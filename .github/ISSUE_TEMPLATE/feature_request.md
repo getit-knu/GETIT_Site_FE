@@ -2,7 +2,7 @@
 name: "\U0001F680 Feature request"
 about: 새로운 기능 추가를 제안합니다
 title: "[Feat] "
-labels: feature
+labels: feat
 assignees: ""
 ---
 
