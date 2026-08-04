@@ -32,4 +32,5 @@ dist-ssr
 # Windows System files
 Thumbs.db
 
-
+# Other files
+.claude
