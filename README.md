@@ -9,6 +9,13 @@
 - **CI/CD**: GitHub Actions
 - **Backend**: Spring Boot (Azure VM) + Nginx reverse proxy (연동 예정)
 
+## 코딩 컨벤션
+
+이 README는 자주 참조하는 항목의 요약입니다. 훅 선언 순서, Props 규칙, 컴포넌트 책임 분리 등 세부 규칙과 그 이유는 아래 문서를 참고하세요.
+
+- [Coding Convention-FE](https://app.notion.com/p/3b5694c484f780689bebc7b501057385) — FE 전체 컨벤션
+- [Coding Convention-Common](https://app.notion.com/p/3ba694c484f781f39024c44469c56229) — FE/BE 공통 규칙
+
 ## 시작하기
 
 ### 요구 사항
@@ -55,7 +62,7 @@ pnpm dev
 
 - `feat:` 새로운 기능 추가
 - `fix:` 버그 수정
-- `style:` Tailwind/CSS 스타일링, 코드 포맷팅, 세미콜론 누락 등 (코드 변경 없음)
+- `style:` SCSS/CSS 스타일링, 코드 포맷팅, 세미콜론 누락 등 (코드 변경 없음)
 - `refactor:` 코드 리팩토링 (기능 변경 없음)
 - `design`: UI 디자인 요소 변경(피드백 반영 등)
 - `chore:` 기타 영향을 크게 미치지 않는 자잘한 수정
@@ -68,6 +75,8 @@ pnpm dev
 - PR 본문에 `close #이슈번호` 작성 시 머지되면 이슈가 자동으로 닫힘
 - `develop`은 PR을 통해서만 머지 가능 (direct push 차단, 서버에서 강제)
 - PR/Issue 생성 시 `.github` 템플릿이 자동으로 채워짐
+- PR 타이틀은 커밋 컨벤션과 동일한 형식(`type: 설명`)을 따름 — Squash & Merge 시 PR 타이틀이 그대로 커밋 메시지가 됨
+- `develop` 머지 시 Approve는 팀 특성상 0명, Squash & Merge로 제한
 
 ## Git Hooks
 
@@ -80,7 +89,45 @@ Husky + lint-staged로 커밋/푸시 전 자동 검사합니다.
 
 ## 디렉토리 구조
 
->
+타입 우선 구조를 사용합니다. `{domain}`은 기능별 도메인(예: `recruitment`, `auth`)을 뜻합니다.
+
+```
+src/
+├── pages/         # 라우팅 및 페이지
+├── assets/        # 정적 리소스
+├── components/
+│   ├── ui/        # domain 무관한 컴포넌트 (layout 포함)
+│   └── {domain}/  # 해당 도메인에서만 사용하는 컴포넌트
+├── contexts/      # 상태 관리 (Context API)
+├── apis/
+│   ├── client.ts     # axios 인스턴스, 인터셉터
+│   ├── generated.ts  # OpenAPI 자동 생성 - 손으로 수정 금지
+│   └── {domain}/     # 해당 도메인에서만 사용하는 api
+├── hooks/
+│   ├── ui/        # domain 무관한 hooks
+│   └── {domain}/  # 해당 도메인에서만 사용하는 hooks
+├── mocks/
+│   ├── ui/        # domain 무관한 목업 데이터
+│   └── {domain}/  # 해당 도메인에서만 사용하는 목업 데이터
+├── styles/
+│   ├── abstracts/ # 변수, 믹스인, 함수
+│   ├── layout/    # 헤더, 푸터 등 레이아웃 구조
+│   └── main.scss
+├── libs/          # 공통 코드, 유틸리티 함수, 외부 라이브러리 파일 등
+├── types/
+│   ├── api/       # generated.ts 재노출 공통 타입
+│   └── {domain}/  # 해당 도메인별 타입 재노출
+└── errors/
+    ├── ErrorBoundary.tsx
+    └── {domain}/
+```
+
+## 스타일링
+
+- CSS Modules(SCSS)를 사용합니다. 컴포넌트와 같은 위치에 `ComponentName.module.scss`로 작성하고 `import styles from "./ComponentName.module.scss"`로 가져옵니다.
+- 인라인 `style` 속성은 쓰지 않습니다 (동적으로 계산된 값이 꼭 필요한 경우만 예외).
+- 조건부 클래스는 `clsx()`로 결합합니다 (문자열 템플릿 결합 금지).
+- 전역 디자인 토큰(색상·spacing·breakpoint)은 `styles/`에 두고 `@use`로 가져옵니다 (`@import`는 deprecated).
 
 ## 환경 변수
 
