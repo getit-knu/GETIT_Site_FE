@@ -25,10 +25,7 @@ export default defineConfig([
     rules: {
       "@typescript-eslint/no-explicit-any": "error",
       "import-x/order": ["error", { "newlines-between": "always" }],
-      "max-lines": [
-        "error",
-        { max: 300, skipBlankLines: true, skipComments: true },
-      ],
+      "max-lines": ["error", { max: 300, skipBlankLines: true, skipComments: true }],
     },
   },
 ]);
