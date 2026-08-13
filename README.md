@@ -124,7 +124,7 @@ src/
 
 ## 스타일링
 
-- **CSS Modules(SCSS)**를 사용합니다. 컴포넌트와 같은 위치에 `ComponentName.module.scss`로 작성하고 `import styles from "./ComponentName.module.scss"`로 가져옵니다.
+- CSS Modules(SCSS)를 사용합니다. 컴포넌트와 같은 위치에 `ComponentName.module.scss`로 작성하고 `import styles from "./ComponentName.module.scss"`로 가져옵니다.
 - 인라인 `style` 속성은 쓰지 않습니다 (동적으로 계산된 값이 꼭 필요한 경우만 예외).
 - 조건부 클래스는 `clsx()`로 결합합니다 (문자열 템플릿 결합 금지).
 - 전역 디자인 토큰(색상·spacing·breakpoint)은 `styles/`에 두고 `@use`로 가져옵니다 (`@import`는 deprecated).
