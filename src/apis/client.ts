@@ -1,5 +1,8 @@
 import axios, { type AxiosError, type AxiosInstance } from "axios";
 
+// TODO: BE 도메인이 아직 스켈레톤 상태라 로컬 fake 서버(계약 기준 mock)로만 검증됨.
+// 실제 BE 엔드포인트 연동 후 재검증 필요.
+
 // BE 응답 envelope 구조 (Coding Convention-Common 참고)
 export interface ApiErrorPayload {
   code: string;
