@@ -32,5 +32,11 @@ dist-ssr
 # Windows System files
 Thumbs.db
 
+# Test
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
 # Other files
 .claude
