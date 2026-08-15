@@ -32,13 +32,17 @@ pnpm dev
 
 ### 주요 스크립트
 
-| 명령어            | 설명                        |
-| ----------------- | --------------------------- |
-| `pnpm dev`        | 개발 서버 실행              |
-| `pnpm build`      | 타입 체크 + 프로덕션 빌드   |
-| `pnpm type-check` | 타입 검사만 실행            |
-| `pnpm lint`       | ESLint 검사 (경고 0개 기준) |
-| `pnpm preview`    | 빌드 결과 미리보기          |
+| 명령어              | 설명                             |
+| ------------------- | -------------------------------- |
+| `pnpm dev`          | 개발 서버 실행                   |
+| `pnpm build`        | 타입 체크 + 프로덕션 빌드        |
+| `pnpm type-check`   | 타입 검사만 실행                 |
+| `pnpm lint`         | ESLint 검사 (경고 0개 기준)      |
+| `pnpm format:check` | Prettier 포맷 검사               |
+| `pnpm test`         | 컴포넌트/훅 테스트 실행          |
+| `pnpm test:watch`   | 테스트를 변경 감지하며 반복 실행 |
+| `pnpm test:e2e`     | Playwright E2E 테스트 실행       |
+| `pnpm preview`      | 빌드 결과 미리보기               |
 
 ## 브랜치 전략
 
@@ -129,11 +133,22 @@ src/
 - 조건부 클래스는 `clsx()`로 결합합니다 (문자열 템플릿 결합 금지).
 - 전역 디자인 토큰(색상·spacing·breakpoint)은 `styles/`에 두고 `@use`로 가져옵니다 (`@import`는 deprecated).
 
+## 테스트
+
+- **컴포넌트/훅**: Vitest + React Testing Library + jest-dom
+- **E2E**: Playwright — 로그인 등 핵심 플로우만 다룸 (`e2e/`), `npx playwright codegen`으로 초안을 뽑아 다듬는 방식을 권장
+- 작성 규칙과 예시 코드는 [Coding Convention-FE](https://app.notion.com/p/3b5694c484f780689bebc7b501057385) 8절, E2E 시나리오는 별도 [E2E 시나리오](https://app.notion.com/p/3bd694c484f780c19e1dc565c2e8e909) 문서 참고
+- 현재 CI에는 연동하지 않고 로컬에서 확인 후 PR 체크리스트에 표시하는 방식으로 운영
+
 ## 환경 변수
 
->
+`.env.example`을 참고해 `.env.local`을 만듭니다.
+
+| 변수                | 설명                                                        |
+| ------------------- | ----------------------------------------------------------- |
+| `VITE_API_BASE_URL` | 백엔드 API 서버 주소 (로컬 개발 시 `http://localhost:8080`) |
 
 ## 배포
 
+- PR 생성 시 GitHub Actions에서 Lint / TypeCheck / Format / Build 4개 검증이 자동으로 실행되며, `develop` 브랜치 보호 규칙의 필수 상태 체크로 등록되어 있음
 - `main` 브랜치에 머지되면 GitHub Actions를 통해 Cloudflare Pages로 자동 배포 (예정)
-- PR 생성 시 GitHub Actions에서 Lint / TypeCheck / Build 자동 검증 (예정)
