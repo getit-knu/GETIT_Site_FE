@@ -16,7 +16,11 @@
   padding: 0.625rem 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
+  // 앱 전역에 color-scheme: light dark가 걸려있어, 지정 안 하면 OS가 다크 모드일 때
+  // 네이티브 인풋이 어두운 배경으로 렌더된다. 이 프로젝트는 라이트 테마만 지원한다.
+  background-color: #fff;
   color: $color-text-primary;
+  color-scheme: light;
   font-size: 0.875rem;
 
   &:focus {
