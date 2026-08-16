@@ -17,3 +17,14 @@ it("onClick이 있으면 클릭 시 호출되고 role이 button이 된다", () =
 
   expect(handleClick).toHaveBeenCalledTimes(1);
 });
+
+it("Enter · Space 키를 누르면 onClick이 호출된다", () => {
+  const handleClick = vi.fn();
+  render(<Card onClick={handleClick}>프로젝트 카드</Card>);
+
+  const card = screen.getByRole("button", { name: "프로젝트 카드" });
+  fireEvent.keyDown(card, { key: "Enter" });
+  fireEvent.keyDown(card, { key: " " });
+
+  expect(handleClick).toHaveBeenCalledTimes(2);
+});
