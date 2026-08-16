@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import { createBrowserRouter, type RouteObject } from "react-router";
 
+import { AdminLayout } from "./components/admin/AdminLayout";
 import { RequireRole } from "./components/auth/RequireRole";
 
 /**
@@ -36,11 +37,25 @@ const areaRoutes: RouteObject[] = [
   },
 
   // ── 어드민 ──────────────────────────────────────────────
-  // 셸(레이아웃 · 사이드바 · Topbar)과 하위 7개 라우트는 #22 에서 이 자리에 붙인다.
+  // RequireRole 이 AdminLayout 을 감싼다. 순서가 반대면 권한이 없는 사용자에게도
+  // 셸이 한 번 그려졌다가 사라진다.
   {
     path: "/admin",
     element: <RequireRole allowed={["ADMIN"]} />,
-    children: [{ index: true, lazy: page(() => import("./pages/admin/AdminHomePage")) }],
+    children: [
+      {
+        element: <AdminLayout />,
+        children: [
+          { index: true, lazy: page(() => import("./pages/admin/AdminHomePage")) },
+          { path: "applications", lazy: page(() => import("./pages/admin/ApplicationsPage")) },
+          { path: "lectures", lazy: page(() => import("./pages/admin/LecturesPage")) },
+          { path: "users", lazy: page(() => import("./pages/admin/UsersPage")) },
+          { path: "site", lazy: page(() => import("./pages/admin/SitePage")) },
+          { path: "questions", lazy: page(() => import("./pages/admin/QuestionsPage")) },
+          { path: "settings", lazy: page(() => import("./pages/admin/SettingsPage")) },
+        ],
+      },
+    ],
   },
 
   { path: "*", lazy: page(() => import("./pages/NotFoundPage")) },

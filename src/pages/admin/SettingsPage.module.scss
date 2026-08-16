@@ -1,0 +1,13 @@
+/* 공통 Card(#35)가 develop 에 들어오면 이 블록은 지운다. */
+.card {
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  border-radius: 0.75rem;
+  background-color: var(--admin-surface);
+}
+
+.notice {
+  padding: 2.5rem;
+  color: var(--admin-text-muted);
+  text-align: center;
+}
