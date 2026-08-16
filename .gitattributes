@@ -1,0 +1,23 @@
+# OpenAPI 자동 생성 파일. 손으로 수정하지 않는다.
+# GitHub 이 diff 를 접고 언어 통계에서도 제외한다.
+src/apis/generated.ts linguist-generated=true
+
+# 락 파일도 사람이 읽을 diff 가 아니다.
+# -diff 대신 linguist-generated 를 쓴다. -diff 는 로컬 `git diff` 까지 막아
+# 의존성이 왜 바뀌었는지 확인할 수 없게 만든다.
+pnpm-lock.yaml linguist-generated=true
+
+# 줄바꿈을 저장소 안에서 LF 로 통일한다. Windows 에서 받아도 diff 가 뒤집히지 않는다.
+# Prettier 의 endOfLine 기본값(lf)과 일치한다.
+* text=auto eol=lf
+
+# 바이너리로 취급해 diff 를 만들지 않는다.
+# svg 는 텍스트라 일부러 제외했다. 아이콘 변경은 diff 로 보는 편이 낫다.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
