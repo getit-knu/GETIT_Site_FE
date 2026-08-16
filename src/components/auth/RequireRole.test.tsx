@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getMe } from "../../apis/auth/authApi";
 import type { Me, Role } from "../../types/auth";
@@ -59,15 +59,6 @@ function renderAt(path: string) {
 describe("RequireRole", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-  });
-
-  // 이 프로젝트는 vitest globals 를 켜지 않아 RTL 자동 cleanup 이 걸리지 않는다.
-  // 없으면 앞 테스트가 그린 화면이 남아 뒤 테스트가 그걸 보고 통과·실패한다.
-  //
-  // 같은 내용이 #33(Modal)에서 src/tests/setup.ts 에 전역으로 들어온다.
-  // 그쪽이 머지되면 이 줄은 지운다. 지금 setup.ts 를 같이 고치면 #33 과 충돌한다.
-  afterEach(() => {
-    cleanup();
   });
 
   it("운영진은 어드민 화면에 들어간다", async () => {
