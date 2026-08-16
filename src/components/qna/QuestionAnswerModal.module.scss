@@ -1,0 +1,38 @@
+.meta {
+  display: grid;
+  margin: 0 0 1rem;
+  gap: 0.5rem 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+
+  div {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  dt {
+    color: var(--admin-text-muted);
+    font-size: 0.8125rem;
+  }
+
+  dd {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+}
+
+.question {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.25rem;
+  background-color: var(--admin-hover);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.loading {
+  padding: 2rem 0;
+  color: var(--admin-text-muted);
+  text-align: center;
+}
