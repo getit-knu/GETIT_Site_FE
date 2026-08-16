@@ -1,11 +1,14 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Outlet, useNavigate } from "react-router";
+import { Outlet, useLocation, useNavigate } from "react-router";
 
 import { logout } from "../../apis/auth/authApi";
+import { useSession } from "../../hooks/auth/useSession";
 import { clearAccessToken } from "../../libs/accessToken";
 
 import styles from "./AdminLayout.module.scss";
+import { findActiveMenu } from "./adminMenu";
 import { Sidebar } from "./Sidebar";
+import { Topbar } from "./Topbar";
 
 /**
  * 어드민 전 화면이 올라가는 셸.
@@ -14,8 +17,12 @@ import { Sidebar } from "./Sidebar";
  * 감싸므로, 여기까지 왔다는 것은 이미 운영진이라는 뜻이다.
  */
 export function AdminLayout() {
+  const { pathname } = useLocation();
+  const { user } = useSession();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const title = findActiveMenu(pathname)?.title ?? "운영진 관리 페이지";
 
   async function handleLogout() {
     try {
@@ -38,7 +45,7 @@ export function AdminLayout() {
     <div className={styles.layout}>
       <Sidebar onLogout={() => void handleLogout()} />
       <div className={styles.main}>
-        {/* Topbar(타이틀 · 알림 · 계정)는 후속 이슈에서 이 자리에 붙인다. */}
+        <Topbar title={title} user={user} />
         <main className={styles.content}>
           <Outlet />
         </main>

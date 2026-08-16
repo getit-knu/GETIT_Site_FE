@@ -118,4 +118,21 @@ describe("AdminLayout", () => {
 
     expect(await screen.findByText("홈")).toBeInTheDocument();
   });
+
+  it("경로에 따라 Topbar 타이틀이 바뀐다", async () => {
+    const { unmount } = renderAt("/admin/questions");
+    expect(await screen.findByRole("heading", { name: "Q&A 관리" })).toBeInTheDocument();
+    unmount();
+
+    renderAt("/admin/settings");
+    expect(await screen.findByRole("heading", { name: "설정" })).toBeInTheDocument();
+  });
+
+  it("이름과 역할을 표기하고, 프로필 이미지가 없으면 이니셜을 쓴다", async () => {
+    renderAt("/admin");
+
+    expect(await screen.findByText("김운영")).toBeInTheDocument();
+    expect(screen.getByText("운영진")).toBeInTheDocument();
+    expect(screen.getByText("김")).toBeInTheDocument();
+  });
 });
