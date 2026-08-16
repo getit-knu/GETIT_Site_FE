@@ -1,7 +1,6 @@
 import type { ComponentType } from "react";
 import { createBrowserRouter, type RouteObject } from "react-router";
 
-import { AdminLayout } from "./components/admin/AdminLayout";
 import { RequireRole } from "./components/auth/RequireRole";
 
 /**
@@ -14,6 +13,16 @@ import { RequireRole } from "./components/auth/RequireRole";
  */
 function page(load: () => Promise<{ default: ComponentType }>): RouteObject["lazy"] {
   return { Component: () => load().then((m) => m.default) };
+}
+
+/**
+ * 이름 있는 export 를 지연 로딩한다. 레이아웃처럼 default export 가 아닌 것에 쓴다.
+ *
+ * **레이아웃도 지연 로딩해야 한다.** 정적으로 import 하면 사이드바 메뉴·아이콘·문구가
+ * 메인 번들에 들어가, 로그인도 하지 않은 방문자가 어드민 화면 구성을 통째로 내려받는다.
+ */
+function layout(load: () => Promise<Record<string, ComponentType>>, name: string): RouteObject["lazy"] {
+  return { Component: () => load().then((m) => m[name]) };
 }
 
 /**
@@ -44,7 +53,7 @@ const areaRoutes: RouteObject[] = [
     element: <RequireRole allowed={["ADMIN"]} />,
     children: [
       {
-        element: <AdminLayout />,
+        lazy: layout(() => import("./components/admin/AdminLayout"), "AdminLayout"),
         children: [
           { index: true, lazy: page(() => import("./pages/admin/AdminHomePage")) },
           { path: "applications", lazy: page(() => import("./pages/admin/ApplicationsPage")) },

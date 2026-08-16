@@ -73,11 +73,27 @@ describe("useModalParams", () => {
     await expect.poll(state).toBe("없음:없음");
   });
 
-  it("숫자가 아닌 id 는 없는 것으로 본다", () => {
-    // 주소를 손으로 고쳐 들어올 수 있다. NaN 을 그대로 넘기면 조회가 이상하게 실패한다.
-    renderAt("/admin/questions?modal=answer&id=abc");
+  it.each([
+    ["abc", "글자"],
+    ["", '빈 값 — Number("") 는 0 이다'],
+    [" ", "공백만 — 이것도 0 이 된다"],
+    ["0", "0 — 서버 id 는 1 부터다"],
+    ["-5", "음수"],
+    ["1.5", "소수"],
+    ["1e3", "지수 표기 — Number 는 1000 으로 받아들인다"],
+    ["0x10", "16진수 — Number 는 16 으로 받아들인다"],
+  ])("id=%j 는 없는 것으로 본다 (%s)", (raw) => {
+    // 주소를 손으로 고쳐 들어올 수 있다. 이상한 값이 그대로 조회에 실리면
+    // 없는 항목을 열거나 엉뚱한 항목을 연다.
+    renderAt(`/admin/questions?modal=answer&id=${raw}`);
 
     expect(state()).toBe("answer:없음");
+  });
+
+  it("양의 정수 id 는 그대로 쓴다", () => {
+    renderAt("/admin/questions?modal=answer&id=7001");
+
+    expect(state()).toBe("answer:7001");
   });
 
   it("다른 쿼리 파라미터는 건드리지 않는다", async () => {

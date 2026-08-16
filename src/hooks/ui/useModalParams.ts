@@ -1,6 +1,27 @@
 import { useCallback } from "react";
 import { useSearchParams } from "react-router";
 
+/** 서버가 주는 id 는 1 부터 시작하는 정수다. 그 형태의 문자열만 받아들인다. */
+const POSITIVE_INTEGER = /^\d+$/;
+
+/**
+ * URL 의 `id` 를 숫자로 바꾼다. 형태가 어긋나면 `null`.
+ *
+ * `Number()` 로 바로 바꾸면 안 된다. 빈 문자열과 공백을 **0 으로** 만들고
+ * (`Number("") === 0`), 지수·16진수 표기(`1e3` → 1000, `0x10` → 16)까지 받아들인다.
+ * `Number.isInteger` 도 그 값들은 통과시킨다. 그러면 `?id=` 같은 주소가
+ * 없는 항목을 열거나, `?id=0x10` 이 엉뚱한 항목을 연다.
+ */
+function parseId(raw: string | null): number | null {
+  if (raw === null || !POSITIVE_INTEGER.test(raw)) return null;
+
+  const parsed = Number(raw);
+  // 자릿수가 아주 크면 정수 정밀도를 벗어나 다른 값이 된다.
+  if (parsed === 0 || !Number.isSafeInteger(parsed)) return null;
+
+  return parsed;
+}
+
 /**
  * 모달 상태를 URL 에 둔다. `?modal={name}&id={id}`
  *
@@ -19,11 +40,7 @@ export function useModalParams() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const modal = searchParams.get("modal");
-  const rawId = searchParams.get("id");
-  // URL 은 문자열만 담는다. `?id=abc` 처럼 손으로 고친 주소로도 들어올 수 있어
-  // 숫자가 아니면 없는 것으로 본다.
-  const parsedId = rawId === null ? null : Number(rawId);
-  const id = parsedId !== null && Number.isInteger(parsedId) ? parsedId : null;
+  const id = parseId(searchParams.get("id"));
 
   const openModal = useCallback(
     (name: string, targetId?: number) => {
