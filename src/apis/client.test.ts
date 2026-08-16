@@ -1,5 +1,7 @@
-import type { AxiosResponse } from "axios";
-import { describe, expect, it } from "vitest";
+import type { AxiosError, AxiosResponse } from "axios";
+import { beforeEach, describe, expect, it } from "vitest";
+
+import { getAccessToken, setAccessToken } from "../libs/accessToken";
 
 import { client, type ApiErrorPayload } from "./client";
 
@@ -7,13 +9,27 @@ import { client, type ApiErrorPayload } from "./client";
  * 인터셉터를 직접 꺼내 돌린다. axios 내부 핸들러 배열을 읽는 방식이라
  * 서버를 띄우지 않고도 응답 변환만 떼어 검증할 수 있다.
  */
-function runResponseInterceptor(data: unknown): Promise<AxiosResponse> {
-  const handlers = client.interceptors.response as unknown as {
-    handlers: { fulfilled: (r: AxiosResponse) => Promise<AxiosResponse> }[];
-  };
+interface Handler {
+  fulfilled: (r: AxiosResponse) => Promise<AxiosResponse>;
+  rejected: (e: AxiosError) => Promise<never>;
+}
 
+function responseHandler(): Handler {
+  return (client.interceptors.response as unknown as { handlers: Handler[] }).handlers[0];
+}
+
+function runResponseInterceptor(data: unknown): Promise<AxiosResponse> {
   const response = { data, status: 200, statusText: "OK", headers: {}, config: {} } as AxiosResponse;
-  return Promise.resolve(handlers.handlers[0].fulfilled(response));
+  return Promise.resolve(responseHandler().fulfilled(response));
+}
+
+/** 실패 응답을 인터셉터에 흘려보낸다. `error` 는 BE envelope 의 error 필드. */
+function runErrorInterceptor(status: number, error: ApiErrorPayload | null): Promise<never> {
+  const axiosError = {
+    message: "Request failed",
+    response: { status, data: { success: false, data: null, error } },
+  } as AxiosError;
+  return responseHandler().rejected(axiosError);
 }
 
 describe("응답 인터셉터", () => {
@@ -45,5 +61,53 @@ describe("응답 인터셉터", () => {
     await expect(runResponseInterceptor(undefined)).rejects.toMatchObject({
       code: "MALFORMED_RESPONSE",
     });
+  });
+});
+
+describe("실패 응답 인터셉터", () => {
+  beforeEach(() => {
+    setAccessToken(null);
+  });
+
+  it("BE 가 준 error 를 그대로 넘긴다", async () => {
+    await expect(
+      runErrorInterceptor(409, { code: "ALREADY_ANSWERED", message: "이미 답변이 존재합니다." }),
+    ).rejects.toEqual({ code: "ALREADY_ANSWERED", message: "이미 답변이 존재합니다." });
+  });
+
+  it("error 가 없으면 UNKNOWN_ERROR 로 채운다", async () => {
+    // 게이트웨이가 envelope 없이 5xx 를 뱉는 경우가 있다. 화면이 code 를 못 읽으면 안 된다.
+    await expect(runErrorInterceptor(502, null)).rejects.toMatchObject({ code: "UNKNOWN_ERROR" });
+  });
+
+  it("401 을 받으면 들고 있던 토큰을 버린다", async () => {
+    // 남겨 두면 이후 요청이 전부 401 로 죽고, 세션 쿼리가 실패하지 않아
+    // 로그인 상태로 잘못 남는다.
+    setAccessToken("stale-token");
+
+    await expect(
+      runErrorInterceptor(401, { code: "UNAUTHORIZED", message: "인증이 필요합니다." }),
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+
+    expect(getAccessToken()).toBeNull();
+  });
+
+  it("403 은 토큰을 지우지 않는다", async () => {
+    // 로그인은 유효하고 권한만 모자란 상태다. 토큰을 버리면 멀쩡한 세션이 끊긴다.
+    setAccessToken("valid-token");
+
+    await expect(runErrorInterceptor(403, { code: "FORBIDDEN", message: "권한이 없습니다." })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+
+    expect(getAccessToken()).toBe("valid-token");
+  });
+
+  it("그 밖의 상태 코드도 토큰을 건드리지 않는다", async () => {
+    setAccessToken("valid-token");
+
+    await expect(runErrorInterceptor(500, null)).rejects.toMatchObject({ code: "UNKNOWN_ERROR" });
+
+    expect(getAccessToken()).toBe("valid-token");
   });
 });

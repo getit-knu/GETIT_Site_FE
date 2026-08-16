@@ -30,7 +30,7 @@ function makeUser(role: Role): Me {
 }
 
 /** `/admin` 에 가드를 걸고, 홈과 403 을 착지 지점으로 둔 최소 라우터. */
-function renderAt(path: string) {
+function renderAt(path: string, existingClient?: QueryClient) {
   const router = createMemoryRouter(
     [
       { path: "/", element: <p>홈</p> },
@@ -45,15 +45,17 @@ function renderAt(path: string) {
   );
 
   // 테스트에서는 재시도를 끈다. 켜 두면 실패 케이스가 타임아웃까지 늘어진다.
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
+  const queryClient = existingClient ?? new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
   return render(
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
     </QueryClientProvider>,
   );
+}
+
+function makeClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false } } });
 }
 
 describe("RequireRole", () => {
@@ -103,6 +105,25 @@ describe("RequireRole", () => {
 
     expect(screen.queryByText("홈")).not.toBeInTheDocument();
     expect(screen.queryByText("접근 권한이 없습니다")).not.toBeInTheDocument();
+    expect(screen.queryByText("어드민 화면")).not.toBeInTheDocument();
+  });
+
+  it("세션이 만료되면 열려 있던 어드민 화면에서 내보낸다", async () => {
+    // 리뷰 지적(#36) — 재조회가 401 이어도 이전 사용자 정보가 남아 계속 로그인으로 보이던 문제.
+    // 가드 경계에서도 실제로 내보내는지 확인한다.
+    mockedGetMe.mockResolvedValueOnce(makeUser("ADMIN"));
+    const queryClient = makeClient();
+
+    const { unmount } = renderAt("/admin", queryClient);
+    expect(await screen.findByText("어드민 화면")).toBeInTheDocument();
+    unmount();
+
+    mockedGetMe.mockRejectedValue({ code: "UNAUTHORIZED", message: "인증이 필요합니다" });
+    await queryClient.refetchQueries();
+
+    renderAt("/admin", queryClient);
+
+    expect(await screen.findByText("홈")).toBeInTheDocument();
     expect(screen.queryByText("어드민 화면")).not.toBeInTheDocument();
   });
 });

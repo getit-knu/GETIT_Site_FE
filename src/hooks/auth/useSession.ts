@@ -17,7 +17,7 @@ interface Session {
  * 요청은 한 번만 나간다. 그래서 굳이 Context 로 감싸지 않았다.
  */
 export function useSession(): Session {
-  const { data, isPending } = useQuery({
+  const { data, isPending, isError } = useQuery({
     queryKey: queryKeys.auth.me(),
     queryFn: getMe,
 
@@ -29,10 +29,18 @@ export function useSession(): Session {
     staleTime: 5 * 60_000,
   });
 
+  // **`data` 만 보면 안 된다.** TanStack Query 는 재조회가 실패해도 직전에 성공한 `data` 를
+  // 그대로 남겨 둔다. 세션이 만료돼 `/api/auth/me` 가 401 을 주는데도 이전 사용자 정보가
+  // 남아 있어, 로그아웃된 사람에게 계속 어드민 화면이 열린다.
+  //
+  // 마지막 조회가 실패했으면 들고 있는 값이 무엇이든 로그인으로 보지 않는다.
+  const isAuthenticated = data !== undefined && !isError;
+
   return {
-    user: data,
+    // 인증이 풀린 상태에서 이름·권한만 남아 화면에 그려지지 않도록 함께 비운다.
+    user: isAuthenticated ? data : undefined,
     isLoading: isPending,
-    isAuthenticated: data !== undefined,
+    isAuthenticated,
   };
 }
 
