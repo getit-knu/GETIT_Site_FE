@@ -16,6 +16,16 @@ function page(load: () => Promise<{ default: ComponentType }>): RouteObject["laz
 }
 
 /**
+ * 이름 있는 export 를 지연 로딩한다. 레이아웃처럼 default export 가 아닌 것에 쓴다.
+ *
+ * **레이아웃도 지연 로딩해야 한다.** 정적으로 import 하면 사이드바 메뉴·아이콘·문구가
+ * 메인 번들에 들어가, 로그인도 하지 않은 방문자가 어드민 화면 구성을 통째로 내려받는다.
+ */
+function layout(load: () => Promise<Record<string, ComponentType>>, name: string): RouteObject["lazy"] {
+  return { Component: () => load().then((m) => m[name]) };
+}
+
+/**
  * 공개 · 부원 · 어드민 3영역.
  *
  * 권한 검사는 각 영역의 부모 라우트에서 `RequireRole` 로 **한 번만** 한다.
@@ -36,11 +46,25 @@ const areaRoutes: RouteObject[] = [
   },
 
   // ── 어드민 ──────────────────────────────────────────────
-  // 셸(레이아웃 · 사이드바 · Topbar)과 하위 7개 라우트는 #22 에서 이 자리에 붙인다.
+  // RequireRole 이 AdminLayout 을 감싼다. 순서가 반대면 권한이 없는 사용자에게도
+  // 셸이 한 번 그려졌다가 사라진다.
   {
     path: "/admin",
     element: <RequireRole allowed={["ADMIN"]} />,
-    children: [{ index: true, lazy: page(() => import("./pages/admin/AdminHomePage")) }],
+    children: [
+      {
+        lazy: layout(() => import("./components/admin/AdminLayout"), "AdminLayout"),
+        children: [
+          { index: true, lazy: page(() => import("./pages/admin/AdminHomePage")) },
+          { path: "applications", lazy: page(() => import("./pages/admin/ApplicationsPage")) },
+          { path: "lectures", lazy: page(() => import("./pages/admin/LecturesPage")) },
+          { path: "users", lazy: page(() => import("./pages/admin/UsersPage")) },
+          { path: "site", lazy: page(() => import("./pages/admin/SitePage")) },
+          { path: "questions", lazy: page(() => import("./pages/admin/QuestionsPage")) },
+          { path: "settings", lazy: page(() => import("./pages/admin/SettingsPage")) },
+        ],
+      },
+    ],
   },
 
   { path: "*", lazy: page(() => import("./pages/NotFoundPage")) },

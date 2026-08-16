@@ -1,0 +1,47 @@
+@use "../../styles/abstracts/variables" as *;
+
+/**
+ * 어드민 전용 치수와, 팔레트에 없는 보조색.
+ *
+ * 색은 전역 토큰(`styles/abstracts/_variables.scss`)을 그대로 쓴다.
+ * 팔레트에 없는 값(사이드바 활성 배경 · hover · 비활성 글자)만 여기서 파생시킨다.
+ * 화면마다 흩뿌리지 않도록 이 블록 한 곳에만 둔다.
+ *
+ * 어드민 영역에만 걸리므로 공개·부원 화면과 충돌하지 않는다.
+ */
+.layout {
+  --admin-sidebar-width: 15rem;
+  --admin-topbar-height: 4rem;
+  --admin-surface: #{$color-surface};
+  --admin-canvas: #{$color-background};
+  --admin-border: #{$color-border};
+  --admin-text: #{$color-text-primary};
+  --admin-text-muted: #{$color-text-secondary};
+  --admin-accent: #{$color-accent};
+
+  // 팔레트에 없는 보조색. 토큰에서 파생시켜 임의의 회색이 늘어나지 않게 한다.
+  --admin-hover: #{$color-disabled-bg};
+  --admin-text-disabled: #{rgba($color-text-secondary, 0.55)};
+  --admin-accent-soft: #{rgba($color-accent, 0.08)};
+
+  display: flex;
+  height: 100vh;
+
+  // color-scheme 은 index.css 에서 전역으로 light 고정한다. 여기서 다시 선언하지 않는다.
+  color: var(--admin-text);
+}
+
+.main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.content {
+  // 사이드바와 상단바는 고정하고 본문만 스크롤한다.
+  flex: 1;
+  padding: 1.75rem;
+  overflow-y: auto;
+  background-color: var(--admin-canvas);
+}

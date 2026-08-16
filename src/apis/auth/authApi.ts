@@ -17,3 +17,13 @@ export async function refreshAccessToken(): Promise<TokenResponse> {
   const { data } = await client.post<TokenResponse>("/api/auth/refresh");
   return data;
 }
+
+/**
+ * 로그아웃. BE 가 Refresh Token 을 폐기하고 쿠키를 지운다.
+ *
+ * Access Token 은 서버가 지울 수 없다. 만료까지는 유효하므로 호출한 쪽에서
+ * 메모리 저장소를 함께 비워야 한다.
+ */
+export async function logout(): Promise<void> {
+  await client.post("/api/auth/logout");
+}
