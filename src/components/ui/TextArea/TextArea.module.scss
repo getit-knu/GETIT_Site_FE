@@ -14,13 +14,10 @@
 
 .textarea {
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid $color-border;
   border-radius: 0.5rem;
-  // 앱 전역에 color-scheme: light dark가 걸려있어, 지정 안 하면 OS가 다크 모드일 때
-  // 네이티브 텍스트영역이 어두운 배경으로 렌더된다. 이 프로젝트는 라이트 테마만 지원한다.
-  background-color: #fff;
+  background-color: $color-surface;
   color: $color-text-primary;
-  color-scheme: light;
   font-size: 0.875rem;
   resize: vertical;
 
@@ -30,17 +27,17 @@
   }
 
   &:disabled {
-    background-color: #f3f4f6;
+    background-color: $color-disabled-bg;
     cursor: not-allowed;
   }
 }
 
 .textareaError {
-  border-color: #dc2626;
+  border-color: $color-danger;
 }
 
 .errorMessage {
   margin: 0;
-  color: #dc2626;
+  color: $color-danger;
   font-size: 0.75rem;
 }

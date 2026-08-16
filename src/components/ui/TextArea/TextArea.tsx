@@ -7,13 +7,27 @@ interface TextAreaProps {
   label?: string;
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   placeholder?: string;
   error?: string;
   rows?: number;
+  maxLength?: number;
+  name?: string;
   disabled?: boolean;
 }
 
-export function TextArea({ label, value, onChange, placeholder, error, rows = 4, disabled }: TextAreaProps) {
+export function TextArea({
+  label,
+  value,
+  onChange,
+  onBlur,
+  placeholder,
+  error,
+  rows = 4,
+  maxLength,
+  name,
+  disabled,
+}: TextAreaProps) {
   const id = useId();
 
   return (
@@ -25,11 +39,14 @@ export function TextArea({ label, value, onChange, placeholder, error, rows = 4,
       )}
       <textarea
         id={id}
+        name={name}
         className={clsx(styles.textarea, error && styles.textareaError)}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        onBlur={onBlur}
         placeholder={placeholder}
         rows={rows}
+        maxLength={maxLength}
         disabled={disabled}
       />
       {error && (

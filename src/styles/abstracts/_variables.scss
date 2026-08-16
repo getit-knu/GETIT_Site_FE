@@ -3,3 +3,10 @@ $color-text-primary: #364153;
 $color-text-secondary: #6a7282;
 $color-background: #f8f8f8;
 $color-accent: #283997;
+
+// 팔레트에 없는 중립/시맨틱 색. 컴포넌트마다 따로 하드코딩하지 않도록 한곳에 모은다.
+// $color-danger는 시맨틱 색이라 위 팔레트 4개 정렬 대상이 아니다(2026-08-16 팀 확정).
+$color-surface: #fff;
+$color-border: #d1d5db;
+$color-danger: #dc2626;
+$color-disabled-bg: #f3f4f6;

@@ -17,3 +17,12 @@ it("error가 있으면 에러 문구를 보여준다", () => {
 
   expect(screen.getByRole("alert")).toHaveTextContent("필수 입력 항목입니다.");
 });
+
+it("포커스를 벗어나면 onBlur가 호출된다", () => {
+  const handleBlur = vi.fn();
+  render(<TextArea value="" onChange={() => {}} onBlur={handleBlur} />);
+
+  fireEvent.blur(screen.getByRole("textbox"));
+
+  expect(handleBlur).toHaveBeenCalledTimes(1);
+});
