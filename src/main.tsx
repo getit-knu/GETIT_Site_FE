@@ -1,15 +1,32 @@
-import { StrictMode } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { StrictMode, Suspense, lazy } from "react";
 import { createRoot } from "react-dom/client";
+import { RouterProvider } from "react-router";
 
+import { createQueryClient } from "./apis/queryClient.ts";
 import { ErrorBoundary } from "./errors/ErrorBoundary.tsx";
+import { router } from "./routes.tsx";
 import "./index.css";
 import "./styles/main.scss";
-import App from "./App.tsx";
+
+// devtools 는 개발 환경에서만 부른다. 정적 import 로 두면 배포 번들에 그대로 들어간다.
+const ReactQueryDevtools = import.meta.env.DEV
+  ? lazy(() => import("@tanstack/react-query-devtools").then((m) => ({ default: m.ReactQueryDevtools })))
+  : null;
+
+const queryClient = createQueryClient();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+        {ReactQueryDevtools && (
+          <Suspense fallback={null}>
+            <ReactQueryDevtools initialIsOpen={false} />
+          </Suspense>
+        )}
+      </QueryClientProvider>
     </ErrorBoundary>
   </StrictMode>,
 );
