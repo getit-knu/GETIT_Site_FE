@@ -16,7 +16,9 @@
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
-  color-scheme: light dark;
+  /* 이 프로젝트는 라이트 테마만 지원한다 — 네이티브 폼 컨트롤(input/textarea/select 등)이
+     OS 다크 모드를 따라가지 않도록 전역에서 한 번만 고정한다(컴포넌트마다 개별 지정하지 않는다). */
+  color-scheme: light;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;

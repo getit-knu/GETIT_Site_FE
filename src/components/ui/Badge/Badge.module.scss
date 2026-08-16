@@ -1,0 +1,27 @@
+@use "../../../styles/abstracts/variables" as *;
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+// 시맨틱 배지 틴트는 팔레트 정렬 대상이 아니다 (2026-08-16 팀 확정)
+.accent {
+  background-color: rgb(40 57 151 / 12%);
+  color: $color-accent;
+}
+
+.info {
+  background-color: #e0edff;
+  color: #1d4ed8;
+}
+
+.neutral {
+  background-color: #e5e7eb;
+  color: $color-text-secondary;
+}
