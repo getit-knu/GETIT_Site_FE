@@ -1,32 +1,33 @@
+@use "../../styles/abstracts/variables" as *;
+
 /**
- * 어드민 색·치수는 여기 한 곳에서만 정의한다.
+ * 어드민 전용 치수와, 팔레트에 없는 보조색.
  *
- * 전역 디자인 토큰(`styles/abstracts/_variables.scss`)은 협업자가 Figma 확정본으로
- * 채우는 중이라 아직 어드민에 필요한 값(사이드바 활성 배경 · 경계선 · 표 헤더 등)이 없다.
- * 화면마다 색을 흩뿌리지 않도록 CSS 변수로 모아 두고, 토큰이 확정되면
- * **이 블록만** 전역 토큰을 가리키도록 바꾼다.
+ * 색은 전역 토큰(`styles/abstracts/_variables.scss`)을 그대로 쓴다.
+ * 팔레트에 없는 값(사이드바 활성 배경 · hover · 비활성 글자)만 여기서 파생시킨다.
+ * 화면마다 흩뿌리지 않도록 이 블록 한 곳에만 둔다.
  *
  * 어드민 영역에만 걸리므로 공개·부원 화면과 충돌하지 않는다.
  */
 .layout {
   --admin-sidebar-width: 15rem;
   --admin-topbar-height: 4rem;
-  --admin-surface: #fff;
-  --admin-canvas: #f8fafc;
-  --admin-border: #e5e7eb;
-  --admin-text: #1f2937;
-  --admin-text-muted: #6b7280;
-  --admin-text-disabled: #b6bcc6;
-  --admin-hover: #f3f4f6;
-  --admin-accent: #2563eb;
-  --admin-accent-soft: #eff6ff;
+  --admin-surface: #{$color-surface};
+  --admin-canvas: #{$color-background};
+  --admin-border: #{$color-border};
+  --admin-text: #{$color-text-primary};
+  --admin-text-muted: #{$color-text-secondary};
+  --admin-accent: #{$color-accent};
+
+  // 팔레트에 없는 보조색. 토큰에서 파생시켜 임의의 회색이 늘어나지 않게 한다.
+  --admin-hover: #{$color-disabled-bg};
+  --admin-text-disabled: #{rgba($color-text-secondary, 0.55)};
+  --admin-accent-soft: #{rgba($color-accent, 0.08)};
 
   display: flex;
   height: 100vh;
 
-  // 어드민은 흰 표와 카드가 전제인 화면이다. 전역 스타일이 다크 모드에서
-  // 어두운 배경을 물려주면 대비가 뒤집히므로 여기서 밝은 배색을 못 박는다.
-  color-scheme: light;
+  // color-scheme 은 index.css 에서 전역으로 light 고정한다. 여기서 다시 선언하지 않는다.
   color: var(--admin-text);
 }
 
