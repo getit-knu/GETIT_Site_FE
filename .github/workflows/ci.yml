@@ -52,3 +52,33 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+
+  # e2e(Playwright)는 아직 job 으로 두지 않는다.
+  # e2e/ 에 테스트가 하나도 없어, 브라우저를 내려받고 dev 서버를 띄운 뒤
+  # 아무것도 실행하지 않는 시간만 PR 마다 든다.
+  # 첫 e2e 테스트를 추가할 때 아래 형태로 함께 넣는다.
+  #
+  #   e2e:
+  #     runs-on: ubuntu-latest
+  #     steps:
+  #       - uses: actions/checkout@v4
+  #       - uses: pnpm/action-setup@v4
+  #       - uses: actions/setup-node@v4
+  #         with:
+  #           node-version-file: ".nvmrc"
+  #           cache: "pnpm"
+  #       - run: pnpm install --frozen-lockfile
+  #       - run: pnpm exec playwright install --with-deps chromium
+  #       - run: pnpm test:e2e
