@@ -62,3 +62,28 @@ it("헤더의 닫기 버튼을 누르면 onClose가 호출된다", () => {
 
   expect(handleClose).toHaveBeenCalledTimes(1);
 });
+
+it("ModalHeader의 title이 aria-labelledby로 dialog와 연결된다", () => {
+  render(
+    <Modal isOpen onClose={() => {}}>
+      <ModalHeader title="답변 작성" onClose={() => {}} />
+    </Modal>,
+  );
+
+  const dialog = screen.getByRole("dialog");
+  const labelledBy = dialog.getAttribute("aria-labelledby");
+
+  expect(labelledBy).toBeTruthy();
+  expect(document.getElementById(labelledBy as string)).toHaveTextContent("답변 작성");
+});
+
+it("열리면 다이얼로그 자체에 포커스가 간다", () => {
+  render(
+    <Modal isOpen onClose={() => {}}>
+      <ModalHeader title="제목" onClose={() => {}} />
+      <ModalBody>내용</ModalBody>
+    </Modal>,
+  );
+
+  expect(screen.getByRole("dialog")).toHaveFocus();
+});

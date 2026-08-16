@@ -19,6 +19,11 @@
   overflow-y: auto;
   border-radius: 0.75rem;
   background-color: $color-background;
+
+  // 열릴 때 다이얼로그 자체가 포커스를 받는다 — 기본 아웃라인 링은 불필요하다.
+  &:focus {
+    outline: none;
+  }
 }
 
 .header {
