@@ -1,0 +1,37 @@
+@use "../../../styles/abstracts/variables" as *;
+@use "../../../styles/abstracts/form-field";
+
+.wrapper {
+  @include form-field.field-wrapper;
+}
+
+.label {
+  @include form-field.field-label;
+}
+
+.input {
+  padding: 0.625rem 0.75rem;
+  border: 1px solid $color-border;
+  border-radius: 0.5rem;
+  background-color: $color-surface;
+  color: $color-text-primary;
+  font-size: 0.875rem;
+
+  &:focus {
+    outline: 2px solid $color-accent;
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    background-color: $color-disabled-bg;
+    cursor: not-allowed;
+  }
+}
+
+.inputError {
+  border-color: $color-danger;
+}
+
+.errorMessage {
+  @include form-field.field-error-message;
+}
