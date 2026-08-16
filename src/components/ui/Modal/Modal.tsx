@@ -4,7 +4,8 @@ import { createPortal } from "react-dom";
 
 import styles from "./Modal.module.scss";
 
-const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 // Modal이 생성한 titleId를 ModalHeader에 전달해 aria-labelledby로 연결하기 위한 내부 채널.
 // 사용하는 쪽은 id를 몰라도 되고, 그냥 <Modal><ModalHeader title="..." /></Modal>로 쓰면 된다.
@@ -13,11 +14,13 @@ const ModalTitleContext = createContext<string | undefined>(undefined);
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
+  closeOnOverlayClick?: boolean;
   children: ReactNode;
 }
 
-export function Modal({ isOpen, onClose, children }: ModalProps) {
+export function Modal({ isOpen, onClose, closeOnOverlayClick = true, children }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const mouseDownTargetRef = useRef<EventTarget | null>(null);
   const titleId = useId();
 
   useEffect(() => {
@@ -71,14 +74,28 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
 
   if (!isOpen) return null;
 
+  function handleOverlayMouseDown(event: MouseEvent<HTMLDivElement>) {
+    mouseDownTargetRef.current = event.target;
+  }
+
   function handleOverlayClick(event: MouseEvent<HTMLDivElement>) {
-    if (event.target === event.currentTarget) {
+    if (!closeOnOverlayClick) return;
+
+    // 다이얼로그 안 텍스트를 드래그로 선택하다 오버레이 위에서 마우스를 놓으면
+    // click의 target이 오버레이가 되어버린다. mousedown도 오버레이 자신이었을
+    // 때만 닫히게 해서, 드래그가 오버레이에서 "끝난" 것과 "시작한" 것을 구분한다.
+    if (event.target === event.currentTarget && mouseDownTargetRef.current === event.currentTarget) {
       onClose();
     }
   }
 
   return createPortal(
-    <div className={styles.overlay} onClick={handleOverlayClick}>
+    <div
+      className={styles.overlay}
+      data-testid="modal-overlay"
+      onMouseDown={handleOverlayMouseDown}
+      onClick={handleOverlayClick}
+    >
       <div
         ref={dialogRef}
         className={styles.dialog}
