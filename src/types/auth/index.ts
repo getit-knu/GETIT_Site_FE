@@ -1,0 +1,41 @@
+/**
+ * 인증 도메인 타입.
+ *
+ * BE 에 어드민 OpenAPI 스키마가 갖춰지면 `apis/generated.ts` 에서 가져와 재노출한다.
+ * 지금은 `GETIT 백엔드 설계 명세서` 1.3 · 1.5 를 보고 손으로 옮겼다.
+ */
+
+/** BE `Role` enum 과 값이 같아야 한다. */
+export const ROLES = ["GUEST", "MEMBER", "ADMIN"] as const;
+
+export type Role = (typeof ROLES)[number];
+
+/** BE `UserStatus` enum. */
+export type UserStatus = "ACTIVE" | "WITHDRAWN";
+
+/** `GET /api/auth/me` 응답. 명세서 1.5 의 필드 순서를 그대로 따랐다. */
+export interface Me {
+  id: number;
+  email: string;
+  name: string;
+  phoneNumber: string | null;
+  college: string | null;
+  major: string | null;
+  studentYear: number | null;
+  studentNumber: string | null;
+  profileImageUrl: string | null;
+  role: Role;
+  generationNo: number | null;
+  status: UserStatus;
+}
+
+/**
+ * `POST /api/auth/refresh` 응답. 명세서 1.3.
+ *
+ * Refresh Token 은 본문에 없다. HttpOnly 쿠키로만 오간다.
+ */
+export interface TokenResponse {
+  accessToken: string;
+  /** 만료까지 남은 초. */
+  accessTokenExpiresIn: number;
+}
