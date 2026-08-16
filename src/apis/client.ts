@@ -23,11 +23,26 @@ export const client: AxiosInstance = axios.create({
   },
 });
 
+function isEnvelope(value: unknown): value is ApiEnvelope<unknown> {
+  return typeof value === "object" && value !== null && "success" in value;
+}
+
 // 컴포넌트는 envelope을 몰라야 한다: 여기서 한 번 벗겨서 data만 내려준다.
 client.interceptors.response.use(
   (response) => {
-    const envelope = response.data as ApiEnvelope<unknown>;
-    response.data = envelope.data;
+    // 2xx 라고 전부 envelope 은 아니다. baseURL 이 비어 있으면 요청이 개발 서버로 가고,
+    // 개발 서버는 SPA 폴백으로 index.html 을 200 으로 준다.
+    // 검사 없이 벗기면 data 가 조용히 undefined 가 되고, 그 결과는
+    // "Query data cannot be undefined" 처럼 원인과 동떨어진 곳에서 터진다.
+    if (!isEnvelope(response.data)) {
+      const malformed: ApiErrorPayload = {
+        code: "MALFORMED_RESPONSE",
+        message: "서버 응답 형식이 올바르지 않습니다. API 주소 설정을 확인해 주세요.",
+      };
+      return Promise.reject(malformed);
+    }
+
+    response.data = response.data.data;
     return response;
   },
   (error: AxiosError<ApiEnvelope<unknown>>) => {
