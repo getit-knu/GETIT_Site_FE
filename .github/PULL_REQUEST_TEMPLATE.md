@@ -14,5 +14,6 @@ close #
 - [ ] `pnpm test` 통과 (테스트 코드 작성 시)
 - [ ] `pnpm test:e2e` 통과 (테스트 코드 작성 시)
 - [ ] 브랜치 네이밍/커밋 컨벤션 준수
+- [ ] PR 코멘트에 `@coderabbitai review` 트리거함
 
 ## 🖼️ 스크린샷 (UI 변경 시, Optional)

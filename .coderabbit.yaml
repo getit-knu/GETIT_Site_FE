@@ -1,0 +1,76 @@
+# CodeRabbit 설정
+# https://docs.coderabbit.ai/reference/configuration
+language: "ko-KR"
+
+tone_instructions: >
+  한국어로 간결하고 친절하게 리뷰를 작성한다. 팀에 개발 초심자가 많으니
+  용어는 쉽게 풀어 설명한다.
+
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - "develop"
+      - "main"
+
+  path_filters:
+    - "!**/*.generated.ts"
+    - "!src/apis/generated.ts"
+    - "!pnpm-lock.yaml"
+    - "!**/*.svg"
+
+  path_instructions:
+    - path: "**"
+      instructions: >
+        GETIT_Site_FE는 타입(기술 계층) 우선 디렉토리 구조를 쓴다. 응답은
+        { success, data, error } envelope 계약을 따르며, error.code는 BE의
+        ErrorCode enum을 그대로 사용하고 FE가 새 코드를 만들지 않는다. 화면 표시
+        문구는 errors/{domain}/errorMessages.ts에서 code→문구로 매핑한다.
+        types/api 이하는 generated.ts 재노출 전용이며 손으로 새 타입을 정의하지
+        않는다. PR 하나는 목적 하나, src/ 변경은 500줄 이하를 지향한다(테스트
+        코드·generated.ts 제외).
+
+    - path: "src/types/api/**"
+      instructions: >
+        이 디렉토리는 apis/generated.ts를 재노출하는 용도로만 사용해야 한다.
+        새 타입을 직접 정의하는 코드가 있으면 지적할 것.
+
+    - path: "src/apis/**"
+      instructions: >
+        client.ts의 응답 인터셉터가 { success, data, error } envelope을 벗겨 data만
+        컴포넌트에 내려주는 구조를 유지해야 한다. 개별 API 함수가 envelope 구조를 그대로
+        컴포넌트에 노출하면 지적할 것. error.code는 BE ErrorCode enum 값이어야 하며 FE에서
+        임의로 새 코드를 만들면 지적할 것.
+
+    - path: "src/errors/**"
+      instructions: >
+        code→표시 문구 매핑이 이 디렉토리(도메인별 errorMessages.ts)에 있는지 확인하고,
+        매핑이 없을 때는 error.message로 폴백하는 구조를 따르는지 확인할 것.
+
+    - path: "**/*.test.{ts,tsx}"
+      instructions: >
+        이 프로젝트는 Vitest + React Testing Library + jest-dom(서브패스 vitest)을 쓰며,
+        테스트 파일은 co-location(컴포넌트 옆) 배치가 컨벤션이다. MSW 도입, RTL 쿼리 우선순위
+        강제, 커버리지 수치 강제는 팀이 의도적으로 도입하지 않기로 했으므로 이를 요구하지 말 것.
+
+    - path: "src/**/*.{ts,tsx}"
+      instructions: >
+        any 타입 사용은 지적할 것(@typescript-eslint/no-explicit-any: error).
+        파일당 300줄(max-lines, 공백/주석 제외, generated.ts 제외) 초과 시 분리를 제안할 것.
+        import 순서는 eslint-plugin-import-x 규칙을 따른다.
+
+  abort_on_close: true
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  learnings:
+    scope: "auto"
