@@ -1,0 +1,49 @@
+.wrapper {
+  // 열이 많은 표는 좁은 화면에서 가로로 넘친다. 페이지 전체가 밀리지 않도록
+  // 표 안에서만 스크롤하게 둔다.
+  overflow-x: auto;
+  border: 1px solid var(--admin-border);
+  border-radius: 0.75rem;
+  background-color: var(--admin-surface);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+// 스크린리더에는 읽히되 화면에는 보이지 않게 한다.
+.caption {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.table th {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--admin-border);
+  background-color: var(--admin-hover);
+  color: var(--admin-text-muted);
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--admin-border);
+  color: var(--admin-text);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table tbody tr:hover {
+  background-color: var(--admin-hover);
+}

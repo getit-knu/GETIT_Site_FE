@@ -1,3 +1,5 @@
+import type { QuestionListParams } from "../types/qna";
+
 /**
  * 쿼리 키 팩토리.
  *
@@ -42,14 +44,8 @@ export const queryKeys = {
   questions: {
     all: ["questions"] as const,
     lists: () => [...queryKeys.questions.all, "list"] as const,
-    list: (filters: QuestionListFilters) => [...queryKeys.questions.lists(), filters] as const,
+    list: (params: QuestionListParams) => [...queryKeys.questions.lists(), params] as const,
     details: () => [...queryKeys.questions.all, "detail"] as const,
     detail: (id: number) => [...queryKeys.questions.details(), id] as const,
   },
 } as const;
-
-/** 목록 필터. 서버 스키마가 생기면 `generated.ts` 에서 가져온다. */
-export interface QuestionListFilters {
-  status?: "PENDING" | "ANSWERED";
-  page?: number;
-}

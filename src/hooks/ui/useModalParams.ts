@@ -1,26 +1,7 @@
 import { useCallback } from "react";
 import { useSearchParams } from "react-router";
 
-/** 서버가 주는 id 는 1 부터 시작하는 정수다. 그 형태의 문자열만 받아들인다. */
-const POSITIVE_INTEGER = /^\d+$/;
-
-/**
- * URL 의 `id` 를 숫자로 바꾼다. 형태가 어긋나면 `null`.
- *
- * `Number()` 로 바로 바꾸면 안 된다. 빈 문자열과 공백을 **0 으로** 만들고
- * (`Number("") === 0`), 지수·16진수 표기(`1e3` → 1000, `0x10` → 16)까지 받아들인다.
- * `Number.isInteger` 도 그 값들은 통과시킨다. 그러면 `?id=` 같은 주소가
- * 없는 항목을 열거나, `?id=0x10` 이 엉뚱한 항목을 연다.
- */
-function parseId(raw: string | null): number | null {
-  if (raw === null || !POSITIVE_INTEGER.test(raw)) return null;
-
-  const parsed = Number(raw);
-  // 자릿수가 아주 크면 정수 정밀도를 벗어나 다른 값이 된다.
-  if (parsed === 0 || !Number.isSafeInteger(parsed)) return null;
-
-  return parsed;
-}
+import { parseIntParam } from "../../libs/urlParams";
 
 /**
  * 모달 상태를 URL 에 둔다. `?modal={name}&id={id}`
@@ -36,11 +17,35 @@ function parseId(raw: string | null): number | null {
  * {modal === "answer" && <QuestionAnswerModal id={id} onClose={closeModal} />}
  * ```
  */
+/**
+ * ⚠️ **`useTableParams` 의 setter 와 한 이벤트 핸들러에서 같이 부르면 안 된다.**
+ *
+ * ```ts
+ * openModal("answer", 7);
+ * setPage(2);            // ← 앞의 openModal 이 사라지고 ?page=2 만 남는다
+ * ```
+ *
+ * react-router 의 `setSearchParams` 는 함수 형태로 불러도 인자로 *렌더 시점*의 쿼리를
+ * 넘긴다(`nextInit(new URLSearchParams(searchParams))`). 한 핸들러 안의 두 호출이
+ * 같은 값에서 출발하므로 뒤엣것이 앞엣것을 덮는다.
+ *
+ * 둘을 함께 바꿔야 하면 `useSearchParams` 로 한 번에 처리한다.
+ *
+ * ```ts
+ * setSearchParams((prev) => {
+ *   const next = new URLSearchParams(prev);
+ *   next.set("modal", "answer");
+ *   next.set("page", "2");
+ *   return next;
+ * });
+ * ```
+ */
 export function useModalParams() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const modal = searchParams.get("modal");
-  const id = parseId(searchParams.get("id"));
+  // 서버 id 는 1 부터다. 0 과 음수는 없는 것으로 본다.
+  const id = parseIntParam(searchParams.get("id"), 1);
 
   const openModal = useCallback(
     (name: string, targetId?: number) => {

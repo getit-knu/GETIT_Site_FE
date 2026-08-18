@@ -1,0 +1,33 @@
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem 0;
+
+  button {
+    padding: 0.375rem 0.875rem;
+    border: 1px solid var(--admin-border);
+    border-radius: 0.5rem;
+    background-color: var(--admin-surface);
+    color: var(--admin-text);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.875rem;
+
+    &:hover:not(:disabled) {
+      background-color: var(--admin-hover);
+    }
+
+    &:disabled {
+      color: var(--admin-text-disabled);
+      cursor: not-allowed;
+    }
+  }
+}
+
+.status {
+  color: var(--admin-text-muted);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
