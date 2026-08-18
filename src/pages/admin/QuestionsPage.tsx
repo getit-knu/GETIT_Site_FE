@@ -89,8 +89,24 @@ export default function QuestionsPage() {
 
       {isError && <ErrorState message="질문 목록을 불러오지 못했습니다." onRetry={() => void refetch()} />}
 
-      {data && data.content.length === 0 && (
+      {/*
+        비어 있는 이유가 두 가지다. 조건에 맞는 질문이 아예 없는 경우와,
+        결과는 있는데 범위를 벗어난 페이지를 보고 있는 경우(`?page=99`)다.
+        둘을 같은 문구로 알리면 "질문이 없다"고 잘못 읽힌다.
+      */}
+      {data && data.content.length === 0 && data.totalElements === 0 && (
         <EmptyState message={status ? "해당 상태의 질문이 없습니다." : "등록된 질문이 없습니다."} />
+      )}
+
+      {data && data.content.length === 0 && data.totalElements > 0 && (
+        <EmptyState
+          message={`이 페이지에는 질문이 없습니다. 전체 ${data.totalElements}건은 ${data.totalPages}페이지까지 있습니다.`}
+          action={
+            <button type="button" className={styles.backToFirst} onClick={() => setPage(0)}>
+              첫 페이지로
+            </button>
+          }
+        />
       )}
 
       {data && data.content.length > 0 && (

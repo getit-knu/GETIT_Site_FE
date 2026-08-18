@@ -93,9 +93,14 @@ interface QuestionAnswerModalProps {
 export function QuestionAnswerModal({ questionId, onClose }: QuestionAnswerModalProps) {
   const { data: question, isPending, isError, refetch } = useQuestion(questionId);
 
+  // 상세가 오기 전에는 답변이 있는지 알 수 없다. 그때 `답변 작성` 으로 단정하면
+  // 이미 답변한 질문을 열었을 때 제목이 `작성` → `수정` 으로 바뀌어 깜빡인다.
+  // 모르는 동안에는 양쪽 다 맞는 말만 한다.
+  const title = question === undefined ? "답변" : question.answer ? "답변 수정" : "답변 작성";
+
   return (
     <Modal isOpen onClose={onClose}>
-      <ModalHeader title={question?.answer ? "답변 수정" : "답변 작성"} onClose={onClose} />
+      <ModalHeader title={title} onClose={onClose} />
 
       {isPending && (
         <ModalBody>

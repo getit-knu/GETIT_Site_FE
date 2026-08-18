@@ -106,6 +106,30 @@ describe("QuestionsPage", () => {
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
   });
 
+  it("범위를 벗어난 페이지는 '질문이 없다'고 말하지 않는다", async () => {
+    // 결과는 34건 있는데 99페이지를 보고 있는 상황(?page=99).
+    // 이 페이지가 비었을 뿐이므로 등록된 질문이 없다고 알리면 잘못 읽힌다.
+    vi.mocked(getQuestions).mockResolvedValue(
+      page([], { page: 99, totalElements: 34, totalPages: 4, first: false, last: true }),
+    );
+
+    renderPage("/admin/questions?page=99");
+
+    expect(await screen.findByText(/이 페이지에는 질문이 없습니다/)).toBeInTheDocument();
+    expect(screen.queryByText("등록된 질문이 없습니다.")).not.toBeInTheDocument();
+  });
+
+  it("범위를 벗어났으면 첫 페이지로 돌아갈 방법을 준다", async () => {
+    vi.mocked(getQuestions).mockResolvedValue(
+      page([], { page: 99, totalElements: 34, totalPages: 4, first: false, last: true }),
+    );
+    const router = renderPage("/admin/questions?page=99");
+
+    await userEvent.click(await screen.findByRole("button", { name: "첫 페이지로" }));
+
+    expect(router.state.location.search).not.toContain("page=");
+  });
+
   it("조회에 실패하면 오류와 재시도를 보여준다", async () => {
     vi.mocked(getQuestions).mockRejectedValue({ code: "UNKNOWN_ERROR", message: "실패" });
 
@@ -167,6 +191,17 @@ describe("QuestionsPage", () => {
     renderPage("/admin/questions?modal=answer&id=7001");
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("상세를 불러오는 동안에는 답변 작성/수정을 단정하지 않는다", async () => {
+    // 이미 답변한 질문을 열면 제목이 `답변 작성` → `답변 수정` 으로 바뀌어 깜빡인다.
+    vi.mocked(getQuestion).mockReturnValue(new Promise(() => {}));
+
+    renderPage("/admin/questions?modal=answer&id=7001");
+
+    const heading = await screen.findByRole("heading", { name: "답변" });
+    expect(heading).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "답변 작성" })).not.toBeInTheDocument();
   });
 
   it("이미 답변한 질문은 기존 답변을 채워 수정 모드로 연다", async () => {
