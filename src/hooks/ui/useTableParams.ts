@@ -16,6 +16,29 @@ import { parseIntParam } from "../../libs/urlParams";
  *   useTableParams("status", ["PENDING", "ANSWERED"] as const);
  * ```
  */
+/**
+ * ⚠️ **`useModalParams` 의 setter 와 한 이벤트 핸들러에서 같이 부르면 안 된다.**
+ *
+ * ```ts
+ * openModal("answer", 7);
+ * setPage(2);            // ← 앞의 openModal 이 사라지고 ?page=2 만 남는다
+ * ```
+ *
+ * react-router 의 `setSearchParams` 는 함수 형태로 불러도 인자로 *렌더 시점*의 쿼리를
+ * 넘긴다(`nextInit(new URLSearchParams(searchParams))`). 한 핸들러 안의 두 호출이
+ * 같은 값에서 출발하므로 뒤엣것이 앞엣것을 덮는다.
+ *
+ * 둘을 함께 바꿔야 하면 `useSearchParams` 로 한 번에 처리한다.
+ *
+ * ```ts
+ * setSearchParams((prev) => {
+ *   const next = new URLSearchParams(prev);
+ *   next.set("modal", "answer");
+ *   next.set("page", "2");
+ *   return next;
+ * });
+ * ```
+ */
 export function useTableParams<T extends string>(filterKey: string, allowed: readonly T[]) {
   const [searchParams, setSearchParams] = useSearchParams();
 
