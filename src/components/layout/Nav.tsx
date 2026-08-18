@@ -13,7 +13,7 @@ import styles from "./Nav.module.scss";
 export function Nav() {
   return (
     <header className={styles.nav}>
-      <div className={styles.inner}>
+      <nav className={styles.inner} aria-label="주요 메뉴">
         <NavLink to="/" className={styles.logo}>
           GETIT
         </NavLink>
@@ -27,7 +27,7 @@ export function Nav() {
           <span className={styles.link}>로그인</span>
           <span className={styles.cta}>지원하기</span>
         </div>
-      </div>
+      </nav>
     </header>
   );
 }
