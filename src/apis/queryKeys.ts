@@ -1,3 +1,4 @@
+import type { ApplicantListParams } from "../types/application";
 import type { LectureListParams } from "../types/lecture";
 import type { QuestionListParams } from "../types/qna";
 
@@ -32,6 +33,12 @@ import type { QuestionListParams } from "../types/qna";
  * 새 도메인을 추가할 때 아래 `questions` 를 복사해서 쓰면 된다.
  */
 export const queryKeys = {
+  applications: {
+    all: ["applications"] as const,
+    lists: () => [...queryKeys.applications.all, "list"] as const,
+    list: (params: ApplicantListParams) => [...queryKeys.applications.lists(), params] as const,
+  },
+
   /**
    * 대시보드는 카드 5개가 각자 조회한다. 한 곳이 실패해도 나머지는 보여야 하므로
    * 키를 카드 단위로 나눈다.
