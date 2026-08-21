@@ -1,4 +1,4 @@
-import axios, { type AxiosError, type AxiosInstance } from "axios";
+import axios, { type AxiosError, type AxiosInstance, type AxiosResponse } from "axios";
 
 import { clearAccessToken, getAccessToken } from "../libs/accessToken";
 
@@ -40,9 +40,22 @@ function isEnvelope(value: unknown): value is ApiEnvelope<unknown> {
   return typeof value === "object" && value !== null && "success" in value;
 }
 
+/**
+ * 파일 응답은 envelope 이 아니다.
+ *
+ * 엑셀 다운로드(명세서 7.6 · 9.5)는 본문이 곧 파일이라 아래 검사에 걸려
+ * `MALFORMED_RESPONSE` 로 막힌다. 요청한 쪽이 파일을 기대했으면 그대로 통과시킨다.
+ */
+function isFileResponse(response: AxiosResponse): boolean {
+  const type = response.config.responseType;
+  return type === "blob" || type === "arraybuffer";
+}
+
 // 컴포넌트는 envelope을 몰라야 한다: 여기서 한 번 벗겨서 data만 내려준다.
 client.interceptors.response.use(
   (response) => {
+    if (isFileResponse(response)) return response;
+
     // 2xx 라고 전부 envelope 은 아니다. baseURL 이 비어 있으면 요청이 개발 서버로 가고,
     // 개발 서버는 SPA 폴백으로 index.html 을 200 으로 준다.
     // 검사 없이 벗기면 data 가 조용히 undefined 가 되고, 그 결과는
