@@ -1,0 +1,24 @@
+.track {
+  overflow: hidden;
+  width: 100%;
+  height: 0.5rem;
+  border-radius: 999px;
+  background-color: var(--admin-hover);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+.good {
+  background-color: #10b981;
+}
+.warn {
+  background-color: #f59e0b;
+}
+.bad {
+  background-color: #ef4444;
+}
