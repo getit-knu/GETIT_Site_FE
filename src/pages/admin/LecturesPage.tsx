@@ -1,9 +1,12 @@
 import { useEffect } from "react";
 
 import { LectureCard } from "../../components/lecture/LectureCard";
+import { LectureFormModal } from "../../components/lecture/LectureFormModal";
+import { Button } from "../../components/ui/Button/Button";
 import { EmptyState, ErrorState } from "../../components/ui/states/States";
 import { lectureErrorMessage } from "../../errors/lecture/errorMessages";
 import { useDeleteLecture, useLectureBoard } from "../../hooks/lecture/useLectures";
+import { useModalParams } from "../../hooks/ui/useModalParams";
 import { useNumericParams } from "../../hooks/ui/useNumericParams";
 import type { Lecture } from "../../types/lecture";
 
@@ -22,6 +25,7 @@ export default function LecturesPage() {
 
   const { data, isPending, isError, error, refetch } = useLectureBoard({ trackId, subCategoryId });
   const removeLecture = useDeleteLecture();
+  const { modal, id: modalId, openModal, closeModal } = useModalParams();
 
   // 응답에 실린 트랙 목록으로만 필터가 유효한지 알 수 있다. 조회한 뒤에 걸러낸다.
   // `?trackId=999` 처럼 없는 값이 남아 있으면 어떤 탭도 선택되지 않은 채
@@ -59,7 +63,7 @@ export default function LecturesPage() {
     removeLecture.mutate(lecture.id);
   }
 
-  // TODO: 강의 추가·수정 모달은 별도 이슈. 제출 현황·피드백 모달도 마찬가지다.
+  // TODO: 제출 현황·피드백 모달은 #73 에서 붙인다.
   const notImplemented = (name: string) => () => window.alert(`${name} 화면은 준비 중입니다.`);
 
   if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
@@ -72,6 +76,10 @@ export default function LecturesPage() {
 
   return (
     <div className={styles.page}>
+      <div className={styles.toolbar}>
+        <Button onClick={() => openModal("lecture")}>+ 강의 추가</Button>
+      </div>
+
       <div className={styles.tabs} role="tablist" aria-label="트랙">
         <button
           type="button"
@@ -132,11 +140,20 @@ export default function LecturesPage() {
               lecture={lecture}
               onFeedback={notImplemented("과제 피드백")}
               onSubmissions={notImplemented("제출 현황")}
-              onEdit={notImplemented("강의 수정")}
+              onEdit={(id) => openModal("lecture", id)}
               onDelete={handleDelete}
             />
           ))}
         </div>
+      )}
+
+      {modal === "lecture" && (
+        <LectureFormModal
+          // id 가 없으면 추가 모드다. 추가와 수정이 같은 폼을 쓴다.
+          lectureId={modalId}
+          tracks={data.tracks}
+          onClose={closeModal}
+        />
       )}
     </div>
   );

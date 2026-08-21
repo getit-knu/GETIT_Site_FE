@@ -69,3 +69,8 @@
   color: var(--admin-text-muted);
   text-align: center;
 }
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
