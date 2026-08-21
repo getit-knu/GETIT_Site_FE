@@ -136,4 +136,46 @@ describe("401 무음 갱신", () => {
     expect(post).not.toHaveBeenCalled();
     expect(getAccessToken()).toBe("expired-token");
   });
+
+  it("만료된 토큰으로 파일을 받아도 갱신 후 파일로 다시 받는다", async () => {
+    // 재시도할 때 responseType 을 잃으면 파일이 envelope 검사에 걸려 막힌다.
+    vi.spyOn(client, "post").mockResolvedValue({ data: { accessToken: "new-token" } });
+    const request = vi.spyOn(client, "request").mockResolvedValue({ data: new Blob(["a,b"]) });
+
+    const error = unauthorized("/api/admin/users/export");
+    (error.config as InternalAxiosRequestConfig).responseType = "blob";
+
+    await run(error);
+
+    expect(request.mock.calls[0][0]).toMatchObject({ responseType: "blob" });
+  });
+});
+
+describe("파일 응답의 실패", () => {
+  it("Blob 으로 감싸여 온 error 코드를 꺼낸다", async () => {
+    // responseType: blob 이면 실패 응답까지 Blob 이다. 풀지 않으면 모든 다운로드 실패가
+    // UNKNOWN_ERROR 가 되어 화면이 이유를 말하지 못한다.
+    const error = {
+      message: "Request failed",
+      config: { url: "/api/admin/users/export", responseType: "blob", headers: {} } as InternalAxiosRequestConfig,
+      response: {
+        status: 403,
+        data: new Blob([
+          JSON.stringify({ success: false, data: null, error: { code: "FORBIDDEN", message: "권한 없음" } }),
+        ]),
+      },
+    } as AxiosError;
+
+    await expect(run(error)).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("진짜 파일이 실려 오면 UNKNOWN_ERROR 로 둔다", async () => {
+    const error = {
+      message: "Request failed",
+      config: { url: "/api/admin/users/export", responseType: "blob", headers: {} } as InternalAxiosRequestConfig,
+      response: { status: 500, data: new Blob(["PK\x03\x04binary"]) },
+    } as AxiosError;
+
+    await expect(run(error)).rejects.toMatchObject({ code: "UNKNOWN_ERROR" });
+  });
 });

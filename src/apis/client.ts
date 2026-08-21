@@ -64,6 +64,27 @@ function refreshOnce(): Promise<void> {
   return refreshing;
 }
 
+/**
+ * 실패 응답의 error 를 꺼낸다.
+ *
+ * **`responseType: "blob"` 으로 요청하면 실패 응답까지 Blob 으로 감싸여 온다.**
+ * 그대로 두면 `data.error` 를 읽지 못해 모든 다운로드 실패가 UNKNOWN_ERROR 가 된다.
+ * 화면은 "권한이 없습니다" 대신 "실패했습니다" 만 보게 된다.
+ */
+async function extractError(data: unknown): Promise<ApiErrorPayload | undefined> {
+  if (data instanceof Blob) {
+    try {
+      const parsed: unknown = JSON.parse(await data.text());
+      if (isEnvelope(parsed)) return parsed.error ?? undefined;
+    } catch {
+      // 진짜 파일이거나 JSON 이 아니다. 알 수 있는 게 없다.
+    }
+    return undefined;
+  }
+
+  return isEnvelope(data) ? (data.error ?? undefined) : undefined;
+}
+
 function isEnvelope(value: unknown): value is ApiEnvelope<unknown> {
   return typeof value === "object" && value !== null && "success" in value;
 }
@@ -100,7 +121,7 @@ client.interceptors.response.use(
     return response;
   },
   async (error: AxiosError<ApiEnvelope<unknown>>) => {
-    const payload = error.response?.data?.error;
+    const payload = await extractError(error.response?.data);
     const config = error.config as RetriableConfig | undefined;
 
     if (error.response?.status === 401) {
