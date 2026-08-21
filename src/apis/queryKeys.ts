@@ -1,6 +1,7 @@
 import type { ApplicantListParams } from "../types/application";
 import type { LectureListParams } from "../types/lecture";
 import type { QuestionListParams } from "../types/qna";
+import type { UserListParams } from "../types/user";
 
 /**
  * 쿼리 키 팩토리.
@@ -56,6 +57,12 @@ export const queryKeys = {
   lectures: {
     all: ["lectures"] as const,
     board: (params: LectureListParams) => [...queryKeys.lectures.all, "board", params] as const,
+  },
+
+  users: {
+    all: ["users"] as const,
+    lists: () => [...queryKeys.users.all, "list"] as const,
+    list: (params: UserListParams) => [...queryKeys.users.lists(), params] as const,
   },
 
   auth: {
