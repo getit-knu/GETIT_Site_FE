@@ -21,7 +21,11 @@ interface ProgressBarProps {
 
 export function ProgressBar({ rate, label }: ProgressBarProps) {
   // 서버 값이 범위를 벗어나도 막대가 넘치지 않게 한다.
-  const clamped = Math.min(100, Math.max(0, rate));
+  //
+  // `Math.min` · `Math.max` 는 NaN 을 그대로 통과시킨다. 그러면 `width: NaN%` 와
+  // `aria-valuenow="NaN"` 이 그려져 막대가 사라지고 낭독기도 값을 읽지 못한다.
+  // 나눗셈 결과나 서버 값이 숫자가 아닐 수 있으므로 먼저 거른다.
+  const clamped = Number.isFinite(rate) ? Math.min(100, Math.max(0, rate)) : 0;
 
   return (
     <div

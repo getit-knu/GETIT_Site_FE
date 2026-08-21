@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -173,6 +173,55 @@ describe("LecturesPage", () => {
 
   it("조회에 실패하면 오류와 재시도를 보여준다", async () => {
     vi.mocked(api.getLectures).mockRejectedValue({ code: "UNKNOWN_ERROR", message: "실패" });
+    renderPage();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("강의 목록을 불러오지 못했습니다.");
+  });
+
+  it("응답에 없는 trackId 는 URL 에서 지운다", async () => {
+    // 남겨 두면 어떤 탭도 선택되지 않은 채 결과만 비어 이유를 알 수 없다.
+    const router = renderPage("/admin/lectures?trackId=999");
+
+    await waitFor(() => expect(router.state.location.search).not.toContain("trackId"));
+    expect(screen.getByRole("tab", { name: "전체" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("트랙에 속하지 않는 subCategoryId 는 지운다", async () => {
+    // 2번 소분류는 SW(1) 것이다. 창업 빌드업(2)에는 없다.
+    const router = renderPage("/admin/lectures?trackId=2&subCategoryId=2");
+
+    await waitFor(() => expect(router.state.location.search).not.toContain("subCategoryId"));
+    expect(router.state.location.search).toContain("trackId=2");
+  });
+
+  it("트랙 없이 소분류만 있으면 조회에 싣지 않는다", async () => {
+    // 소분류 탭이 그려지지 않아 사용자가 걸린 필터를 풀 수 없다.
+    renderPage("/admin/lectures?subCategoryId=2");
+
+    await screen.findByText("HTML/CSS 기초");
+    expect(api.getLectures).toHaveBeenCalledWith({ trackId: undefined, subCategoryId: undefined });
+  });
+
+  it("유효한 필터는 그대로 둔다", async () => {
+    const router = renderPage("/admin/lectures?trackId=1&subCategoryId=2");
+
+    await screen.findByText("HTML/CSS 기초");
+    expect(router.state.location.search).toContain("trackId=1");
+    expect(router.state.location.search).toContain("subCategoryId=2");
+  });
+
+  it("오류 문구를 BE 코드에서 가져온다", async () => {
+    vi.mocked(api.getLectures).mockRejectedValue({
+      code: "FORBIDDEN",
+      message: "서버 원문",
+    });
+    renderPage();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("강의를 볼 권한이 없습니다.");
+  });
+
+  it("모르는 코드에는 공통 문구를 쓴다", async () => {
+    vi.mocked(api.getLectures).mockRejectedValue({ code: "SOMETHING_NEW", message: "?" });
     renderPage();
 
     expect(await screen.findByRole("alert")).toHaveTextContent("강의 목록을 불러오지 못했습니다.");

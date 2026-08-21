@@ -1,5 +1,8 @@
+import { useEffect } from "react";
+
 import { LectureCard } from "../../components/lecture/LectureCard";
 import { EmptyState, ErrorState } from "../../components/ui/states/States";
+import { lectureErrorMessage } from "../../errors/lecture/errorMessages";
 import { useDeleteLecture, useLectureBoard } from "../../hooks/lecture/useLectures";
 import { useNumericParams } from "../../hooks/ui/useNumericParams";
 import type { Lecture } from "../../types/lecture";
@@ -11,10 +14,34 @@ const PARAM_KEYS = ["trackId", "subCategoryId"] as const;
 /** 와이어프레임 p12. */
 export default function LecturesPage() {
   const { values, setValues } = useNumericParams(PARAM_KEYS);
-  const { trackId, subCategoryId } = values;
+  const { trackId } = values;
 
-  const { data, isPending, isError, refetch } = useLectureBoard({ trackId, subCategoryId });
+  // 소분류는 트랙에 딸려 있다. 트랙 없이 소분류만 있는 주소(`?subCategoryId=2`)는
+  // 조회에 실려도 화면에 탭이 없어 사용자가 걸린 필터를 보거나 풀 수 없다.
+  const subCategoryId = trackId === undefined ? undefined : values.subCategoryId;
+
+  const { data, isPending, isError, error, refetch } = useLectureBoard({ trackId, subCategoryId });
   const removeLecture = useDeleteLecture();
+
+  // 응답에 실린 트랙 목록으로만 필터가 유효한지 알 수 있다. 조회한 뒤에 걸러낸다.
+  // `?trackId=999` 처럼 없는 값이 남아 있으면 어떤 탭도 선택되지 않은 채
+  // 결과만 비어 사용자가 이유를 알 수 없다.
+  const tracks = data?.tracks;
+  useEffect(() => {
+    if (!tracks) return;
+
+    const track = tracks.find((t) => t.id === trackId);
+    const trackUnknown = trackId !== undefined && track === undefined;
+    const subUnknown =
+      values.subCategoryId !== undefined && !track?.subCategories.some((sub) => sub.id === values.subCategoryId);
+
+    if (trackUnknown || subUnknown) {
+      setValues({
+        trackId: trackUnknown ? undefined : trackId,
+        subCategoryId: undefined,
+      });
+    }
+  }, [tracks, trackId, values.subCategoryId, setValues]);
 
   function selectTrack(nextTrackId: number | undefined) {
     // 소분류는 트랙에 딸려 있다. 트랙을 바꾸면 남아 있던 소분류가 다른 트랙 것이 돼
@@ -36,7 +63,8 @@ export default function LecturesPage() {
   const notImplemented = (name: string) => () => window.alert(`${name} 화면은 준비 중입니다.`);
 
   if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
-  if (isError) return <ErrorState message="강의 목록을 불러오지 못했습니다." onRetry={() => void refetch()} />;
+  // 문구는 BE ErrorCode 에서 가져온다. FE 가 코드를 새로 짓지 않는다.
+  if (isError) return <ErrorState message={lectureErrorMessage(error)} onRetry={() => void refetch()} />;
 
   const activeTrack = data.tracks.find((t) => t.id === trackId);
   // 창업 빌드업·세미나처럼 소분류가 비어 있는 트랙이 있다. 그때는 탭 줄을 그리지 않는다.

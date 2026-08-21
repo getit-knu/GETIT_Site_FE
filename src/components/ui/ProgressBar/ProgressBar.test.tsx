@@ -39,4 +39,16 @@ describe("ProgressBar", () => {
     expect(container.querySelector("span")).toHaveStyle({ width: `${expected}%` });
     expect(bar()).toHaveAttribute("aria-valuenow", String(expected));
   });
+
+  it.each([
+    ["NaN", NaN],
+    ["Infinity", Infinity],
+    ["-Infinity", -Infinity],
+  ])("숫자가 아닌 %s 은 0 으로 본다", (_label, rate) => {
+    // Math.min/max 는 NaN 을 통과시킨다. 그대로 두면 width: NaN% 가 그려진다.
+    const { container } = render(<ProgressBar rate={rate} label="제출률" />);
+
+    expect(bar()).toHaveAttribute("aria-valuenow", Number.isFinite(rate) ? "100" : "0");
+    expect(container.querySelector("span")?.getAttribute("style")).not.toContain("NaN");
+  });
 });
