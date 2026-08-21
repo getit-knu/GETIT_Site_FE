@@ -31,6 +31,19 @@ import type { QuestionListParams } from "../types/qna";
  * 새 도메인을 추가할 때 아래 `questions` 를 복사해서 쓰면 된다.
  */
 export const queryKeys = {
+  /**
+   * 대시보드는 카드 5개가 각자 조회한다. 한 곳이 실패해도 나머지는 보여야 하므로
+   * 키를 카드 단위로 나눈다.
+   */
+  dashboard: {
+    all: ["dashboard"] as const,
+    summary: () => [...queryKeys.dashboard.all, "summary"] as const,
+    recentQuestions: () => [...queryKeys.dashboard.all, "recent-questions"] as const,
+    submissionStatus: () => [...queryKeys.dashboard.all, "submission-status"] as const,
+    upcomingEvents: () => [...queryKeys.dashboard.all, "upcoming-events"] as const,
+    ongoingLectures: () => [...queryKeys.dashboard.all, "ongoing-lectures"] as const,
+  },
+
   auth: {
     all: ["auth"] as const,
     /** 로그인한 사용자 본인. 권한 판단의 유일한 출처다. */
