@@ -7,6 +7,7 @@
 .stats {
   display: grid;
   gap: 1rem;
+
   // 좁아지면 4 → 2 → 1 열로 자연히 접힌다. 브레이크포인트를 따로 두지 않는다.
   grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
   padding-top: 0.5rem;
@@ -37,7 +38,11 @@
   list-style: none;
 }
 
-.list > li {
+// 제출 현황만 ListItem 을 쓰지 않는다. 진행 막대가 들어가 구조가 다르다.
+.week {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   padding: 0.75rem 0;
   border-bottom: 1px solid var(--admin-border);
 
@@ -46,8 +51,14 @@
   }
 }
 
-.itemTitle {
-  display: block;
+.weekHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.weekTitle {
   overflow: hidden;
   color: var(--admin-text);
   font-size: 0.875rem;
@@ -56,54 +67,20 @@
   white-space: nowrap;
 }
 
-.meta {
-  display: block;
-  margin-top: 0.25rem;
+.weekCount {
+  flex-shrink: 0;
   color: var(--admin-text-muted);
   font-size: 0.75rem;
-}
-
-.question a {
-  display: block;
-  color: inherit;
-  text-decoration: none;
-
-  &:hover .itemTitle {
-    color: var(--admin-accent);
-  }
-}
-
-.week {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.weekHead {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
-
-  .meta {
-    margin-top: 0;
-    flex-shrink: 0;
-    font-variant-numeric: tabular-nums;
-  }
-}
-
-.event {
-  position: relative;
-  padding-right: 4rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .dday {
   position: absolute;
   top: 0.75rem;
-  right: 0;
+  right: 0.75rem;
   padding: 0.125rem 0.5rem;
   border-radius: 999px;
-  background-color: var(--admin-accent-soft);
+  background-color: var(--admin-surface);
   color: var(--admin-accent);
   font-size: 0.6875rem;
   font-weight: 600;

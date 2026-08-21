@@ -53,15 +53,25 @@ export async function fetchSubmissionStatus(): Promise<SubmissionStatus> {
   };
 }
 
+/**
+ * 오늘로부터 `dDay` 일 뒤 날짜. **`startDate` 와 `dDay` 를 따로 적으면 서로 어긋난다.**
+ * 서버는 둘을 같은 기준일에서 계산하므로 목도 같게 맞춘다.
+ */
+function upcoming(dDay: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + dDay);
+  return date.toISOString().slice(0, 10);
+}
+
 export async function fetchUpcomingEvents(): Promise<UpcomingEvent[]> {
   await delay();
   return [
-    { id: 11, title: "GETIT Chat", place: "IT5호관 312호", startDate: "2026-08-02", dDay: 7, type: "EVENT" },
+    { id: 11, title: "GETIT Chat", place: "IT5호관 312호", startDate: upcoming(7), dDay: 7, type: "EVENT" },
     {
       id: 12,
       title: "GETIT 해커톤 대회",
       place: "IT5호관 312호",
-      startDate: "2026-08-09",
+      startDate: upcoming(14),
       dDay: 14,
       type: "COMPETITION",
     },

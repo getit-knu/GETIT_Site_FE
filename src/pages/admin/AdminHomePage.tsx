@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 
 import { DashboardCard } from "../../components/dashboard/DashboardCard";
+import { ListItem } from "../../components/ui/ListItem/ListItem";
 import { ProgressBar } from "../../components/ui/ProgressBar/ProgressBar";
 import { StatCard, type StatTone } from "../../components/ui/StatCard/StatCard";
 import {
@@ -81,15 +82,18 @@ export default function AdminHomePage() {
           {(data) => (
             <ul className={styles.list}>
               {data.map((q) => (
-                <li key={q.id} className={styles.question}>
-                  <Link to={`/admin/questions?modal=answer&id=${q.id}`}>
-                    <span className={styles.itemTitle}>{q.content}</span>
-                    <span className={styles.meta}>
-                      {q.authorName}
-                      {q.lectureTitle && ` · ${q.lectureTitle}`} · {q.elapsedLabel}
-                    </span>
-                  </Link>
-                </li>
+                <ListItem
+                  key={q.id}
+                  tone="blue"
+                  title={q.content}
+                  meta={`${q.authorName}${q.lectureTitle ? ` · ${q.lectureTitle}` : ""} · ${q.elapsedLabel}`}
+                  href={`/admin/questions?modal=answer&id=${q.id}`}
+                  linkAs={({ to, className, children }) => (
+                    <Link to={to} className={className}>
+                      {children}
+                    </Link>
+                  )}
+                />
               ))}
             </ul>
           )}
@@ -104,12 +108,13 @@ export default function AdminHomePage() {
           {(data) => (
             <ul className={styles.list}>
               {data.weeks.map((w) => (
-                <li key={w.lectureId} className={styles.week}>
+                // 한 강의에 여러 주차가 실릴 수 있다. lectureId 만으로는 key 가 겹친다.
+                <li key={`${w.lectureId}-${w.week}`} className={styles.week}>
                   <div className={styles.weekHead}>
-                    <span className={styles.itemTitle}>
+                    <span className={styles.weekTitle}>
                       {w.week}주차 · {w.title}
                     </span>
-                    <span className={styles.meta}>
+                    <span className={styles.weekCount}>
                       {w.submittedCount}/{w.totalCount}
                     </span>
                   </div>
@@ -129,14 +134,14 @@ export default function AdminHomePage() {
           {(data) => (
             <ul className={styles.list}>
               {data.map((e) => (
-                <li key={e.id} className={styles.event}>
-                  <span className={styles.itemTitle}>{e.title}</span>
-                  <span className={styles.meta}>
-                    {e.place} · {e.startDate}
-                  </span>
-                  {/* dDay 는 서버가 계산한다. 0 이면 오늘이다. */}
-                  <span className={styles.dday}>{e.dDay === 0 ? "D-DAY" : `D-${e.dDay}`}</span>
-                </li>
+                <ListItem
+                  key={e.id}
+                  tone="yellow"
+                  title={e.title}
+                  meta={`${e.place} · ${e.startDate}`}
+                  // dDay 는 서버가 계산한다. 0 이면 오늘이다.
+                  trailing={<span className={styles.dday}>{e.dDay === 0 ? "D-DAY" : `D-${e.dDay}`}</span>}
+                />
               ))}
             </ul>
           )}
@@ -156,12 +161,12 @@ export default function AdminHomePage() {
           {(data) => (
             <ul className={styles.list}>
               {data.map((l) => (
-                <li key={l.id} className={styles.lecture}>
-                  <span className={styles.itemTitle}>{l.title}</span>
-                  <span className={styles.meta}>
-                    {l.subCategoryName} · 마감 {l.deadline} · 제출 {l.submittedCount}/{l.totalCount}
-                  </span>
-                </li>
+                <ListItem
+                  key={l.id}
+                  tone="gray"
+                  title={l.title}
+                  meta={`${l.subCategoryName} · 마감 ${l.deadline} · 제출 ${l.submittedCount}/${l.totalCount}`}
+                />
               ))}
             </ul>
           )}
