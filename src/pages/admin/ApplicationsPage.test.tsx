@@ -201,4 +201,79 @@ describe("ApplicationsPage", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("지원자 목록을 불러오지 못했습니다.");
   });
+
+  it("평가 여부가 URL 에 남는다", async () => {
+    // useState 로 들면 새로고침·링크 공유에서 조건이 사라진다.
+    const router = renderPage();
+    await screen.findByRole("table");
+
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "평가 여부" }), "todo");
+
+    expect(router.state.location.search).toContain("evaluated=todo");
+  });
+
+  it("URL 의 평가 여부를 읽어 조회에 쓴다", async () => {
+    renderPage("/admin/applications?evaluated=done");
+
+    await screen.findByRole("table");
+    expect(api.getApplicants).toHaveBeenCalledWith(expect.objectContaining({ evaluated: true }));
+  });
+
+  it("검색어가 URL 에 남는다", async () => {
+    const router = renderPage();
+    await screen.findByRole("table");
+
+    await userEvent.type(screen.getByRole("textbox", { name: "지원자 이름 검색" }), "김지원");
+
+    await waitFor(() => expect(router.state.location.search).toContain("keyword=%EA%B9%80%EC%A7%80%EC%9B%90"));
+  });
+
+  it("URL 의 검색어를 입력칸에 채워 시작한다", async () => {
+    renderPage("/admin/applications?keyword=김지원");
+
+    expect(await screen.findByRole("textbox", { name: "지원자 이름 검색" })).toHaveValue("김지원");
+    expect(api.getApplicants).toHaveBeenCalledWith(expect.objectContaining({ keyword: "김지원" }));
+  });
+
+  it("허용 목록에 없는 평가 여부는 조회 조건에 싣지 않는다", async () => {
+    renderPage("/admin/applications?evaluated=DROP");
+
+    await screen.findByRole("table");
+    expect(api.getApplicants).toHaveBeenCalledWith(expect.objectContaining({ evaluated: undefined }));
+  });
+
+  it("조건을 바꾸면 첫 페이지로 돌아간다", async () => {
+    const router = renderPage("/admin/applications?page=2");
+    await screen.findByRole("table");
+
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "평가 여부" }), "done");
+
+    expect(router.state.location.search).not.toContain("page=");
+  });
+
+  it("기본값은 주소에 남기지 않는다", async () => {
+    // 공유한 링크가 지저분해진다.
+    const router = renderPage("/admin/applications?evaluated=done");
+    await screen.findByRole("table");
+
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "평가 여부" }), "all");
+
+    expect(router.state.location.search).not.toContain("evaluated");
+  });
+
+  it("오류 문구를 BE 코드에서 가져온다", async () => {
+    vi.mocked(api.getApplicants).mockRejectedValue({ code: "FORBIDDEN", message: "서버 원문" });
+    renderPage();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("지원서를 볼 권한이 없습니다.");
+  });
+
+  it("다운로드 실패는 목록 조회와 다른 문구를 쓴다", async () => {
+    vi.mocked(api.exportApplicants).mockRejectedValue({ code: "SOMETHING_NEW", message: "?" });
+    renderPage();
+
+    await userEvent.click(await screen.findByRole("button", { name: "엑셀 다운로드" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("엑셀 다운로드에 실패했습니다.");
+  });
 });

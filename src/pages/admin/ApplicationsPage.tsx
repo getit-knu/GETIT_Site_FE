@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { exportApplicants } from "../../apis/application/applicationsApi";
 import { Badge } from "../../components/ui/Badge/Badge";
@@ -8,9 +8,14 @@ import { Input } from "../../components/ui/Input/Input";
 import { Pagination } from "../../components/ui/Pagination/Pagination";
 import { Select } from "../../components/ui/Select/Select";
 import { EmptyState, ErrorState, TableSkeleton } from "../../components/ui/states/States";
+import { applicationErrorMessage, applicationExportErrorMessage } from "../../errors/application/errorMessages";
 import { useApplicants, useUpdateStatus } from "../../hooks/application/useApplicants";
+import {
+  EVALUATED_CHOICES,
+  useApplicantFilters,
+  type EvaluatedChoice,
+} from "../../hooks/application/useApplicantFilters";
 import { useDebouncedValue } from "../../hooks/ui/useDebouncedValue";
-import { useTableParams } from "../../hooks/ui/useTableParams";
 import { formatDateTime } from "../../libs/formatDate";
 import { APPLICATION_STATUSES, type Applicant, type ApplicationStatus } from "../../types/application";
 
@@ -29,34 +34,31 @@ const STATUS_TABS: { value: ApplicationStatus | undefined; label: string }[] = [
   ...APPLICATION_STATUSES.map((s) => ({ value: s, label: STATUS_LABEL[s] })),
 ];
 
-/** 평가 여부는 3상태다. `undefined`(전체)를 값으로 표현할 수 없어 문자열로 다룬다. */
-const EVALUATED_OPTIONS = [
-  { value: "all", label: "평가 전체" },
-  { value: "done", label: "평가 완료" },
-  { value: "todo", label: "미평가" },
-] as const;
-
-type EvaluatedChoice = (typeof EVALUATED_OPTIONS)[number]["value"];
-
-const EVALUATED_VALUE: Record<EvaluatedChoice, boolean | undefined> = {
-  all: undefined,
-  done: true,
-  todo: false,
+const EVALUATED_LABEL: Record<EvaluatedChoice, string> = {
+  all: "평가 전체",
+  done: "평가 완료",
+  todo: "미평가",
 };
+
+const EVALUATED_OPTIONS = EVALUATED_CHOICES.map((value) => ({ value, label: EVALUATED_LABEL[value] }));
 
 /** 와이어프레임 p7. */
 export default function ApplicationsPage() {
-  const { page, filter: status, setPage, setFilter: setStatus } = useTableParams("status", APPLICATION_STATUSES);
-  const [evaluatedChoice, setEvaluatedChoice] = useState<EvaluatedChoice>("all");
-  const [keyword, setKeyword] = useState("");
+  const { status, evaluatedChoice, evaluated, keyword, page, update } = useApplicantFilters();
 
-  // 입력할 때마다 조회하면 한 단어를 치는 사이에 요청이 여러 번 나간다.
-  const settledKeyword = useDebouncedValue(keyword);
+  // 입력 중에는 URL 을 건드리지 않는다. 글자마다 주소가 바뀌면 기록이 지저분해진다.
+  const [draftKeyword, setDraftKeyword] = useState(keyword);
+  const settledKeyword = useDebouncedValue(draftKeyword);
 
-  const { data, isPending, isError, refetch } = useApplicants({
+  // 타이핑이 멈추면 그때 URL 에 옮긴다. 그래야 새로고침·링크 공유에도 검색어가 남는다.
+  useEffect(() => {
+    if (settledKeyword !== keyword) update({ keyword: settledKeyword });
+  }, [settledKeyword, keyword, update]);
+
+  const { data, isPending, isError, error, refetch } = useApplicants({
     status,
-    evaluated: EVALUATED_VALUE[evaluatedChoice],
-    keyword: settledKeyword || undefined,
+    evaluated,
+    keyword: keyword || undefined,
     page,
     size: PAGE_SIZE,
   });
@@ -68,8 +70,9 @@ export default function ApplicationsPage() {
     setExportError(null);
     try {
       await exportApplicants();
-    } catch (error) {
-      setExportError((error as { message?: string }).message ?? "다운로드에 실패했습니다.");
+    } catch (caught) {
+      // 문구는 BE ErrorCode 에서 가져온다. FE 가 코드를 새로 짓지 않는다.
+      setExportError(applicationExportErrorMessage(caught));
     }
   }
 
@@ -139,7 +142,7 @@ export default function ApplicationsPage() {
               role="tab"
               aria-selected={status === tab.value}
               className={status === tab.value ? styles.tabActive : styles.tab}
-              onClick={() => setStatus(tab.value)}
+              onClick={() => update({ status: tab.value })}
             >
               {tab.label}
             </button>
@@ -147,12 +150,12 @@ export default function ApplicationsPage() {
         </div>
 
         <div className={styles.filters}>
-          <Input value={keyword} onChange={setKeyword} placeholder="이름 검색" ariaLabel="지원자 이름 검색" />
+          <Input value={draftKeyword} onChange={setDraftKeyword} placeholder="이름 검색" ariaLabel="지원자 이름 검색" />
           <Select
             ariaLabel="평가 여부"
             value={evaluatedChoice}
             options={EVALUATED_OPTIONS}
-            onChange={setEvaluatedChoice}
+            onChange={(next) => update({ evaluated: next })}
           />
           <Button variant="secondary" onClick={() => void handleExport()}>
             엑셀 다운로드
@@ -164,11 +167,15 @@ export default function ApplicationsPage() {
 
       {isPending && <TableSkeleton columns={columns.length} rows={PAGE_SIZE} />}
 
-      {isError && <ErrorState message="지원자 목록을 불러오지 못했습니다." onRetry={() => void refetch()} />}
+      {isError && <ErrorState message={applicationErrorMessage(error)} onRetry={() => void refetch()} />}
 
       {data && data.content.length === 0 && data.totalElements === 0 && (
         <EmptyState
-          message={settledKeyword || status ? "조건에 맞는 지원자가 없습니다." : "접수된 지원서가 없습니다."}
+          message={
+            keyword || status || evaluated !== undefined
+              ? "조건에 맞는 지원자가 없습니다."
+              : "접수된 지원서가 없습니다."
+          }
         />
       )}
 
@@ -176,7 +183,7 @@ export default function ApplicationsPage() {
         <EmptyState
           message={`이 페이지에는 지원자가 없습니다. 전체 ${data.totalElements}명은 ${data.totalPages}페이지까지 있습니다.`}
           action={
-            <button type="button" className={styles.backToFirst} onClick={() => setPage(0)}>
+            <button type="button" className={styles.backToFirst} onClick={() => update({ page: 0 })}>
               첫 페이지로
             </button>
           }
@@ -186,7 +193,7 @@ export default function ApplicationsPage() {
       {data && data.content.length > 0 && (
         <>
           <DataTable columns={columns} rows={data.content} rowKey={(a) => a.id} caption="지원자 목록" />
-          <Pagination page={data.page} totalPages={data.totalPages} onChange={setPage} />
+          <Pagination page={data.page} totalPages={data.totalPages} onChange={(next) => update({ page: next })} />
         </>
       )}
     </div>
