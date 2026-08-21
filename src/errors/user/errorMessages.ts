@@ -25,3 +25,6 @@ export const userErrorMessage = (error: unknown) => messageFor(error, "사용자
 
 /** 다운로드는 실패 이유가 다르다. 목록 조회 문구를 쓰면 엉뚱하게 읽힌다. */
 export const userExportErrorMessage = (error: unknown) => messageFor(error, "엑셀 다운로드에 실패했습니다.");
+
+/** 조 관리도 같은 도메인이다. 실패했을 때 보이는 대상만 다르다. */
+export const groupErrorMessage = (error: unknown) => messageFor(error, "조 목록을 불러오지 못했습니다.");

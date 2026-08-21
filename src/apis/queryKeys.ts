@@ -65,6 +65,12 @@ export const queryKeys = {
     list: (params: UserListParams) => [...queryKeys.users.lists(), params] as const,
   },
 
+  /** 조 편성은 한 덩어리로 온다. 목록·상세를 나눌 이유가 없다. */
+  groups: {
+    all: ["groups"] as const,
+    board: () => [...queryKeys.groups.all, "board"] as const,
+  },
+
   auth: {
     all: ["auth"] as const,
     /** 로그인한 사용자 본인. 권한 판단의 유일한 출처다. */
