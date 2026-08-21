@@ -4,9 +4,11 @@ import { lectureErrorMessage, lectureSaveErrorMessage } from "../../errors/lectu
 import { useLectureDetail, useSaveLecture } from "../../hooks/lecture/useLectures";
 import type { LectureDetail, LectureFile, LecturePayload, Track } from "../../types/lecture";
 import { Button } from "../ui/Button/Button";
+import { Input } from "../ui/Input/Input";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "../ui/Modal/Modal";
 import { Select } from "../ui/Select/Select";
 import { ErrorState } from "../ui/states/States";
+import { TextArea } from "../ui/TextArea/TextArea";
 
 import styles from "./LectureFormModal.module.scss";
 
@@ -144,18 +146,18 @@ function LectureForm({ lectureId, tracks, initial, files, onClose }: FormProps) 
     <>
       <ModalBody>
         <div className={styles.grid}>
-          <label className={styles.field}>
-            <span>트랙 *</span>
+          <div className={styles.field}>
+            <span className={styles.label}>트랙 *</span>
             <Select
               ariaLabel="트랙"
               value={draft.trackId}
               options={tracks.map((t) => ({ value: t.id, label: t.name }))}
               onChange={(trackId: number) => set({ trackId, subCategoryId: 0 })}
             />
-          </label>
+          </div>
 
-          <label className={styles.field}>
-            <span>소분류</span>
+          <div className={styles.field}>
+            <span className={styles.label}>소분류</span>
             <Select
               ariaLabel="소분류"
               value={draft.subCategoryId}
@@ -165,47 +167,29 @@ function LectureForm({ lectureId, tracks, initial, files, onClose }: FormProps) 
               ]}
               onChange={(subCategoryId: number) => set({ subCategoryId })}
             />
-          </label>
+          </div>
 
-          <label className={styles.field}>
-            <span>주차 *</span>
-            <input type="number" min={1} value={draft.week} onChange={(e) => set({ week: e.target.value })} />
-          </label>
+          <Input label="주차 *" type="number" value={draft.week} onChange={(week) => set({ week })} />
 
-          <label className={styles.field}>
-            <span>재생 시간(분)</span>
-            <input
-              type="number"
-              min={1}
-              value={draft.durationMinutes}
-              onChange={(e) => set({ durationMinutes: e.target.value })}
-            />
-          </label>
+          <Input
+            label="재생 시간(분)"
+            type="number"
+            value={draft.durationMinutes}
+            onChange={(durationMinutes) => set({ durationMinutes })}
+          />
         </div>
 
-        <label className={styles.field}>
-          <span>제목 *</span>
-          <input value={draft.title} onChange={(e) => set({ title: e.target.value })} />
-        </label>
+        <Input label="제목 *" value={draft.title} onChange={(title) => set({ title })} />
 
-        <label className={styles.field}>
-          <span>설명 (Markdown)</span>
-          <textarea rows={4} value={draft.description} onChange={(e) => set({ description: e.target.value })} />
-        </label>
+        <TextArea label="설명 (Markdown)" value={draft.description} onChange={(description) => set({ description })} />
 
         <div className={styles.grid}>
-          <label className={styles.field}>
-            <span>유튜브 URL</span>
-            <input value={draft.youtubeUrl} onChange={(e) => set({ youtubeUrl: e.target.value })} />
-          </label>
-          <label className={styles.field}>
-            <span>강의 자료 URL</span>
-            <input value={draft.materialUrl} onChange={(e) => set({ materialUrl: e.target.value })} />
-          </label>
+          <Input label="유튜브 URL" value={draft.youtubeUrl} onChange={(youtubeUrl) => set({ youtubeUrl })} />
+          <Input label="강의 자료 URL" value={draft.materialUrl} onChange={(materialUrl) => set({ materialUrl })} />
         </div>
 
         <div className={styles.field}>
-          <span>첨부 파일</span>
+          <span className={styles.label}>첨부 파일</span>
           {files.length === 0 ? (
             <p className={styles.hint}>첨부된 파일이 없습니다.</p>
           ) : (
@@ -253,26 +237,23 @@ function LectureForm({ lectureId, tracks, initial, files, onClose }: FormProps) 
 
         {draft.hasAssignment && (
           <div className={styles.assignment}>
-            <label className={styles.field}>
-              <span>과제 제목 *</span>
-              <input value={draft.assignmentTitle} onChange={(e) => set({ assignmentTitle: e.target.value })} />
-            </label>
-            <label className={styles.field}>
-              <span>과제 설명 (Markdown)</span>
-              <textarea
-                rows={3}
-                value={draft.assignmentDescription}
-                onChange={(e) => set({ assignmentDescription: e.target.value })}
-              />
-            </label>
-            <label className={styles.field}>
-              <span>마감 기한 *</span>
-              <input
-                type="datetime-local"
-                value={draft.assignmentDeadline}
-                onChange={(e) => set({ assignmentDeadline: e.target.value })}
-              />
-            </label>
+            <Input
+              label="과제 제목 *"
+              value={draft.assignmentTitle}
+              onChange={(assignmentTitle) => set({ assignmentTitle })}
+            />
+            <TextArea
+              label="과제 설명 (Markdown)"
+              rows={3}
+              value={draft.assignmentDescription}
+              onChange={(assignmentDescription) => set({ assignmentDescription })}
+            />
+            <Input
+              label="마감 기한 *"
+              type="datetime-local"
+              value={draft.assignmentDeadline}
+              onChange={(assignmentDeadline) => set({ assignmentDeadline })}
+            />
           </div>
         )}
 
