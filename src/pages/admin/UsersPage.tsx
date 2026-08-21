@@ -6,6 +6,7 @@ import { DataTable, type Column } from "../../components/ui/DataTable/DataTable"
 import { Pagination } from "../../components/ui/Pagination/Pagination";
 import { Select } from "../../components/ui/Select/Select";
 import { EmptyState, ErrorState, TableSkeleton } from "../../components/ui/states/States";
+import { userErrorMessage, userExportErrorMessage } from "../../errors/user/errorMessages";
 import { useTableParams } from "../../hooks/ui/useTableParams";
 import { useDeleteUser, usePromoteApplicants, useUpdateUser, useUsers } from "../../hooks/user/useUsers";
 import { ROLES, type Role } from "../../types/auth";
@@ -34,21 +35,32 @@ function groupOptions(users: AdminUser[]) {
 /** 와이어프레임 p8. */
 export default function UsersPage() {
   const { page, filter: role, setPage, setFilter: setRole } = useTableParams("role", ROLES);
-  const { data, isPending, isError, refetch } = useUsers({ role, page, size: PAGE_SIZE });
+  const { data, isPending, isError, error, refetch } = useUsers({ role, page, size: PAGE_SIZE });
 
   const updateUser = useUpdateUser();
   const removeUser = useDeleteUser();
   const promote = usePromoteApplicants();
   const [exportError, setExportError] = useState<string | null>(null);
+  const [promoted, setPromoted] = useState<number | null>(null);
 
   async function handleExport() {
     setExportError(null);
     try {
       await exportUsers();
-    } catch (error) {
-      // 파일 응답이라 실패도 Blob 으로 온다. downloadFile 이 풀어 준 메시지를 쓴다.
-      setExportError((error as { message?: string }).message ?? "다운로드에 실패했습니다.");
+    } catch (caught) {
+      // 파일 응답이라 실패도 Blob 으로 온다. 문구는 BE ErrorCode 에서 가져온다.
+      setExportError(userExportErrorMessage(caught));
     }
+  }
+
+  function handlePromote() {
+    // 여러 명의 권한을 한 번에 올린다. 한 명 삭제보다 되돌리기 어렵다.
+    // 대상 수를 미리 알 수 없으므로 무엇이 일어나는지라도 분명히 말한다.
+    const message = "서류 합격자를 모두 부원으로 올릴까요? 되돌리려면 한 명씩 권한을 되돌려야 합니다.";
+    if (!window.confirm(message)) return;
+
+    setPromoted(null);
+    promote.mutate(undefined, { onSuccess: (count) => setPromoted(count) });
   }
 
   function handleDelete(user: AdminUser) {
@@ -123,7 +135,7 @@ export default function UsersPage() {
         </div>
 
         <div className={styles.actions}>
-          <Button variant="secondary" onClick={() => promote.mutate()} disabled={promote.isPending}>
+          <Button variant="secondary" onClick={handlePromote} disabled={promote.isPending}>
             합격자 일괄 승격
           </Button>
           <Button variant="secondary" onClick={() => void handleExport()}>
@@ -134,9 +146,16 @@ export default function UsersPage() {
 
       {exportError && <ErrorState message={exportError} onRetry={() => void handleExport()} />}
 
+      {/* 눌러도 화면이 그대로면 됐는지 알 수 없다. 몇 명이 올라갔는지 알린다. */}
+      {promoted !== null && (
+        <p className={styles.notice} role="status">
+          {promoted === 0 ? "승격할 합격자가 없습니다." : `${promoted}명을 부원으로 올렸습니다.`}
+        </p>
+      )}
+
       {isPending && <TableSkeleton columns={columns.length} rows={PAGE_SIZE} />}
 
-      {isError && <ErrorState message="사용자 목록을 불러오지 못했습니다." onRetry={() => void refetch()} />}
+      {isError && <ErrorState message={userErrorMessage(error)} onRetry={() => void refetch()} />}
 
       {data && data.content.length === 0 && data.totalElements === 0 && (
         <EmptyState message={role ? "해당 권한의 사용자가 없습니다." : "등록된 사용자가 없습니다."} />

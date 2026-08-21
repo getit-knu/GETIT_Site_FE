@@ -14,7 +14,7 @@ export function useUsers(params: UserListParams) {
 }
 
 /** 목록을 다시 받아야 하는 쓰기 동작들. 셋 다 목록의 값을 바꾼다. */
-function useUserMutation<TArgs>(fn: (args: TArgs) => Promise<unknown>) {
+function useUserMutation<TArgs, TData = void>(fn: (args: TArgs) => Promise<TData>) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -31,4 +31,4 @@ export const useUpdateUser = () =>
 export const useDeleteUser = () => useUserMutation((id: number) => deleteUser(id));
 
 /** 인자가 없다. `void` 를 명시해야 `mutate()` 를 인자 없이 부를 수 있다. */
-export const usePromoteApplicants = () => useUserMutation<void>(() => promoteApplicants());
+export const usePromoteApplicants = () => useUserMutation<void, number>(() => promoteApplicants());

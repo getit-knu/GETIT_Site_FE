@@ -132,13 +132,53 @@ describe("UsersPage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("권한이 없습니다.");
   });
 
-  it("합격자 일괄 승격을 호출한다", async () => {
+  it("일괄 승격은 확인 없이 실행되지 않는다", async () => {
+    // 여러 명의 권한을 한 번에 올린다. 한 명 삭제보다 되돌리기 어렵다.
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(false));
+    renderPage();
+
+    await userEvent.click(await screen.findByRole("button", { name: "합격자 일괄 승격" }));
+
+    expect(api.promoteApplicants).not.toHaveBeenCalled();
+  });
+
+  it("확인하면 승격하고 몇 명이 올라갔는지 알린다", async () => {
+    // 눌러도 화면이 그대로면 됐는지 알 수 없다.
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
     vi.mocked(api.promoteApplicants).mockResolvedValue(3);
     renderPage();
 
     await userEvent.click(await screen.findByRole("button", { name: "합격자 일괄 승격" }));
 
     expect(api.promoteApplicants).toHaveBeenCalledOnce();
+    expect(await screen.findByRole("status")).toHaveTextContent("3명을 부원으로 올렸습니다.");
+  });
+
+  it("승격할 대상이 없으면 그렇게 알린다", async () => {
+    // "0명을 올렸습니다" 는 성공처럼 읽혀 혼란스럽다.
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+    vi.mocked(api.promoteApplicants).mockResolvedValue(0);
+    renderPage();
+
+    await userEvent.click(await screen.findByRole("button", { name: "합격자 일괄 승격" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("승격할 합격자가 없습니다.");
+  });
+
+  it("오류 문구를 BE 코드에서 가져온다", async () => {
+    vi.mocked(api.getUsers).mockRejectedValue({ code: "FORBIDDEN", message: "서버 원문" });
+    renderPage();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("사용자를 볼 권한이 없습니다.");
+  });
+
+  it("다운로드 실패는 목록 조회와 다른 문구를 쓴다", async () => {
+    vi.mocked(api.exportUsers).mockRejectedValue({ code: "SOMETHING_NEW", message: "?" });
+    renderPage();
+
+    await userEvent.click(await screen.findByRole("button", { name: "엑셀 다운로드" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("엑셀 다운로드에 실패했습니다.");
   });
 
   it("범위를 벗어난 페이지는 '사용자가 없다'고 말하지 않는다", async () => {
