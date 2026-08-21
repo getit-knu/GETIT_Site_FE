@@ -1,3 +1,4 @@
+import type { LectureListParams } from "../types/lecture";
 import type { QuestionListParams } from "../types/qna";
 
 /**
@@ -42,6 +43,12 @@ export const queryKeys = {
     submissionStatus: () => [...queryKeys.dashboard.all, "submission-status"] as const,
     upcomingEvents: () => [...queryKeys.dashboard.all, "upcoming-events"] as const,
     ongoingLectures: () => [...queryKeys.dashboard.all, "ongoing-lectures"] as const,
+  },
+
+  /** 강의는 탭 구성과 목록이 한 덩어리로 온다. 필터마다 캐시가 갈라진다. */
+  lectures: {
+    all: ["lectures"] as const,
+    board: (params: LectureListParams) => [...queryKeys.lectures.all, "board", params] as const,
   },
 
   auth: {
