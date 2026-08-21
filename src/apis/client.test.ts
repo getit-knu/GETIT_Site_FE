@@ -18,8 +18,14 @@ function responseHandler(): Handler {
   return (client.interceptors.response as unknown as { handlers: Handler[] }).handlers[0];
 }
 
-function runResponseInterceptor(data: unknown): Promise<AxiosResponse> {
-  const response = { data, status: 200, statusText: "OK", headers: {}, config: {} } as AxiosResponse;
+function runResponseInterceptor(data: unknown, responseType?: string): Promise<AxiosResponse> {
+  const response = {
+    data,
+    status: 200,
+    statusText: "OK",
+    headers: {},
+    config: { responseType },
+  } as AxiosResponse;
   return Promise.resolve(responseHandler().fulfilled(response));
 }
 
@@ -109,5 +115,32 @@ describe("실패 응답 인터셉터", () => {
     await expect(runErrorInterceptor(500, null)).rejects.toMatchObject({ code: "UNKNOWN_ERROR" });
 
     expect(getAccessToken()).toBe("valid-token");
+  });
+});
+
+describe("파일 응답", () => {
+  it("blob 으로 요청했으면 envelope 검사를 건너뛴다", async () => {
+    // 엑셀 다운로드(명세서 7.6 · 9.5)는 본문이 곧 파일이다.
+    // 검사에 걸리면 MALFORMED_RESPONSE 로 막혀 다운로드가 아예 동작하지 않는다.
+    const blob = new Blob(["a,b,c"], { type: "text/csv" });
+
+    const response = await runResponseInterceptor(blob, "blob");
+
+    expect(response.data).toBe(blob);
+  });
+
+  it("arraybuffer 도 마찬가지다", async () => {
+    const buffer = new ArrayBuffer(8);
+
+    const response = await runResponseInterceptor(buffer, "arraybuffer");
+
+    expect(response.data).toBe(buffer);
+  });
+
+  it("파일을 기대하지 않은 요청은 여전히 거른다", async () => {
+    // responseType 을 주지 않았는데 envelope 이 아니면 잘못된 응답이 맞다.
+    await expect(runResponseInterceptor(new Blob(["x"]))).rejects.toMatchObject({
+      code: "MALFORMED_RESPONSE",
+    });
   });
 });
