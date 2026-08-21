@@ -8,6 +8,7 @@ import {
   useRemoveMember,
   useRenameGroup,
 } from "../../hooks/group/useGroups";
+import { groupErrorMessage } from "../../errors/user/errorMessages";
 import type { Group, GroupMember } from "../../types/group";
 import { Button } from "../ui/Button/Button";
 import { Input } from "../ui/Input/Input";
@@ -114,7 +115,7 @@ function GroupCard({ group }: { group: Group }) {
  * 접근성 대응을 따로 해야 하고, 조가 늘어나면 놓을 자리를 찾기도 어렵다.
  */
 export function GroupsTab() {
-  const { data, isPending, isError, refetch } = useGroupBoard();
+  const { data, isPending, isError, error, refetch } = useGroupBoard();
   const createGroup = useCreateGroup();
   const addMember = useAddMember();
   const [newName, setNewName] = useState("");
@@ -126,7 +127,8 @@ export function GroupsTab() {
   }
 
   if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
-  if (isError) return <ErrorState message="조 목록을 불러오지 못했습니다." onRetry={() => void refetch()} />;
+  // 문구는 BE ErrorCode 에서 가져온다. FE 가 코드를 새로 짓지 않는다.
+  if (isError) return <ErrorState message={groupErrorMessage(error)} onRetry={() => void refetch()} />;
 
   const groupOptions = data.groups.map((g) => ({ value: g.id, label: g.name }));
 

@@ -4,12 +4,14 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import * as groupApi from "../../apis/group/groupsApi";
 import * as api from "../../apis/user/usersApi";
 import type { AdminUser } from "../../types/user";
 
 import UsersPage from "./UsersPage";
 
 vi.mock("../../apis/user/usersApi");
+vi.mock("../../apis/group/groupsApi");
 
 function user(over: Partial<AdminUser> = {}): AdminUser {
   return {
@@ -190,5 +192,47 @@ describe("UsersPage", () => {
 
     expect(await screen.findByText(/이 페이지에는 사용자가 없습니다/)).toBeInTheDocument();
     expect(screen.queryByText("등록된 사용자가 없습니다.")).not.toBeInTheDocument();
+  });
+
+  it("기본은 사용자 관리 탭이다", async () => {
+    renderPage();
+
+    expect(await screen.findByRole("table", { name: "사용자 목록" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "사용자 관리" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("탭을 바꾸면 URL 에 남고 그룹 관리가 나온다", async () => {
+    vi.mocked(groupApi.getGroups).mockResolvedValue({
+      generationNo: 9,
+      groups: [{ id: 1, name: "1조", memberCount: 0, members: [] }],
+      unassigned: [],
+    });
+    const router = renderPage();
+    await screen.findByRole("table");
+
+    await userEvent.click(screen.getByRole("tab", { name: "그룹 관리" }));
+
+    expect(router.state.location.search).toContain("tab=groups");
+    expect(await screen.findByRole("heading", { name: /1조/ })).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "사용자 목록" })).not.toBeInTheDocument();
+  });
+
+  it("URL 에 적힌 탭으로 시작한다", async () => {
+    // 새로고침하거나 링크를 받아 들어와도 보던 탭이 유지돼야 한다.
+    vi.mocked(groupApi.getGroups).mockResolvedValue({
+      generationNo: 9,
+      groups: [],
+      unassigned: [],
+    });
+
+    renderPage("/admin/users?tab=groups");
+
+    expect(await screen.findByText("아직 만든 조가 없습니다.")).toBeInTheDocument();
+  });
+
+  it("허용 목록에 없는 탭은 기본 탭으로 본다", async () => {
+    renderPage("/admin/users?tab=DROP");
+
+    expect(await screen.findByRole("table", { name: "사용자 목록" })).toBeInTheDocument();
   });
 });

@@ -177,4 +177,18 @@ describe("GroupsTab", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("조 목록을 불러오지 못했습니다.");
   });
+
+  it("오류 문구를 BE 코드에서 가져온다", async () => {
+    vi.mocked(api.getGroups).mockRejectedValue({ code: "FORBIDDEN", message: "서버 원문" });
+    renderTab();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("사용자를 볼 권한이 없습니다.");
+  });
+
+  it("모르는 코드에는 공통 문구를 쓴다", async () => {
+    vi.mocked(api.getGroups).mockRejectedValue({ code: "SOMETHING_NEW", message: "?" });
+    renderTab();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("조 목록을 불러오지 못했습니다.");
+  });
 });
