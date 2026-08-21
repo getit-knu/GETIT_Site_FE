@@ -60,6 +60,8 @@ export const queryKeys = {
   lectures: {
     all: ["lectures"] as const,
     board: (params: LectureListParams) => [...queryKeys.lectures.all, "board", params] as const,
+    details: () => [...queryKeys.lectures.all, "detail"] as const,
+    detail: (id: number) => [...queryKeys.lectures.details(), id] as const,
   },
 
   users: {
