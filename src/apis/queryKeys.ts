@@ -1,4 +1,7 @@
+import type { ApplicantListParams } from "../types/application";
+import type { LectureListParams } from "../types/lecture";
 import type { QuestionListParams } from "../types/qna";
+import type { UserListParams } from "../types/user";
 
 /**
  * 쿼리 키 팩토리.
@@ -31,6 +34,43 @@ import type { QuestionListParams } from "../types/qna";
  * 새 도메인을 추가할 때 아래 `questions` 를 복사해서 쓰면 된다.
  */
 export const queryKeys = {
+  applications: {
+    all: ["applications"] as const,
+    lists: () => [...queryKeys.applications.all, "list"] as const,
+    list: (params: ApplicantListParams) => [...queryKeys.applications.lists(), params] as const,
+  },
+
+  /**
+   * 대시보드는 카드 5개가 각자 조회한다. 한 곳이 실패해도 나머지는 보여야 하므로
+   * 키를 카드 단위로 나눈다.
+   */
+  dashboard: {
+    all: ["dashboard"] as const,
+    summary: () => [...queryKeys.dashboard.all, "summary"] as const,
+    recentQuestions: () => [...queryKeys.dashboard.all, "recent-questions"] as const,
+    submissionStatus: () => [...queryKeys.dashboard.all, "submission-status"] as const,
+    upcomingEvents: () => [...queryKeys.dashboard.all, "upcoming-events"] as const,
+    ongoingLectures: () => [...queryKeys.dashboard.all, "ongoing-lectures"] as const,
+  },
+
+  /** 강의는 탭 구성과 목록이 한 덩어리로 온다. 필터마다 캐시가 갈라진다. */
+  lectures: {
+    all: ["lectures"] as const,
+    board: (params: LectureListParams) => [...queryKeys.lectures.all, "board", params] as const,
+  },
+
+  users: {
+    all: ["users"] as const,
+    lists: () => [...queryKeys.users.all, "list"] as const,
+    list: (params: UserListParams) => [...queryKeys.users.lists(), params] as const,
+  },
+
+  /** 조 편성은 한 덩어리로 온다. 목록·상세를 나눌 이유가 없다. */
+  groups: {
+    all: ["groups"] as const,
+    board: () => [...queryKeys.groups.all, "board"] as const,
+  },
+
   auth: {
     all: ["auth"] as const,
     /** 로그인한 사용자 본인. 권한 판단의 유일한 출처다. */
