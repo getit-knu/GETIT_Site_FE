@@ -2,6 +2,10 @@
 @use "../../styles/abstracts/container";
 
 .section {
+  @include container.full-viewport-section;
+
+  display: flex;
+  align-items: center;
   padding: 8rem 0;
   background-color: $color-background;
 }

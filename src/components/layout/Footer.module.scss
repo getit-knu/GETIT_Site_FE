@@ -6,6 +6,9 @@
   --footer-bg: #101828;
   --footer-border: #1e2939;
 
+  // Home의 각 섹션이 scroll-snap-align을 쓴다(mandatory). 마지막 섹션 다음에 스냅 지점이
+  // 하나도 없으면 브라우저가 그 섹션 너머로 스크롤을 허용하지 않아 Footer에 닿지 못한다.
+  scroll-snap-align: start;
   padding: 3rem 0;
   background-color: var(--footer-bg);
 }

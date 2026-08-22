@@ -25,3 +25,17 @@ export interface CurriculumSemester {
   title: string;
   items: string[];
 }
+
+export interface Project {
+  id: string;
+  title: string;
+  description: string;
+  gradient: string;
+}
+
+/** `answer`는 아직 실제 답변이 없어 임시 문구다. 실제 콘텐츠가 생기면 교체한다. */
+export interface FAQItem {
+  id: string;
+  question: string;
+  answer: string;
+}

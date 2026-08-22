@@ -1,8 +1,14 @@
 @use "../../styles/abstracts/variables" as *;
+@use "../../styles/abstracts/container";
 
 .hero {
+  @include container.full-viewport-section;
+
   position: relative;
+  display: flex;
   overflow: hidden;
+  align-items: center;
+  justify-content: center;
   padding: 9rem 2rem;
   background-color: $color-background;
 }
