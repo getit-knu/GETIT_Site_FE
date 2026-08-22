@@ -136,9 +136,6 @@ export interface SubmissionListParams {
   page?: number;
 }
 
-/** 제출 상태 (명세서 0.4). 마감 뒤에 낸 것은 `LATE` 다. */
-export type SubmissionStatus = "SUBMITTED" | "LATE";
-
 /**
  * 제출 파일 (8.7).
  *

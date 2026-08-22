@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { FeedbackModal } from "../../components/lecture/FeedbackModal";
 import { LectureCard } from "../../components/lecture/LectureCard";
 import { LectureFormModal } from "../../components/lecture/LectureFormModal";
+import { SubmissionStatusModal } from "../../components/lecture/SubmissionStatusModal";
 import { Button } from "../../components/ui/Button/Button";
 import { EmptyState, ErrorState } from "../../components/ui/states/States";
 import { lectureErrorMessage } from "../../errors/lecture/errorMessages";
@@ -65,12 +66,11 @@ export default function LecturesPage() {
   }
 
   /*
-    강의 카드의 '과제 피드백' 은 제출물 하나를 지목할 수 없다 — 8.7 은 submissionId 를
-    받는데 카드가 아는 것은 강의뿐이다. 실제 진입점은 제출 현황 표의 행이고,
-    그 표는 같은 이슈의 다른 PR 에 있다. 두 PR 이 모두 머지된 뒤 행에 버튼을 붙인다.
-    지금은 주소(`?modal=feedback&id={submissionId}`)로 열린다.
+    강의 카드의 '과제 피드백' 은 아직 열 수 없다. 8.7 은 submissionId 를 받는데
+    카드가 아는 것은 강의뿐이라 제출물 하나를 지목할 수 없다.
 
-    제출 현황 모달은 아직 별도 PR 이라 여기서는 준비 중으로 둔다.
+    실제 진입점은 제출 현황 표의 행이고, 그 행에 버튼을 붙이는 것은 별도 이슈다.
+    피드백 모달 자체는 주소(`?modal=feedback&id={submissionId}`)로 열린다.
   */
   const notImplemented = (name: string) => () => window.alert(`${name} 화면은 준비 중입니다.`);
 
@@ -147,7 +147,7 @@ export default function LecturesPage() {
               key={lecture.id}
               lecture={lecture}
               onFeedback={notImplemented("과제 피드백")}
-              onSubmissions={notImplemented("제출 현황")}
+              onSubmissions={(id) => openModal("submissions", id)}
               onEdit={(id) => openModal("lecture", id)}
               onDelete={handleDelete}
             />
@@ -166,6 +166,11 @@ export default function LecturesPage() {
 
       {modal === "feedback" && modalId !== null && (
         <FeedbackModal submissionId={modalId} onNavigate={(id) => openModal("feedback", id)} onClose={closeModal} />
+      )}
+
+      {/* `?modal=submissions` 만 있고 id 가 없는 주소로는 어느 강의인지 알 수 없다. */}
+      {modal === "submissions" && modalId !== null && (
+        <SubmissionStatusModal lectureId={modalId} onClose={closeModal} />
       )}
     </div>
   );
