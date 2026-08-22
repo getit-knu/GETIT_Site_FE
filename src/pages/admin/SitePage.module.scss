@@ -1,0 +1,62 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.section {
+  padding: 1.25rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 0.75rem;
+  background-color: var(--admin-surface);
+}
+
+.sectionTitle {
+  margin: 0 0 0.875rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+.hint {
+  margin: 0.625rem 0 0;
+  color: var(--admin-text-muted);
+  font-size: 0.75rem;
+}
+
+// 섹션이 계속 늘어나므로 저장은 화면 아래에 붙여 둔다.
+.footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 0.75rem;
+  background-color: var(--admin-surface);
+}
+
+.reason {
+  margin: 0;
+  margin-right: auto;
+  color: #dc2626;
+  font-size: 0.8125rem;
+}
+
+.saved {
+  margin: 0;
+  margin-right: auto;
+  color: var(--admin-text-muted);
+  font-size: 0.8125rem;
+}
+
+.loading {
+  color: var(--admin-text-muted);
+}
