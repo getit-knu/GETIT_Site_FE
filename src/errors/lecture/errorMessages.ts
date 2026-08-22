@@ -45,3 +45,25 @@ export function lectureErrorMessage(error: unknown): string {
 export function lectureSaveErrorMessage(error: unknown): string {
   return messageFor(error, SAVE_FALLBACK);
 }
+
+/** 제출물 · 피드백 코드 (명세서 8.7 ~ 8.9). */
+const FEEDBACK_ERROR_MESSAGES: Record<string, string> = {
+  SUBMISSION_NOT_FOUND: "제출물을 찾을 수 없습니다. 목록을 새로고침해 주세요.",
+  FEEDBACK_NOT_FOUND: "피드백을 찾을 수 없습니다. 이미 지워졌을 수 있습니다.",
+  NOT_RESOURCE_OWNER: "본인이 작성한 피드백만 수정할 수 있습니다.",
+  FORBIDDEN: "피드백을 남길 권한이 없습니다.",
+  UNAUTHORIZED: "로그인이 필요합니다.",
+};
+
+const FEEDBACK_FALLBACK = "피드백을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+
+/**
+ * 조회 실패와 문구가 갈려야 한다 — 피드백 저장에 실패했는데 "강의 목록을 불러오지
+ * 못했습니다" 가 뜨면 무엇이 안 됐는지 알 수 없다.
+ */
+export function feedbackErrorMessage(error: unknown): string {
+  if (typeof error !== "object" || error === null || !("code" in error)) return FEEDBACK_FALLBACK;
+
+  const { code } = error as ApiErrorPayload;
+  return FEEDBACK_ERROR_MESSAGES[code] ?? FEEDBACK_FALLBACK;
+}
