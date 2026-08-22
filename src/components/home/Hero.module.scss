@@ -8,11 +8,17 @@
 }
 
 // 장식용 블롭. 콘텐츠 흐름에 영향 없는 배경 장식이라 콘텐츠보다 먼저 두고 z-index로 뒤에 깐다.
+// 애니메이션은 이전 GETIT 프론트(jmespoir/GETIT_front, tailwind.config.js의 blob keyframes)를 그대로 이식했다.
 .blobBlue,
 .blobTeal {
   position: absolute;
   z-index: 0;
   border-radius: 50%;
+  animation: blob 7s infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 }
 
 .blobBlue {
@@ -31,6 +37,25 @@
   height: 38.75rem;
   background-color: #e8ecfb;
   opacity: 0.9;
+  animation-delay: 2s;
+}
+
+@keyframes blob {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(1.875rem, -3.125rem) scale(1.1);
+  }
+
+  66% {
+    transform: translate(-1.25rem, 1.25rem) scale(0.9);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
 }
 
 .inner {

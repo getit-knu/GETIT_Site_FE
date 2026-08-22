@@ -1,13 +1,8 @@
+import { ACTIVITIES } from "../../mocks/home/activities";
+
 import styles from "./ActivityPhotos.module.scss";
 
 /** 실제 활동 사진은 아직 없어 Figma의 회색 플레이스홀더 그대로 보여준다. */
-const ACTIVITIES = [
-  { id: "hackathon", label: "해커톤" },
-  { id: "mt", label: "MT" },
-  { id: "seminar", label: "세미나" },
-  { id: "showcase", label: "프로젝트 발표" },
-];
-
 export function ActivityPhotos() {
   return (
     <section className={styles.section}>
