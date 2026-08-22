@@ -92,6 +92,7 @@ export interface LecturePayload {
   isPublished: boolean;
   fileIds: number[];
   assignment: Assignment | null;
+}
 
 /** 제출 상태 (명세서 0.4). 마감 뒤에 낸 것은 `LATE` 다 — 낸 것과 같이 볼 수 없다. */
 export type SubmissionStatus = "SUBMITTED" | "LATE";

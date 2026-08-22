@@ -1,5 +1,5 @@
 import type { ApplicantListParams } from "../types/application";
-import type { LectureListParams } from "../types/lecture";
+import type { LectureListParams, SubmissionListParams } from "../types/lecture";
 import type { QuestionListParams } from "../types/qna";
 import type { UserListParams } from "../types/user";
 
@@ -63,6 +63,7 @@ export const queryKeys = {
     details: () => [...queryKeys.lectures.all, "detail"] as const,
     detail: (id: number) => [...queryKeys.lectures.details(), id] as const,
     submission: (id: number) => [...queryKeys.lectures.all, "submission", id] as const,
+    submissions: (params: SubmissionListParams) => [...queryKeys.lectures.all, "submissions", params] as const,
   },
 
   /** 사이트 설정은 섹션이 한 덩어리로 오간다(10.20). 키를 쪼개지 않는다. */
