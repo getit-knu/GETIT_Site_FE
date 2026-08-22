@@ -1,0 +1,208 @@
+@use "../../styles/abstracts/variables" as *;
+@use "../../styles/abstracts/container";
+
+.section {
+  padding: 5rem 0;
+  background-color: $color-background;
+}
+
+.inner {
+  @include container.content-width;
+
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: 2fr 1fr;
+}
+
+// 카드 배경이 페이지 배경과 같은 색이라 그림자만으로 구분한다(Figma 원본 그대로).
+.eventsCard {
+  border-radius: 1.5rem;
+  padding: 2rem;
+  background-color: $color-background;
+  box-shadow:
+    0 20px 12.5px rgb(0 0 0 / 10%),
+    0 8px 5px rgb(0 0 0 / 10%);
+}
+
+.eventsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.eventsTitle {
+  margin: 0;
+  color: $color-heading;
+  font-size: 2.25rem;
+  font-weight: 700;
+}
+
+.eventsSubtitle {
+  margin: 0.5rem 0 0;
+  color: $color-text-secondary;
+  font-size: 1rem;
+}
+
+.monthBadge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.monthNumber {
+  color: $color-accent;
+  font-size: 3.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.monthLabel {
+  color: $color-text-secondary;
+  font-size: 0.875rem;
+}
+
+.eventList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0;
+  margin: 2rem 0 0;
+  list-style: none;
+}
+
+.eventItem {
+  display: flex;
+  gap: 1rem;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  background-image: linear-gradient(to right, #eff6ff, #eef2ff);
+}
+
+.eventDay {
+  display: flex;
+  width: 3.5rem;
+  height: 3.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.875rem;
+  background-color: $color-accent;
+  box-shadow:
+    0 10px 7.5px rgb(0 0 0 / 10%),
+    0 4px 3px rgb(0 0 0 / 10%);
+  color: $color-background;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.eventTitle {
+  margin: 0;
+  color: $color-heading;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.eventDate {
+  margin: 0.25rem 0 0.75rem;
+  color: $color-text-secondary;
+  font-size: 1rem;
+}
+
+.calendarCard {
+  overflow: hidden;
+  border-radius: 1.5rem;
+  background-color: $color-background;
+  box-shadow:
+    0 20px 25px -5px rgb(0 0 0 / 10%),
+    0 8px 10px -6px rgb(0 0 0 / 10%);
+}
+
+.calendarHeader {
+  padding: 1rem 1.5rem;
+  background-image: linear-gradient(to right, #155dfc, #4f39f6);
+  text-align: center;
+}
+
+.calendarMonth {
+  margin: 0;
+  color: $color-background;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.calendarYear {
+  margin: 0;
+  color: #dbeafe;
+  font-size: 0.875rem;
+}
+
+.calendarBody {
+  padding: 1rem;
+}
+
+.weekdayRow,
+.dateGrid {
+  display: grid;
+  gap: 0.25rem;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.weekday {
+  padding: 0.25rem 0;
+  color: $color-text-secondary;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+
+  &[data-sunday] {
+    color: #fb2c36;
+  }
+
+  &[data-saturday] {
+    color: $color-accent;
+  }
+}
+
+.date,
+.dateActive {
+  display: flex;
+  aspect-ratio: 1;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.date {
+  background-color: $color-background;
+  color: $color-text-secondary;
+}
+
+.dateActive {
+  background-color: $color-accent;
+  color: $color-background;
+  font-weight: 600;
+}
+
+.pagination {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: center;
+  padding: 0 1rem 1rem;
+}
+
+.dot,
+.dotActive {
+  height: 0.5rem;
+  border-radius: 9999px;
+}
+
+.dot {
+  width: 0.5rem;
+  background-color: #8ec5ff;
+}
+
+.dotActive {
+  width: 1.5rem;
+  background-color: $color-accent;
+}
