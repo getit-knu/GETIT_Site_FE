@@ -64,6 +64,12 @@ export const queryKeys = {
     detail: (id: number) => [...queryKeys.lectures.details(), id] as const,
   },
 
+  /** 사이트 설정은 섹션이 한 덩어리로 오간다(10.20). 키를 쪼개지 않는다. */
+  site: {
+    all: ["site"] as const,
+    settings: () => [...queryKeys.site.all, "settings"] as const,
+  },
+
   users: {
     all: ["users"] as const,
     lists: () => [...queryKeys.users.all, "list"] as const,
