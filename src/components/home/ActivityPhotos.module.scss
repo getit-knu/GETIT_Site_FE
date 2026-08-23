@@ -1,9 +1,13 @@
 @use "../../styles/abstracts/variables" as *;
+@use "../../styles/abstracts/container";
 
 .section {
+  @include container.full-viewport-section;
+
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 4rem;
   padding: 8rem 4.75rem;
   background-color: $color-background;
