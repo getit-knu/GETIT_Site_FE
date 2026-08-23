@@ -10,3 +10,11 @@ $color-surface: #fff;
 $color-border: #d1d5db;
 $color-danger: #dc2626;
 $color-disabled-bg: #f3f4f6;
+
+// Home 와이어프레임의 큰 제목(H1·H2)에 반복적으로 쓰이는 검정. $color-text-primary(#364153)보다
+// 진해서 별도 토큰으로 뺀다 — 여러 섹션(Hero·ActivityPhotos 등)에서 재사용.
+$color-heading: #0a0a0a;
+
+// 아직 실제 이미지가 없는 자리(활동 사진·프로젝트 스크린샷 등)에 쓰는 플레이스홀더 색.
+$color-placeholder-bg: #e5e7eb;
+$color-placeholder-icon: #99a1af;
