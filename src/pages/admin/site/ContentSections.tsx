@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { Input } from "../../../components/ui/Input/Input";
 import { Select } from "../../../components/ui/Select/Select";
 import { TextArea } from "../../../components/ui/TextArea/TextArea";
-import type { Curriculum, EventType, Faq, SiteEvent } from "../../../types/site";
+import type { Curriculum, SiteEventType, Faq, SiteEvent } from "../../../types/site";
 
 import styles from "./ContentSections.module.scss";
 import type { Draft } from "./contentDraft";
@@ -132,7 +132,7 @@ export function ContentSections({
               ariaLabel={`${row.title || "새 행사"} 종류`}
               value={row.type}
               options={EVENT_TYPES}
-              onChange={(type: EventType) => patch({ type })}
+              onChange={(type: SiteEventType) => patch({ type })}
             />
           </>
         )}

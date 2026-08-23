@@ -62,17 +62,6 @@ describe("SitePage", () => {
     expect(screen.getByLabelText("전체 모집 시작")).toHaveValue("2026-09-01T00:00");
   });
 
-  it("편집 화면이 없는 섹션도 그대로 되돌려 보낸다", async () => {
-    // 10.20 은 화면 전체 상태를 한 트랜잭션으로 반영한다. 빼고 보내면 서버에서 지워진다.
-    renderPage();
-    await screen.findByLabelText("기수");
-
-    await userEvent.click(saveButton());
-
-    await waitFor(() => expect(api.saveSiteSettings).toHaveBeenCalled());
-    expect(lastPayload()).toMatchObject({ curriculums: CURRICULUMS, events: EVENTS, faqs: FAQS });
-  });
-
   it("손대지 않은 강의 분류는 받은 그대로 나간다", async () => {
     // 편집 대상이 됐어도 아무것도 고치지 않았다면 값이 달라지면 안 된다.
     renderPage();
@@ -82,6 +71,39 @@ describe("SitePage", () => {
 
     await waitFor(() => expect(api.saveSiteSettings).toHaveBeenCalled());
     expect(lastPayload()?.tracks).toEqual(TRACKS);
+  });
+
+  it("손대지 않은 커리큘럼 · 행사 · FAQ 는 받은 그대로 나간다", async () => {
+    // 편집 대상이 됐어도 아무것도 고치지 않았다면 값이 달라지면 안 된다.
+    renderPage();
+    await screen.findByLabelText("기수");
+
+    await userEvent.click(saveButton());
+
+    await waitFor(() => expect(api.saveSiteSettings).toHaveBeenCalled());
+    expect(lastPayload()).toMatchObject({ curriculums: CURRICULUMS, events: EVENTS, faqs: FAQS });
+  });
+
+  it("고친 행사가 저장에 실린다", async () => {
+    renderPage();
+
+    const title = await screen.findByLabelText("행사 제목 개발 대회");
+    await userEvent.type(title, " 2026");
+    await userEvent.click(saveButton());
+
+    await waitFor(() => expect(api.saveSiteSettings).toHaveBeenCalled());
+    expect(lastPayload()?.events[0].title).toBe("개발 대회 2026");
+  });
+
+  it("행사 기간이 뒤집히면 저장을 막는다", async () => {
+    renderPage();
+
+    const end = await screen.findByLabelText("개발 대회 종료일");
+    await userEvent.clear(end);
+    await userEvent.type(end, "2026-09-01");
+
+    expect(screen.getByText("개발 대회 의 종료일이 시작일보다 빠릅니다.")).toBeInTheDocument();
+    expect(saveButton()).toBeDisabled();
   });
 
   it("고친 기수와 일정을 보낸다", async () => {
@@ -172,5 +194,32 @@ describe("SitePage", () => {
     await userEvent.type(screen.getByLabelText("기수"), "1");
 
     expect(screen.queryByText(/이미 활성화된 기수가 있습니다/)).not.toBeInTheDocument();
+  });
+
+  it("고친 강의 분류와 커리큘럼이 한 번에 함께 나간다", async () => {
+    /*
+      10.20 은 화면 전체 상태를 한 트랜잭션으로 반영한다. 섹션마다 따로 저장되는 것이
+      아니라 `저장하기` 하나가 전부를 실어 보낸다.
+    */
+    renderPage();
+
+    await userEvent.type(await screen.findByLabelText("대분류 이름 SW"), "!");
+    await userEvent.type(screen.getByLabelText("커리큘럼 제목 Python & 데이터 분석"), "?");
+    await userEvent.click(saveButton());
+
+    await waitFor(() => expect(api.saveSiteSettings).toHaveBeenCalled());
+    expect(lastPayload()?.tracks[0].name).toBe("SW!");
+    expect(lastPayload()?.curriculums[0].title).toBe("Python & 데이터 분석?");
+    // 저장은 한 번이다.
+    expect(api.saveSiteSettings).toHaveBeenCalledTimes(1);
+  });
+
+  it("어느 섹션이든 막히면 저장을 막는다", async () => {
+    renderPage();
+
+    // 강의 분류 쪽 이유
+    await userEvent.clear(await screen.findByLabelText("대분류 이름 SW"));
+    expect(screen.getByText("이름이 비어 있는 대분류가 있습니다.")).toBeInTheDocument();
+    expect(saveButton()).toBeDisabled();
   });
 });

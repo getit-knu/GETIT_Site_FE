@@ -1,4 +1,4 @@
-import type { Curriculum, EventType, Faq, SiteEvent } from "../../../types/site";
+import type { Curriculum, SiteEventType, Faq, SiteEvent } from "../../../types/site";
 
 /**
  * 커리큘럼 · 행사 · FAQ 편집 상태. 명세서 10.10 ~ 10.20.
@@ -30,7 +30,7 @@ export function fromDrafts<T>(drafts: Draft<T>[]): T[] {
   });
 }
 
-export const EVENT_TYPES: { value: EventType; label: string }[] = [
+export const EVENT_TYPES: { value: SiteEventType; label: string }[] = [
   { value: "COMPETITION", label: "대회" },
   { value: "WORKSHOP", label: "워크숍" },
   { value: "EVENT", label: "행사" },
