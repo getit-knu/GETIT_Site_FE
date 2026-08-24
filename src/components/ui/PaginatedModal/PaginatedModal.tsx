@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { Modal, ModalBody, ModalFooter } from "../Modal/Modal";
+import { useModalTitleId } from "../Modal/modalTitleContext";
 
 import styles from "./PaginatedModal.module.scss";
 
@@ -25,6 +26,35 @@ interface PaginatedModalProps {
  * `ModalHeader` 는 제목과 닫기만 받는다. 그쪽을 고치는 대신 여기서 헤더를 직접 그린다 —
  * 순차 탐색은 평가·피드백 화면에만 있는 요구라 공통 컴포넌트가 알 필요가 없다.
  */
+interface HeaderProps {
+  title: string;
+  current: number;
+  total: number;
+  onClose: () => void;
+}
+
+/**
+ * **`Modal` 안에서 그려야 한다.** 제목 id 는 `Modal` 이 컨텍스트로 내려주므로
+ * 바깥에서 훅을 부르면 값을 받지 못하고 `aria-labelledby` 가 끊긴다.
+ */
+function Header({ title, current, total, onClose }: HeaderProps) {
+  const titleId = useModalTitleId();
+
+  return (
+    <div className={styles.header}>
+      <h2 id={titleId} className={styles.title}>
+        {title}
+      </h2>
+      <span className={styles.counter} aria-live="polite">
+        {current} / {total}
+      </span>
+      <button type="button" className={styles.close} onClick={onClose} aria-label="닫기">
+        ✕
+      </button>
+    </div>
+  );
+}
+
 export function PaginatedModal({
   title,
   onClose,
@@ -37,15 +67,7 @@ export function PaginatedModal({
 }: PaginatedModalProps) {
   return (
     <Modal isOpen onClose={onClose}>
-      <div className={styles.header}>
-        <h2 className={styles.title}>{title}</h2>
-        <span className={styles.counter} aria-live="polite">
-          {current} / {total}
-        </span>
-        <button type="button" className={styles.close} onClick={onClose} aria-label="닫기">
-          ✕
-        </button>
-      </div>
+      <Header title={title} current={current} total={total} onClose={onClose} />
 
       <ModalBody>{children}</ModalBody>
 
