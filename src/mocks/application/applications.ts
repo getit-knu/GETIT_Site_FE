@@ -87,7 +87,38 @@ const QUESTIONS = [
 ];
 
 /** 저장한 점수. 서버가 들고 있는 것을 흉내 낸다. */
-const savedScores = new Map<number, Map<number, number>>();
+const TOTAL_MAX = CRITERIA.reduce((sum, c) => sum + c.maxScore, 0);
+
+/**
+ * 목록의 `totalScore` 를 기준별 점수로 쪼갠다.
+ *
+ * 내림한 뒤 남은 점수를 여유가 있는 기준에 1점씩 돌려 **합계가 정확히 `totalScore`** 가 되고
+ * 어느 기준도 배점을 넘지 않는다.
+ */
+function splitScore(totalScore: number): Map<number, number> {
+  const scores = new Map(CRITERIA.map((c) => [c.criterionId, Math.floor((totalScore * c.maxScore) / TOTAL_MAX)]));
+  let left = totalScore - [...scores.values()].reduce((a, b) => a + b, 0);
+
+  for (const criterion of CRITERIA) {
+    if (left === 0) break;
+    const current = scores.get(criterion.criterionId) ?? 0;
+    const room = Math.min(left, criterion.maxScore - current);
+    scores.set(criterion.criterionId, current + room);
+    left -= room;
+  }
+
+  return scores;
+}
+
+/**
+ * 이미 평가된 지원자의 점수를 처음부터 채워 둔다.
+ *
+ * 비워 두면 목록에는 '평가 완료' 인 지원자가 상세에서는 **미평가·빈 점수로 보이고,
+ * 그 상태로 저장하면 기존 평가가 지워진다.** 목록과 상세가 같은 데이터를 봐야 한다.
+ */
+const savedScores = new Map<number, Map<number, number>>(
+  ALL.filter((a) => a.evaluated && a.totalScore !== null).map((a) => [a.id, splitScore(a.totalScore as number)]),
+);
 
 /**
  * 순차 탐색은 목록과 같은 조건에서 계산해야 순서가 맞는다.
@@ -111,8 +142,8 @@ export async function fetchApplicationDetail(id: number, params: ApplicantListPa
   const applicant = ALL.find((a) => a.id === id);
   if (!applicant) throw { code: "APPLICATION_NOT_FOUND", message: "지원서를 찾을 수 없습니다." };
 
+  // 평가 여부와 총점은 목록이 쓰는 값을 그대로 쓴다. 두 화면이 갈리면 안 된다.
   const scores = savedScores.get(id);
-  const evaluated = scores !== undefined;
 
   return {
     id: applicant.id,
@@ -134,8 +165,8 @@ export async function fetchApplicationDetail(id: number, params: ApplicantListPa
       selectedOptions: null,
     })),
     evaluation: {
-      evaluated,
-      totalScore: evaluated ? [...scores.values()].reduce((a, b) => a + b, 0) : null,
+      evaluated: applicant.evaluated,
+      totalScore: applicant.totalScore,
       scores: CRITERIA.map((c) => ({ ...c, score: scores?.get(c.criterionId) ?? null })),
     },
     navigation: navigationFor(id, params),
