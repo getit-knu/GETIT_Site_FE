@@ -48,15 +48,20 @@ export interface Curriculum {
   subtitle: string;
 }
 
-/** 10.14 행사. (명세서 0.4 `EventType`) */
-export type EventType = "COMPETITION" | "WORKSHOP" | "EVENT";
+/**
+ * 10.14 행사 종류 (명세서 0.4 `EventType`).
+ *
+ * **`types/dashboard` 에도 `EventType` 이 있고 값이 다르다**(대시보드는 `WORKSHOP` 이 없다).
+ * 한 파일에서 둘을 함께 쓰면 이름이 부딪히므로 도메인 접두어를 붙인다.
+ */
+export type SiteEventType = "COMPETITION" | "WORKSHOP" | "EVENT";
 
 export interface SiteEvent {
   id: number | null;
   title: string;
   startDate: string;
   endDate: string;
-  type: EventType;
+  type: SiteEventType;
 }
 
 /** 10.18 FAQ. */
