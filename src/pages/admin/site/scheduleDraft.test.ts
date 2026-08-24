@@ -86,4 +86,37 @@ describe("invalidReason", () => {
       "전체 모집 마감이 시작보다 빠릅니다.",
     );
   });
+
+  it("형태가 어긋난 일시는 어느 칸인지 짚어 막는다", () => {
+    /*
+      비어 있지 않다고 쓸 수 있는 값은 아니다. 막지 않으면 저장 버튼이 열린 채
+      빈 일정이 서버로 나간다.
+    */
+    expect(invalidReason("9", "2026", { ...draft(), interviewStartAt: "2026-09-15" })).toBe(
+      "면접 시작 일시 형식이 올바르지 않습니다.",
+    );
+    expect(invalidReason("9", "2026", { ...draft(), totalStartAt: "아무거나" })).toBe(
+      "전체 모집 시작 일시 형식이 올바르지 않습니다.",
+    );
+  });
+
+  it("서류가 전체 마감을 넘으면 서류 칸을 짚는다", () => {
+    // 면접 검사에도 걸리지만 "면접이 늦습니다" 로는 고쳐야 할 칸을 알 수 없다.
+    expect(
+      invalidReason("9", "2026", {
+        ...draft(),
+        documentEndAt: "2026-10-15T23:59",
+        interviewStartAt: "2026-10-20T00:00",
+      }),
+    ).toBe("서류 접수 마감이 전체 모집 마감보다 늦습니다.");
+
+    expect(
+      invalidReason("9", "2026", {
+        ...draft(),
+        documentStartAt: "2026-10-01T00:00",
+        documentEndAt: "2026-10-15T23:59",
+        interviewStartAt: "2026-10-20T00:00",
+      }),
+    ).toBe("서류 접수 시작이 전체 모집 마감보다 늦습니다.");
+  });
 });
