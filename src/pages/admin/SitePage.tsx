@@ -20,6 +20,17 @@ function SiteForm({ settings }: { settings: SiteSettings }) {
 
   const reason = invalidReason(generationNo, year, schedule);
 
+  /**
+   * 값을 고치면 지난 저장 결과를 지운다.
+   *
+   * 그대로 두면 저장한 뒤 한 글자만 바꿔도 "저장했습니다." 가 계속 떠 있어,
+   * 아직 보내지 않은 값을 저장된 것으로 읽게 된다. 실패 문구도 마찬가지다.
+   */
+  function edit(apply: () => void) {
+    if (save.isSuccess || save.isError) save.reset();
+    apply();
+  }
+
   function handleSave() {
     save.mutate({
       generation: { generationNo: Number(generationNo), year: Number(year) },
@@ -41,8 +52,8 @@ function SiteForm({ settings }: { settings: SiteSettings }) {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>진행 기수</h2>
         <div className={styles.grid}>
-          <Input label="기수" type="number" value={generationNo} onChange={setGenerationNo} />
-          <Input label="연도" type="number" value={year} onChange={setYear} />
+          <Input label="기수" type="number" value={generationNo} onChange={(v) => edit(() => setGenerationNo(v))} />
+          <Input label="연도" type="number" value={year} onChange={(v) => edit(() => setYear(v))} />
         </div>
       </section>
 
@@ -55,7 +66,7 @@ function SiteForm({ settings }: { settings: SiteSettings }) {
               label={label}
               type="datetime-local"
               value={schedule[key]}
-              onChange={(value) => setSchedule((prev) => ({ ...prev, [key]: value }))}
+              onChange={(value) => edit(() => setSchedule((prev) => ({ ...prev, [key]: value })))}
             />
           ))}
         </div>

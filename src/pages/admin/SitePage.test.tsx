@@ -141,4 +141,30 @@ describe("SitePage", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("권한이 없습니다");
   });
+
+  it("저장한 뒤 값을 고치면 저장 안내가 사라진다", async () => {
+    // 남아 있으면 아직 보내지 않은 값을 저장된 것으로 읽는다.
+    renderPage();
+    await screen.findByLabelText("기수");
+
+    await userEvent.click(saveButton());
+    expect(await screen.findByText("저장했습니다.")).toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText("기수"), "1");
+
+    expect(screen.queryByText("저장했습니다.")).not.toBeInTheDocument();
+  });
+
+  it("저장에 실패한 뒤 값을 고치면 실패 문구도 사라진다", async () => {
+    vi.mocked(api.saveSiteSettings).mockRejectedValue({ code: "ACTIVE_GENERATION_EXISTS", message: "?" });
+    renderPage();
+    await screen.findByLabelText("기수");
+
+    await userEvent.click(saveButton());
+    expect(await screen.findByText(/이미 활성화된 기수가 있습니다/)).toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText("기수"), "1");
+
+    expect(screen.queryByText(/이미 활성화된 기수가 있습니다/)).not.toBeInTheDocument();
+  });
 });
