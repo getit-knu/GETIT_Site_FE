@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as api from "../../apis/lecture/lecturesApi";
+import { queryKeys } from "../../apis/queryKeys";
 import type { LectureDetail, Track } from "../../types/lecture";
 
 import { LectureFormModal } from "./LectureFormModal";
@@ -205,9 +206,22 @@ describe("LectureFormModal", () => {
     await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 
-  it("저장에 실패하면 모달을 닫지 않고 저장 실패라고 알린다", async () => {
-    // 쓰기 전용 에러 코드는 BE 가 아직 발급하지 않는다. 대체 문구가 조회용이면 안 된다.
-    vi.mocked(api.createLecture).mockRejectedValue({ code: "SOME_UNMAPPED_CODE", message: "?" });
+  it("표에 없는 코드는 서버가 준 문구를 보여준다", async () => {
+    // BE 가 코드를 추가해도 화면이 '저장하지 못했습니다' 만 되뇌면 무엇이 잘못됐는지 알 수 없다.
+    vi.mocked(api.createLecture).mockRejectedValue({ code: "DUPLICATE_WEEK", message: "이미 등록된 주차입니다." });
+    renderModal(null);
+
+    await userEvent.type(titleBox(), "새 강의");
+    await userEvent.type(weekBox(), "3");
+    await userEvent.click(submit());
+
+    expect(await screen.findByText("이미 등록된 주차입니다.")).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("서버 문구도 없으면 저장 실패 대체 문구를 쓴다", async () => {
+    // 대체 문구가 조회용이면 무엇이 안 됐는지 알 수 없다.
+    vi.mocked(api.createLecture).mockRejectedValue({ code: "SOME_UNMAPPED_CODE", message: "  " });
     renderModal(null);
 
     await userEvent.type(titleBox(), "새 강의");
@@ -215,7 +229,18 @@ describe("LectureFormModal", () => {
     await userEvent.click(submit());
 
     expect(await screen.findByText("강의를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.")).toBeInTheDocument();
-    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("표에 있는 코드는 화면 문구를 쓴다", async () => {
+    // 서버 문구가 개발자용일 수 있다. 아는 코드는 우리 문구가 우선이다.
+    vi.mocked(api.createLecture).mockRejectedValue({ code: "FORBIDDEN", message: "Access denied" });
+    renderModal(null);
+
+    await userEvent.type(titleBox(), "새 강의");
+    await userEvent.type(weekBox(), "3");
+    await userEvent.click(submit());
+
+    expect(await screen.findByText("강의를 볼 권한이 없습니다.")).toBeInTheDocument();
   });
 
   it("수정 조회에 실패하면 오류와 재시도를 보여준다", async () => {
@@ -223,5 +248,41 @@ describe("LectureFormModal", () => {
     renderModal(101);
 
     expect(await screen.findByRole("alert")).toHaveTextContent("강의를 찾을 수 없습니다");
+  });
+
+  it("열린 채로 다른 강의로 바뀌면 그 강의 값을 보여준다", async () => {
+    /*
+      캐시에 이미 있는 강의로 바꾸면 data 가 곧바로 채워져 폼이 언마운트되지 않는다.
+      그러면 앞 강의에서 고치던 draft 가 남아 새 강의에 저장된다.
+    */
+    const other = detail({ id: 202, title: "Express 라우팅", week: 5 });
+    vi.mocked(api.getLectureDetail).mockImplementation((id) => Promise.resolve(id === 202 ? other : detail()));
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    // 두 강의를 모두 캐시에 올려 둔다 — 실제로 목록에서 번갈아 열면 이 상태가 된다.
+    await queryClient.prefetchQuery({
+      queryKey: queryKeys.lectures.detail(101),
+      queryFn: () => api.getLectureDetail(101),
+    });
+    await queryClient.prefetchQuery({
+      queryKey: queryKeys.lectures.detail(202),
+      queryFn: () => api.getLectureDetail(202),
+    });
+
+    const { rerender } = render(
+      <QueryClientProvider client={queryClient}>
+        <LectureFormModal lectureId={101} tracks={TRACKS} onClose={onClose} />
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByDisplayValue("HTML/CSS 기초")).toBeInTheDocument();
+
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <LectureFormModal lectureId={202} tracks={TRACKS} onClose={onClose} />
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByDisplayValue("Express 라우팅")).toBeInTheDocument();
+    expect(screen.getByLabelText(/^주차/)).toHaveValue(5);
   });
 });

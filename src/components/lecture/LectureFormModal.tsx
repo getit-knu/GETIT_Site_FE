@@ -10,6 +10,7 @@ import { Select } from "../ui/Select/Select";
 import { ErrorState } from "../ui/states/States";
 import { TextArea } from "../ui/TextArea/TextArea";
 
+import { AttachmentsField } from "./AttachmentsField";
 import styles from "./LectureFormModal.module.scss";
 
 /** 입력 중에는 빈 칸을 허용해야 지우고 다시 칠 수 있다. 숫자도 문자열로 든다. */
@@ -188,38 +189,7 @@ function LectureForm({ lectureId, tracks, initial, files, onClose }: FormProps) 
           <Input label="강의 자료 URL" value={draft.materialUrl} onChange={(materialUrl) => set({ materialUrl })} />
         </div>
 
-        <div className={styles.field}>
-          <span className={styles.label}>첨부 파일</span>
-          {files.length === 0 ? (
-            <p className={styles.hint}>첨부된 파일이 없습니다.</p>
-          ) : (
-            <ul className={styles.files}>
-              {files.map((file) => (
-                <li key={file.fileId} className={draft.fileIds.includes(file.fileId) ? "" : styles.removed}>
-                  <span>{file.displayName}</span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      set({
-                        fileIds: draft.fileIds.includes(file.fileId)
-                          ? draft.fileIds.filter((id) => id !== file.fileId)
-                          : [...draft.fileIds, file.fileId],
-                      })
-                    }
-                  >
-                    {draft.fileIds.includes(file.fileId) ? "제거" : "되돌리기"}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          {/*
-            새 파일 업로드는 명세서 13.1 · 13.2 로 먼저 올린 뒤 fileIds 를 넘기는 구조다.
-            file 도메인이 아직 없어 이 화면에서는 기존 첨부를 빼는 것만 된다.
-            TODO: 파일 업로드 이슈가 끝나면 업로드 버튼을 붙인다.
-          */}
-          <p className={styles.hint}>새 파일 업로드는 파일 업로드 기능이 붙은 뒤에 지원됩니다.</p>
-        </div>
+        <AttachmentsField files={files} keptIds={draft.fileIds} onKeptIdsChange={(fileIds) => set({ fileIds })} />
 
         <label className={styles.checkbox}>
           <input type="checkbox" checked={draft.isPublished} onChange={(e) => set({ isPublished: e.target.checked })} />
@@ -309,6 +279,12 @@ export function LectureFormModal({ lectureId, tracks, onClose }: LectureFormModa
         <LectureForm
           lectureId={lectureId}
           tracks={tracks}
+          /*
+            강의가 바뀌면 폼을 새로 만든다. 캐시에 이미 있는 강의로 옮기면 `data` 가
+            곧바로 채워져 폼이 언마운트되지 않고, 앞 강의에서 고치던 값이 그대로 남아
+            새 강의에 저장된다.
+          */
+          key={lectureId ?? "new"}
           initial={data ? toDraft(data) : emptyDraft(tracks[0]?.id ?? 0)}
           files={data?.files ?? []}
           onClose={onClose}
