@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { exportApplicants } from "../../apis/application/applicationsApi";
+import { ApplicationDetailModal } from "../../components/application/ApplicationDetailModal";
 import { Badge } from "../../components/ui/Badge/Badge";
 import { Button } from "../../components/ui/Button/Button";
 import { DataTable, type Column } from "../../components/ui/DataTable/DataTable";
@@ -16,6 +17,7 @@ import {
   type EvaluatedChoice,
 } from "../../hooks/application/useApplicantFilters";
 import { useDebouncedValue } from "../../hooks/ui/useDebouncedValue";
+import { useModalParams } from "../../hooks/ui/useModalParams";
 import { formatDateTime } from "../../libs/formatDate";
 import { APPLICATION_STATUSES, type Applicant, type ApplicationStatus } from "../../types/application";
 
@@ -63,6 +65,7 @@ export default function ApplicationsPage() {
     size: PAGE_SIZE,
   });
 
+  const { modal, id: openedId, openModal, closeModal } = useModalParams();
   const updateStatus = useUpdateStatus();
   const [exportError, setExportError] = useState<string | null>(null);
 
@@ -77,7 +80,15 @@ export default function ApplicationsPage() {
   }
 
   const columns: Column<Applicant>[] = [
-    { header: "이름", render: (a) => a.applicantName, width: "6rem" },
+    {
+      header: "이름",
+      width: "6rem",
+      render: (a) => (
+        <button type="button" className={styles.nameButton} onClick={() => openModal("application", a.id)}>
+          {a.applicantName}
+        </button>
+      ),
+    },
     { header: "소속", render: (a) => `${a.college} ${a.major}`, width: "14rem" },
     { header: "학년", render: (a) => `${a.grade}학년`, width: "5rem", align: "center" },
     {
@@ -195,6 +206,16 @@ export default function ApplicationsPage() {
           <DataTable columns={columns} rows={data.content} rowKey={(a) => a.id} caption="지원자 목록" />
           <Pagination page={data.page} totalPages={data.totalPages} onChange={(next) => update({ page: next })} />
         </>
+      )}
+
+      {modal === "application" && openedId !== null && (
+        <ApplicationDetailModal
+          applicationId={openedId}
+          // 순차 탐색이 목록과 같은 순서를 따르려면 필터를 그대로 넘겨야 한다(명세서 7.5).
+          listParams={{ status, evaluated, keyword: keyword || undefined }}
+          onNavigate={(next) => openModal("application", next)}
+          onClose={closeModal}
+        />
       )}
     </div>
   );

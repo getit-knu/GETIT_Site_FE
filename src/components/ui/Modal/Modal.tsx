@@ -1,15 +1,12 @@
-import { createContext, useContext, useEffect, useId, useRef } from "react";
+import { useContext, useEffect, useId, useRef } from "react";
 import type { MouseEvent, ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 import styles from "./Modal.module.scss";
+import { ModalTitleContext } from "./modalTitleContext";
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
-// Modal이 생성한 titleId를 ModalHeader에 전달해 aria-labelledby로 연결하기 위한 내부 채널.
-// 사용하는 쪽은 id를 몰라도 되고, 그냥 <Modal><ModalHeader title="..." /></Modal>로 쓰면 된다.
-const ModalTitleContext = createContext<string | undefined>(undefined);
 
 interface ModalProps {
   isOpen: boolean;

@@ -1,6 +1,12 @@
 import { downloadFile } from "../../libs/downloadFile";
 import * as mock from "../../mocks/application/applications";
-import type { Applicant, ApplicantListParams, Page } from "../../types/application";
+import type {
+  Applicant,
+  ApplicantListParams,
+  ApplicationDetail,
+  EvaluationPayload,
+  Page,
+} from "../../types/application";
 
 /**
  * 지원자 관리 API. 명세서 7.1 · 7.4 · 7.6.
@@ -22,3 +28,16 @@ export const updateStatus = (id: number, passed: boolean): Promise<void> => mock
 /** `GET /api/admin/applications/export` */
 export const exportApplicants = (): Promise<void> =>
   downloadFile("/api/admin/applications/export", "getit-applicants.xlsx");
+
+/**
+ * `GET /api/admin/applications/{id}`
+ *
+ * **목록 필터를 함께 넘긴다.** 응답의 `navigation` 이 커서 기반이라
+ * 같은 조건에서 계산해야 이전·다음 순서가 목록과 일치한다(명세서 7.5).
+ */
+export const getApplicationDetail = (id: number, params: ApplicantListParams): Promise<ApplicationDetail> =>
+  mock.fetchApplicationDetail(id, params);
+
+/** `POST /api/admin/applications/{id}/evaluation` */
+export const saveEvaluation = (id: number, payload: EvaluationPayload): Promise<void> =>
+  mock.saveEvaluation(id, payload);

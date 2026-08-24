@@ -42,3 +42,61 @@ export interface ApplicantListParams {
   page?: number;
   size?: number;
 }
+
+/** 지원서 문항과 답변. (7.2) */
+export interface ApplicationAnswer {
+  questionId: number;
+  order: number;
+  question: string;
+  type: string;
+  /** **비워 둔 문항은 `null`.** 화면에 "답변 없음" 을 보여준다. */
+  answerText: string | null;
+  selectedOptions: string[] | null;
+}
+
+/** 평가 기준 한 줄. `score` 는 아직 매기지 않았으면 `null`. */
+export interface EvaluationScore {
+  criterionId: number;
+  name: string;
+  guideline: string;
+  maxScore: number;
+  score: number | null;
+}
+
+export interface Evaluation {
+  evaluated: boolean;
+  totalScore: number | null;
+  scores: EvaluationScore[];
+}
+
+/**
+ * 순차 탐색 위치. **응답에 함께 온다.**
+ * `1 / 2` 표시와 이전·다음 버튼을 이 하나로 처리한다.
+ */
+export interface ApplicationNavigation {
+  current: number;
+  total: number;
+  prevId: number | null;
+  nextId: number | null;
+}
+
+/** 지원서 상세 (7.2). */
+export interface ApplicationDetail {
+  id: number;
+  applicantName: string;
+  email: string;
+  phoneNumber: string;
+  college: string;
+  major: string;
+  grade: number;
+  status: ApplicationStatus;
+  submittedAt: string;
+  answers: ApplicationAnswer[];
+  evaluation: Evaluation;
+  navigation: ApplicationNavigation;
+}
+
+/** 평가 저장 (7.3). */
+export interface EvaluationPayload {
+  scores: { criterionId: number; score: number }[];
+}
