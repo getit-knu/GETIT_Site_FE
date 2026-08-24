@@ -41,3 +41,53 @@ export interface LectureListParams {
   trackId?: number;
   subCategoryId?: number;
 }
+
+/** 강의에 붙은 과제. 없는 강의는 `null`. */
+export interface Assignment {
+  id?: number;
+  title: string;
+  description: string;
+  /** `datetime-local` 로 다루기 쉽게 문자열로 둔다. */
+  deadline: string;
+}
+
+/** 이미 올라간 첨부. 수정 폼에서 목록으로 보여준다. */
+export interface LectureFile {
+  fileId: number;
+  displayName: string;
+  url: string;
+  size: number;
+}
+
+/** 8.3 수정 폼 프리필용 단건 조회. */
+export interface LectureDetail {
+  id: number;
+  generationId: number;
+  trackId: number;
+  subCategoryId: number | null;
+  week: number;
+  title: string;
+  /** Markdown 원문. */
+  description: string;
+  youtubeUrl: string;
+  materialUrl: string;
+  durationMinutes: number | null;
+  isPublished: boolean;
+  files: LectureFile[];
+  assignment: Assignment | null;
+}
+
+/** 8.2 · 8.4 요청 본문. `fileIds` 는 미리 업로드한 파일의 id 다(명세서 13.1 · 13.2). */
+export interface LecturePayload {
+  trackId: number;
+  subCategoryId: number | null;
+  week: number;
+  title: string;
+  description: string;
+  youtubeUrl: string;
+  materialUrl: string;
+  durationMinutes: number | null;
+  isPublished: boolean;
+  fileIds: number[];
+  assignment: Assignment | null;
+}
