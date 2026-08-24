@@ -69,6 +69,9 @@ export const queryKeys = {
   site: {
     all: ["site"] as const,
     settings: () => [...queryKeys.site.all, "settings"] as const,
+    // 운영진·기능 토글은 10.20 일괄 저장과 무관하게 개별로 오간다. 키를 나눈다.
+    staffs: () => [...queryKeys.site.all, "staffs"] as const,
+    features: () => [...queryKeys.site.all, "features"] as const,
   },
 
   users: {
