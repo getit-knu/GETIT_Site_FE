@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { recruitmentErrorMessage } from "../../errors/recruitment/errorMessages";
 import {
   useCreateQuestion,
@@ -6,16 +8,27 @@ import {
   useReorderQuestions,
   useUpdateQuestion,
 } from "../../hooks/recruitment/useRecruitment";
-import type { RecruitmentQuestion } from "../../types/recruitment";
+import type { QuestionType, RecruitmentQuestion } from "../../types/recruitment";
 import { Button } from "../ui/Button/Button";
-import { EditableListRow } from "../ui/EditableListRow/EditableListRow";
+import { Select } from "../ui/Select/Select";
 import { ErrorState } from "../ui/states/States";
 
+import { QuestionRow } from "./QuestionRow";
 import styles from "./Section.module.scss";
+
+/** `all` 은 화면에서만 쓰는 값이다. */
+type TypeFilter = QuestionType | "all";
+
+const FILTERS: { value: TypeFilter; label: string }[] = [
+  { value: "all", label: "전체" },
+  { value: "TEXT", label: "서술형" },
+  { value: "CHOICE", label: "객관식" },
+];
 
 /** 문항은 하나씩 저장한다. 평가 기준과 달리 서로 얽힌 제약이 없다. */
 export function QuestionsSection({ locked }: { locked: boolean }) {
   const { data, isPending, isError, error, refetch } = useQuestions();
+  const [filter, setFilter] = useState<TypeFilter>("all");
   const create = useCreateQuestion();
   const update = useUpdateQuestion();
   const remove = useDeleteQuestion();
@@ -30,6 +43,7 @@ export function QuestionsSection({ locked }: { locked: boolean }) {
 
   // 이른 반환 뒤라 값이 있는 것이 확실하다. 중첩 함수는 그 좁힘을 물려받지 못한다.
   const questions = data;
+  const shown = filter === "all" ? questions : questions.filter((q) => q.type === filter);
 
   /** 배열 순서대로 order 를 다시 매긴다(명세서 6.7). 화면에서 자리만 바꿔 보낸다. */
   function move(from: number, to: number) {
@@ -50,49 +64,39 @@ export function QuestionsSection({ locked }: { locked: boolean }) {
     <section className={styles.section}>
       <header className={styles.head}>
         <h3 className={styles.title}>지원서 문항</h3>
-        <span className={styles.required}>{questions.length}개</span>
+        <Select ariaLabel="문항 유형 필터" value={filter} options={FILTERS} onChange={setFilter} />
+        <span className={styles.required}>
+          {shown.length}개{filter !== "all" && ` / 전체 ${questions.length}개`}
+        </span>
       </header>
 
-      <ul className={styles.list}>
-        {questions.map((question, i) => (
-          <EditableListRow
-            key={question.id}
-            moveLabel={`${i + 1}번 문항`}
-            removeLabel={`${i + 1}번 문항 삭제`}
-            disabled={busy}
-            onMoveUp={i > 0 ? () => move(i, i - 1) : null}
-            onMoveDown={i < questions.length - 1 ? () => move(i, i + 1) : null}
-            onRemove={() => handleDelete(question)}
-          >
-            <input
-              className={styles.guideline}
-              defaultValue={question.content}
-              aria-label={`${i + 1}번 문항 내용`}
-              disabled={busy}
-              onBlur={(e) => {
-                const content = e.target.value.trim();
-                // 빈 문항은 무엇을 묻는지 알 수 없다. 원래 값으로 되돌린다.
-                if (content === "" || content === question.content) {
-                  e.target.value = question.content;
-                  return;
-                }
-                update.mutate({ id: question.id, payload: { ...question, content } });
-              }}
-            />
-            <label className={styles.required}>
-              <input
-                type="checkbox"
-                checked={question.required}
+      {shown.length === 0 ? (
+        <p className={styles.loading}>이 유형의 문항이 없습니다.</p>
+      ) : (
+        <ul className={styles.list}>
+          {shown.map((question) => {
+            // 순서는 걸러낸 목록이 아니라 전체 기준이다. 필터를 걸었다고 자리가 달라지지 않는다.
+            const at = questions.indexOf(question);
+
+            return (
+              <QuestionRow
+                key={question.id}
+                question={question}
+                index={at}
                 disabled={busy}
-                onChange={(e) =>
-                  update.mutate({ id: question.id, payload: { ...question, required: e.target.checked } })
-                }
+                /*
+                  걸러낸 상태에서 화살표를 누르면 화면에 없는 문항과 자리를 바꾸게 되어
+                  무슨 일이 일어났는지 보이지 않는다. 전체를 보고 있을 때만 옮긴다.
+                */
+                onMoveUp={filter === "all" && at > 0 ? () => move(at, at - 1) : null}
+                onMoveDown={filter === "all" && at < questions.length - 1 ? () => move(at, at + 1) : null}
+                onRemove={() => handleDelete(question)}
+                onChange={(payload) => update.mutate({ id: question.id, payload })}
               />
-              필수
-            </label>
-          </EditableListRow>
-        ))}
-      </ul>
+            );
+          })}
+        </ul>
+      )}
 
       <div className={styles.actions}>
         <Button
@@ -100,11 +104,12 @@ export function QuestionsSection({ locked }: { locked: boolean }) {
           disabled={busy}
           onClick={() =>
             create.mutate({
-              type: "TEXT",
+              // 걸러 보고 있으면 그 유형으로 만든다. 만들자마자 사라지면 안 된다.
+              type: filter === "CHOICE" ? "CHOICE" : "TEXT",
               content: "새 문항",
               required: false,
-              maxLength: 300,
-              options: null,
+              maxLength: filter === "CHOICE" ? null : 300,
+              options: filter === "CHOICE" ? [{ id: "opt-1", label: "선택지 1" }] : null,
             })
           }
         >
