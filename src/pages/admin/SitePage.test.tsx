@@ -70,12 +70,18 @@ describe("SitePage", () => {
     await userEvent.click(saveButton());
 
     await waitFor(() => expect(api.saveSiteSettings).toHaveBeenCalled());
-    expect(lastPayload()).toMatchObject({
-      tracks: TRACKS,
-      curriculums: CURRICULUMS,
-      events: EVENTS,
-      faqs: FAQS,
-    });
+    expect(lastPayload()).toMatchObject({ curriculums: CURRICULUMS, events: EVENTS, faqs: FAQS });
+  });
+
+  it("손대지 않은 강의 분류는 받은 그대로 나간다", async () => {
+    // 편집 대상이 됐어도 아무것도 고치지 않았다면 값이 달라지면 안 된다.
+    renderPage();
+    await screen.findByLabelText("기수");
+
+    await userEvent.click(saveButton());
+
+    await waitFor(() => expect(api.saveSiteSettings).toHaveBeenCalled());
+    expect(lastPayload()?.tracks).toEqual(TRACKS);
   });
 
   it("고친 기수와 일정을 보낸다", async () => {

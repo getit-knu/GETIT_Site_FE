@@ -9,6 +9,9 @@ import type { SiteSettings } from "../../types/site";
 
 import { invalidReason, SCHEDULE_FIELDS, toDraft, toSchedule } from "./site/scheduleDraft";
 import type { ScheduleDraft } from "./site/scheduleDraft";
+import { TracksSection } from "./site/TracksSection";
+import { toTrackDrafts, toTracks, tracksInvalidReason } from "./site/tracksDraft";
+import type { TrackDraft } from "./site/tracksDraft";
 import styles from "./SitePage.module.scss";
 
 /** 조회한 뒤에만 마운트한다. 그래야 `useState` 초기값으로 기존 값을 넣을 수 있다. */
@@ -16,9 +19,11 @@ function SiteForm({ settings }: { settings: SiteSettings }) {
   const [generationNo, setGenerationNo] = useState(String(settings.generation.generationNo));
   const [year, setYear] = useState(String(settings.generation.year));
   const [schedule, setSchedule] = useState<ScheduleDraft>(() => toDraft(settings.schedule));
+  const [tracks, setTracks] = useState<TrackDraft[]>(() => toTrackDrafts(settings.tracks));
   const save = useSaveSiteSettings();
 
-  const reason = invalidReason(generationNo, year, schedule);
+  // 섹션이 늘어나면 이유도 늘어난다. 먼저 걸리는 것 하나만 보여준다.
+  const reason = invalidReason(generationNo, year, schedule) ?? tracksInvalidReason(tracks);
 
   /**
    * 값을 고치면 지난 저장 결과를 지운다.
@@ -35,12 +40,12 @@ function SiteForm({ settings }: { settings: SiteSettings }) {
     save.mutate({
       generation: { generationNo: Number(generationNo), year: Number(year) },
       schedule: toSchedule(schedule),
+      tracks: toTracks(tracks),
       /*
         아직 편집 화면이 없는 섹션들이다. 10.20 은 개별 CRUD 가 아니라 화면 전체 상태를
         한 트랜잭션으로 반영하므로, 빼고 보내면 **서버에서 지워진다.**
         받은 그대로 되돌려 보낸다. 편집 UI 는 뒤따르는 이슈에서 붙인다.
       */
-      tracks: settings.tracks,
       curriculums: settings.curriculums,
       events: settings.events,
       faqs: settings.faqs,
@@ -73,6 +78,8 @@ function SiteForm({ settings }: { settings: SiteSettings }) {
         {/* 면접 마감은 서버가 전체 모집 마감으로 맞춘다(명세서 6.2). 입력칸을 두지 않는다. */}
         <p className={styles.hint}>면접 마감은 전체 모집 마감과 같게 저장됩니다.</p>
       </section>
+
+      <TracksSection tracks={tracks} onChange={setTracks} />
 
       <div className={styles.footer}>
         {/* 저장을 막는 이유를 미리 보여준다. 눌러 보고 알게 하지 않는다. */}

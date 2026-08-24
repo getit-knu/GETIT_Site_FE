@@ -8,11 +8,17 @@ import type { SiteSavePayload, SiteSettings } from "../../types/site";
 
 let state: SiteSettings = {
   generation: { id: 9, generationNo: 9, year: 2026, isActive: true },
+  /*
+    일정은 분 단위로 둔다. 화면이 `datetime-local` 로 다뤄 초를 버리므로, 목에 초가 있으면
+    아무것도 고치지 않고 저장해도 마감이 앞당겨진다.
+
+    BE 가 초를 담아 보내기 시작하면 화면에서 초를 지켜 되돌려 보낼지 정해야 한다.
+  */
   schedule: {
     totalStartAt: "2026-09-01T00:00:00+09:00",
-    totalEndAt: "2026-09-30T23:59:59+09:00",
+    totalEndAt: "2026-09-30T23:59:00+09:00",
     documentStartAt: "2026-09-01T00:00:00+09:00",
-    documentEndAt: "2026-09-10T23:59:59+09:00",
+    documentEndAt: "2026-09-10T23:59:00+09:00",
     interviewStartAt: "2026-09-15T00:00:00+09:00",
   },
   // 아직 편집 화면이 없는 섹션들. 저장할 때 그대로 되돌려 보내야 지워지지 않는다.
