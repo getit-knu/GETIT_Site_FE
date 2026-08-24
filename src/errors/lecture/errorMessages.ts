@@ -19,8 +19,15 @@ const SAVE_FALLBACK = "강의를 저장하지 못했습니다. 잠시 후 다시
 function messageFor(error: unknown, fallback: string): string {
   if (typeof error !== "object" || error === null || !("code" in error)) return fallback;
 
-  const { code } = error as ApiErrorPayload;
-  return LECTURE_ERROR_MESSAGES[code] ?? fallback;
+  const { code, message } = error as ApiErrorPayload;
+  const mapped = LECTURE_ERROR_MESSAGES[code];
+  if (mapped !== undefined) return mapped;
+
+  /*
+    표에 없는 코드는 BE 가 새로 추가한 것이다. 고정 문구를 보여주면 무엇이 잘못됐는지
+    알 수 없으니 서버가 준 문구라도 쓴다. 그마저 없을 때만 대체 문구로 간다.
+  */
+  return typeof message === "string" && message.trim() !== "" ? message : fallback;
 }
 
 /** 알 수 없는 코드에는 공통 문구를 쓴다. */

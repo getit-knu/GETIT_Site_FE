@@ -175,7 +175,9 @@ describe("LecturesPage", () => {
     vi.mocked(api.getLectures).mockRejectedValue({ code: "UNKNOWN_ERROR", message: "실패" });
     renderPage();
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("강의 목록을 불러오지 못했습니다.");
+    const alert = await screen.findByRole("alert");
+    expect(alert).toBeInTheDocument();
+    expect(within(alert).getByRole("button", { name: "다시 시도" })).toBeInTheDocument();
   });
 
   it("응답에 없는 trackId 는 URL 에서 지운다", async () => {
@@ -220,8 +222,16 @@ describe("LecturesPage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("강의를 볼 권한이 없습니다.");
   });
 
-  it("모르는 코드에는 공통 문구를 쓴다", async () => {
-    vi.mocked(api.getLectures).mockRejectedValue({ code: "SOMETHING_NEW", message: "?" });
+  it("모르는 코드에는 서버가 준 문구를 쓴다", async () => {
+    // BE 가 코드를 추가해도 화면이 '불러오지 못했습니다' 만 되뇌면 무엇이 잘못됐는지 알 수 없다.
+    vi.mocked(api.getLectures).mockRejectedValue({ code: "SOMETHING_NEW", message: "기수가 아직 열리지 않았습니다." });
+    renderPage();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("기수가 아직 열리지 않았습니다.");
+  });
+
+  it("서버 문구도 없으면 공통 문구를 쓴다", async () => {
+    vi.mocked(api.getLectures).mockRejectedValue({ code: "SOMETHING_NEW", message: "" });
     renderPage();
 
     expect(await screen.findByRole("alert")).toHaveTextContent("강의 목록을 불러오지 못했습니다.");
