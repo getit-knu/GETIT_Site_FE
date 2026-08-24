@@ -9,8 +9,10 @@ import type { SiteSettings } from "../../types/site";
 
 import { ContentSections } from "./site/ContentSections";
 import { contentInvalidReason, fromDrafts, toDrafts } from "./site/contentDraft";
+import { FeaturesSection } from "./site/FeaturesSection";
 import { invalidReason, SCHEDULE_FIELDS, toDraft, toSchedule } from "./site/scheduleDraft";
 import type { ScheduleDraft } from "./site/scheduleDraft";
+import { StaffsSection } from "./site/StaffsSection";
 import { TracksSection } from "./site/TracksSection";
 import { toTrackDrafts, toTracks, tracksInvalidReason } from "./site/tracksDraft";
 import type { TrackDraft } from "./site/tracksDraft";
@@ -93,6 +95,13 @@ function SiteForm({ settings }: { settings: SiteSettings }) {
         onEventsChange={setEvents}
         onFaqsChange={setFaqs}
       />
+
+      {/*
+        아래 두 섹션은 `저장하기` 와 무관하다. 10.20 일괄 저장에 들어가지 않고
+        개별 엔드포인트로 즉시 반영된다(명세서 10.21 ~ 10.24).
+      */}
+      <StaffsSection generationNo={settings.generation.generationNo} />
+      <FeaturesSection />
 
       <div className={styles.footer}>
         {/* 저장을 막는 이유를 미리 보여준다. 눌러 보고 알게 하지 않는다. */}
