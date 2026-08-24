@@ -87,6 +87,54 @@ export interface SiteSettings {
   faqs: Faq[];
 }
 
+/** 운영진 구역 (10.21). 순서는 **구역 안에서만** 다시 매긴다(10.22). */
+export type StaffSection = "EXECUTIVE" | "SW" | "STARTUP";
+
+/**
+ * 운영진 프로필 (10.21).
+ *
+ * **앞의 섹션들과 달리 10.20 일괄 저장에 들어가지 않는다.** 개별 엔드포인트로 즉시 반영된다.
+ */
+export interface Staff {
+  id: number;
+  /** 실제 계정 연결. 없으면 표시 전용 프로필이다. */
+  userId: number | null;
+  name: string;
+  staffRole: string;
+  section: StaffSection;
+  department: string;
+  introduction: string;
+  profileImageUrl: string | null;
+  order: number;
+  generationNo: number;
+}
+
+/** 10.21 POST · PUT 요청 본문. `order` 는 서버가 매기므로 보내지 않는다. */
+export interface StaffPayload {
+  userId: number | null;
+  name: string;
+  staffRole: string;
+  section: StaffSection;
+  department: string;
+  introduction: string;
+  fileId: number | null;
+  generationNo: number;
+}
+
+/**
+ * 기능 토글 (10.23 · 10.24).
+ *
+ * **`key` 는 BE 가 정한다.** 화면은 받은 목록을 그대로 그린다 — FE 에 키 목록을 두면
+ * BE 가 기능을 추가해도 화면에 나오지 않는다.
+ */
+export interface FeatureToggle {
+  key: string;
+  label: string;
+  enabled: boolean;
+  updatedAt: string;
+  updatedBy: string;
+}
+
 /** 10.20 요청 본문. 조회 전용 필드(`id` 의 일부 · `isActive`)는 빠진다. */
 export interface SiteSavePayload {
   generation: { generationNo: number; year: number };
