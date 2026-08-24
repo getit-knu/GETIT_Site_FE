@@ -4,6 +4,9 @@ import type { Feedback, NavigateParams, SubmissionDetail, SubmissionNavigation }
  * 과제 피드백 목 (명세서 8.7 ~ 8.10).
  *
  * BE 에 admin lecture 컨트롤러가 아직 없어 화면을 먼저 만든다.
+ *
+ * **시각에는 오프셋을 붙인다.** 빼면 브라우저가 실행 환경의 시간대로 읽어
+ * 한국 밖에서는 다른 시각이 표시된다. 서버도 오프셋을 붙여 준다(명세서 0.3).
  */
 
 interface StoredSubmission {
@@ -30,7 +33,7 @@ const SUBMISSIONS: StoredSubmission[] = [
         previewable: false,
       },
       comment: "부족한 부분이 있으면 알려주세요.",
-      submittedAt: "2026-06-04T20:11:00",
+      submittedAt: "2026-06-04T20:11:00+09:00",
       status: "SUBMITTED",
     },
   },
@@ -50,7 +53,7 @@ const SUBMISSIONS: StoredSubmission[] = [
         previewable: true,
       },
       comment: "",
-      submittedAt: "2026-06-05T09:30:00",
+      submittedAt: "2026-06-05T09:30:00+09:00",
       status: "SUBMITTED",
     },
   },
@@ -70,7 +73,7 @@ const SUBMISSIONS: StoredSubmission[] = [
         previewable: true,
       },
       comment: "늦어서 죄송합니다.",
-      submittedAt: "2026-06-07T01:20:00",
+      submittedAt: "2026-06-07T01:20:00+09:00",
       status: "LATE",
     },
   },
@@ -82,7 +85,7 @@ const FEEDBACKS: Feedback[] = [
     adminId: 3,
     adminName: "김운영",
     content: "구조가 깔끔합니다.",
-    createdAt: "2026-06-06T10:00:00",
+    createdAt: "2026-06-06T10:00:00+09:00",
     updatedAt: null,
   },
 ];
