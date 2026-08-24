@@ -1,0 +1,18 @@
+// 공개 사이트 섹션들이 공유하는 1280px 중앙 정렬 컨테이너.
+// Nav·Footer뿐 아니라 Home의 각 섹션(Hero·ProjectShowcase 등)도 같은 폭을 쓴다.
+@mixin content-width {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: 2rem;
+}
+
+// Home 섹션이 스크롤 한 번에 한 화면씩만 보이게 한다. Nav가 4rem 높이의 sticky라 그만큼
+// 빼고, scroll-margin-top으로 스냅 위치를 맞춰야 다음 섹션 시작부가 Nav에 가리지 않는다.
+// 콘텐츠가 한 화면보다 길면 min-height라 그 섹션 안에서는 그냥 스크롤된다.
+@mixin full-viewport-section {
+  min-height: calc(100vh - 4rem);
+  scroll-margin-top: 4rem;
+  scroll-snap-align: start;
+}

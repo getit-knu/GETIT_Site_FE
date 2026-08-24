@@ -21,6 +21,14 @@ body,
   height: 100%;
 }
 
+/*
+ * 스크롤 스냅은 자식 요소가 scroll-snap-align을 선언해야만 실제로 동작해서, 여기 전역에
+ * 걸어도 그런 요소가 없는 화면(어드민 등)에는 영향이 없다. Home 섹션들만 opt-in 한다.
+ */
+html {
+  scroll-snap-type: y mandatory;
+}
+
 :root {
   /* 이 프로젝트는 라이트 테마만 지원한다 — 네이티브 폼 컨트롤(input/textarea/select 등)이
      OS 다크 모드를 따라가지 않도록 전역에서 한 번만 고정한다(컴포넌트마다 개별 지정하지 않는다). */

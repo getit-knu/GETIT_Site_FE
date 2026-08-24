@@ -1,0 +1,86 @@
+@use "../../styles/abstracts/variables" as *;
+@use "../../styles/abstracts/container";
+
+.section {
+  @include container.full-viewport-section;
+
+  display: flex;
+  align-items: center;
+  padding: 8rem 0;
+  background-color: $color-background;
+}
+
+.inner {
+  @include container.content-width;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  color: $color-heading;
+  font-size: 3.75rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  margin: 0;
+  color: $color-text-secondary;
+  font-size: 1.25rem;
+}
+
+.grid {
+  display: grid;
+  width: 100%;
+  margin-top: 5rem;
+  gap: 2rem;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.card {
+  border-radius: 1rem;
+  padding: 2.5rem;
+  background-color: $color-surface;
+}
+
+.semesterTitle {
+  margin: 0 0 1.25rem;
+  color: $color-accent;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.itemList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: $color-text-primary;
+  font-size: 1.125rem;
+}
+
+.dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background-color: $color-accent;
+}
