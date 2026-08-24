@@ -62,6 +62,7 @@ export const queryKeys = {
     board: (params: LectureListParams) => [...queryKeys.lectures.all, "board", params] as const,
     details: () => [...queryKeys.lectures.all, "detail"] as const,
     detail: (id: number) => [...queryKeys.lectures.details(), id] as const,
+    submission: (id: number) => [...queryKeys.lectures.all, "submission", id] as const,
   },
 
   /** 사이트 설정은 섹션이 한 덩어리로 오간다(10.20). 키를 쪼개지 않는다. */

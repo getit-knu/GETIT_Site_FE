@@ -1,5 +1,5 @@
 /**
- * 강의 관리 타입. API 명세서 8.1 · 8.5.
+ * 강의 관리 타입. API 명세서 8.1 · 8.5 · 8.7 ~ 8.10.
  *
  * BE 에 admin lecture 컨트롤러가 아직 없다. 스키마가 생기면 `generated.ts` 에서 가져온다.
  */
@@ -90,4 +90,64 @@ export interface LecturePayload {
   isPublished: boolean;
   fileIds: number[];
   assignment: Assignment | null;
+}
+
+/** 제출 상태 (명세서 0.4). 마감 뒤에 낸 것은 `LATE` 다. */
+export type SubmissionStatus = "SUBMITTED" | "LATE";
+
+/**
+ * 제출 파일 (8.7).
+ *
+ * **`previewable` 은 서버가 판정한다.** 이미지·PDF 만 인라인으로 볼 수 있고
+ * 그 외(zip, docx)는 `previewUrl` 이 `null` 이라 내려받기만 된다.
+ * FE 가 `contentType` 을 보고 다시 판정하면 서버와 기준이 갈린다.
+ */
+export interface SubmissionFile {
+  fileId: number;
+  fileName: string;
+  url: string;
+  previewUrl: string | null;
+  contentType: string;
+  size: number;
+  previewable: boolean;
+}
+
+/** 한 제출물에 여러 건이 달린다 (submission 1 : N feedback). */
+export interface Feedback {
+  id: number;
+  adminId: number;
+  adminName: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+/** 순차 탐색 위치 (8.7 · 8.10). 끝이면 그쪽 id 가 `null` 이다. */
+export interface SubmissionNavigation {
+  current: number;
+  total: number;
+  prevSubmissionId: number | null;
+  nextSubmissionId: number | null;
+}
+
+/** 8.7 응답. */
+export interface SubmissionDetail {
+  id: number;
+  lecture: { id: number; title: string };
+  user: { id: number; name: string; major: string };
+  file: SubmissionFile;
+  comment: string;
+  submittedAt: string;
+  status: SubmissionStatus;
+  feedbacks: Feedback[];
+  navigation: SubmissionNavigation;
+}
+
+/** 8.10. 목록 필터를 그대로 넘겨 같은 순서로 훑는다. */
+export interface NavigateParams {
+  lectureId: number;
+  currentSubmissionId: number;
+  submitted?: boolean;
+  feedbackDone?: boolean;
+  groupId?: number;
 }

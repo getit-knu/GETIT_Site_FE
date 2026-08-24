@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 
+import { FeedbackModal } from "../../components/lecture/FeedbackModal";
 import { LectureCard } from "../../components/lecture/LectureCard";
 import { LectureFormModal } from "../../components/lecture/LectureFormModal";
 import { Button } from "../../components/ui/Button/Button";
@@ -63,7 +64,14 @@ export default function LecturesPage() {
     removeLecture.mutate(lecture.id);
   }
 
-  // TODO: 제출 현황·피드백 모달은 #73 에서 붙인다.
+  /*
+    강의 카드의 '과제 피드백' 은 제출물 하나를 지목할 수 없다 — 8.7 은 submissionId 를
+    받는데 카드가 아는 것은 강의뿐이다. 실제 진입점은 제출 현황 표의 행이고,
+    그 표는 같은 이슈의 다른 PR 에 있다. 두 PR 이 모두 머지된 뒤 행에 버튼을 붙인다.
+    지금은 주소(`?modal=feedback&id={submissionId}`)로 열린다.
+
+    제출 현황 모달은 아직 별도 PR 이라 여기서는 준비 중으로 둔다.
+  */
   const notImplemented = (name: string) => () => window.alert(`${name} 화면은 준비 중입니다.`);
 
   if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
@@ -154,6 +162,10 @@ export default function LecturesPage() {
           tracks={data.tracks}
           onClose={closeModal}
         />
+      )}
+
+      {modal === "feedback" && modalId !== null && (
+        <FeedbackModal submissionId={modalId} onNavigate={(id) => openModal("feedback", id)} onClose={closeModal} />
       )}
     </div>
   );
