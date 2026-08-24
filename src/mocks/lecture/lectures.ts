@@ -2,10 +2,12 @@ import type {
   Lecture,
   LectureBoard,
   LectureDetail,
+  LectureFile,
   LectureListParams,
   LecturePayload,
   Track,
 } from "../../types/lecture";
+import { lookupUpload } from "../file/files";
 
 /** BE 에 admin lecture 컨트롤러가 아직 없어 화면을 먼저 만든다. */
 const TRACKS: Track[] = [
@@ -166,6 +168,22 @@ export async function fetchLectureDetail(id: number): Promise<LectureDetail> {
 
 let nextLectureId = 400;
 
+/** `fileIds` 를 파일 정보로 되살린다. 서버는 파일 레코드에서 이름·크기를 가져온다. */
+function filesOf(fileIds: number[]): LectureFile[] {
+  return fileIds.flatMap((fileId) => {
+    const uploaded = lookupUpload(fileId);
+    if (uploaded === undefined) return [];
+    return [
+      {
+        fileId,
+        displayName: uploaded.fileName,
+        url: `https://cdn.getit.com/${fileId}`,
+        size: uploaded.size,
+      },
+    ];
+  });
+}
+
 export async function createLecture(payload: LecturePayload): Promise<void> {
   await delay();
 
@@ -183,7 +201,7 @@ export async function createLecture(payload: LecturePayload): Promise<void> {
     feedbackDoneCount: 0,
     isPublished: payload.isPublished,
   });
-  details.set(id, { ...detailDefaults(), ...payload, files: [] });
+  details.set(id, { ...detailDefaults(), ...payload, files: filesOf(payload.fileIds) });
 }
 
 export async function updateLecture(id: number, payload: LecturePayload): Promise<void> {
@@ -207,6 +225,10 @@ export async function updateLecture(id: number, payload: LecturePayload): Promis
   details.set(id, {
     ...before,
     ...payload,
-    files: before.files.filter((f) => payload.fileIds.includes(f.fileId)),
+    files: [
+      ...before.files.filter((f) => payload.fileIds.includes(f.fileId)),
+      // 이번에 올린 것은 아직 목록에 없다.
+      ...filesOf(payload.fileIds.filter((id) => !before.files.some((f) => f.fileId === id))),
+    ],
   });
 }
