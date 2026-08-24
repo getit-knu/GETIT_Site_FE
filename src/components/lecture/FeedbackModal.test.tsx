@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -206,10 +206,17 @@ describe("FeedbackModal", () => {
     expect(onNavigate).not.toHaveBeenCalled();
   });
 
-  it("조회에 실패하면 오류와 재시도를 보여준다", async () => {
+  it("조회에 실패하면 제출물 도메인 문구와 재시도를 보여준다", async () => {
+    /*
+      문구까지 보지 않으면 엉뚱한 도메인의 함수를 써도 통과한다.
+      SUBMISSION_NOT_FOUND 는 피드백 표에 있고, 강의 문구를 쓰면 표에 없는 코드가 되어
+      "강의 목록을 불러오지 못했습니다" 가 뜬다.
+    */
     vi.mocked(api.getSubmissionDetail).mockRejectedValue({ code: "SUBMISSION_NOT_FOUND", message: "?" });
     renderModal();
 
-    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("제출물을 찾을 수 없습니다");
+    expect(within(alert).getByRole("button", { name: "다시 시도" })).toBeInTheDocument();
   });
 });

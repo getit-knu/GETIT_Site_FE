@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { feedbackErrorMessage, lectureErrorMessage } from "../../errors/lecture/errorMessages";
+import { feedbackErrorMessage } from "../../errors/lecture/errorMessages";
 import { useSaveFeedback, useSubmissionDetail } from "../../hooks/lecture/useFeedback";
 import { formatDateTime } from "../../libs/formatDate";
 import type { Feedback, SubmissionDetail } from "../../types/lecture";
@@ -157,10 +157,14 @@ export function FeedbackModal({ submissionId, onNavigate, onClose }: FeedbackMod
       <Modal isOpen onClose={onClose}>
         <ModalHeader title="과제 피드백" onClose={onClose} />
         <ModalBody>
+          {/*
+            제출물 코드(SUBMISSION_NOT_FOUND 등)는 피드백 표에 있다.
+            강의 문구를 쓰면 표에 없는 코드가 되어 "강의 목록을 불러오지 못했습니다" 가 뜬다.
+          */}
           {isPending ? (
             <p className={styles.hint}>불러오는 중…</p>
           ) : (
-            <ErrorState message={lectureErrorMessage(error)} onRetry={() => void refetch()} />
+            <ErrorState message={feedbackErrorMessage(error)} onRetry={() => void refetch()} />
           )}
         </ModalBody>
       </Modal>
