@@ -76,6 +76,14 @@ export const queryKeys = {
     board: () => [...queryKeys.groups.all, "board"] as const,
   },
 
+  /** 지원 시스템 설정. 세 영역이 각자 조회한다. */
+  recruitment: {
+    all: ["recruitment"] as const,
+    schedule: () => [...queryKeys.recruitment.all, "schedule"] as const,
+    questions: () => [...queryKeys.recruitment.all, "questions"] as const,
+    criteria: () => [...queryKeys.recruitment.all, "criteria"] as const,
+  },
+
   auth: {
     all: ["auth"] as const,
     /** 로그인한 사용자 본인. 권한 판단의 유일한 출처다. */

@@ -1,221 +1,73 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-import { exportApplicants } from "../../apis/application/applicationsApi";
-import { ApplicationDetailModal } from "../../components/application/ApplicationDetailModal";
-import { Badge } from "../../components/ui/Badge/Badge";
-import { Button } from "../../components/ui/Button/Button";
-import { DataTable, type Column } from "../../components/ui/DataTable/DataTable";
-import { Input } from "../../components/ui/Input/Input";
-import { Pagination } from "../../components/ui/Pagination/Pagination";
-import { Select } from "../../components/ui/Select/Select";
-import { EmptyState, ErrorState, TableSkeleton } from "../../components/ui/states/States";
-import { applicationErrorMessage, applicationExportErrorMessage } from "../../errors/application/errorMessages";
-import { useApplicants, useUpdateStatus } from "../../hooks/application/useApplicants";
-import {
-  EVALUATED_CHOICES,
-  useApplicantFilters,
-  type EvaluatedChoice,
-} from "../../hooks/application/useApplicantFilters";
-import { useDebouncedValue } from "../../hooks/ui/useDebouncedValue";
-import { useModalParams } from "../../hooks/ui/useModalParams";
-import { formatDateTime } from "../../libs/formatDate";
-import { APPLICATION_STATUSES, type Applicant, type ApplicationStatus } from "../../types/application";
+import { ApplicantsTab } from "../../components/application/ApplicantsTab";
+import { CriteriaSection } from "../../components/recruitment/CriteriaSection";
+import { QuestionsSection } from "../../components/recruitment/QuestionsSection";
+import { ScheduleSection } from "../../components/recruitment/ScheduleSection";
+import { useSchedule } from "../../hooks/recruitment/useRecruitment";
+import { useTableParams } from "../../hooks/ui/useTableParams";
 
 import styles from "./ApplicationsPage.module.scss";
 
-const PAGE_SIZE = 10;
+const TABS = ["applicants", "settings"] as const;
 
-const STATUS_LABEL: Record<ApplicationStatus, string> = {
-  SUBMITTED: "제출",
-  DOC_PASS: "서류 합격",
-  DOC_FAIL: "서류 불합격",
+const TAB_LABEL: Record<(typeof TABS)[number], string> = {
+  applicants: "지원자 목록",
+  settings: "지원 시스템 설정",
 };
 
-const STATUS_TABS: { value: ApplicationStatus | undefined; label: string }[] = [
-  { value: undefined, label: "전체" },
-  ...APPLICATION_STATUSES.map((s) => ({ value: s, label: STATUS_LABEL[s] })),
-];
+/**
+ * 모집이 시작되면 설정을 잠근다.
+ *
+ * 서버도 `409 RECRUITMENT_ALREADY_STARTED` 로 막지만(명세서 6절), 눌러 보고 알게 하면
+ * 무엇을 잘못했는지 찾기 어렵다. 시작 시각이 지났으면 입력칸부터 비활성으로 둔다.
+ */
+function useSettingsLocked() {
+  const { data } = useSchedule();
+  // 현재 시각은 렌더 중에 읽으면 안 된다(두 렌더가 달라진다). 마운트 때 한 번만 잡는다.
+  // 화면을 열어 둔 채 모집 시작 시각을 넘기는 경우는 새로고침하면 반영된다.
+  const [openedAt] = useState(() => Date.now());
 
-const EVALUATED_LABEL: Record<EvaluatedChoice, string> = {
-  all: "평가 전체",
-  done: "평가 완료",
-  todo: "미평가",
-};
+  if (!data) return false;
+  return new Date(data.totalStartAt).getTime() <= openedAt;
+}
 
-const EVALUATED_OPTIONS = EVALUATED_CHOICES.map((value) => ({ value, label: EVALUATED_LABEL[value] }));
-
-/** 와이어프레임 p7. */
+/** 와이어프레임 p7 · p6. */
 export default function ApplicationsPage() {
-  const { status, evaluatedChoice, evaluated, keyword, page, update } = useApplicantFilters();
-
-  // 입력 중에는 URL 을 건드리지 않는다. 글자마다 주소가 바뀌면 기록이 지저분해진다.
-  const [draftKeyword, setDraftKeyword] = useState(keyword);
-  const settledKeyword = useDebouncedValue(draftKeyword);
-
-  // 타이핑이 멈추면 그때 URL 에 옮긴다. 그래야 새로고침·링크 공유에도 검색어가 남는다.
-  useEffect(() => {
-    if (settledKeyword !== keyword) update({ keyword: settledKeyword });
-  }, [settledKeyword, keyword, update]);
-
-  const { data, isPending, isError, error, refetch } = useApplicants({
-    status,
-    evaluated,
-    keyword: keyword || undefined,
-    page,
-    size: PAGE_SIZE,
-  });
-
-  const { modal, id: openedId, openModal, closeModal } = useModalParams();
-  const updateStatus = useUpdateStatus();
-  const [exportError, setExportError] = useState<string | null>(null);
-
-  async function handleExport() {
-    setExportError(null);
-    try {
-      await exportApplicants();
-    } catch (caught) {
-      // 문구는 BE ErrorCode 에서 가져온다. FE 가 코드를 새로 짓지 않는다.
-      setExportError(applicationExportErrorMessage(caught));
-    }
-  }
-
-  const columns: Column<Applicant>[] = [
-    {
-      header: "이름",
-      width: "6rem",
-      render: (a) => (
-        <button type="button" className={styles.nameButton} onClick={() => openModal("application", a.id)}>
-          {a.applicantName}
-        </button>
-      ),
-    },
-    { header: "소속", render: (a) => `${a.college} ${a.major}`, width: "14rem" },
-    { header: "학년", render: (a) => `${a.grade}학년`, width: "5rem", align: "center" },
-    {
-      header: "총점",
-      width: "5rem",
-      align: "center",
-      // 평가 전에는 점수가 없다. 0 점으로 보이면 안 된다.
-      render: (a) => (a.totalScore === null ? <span className={styles.none}>—</span> : a.totalScore),
-    },
-    {
-      header: "평가",
-      width: "6rem",
-      align: "center",
-      render: (a) => <Badge variant={a.evaluated ? "neutral" : "info"}>{a.evaluated ? "완료" : "미평가"}</Badge>,
-    },
-    {
-      header: "상태",
-      width: "7rem",
-      align: "center",
-      render: (a) => <Badge variant={a.status === "DOC_FAIL" ? "neutral" : "accent"}>{STATUS_LABEL[a.status]}</Badge>,
-    },
-    { header: "제출일", render: (a) => formatDateTime(a.submittedAt), width: "10rem" },
-    {
-      header: "합·불",
-      width: "8rem",
-      align: "center",
-      render: (a) => (
-        <div className={styles.decision}>
-          <button
-            type="button"
-            className={a.passed === true ? styles.passActive : styles.pass}
-            aria-label={`${a.applicantName} 합격 처리`}
-            aria-pressed={a.passed === true}
-            disabled={updateStatus.isPending}
-            onClick={() => updateStatus.mutate({ id: a.id, passed: true })}
-          >
-            합격
-          </button>
-          <button
-            type="button"
-            className={a.passed === false ? styles.failActive : styles.fail}
-            aria-label={`${a.applicantName} 불합격 처리`}
-            aria-pressed={a.passed === false}
-            disabled={updateStatus.isPending}
-            onClick={() => updateStatus.mutate({ id: a.id, passed: false })}
-          >
-            불합격
-          </button>
-        </div>
-      ),
-    },
-  ];
+  const { filter: tab, setFilter: setTab } = useTableParams("tab", TABS);
+  const active = tab ?? "applicants";
+  const locked = useSettingsLocked();
 
   return (
     <div className={styles.page}>
-      <div className={styles.toolbar}>
-        <div className={styles.tabs} role="tablist" aria-label="지원 상태">
-          {STATUS_TABS.map((tab) => (
-            <button
-              key={tab.label}
-              type="button"
-              role="tab"
-              aria-selected={status === tab.value}
-              className={status === tab.value ? styles.tabActive : styles.tab}
-              onClick={() => update({ status: tab.value })}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        <div className={styles.filters}>
-          <Input value={draftKeyword} onChange={setDraftKeyword} placeholder="이름 검색" ariaLabel="지원자 이름 검색" />
-          <Select
-            ariaLabel="평가 여부"
-            value={evaluatedChoice}
-            options={EVALUATED_OPTIONS}
-            onChange={(next) => update({ evaluated: next })}
-          />
-          <Button variant="secondary" onClick={() => void handleExport()}>
-            엑셀 다운로드
-          </Button>
-        </div>
+      <div className={styles.tabs} role="tablist" aria-label="지원서 관리">
+        {TABS.map((value) => (
+          <button
+            key={value}
+            type="button"
+            role="tab"
+            aria-selected={active === value}
+            className={active === value ? styles.tabActive : styles.tab}
+            onClick={() => setTab(value)}
+          >
+            {TAB_LABEL[value]}
+          </button>
+        ))}
       </div>
 
-      {exportError && <ErrorState message={exportError} onRetry={() => void handleExport()} />}
-
-      {isPending && <TableSkeleton columns={columns.length} rows={PAGE_SIZE} />}
-
-      {isError && <ErrorState message={applicationErrorMessage(error)} onRetry={() => void refetch()} />}
-
-      {data && data.content.length === 0 && data.totalElements === 0 && (
-        <EmptyState
-          message={
-            keyword || status || evaluated !== undefined
-              ? "조건에 맞는 지원자가 없습니다."
-              : "접수된 지원서가 없습니다."
-          }
-        />
-      )}
-
-      {data && data.content.length === 0 && data.totalElements > 0 && (
-        <EmptyState
-          message={`이 페이지에는 지원자가 없습니다. 전체 ${data.totalElements}명은 ${data.totalPages}페이지까지 있습니다.`}
-          action={
-            <button type="button" className={styles.backToFirst} onClick={() => update({ page: 0 })}>
-              첫 페이지로
-            </button>
-          }
-        />
-      )}
-
-      {data && data.content.length > 0 && (
-        <>
-          <DataTable columns={columns} rows={data.content} rowKey={(a) => a.id} caption="지원자 목록" />
-          <Pagination page={data.page} totalPages={data.totalPages} onChange={(next) => update({ page: next })} />
-        </>
-      )}
-
-      {modal === "application" && openedId !== null && (
-        <ApplicationDetailModal
-          applicationId={openedId}
-          // 순차 탐색이 목록과 같은 순서를 따르려면 필터를 그대로 넘겨야 한다(명세서 7.5).
-          listParams={{ status, evaluated, keyword: keyword || undefined }}
-          onNavigate={(next) => openModal("application", next)}
-          onClose={closeModal}
-        />
+      {active === "applicants" ? (
+        <ApplicantsTab />
+      ) : (
+        <div className={styles.settings}>
+          {locked && (
+            <p className={styles.lockNotice} role="status">
+              모집이 시작되어 설정을 수정할 수 없습니다.
+            </p>
+          )}
+          <ScheduleSection locked={locked} />
+          <QuestionsSection locked={locked} />
+          <CriteriaSection locked={locked} />
+        </div>
       )}
     </div>
   );
