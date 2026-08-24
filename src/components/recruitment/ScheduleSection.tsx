@@ -26,6 +26,9 @@ function invalidReason(draft: SchedulePayload): string | null {
   if (draft.documentStartAt >= draft.documentEndAt) return "서류 시작은 마감보다 빨라야 합니다.";
   if (draft.documentEndAt > draft.totalEndAt) return "서류 마감은 전체 종료 안에 있어야 합니다.";
   if (draft.documentEndAt > draft.interviewStartAt) return "면접은 서류 마감 뒤에 시작해야 합니다.";
+  // 서류·면접이 전체 기간 밖으로 나가면 공개 사이트의 단계 표기가 어긋난다.
+  if (draft.documentStartAt < draft.totalStartAt) return "서류 접수는 전체 시작 뒤에 열려야 합니다.";
+  if (draft.interviewStartAt > draft.totalEndAt) return "면접은 전체 종료 안에 시작해야 합니다.";
   return null;
 }
 
