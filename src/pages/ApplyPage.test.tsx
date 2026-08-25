@@ -51,6 +51,12 @@ describe("ApplyPage", () => {
     expect(screen.queryByRole("option", { name: "기계공학과" })).not.toBeInTheDocument();
   });
 
+  it("학번은 10자까지만 입력할 수 있다", () => {
+    render(<ApplyPage />);
+
+    expect(screen.getByLabelText("학번(10자) *")).toHaveAttribute("maxlength", "10");
+  });
+
   it("단과 대학을 바꾸면 이미 고른 전공이 초기화된다", () => {
     render(<ApplyPage />);
 

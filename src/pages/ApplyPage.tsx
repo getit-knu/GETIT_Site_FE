@@ -149,6 +149,7 @@ export default function ApplyPage() {
                     value={form.studentId}
                     onChange={update("studentId")}
                     placeholder="2021123456"
+                    maxLength={10}
                   />
                 </div>
               </section>
