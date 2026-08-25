@@ -1,0 +1,99 @@
+@use "../../styles/abstracts/variables" as *;
+
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: none;
+  border-radius: 1rem;
+  background-color: $color-background;
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 10%),
+    0 4px 6px -4px rgb(0 0 0 / 10%);
+}
+
+.thumbnail {
+  height: 12rem;
+  flex-shrink: 0;
+  background-size: cover;
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 1.5rem;
+}
+
+.meta {
+  margin: 0;
+  color: $color-text-secondary;
+  font-size: 0.875rem;
+}
+
+.title {
+  margin: 0.75rem 0 0;
+  color: $color-heading;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.description {
+  margin: 0.75rem 0 0;
+  color: $color-text-secondary;
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+
+  // 카드 높이를 맞추기 위해 설명은 2줄로 잘라낸다. 목업 설명 길이가 제각각이라
+  // Figma처럼 수동 줄바꿈을 넣는 대신 clamp로 처리한다.
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.techStack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0;
+  margin: 1rem 0 0;
+  list-style: none;
+}
+
+.actions {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  gap: 0.75rem;
+  padding-top: 1.5rem;
+}
+
+.codeLink,
+.demoLink {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.625rem;
+  padding: 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 500;
+  text-decoration: none;
+
+  svg {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+}
+
+.codeLink {
+  background-color: $color-disabled-bg;
+  color: $color-heading;
+}
+
+.demoLink {
+  background-color: $color-accent;
+  color: $color-background;
+}

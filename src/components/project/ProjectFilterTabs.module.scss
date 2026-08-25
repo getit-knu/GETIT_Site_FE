@@ -1,0 +1,38 @@
+@use "../../styles/abstracts/variables" as *;
+
+.tabs {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.tab {
+  border: none;
+  border-radius: 9999px;
+  padding: 0.5rem 1.5rem;
+  background-color: $color-disabled-bg;
+  color: $color-text-primary;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    background-color: rgb(40 57 151 / 12%);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-accent;
+    outline-offset: 2px;
+  }
+}
+
+.active {
+  background-color: $color-accent;
+  color: $color-background;
+
+  &:hover {
+    background-color: $color-accent;
+  }
+}

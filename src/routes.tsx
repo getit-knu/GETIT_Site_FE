@@ -36,7 +36,10 @@ const areaRoutes: RouteObject[] = [
   // 콜백·403은 Nav/Footer가 필요 없는 화면이라 PublicLayout 밖에 둔다.
   {
     lazy: layout(() => import("./components/layout/PublicLayout"), "PublicLayout"),
-    children: [{ path: "/", lazy: page(() => import("./pages/HomePage")) }],
+    children: [
+      { path: "/", lazy: page(() => import("./pages/HomePage")) },
+      { path: "/projects", lazy: page(() => import("./pages/ProjectsPage")) },
+    ],
   },
   { path: "/oauth/callback", lazy: page(() => import("./pages/OAuthCallbackPage")) },
   { path: "/403", lazy: page(() => import("./pages/ForbiddenPage")) },
