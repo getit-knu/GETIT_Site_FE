@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { createBrowserRouter, type RouteObject } from "react-router";
+import { createBrowserRouter, Outlet, ScrollRestoration, type RouteObject } from "react-router";
 
 import { RequireRole } from "./components/auth/RequireRole";
 
@@ -82,12 +82,22 @@ const areaRoutes: RouteObject[] = [
  *
  * 첫 진입 때는 해당 페이지 청크를 아직 받는 중이라 그릴 것이 없다.
  * `HydrateFallback` 을 주지 않으면 라우터가 그 틈에 무엇을 그릴지 몰라 경고를 낸다.
- * `element` 를 비워 두면 라우터가 `<Outlet />` 을 대신 그린다.
+ *
+ * `createBrowserRouter`는 페이지 전환 시 스크롤 위치를 알아서 맨 위로 돌려주지 않는다 —
+ * `<ScrollRestoration />`을 라우터 트리 안에 직접 그려야 동작한다(react-router 데이터
+ * 라우터 API의 opt-in 기능). 그래서 여기서는 `element` 를 비워 두는 대신 `Outlet`과
+ * 나란히 그린다.
  */
 const routes: RouteObject[] = [
   {
     // TODO(A-3): 전체 화면 로딩 컴포넌트로 교체한다.
     HydrateFallback: () => null,
+    Component: () => (
+      <>
+        <ScrollRestoration />
+        <Outlet />
+      </>
+    ),
     children: areaRoutes,
   },
 ];
