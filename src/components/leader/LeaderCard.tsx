@@ -15,13 +15,15 @@ const PHOTO_GRADIENTS = [
 
 interface LeaderCardProps {
   staff: Staff;
+  /** Leader(회장단)만 회장·부회장·총무 구분이 의미 있어 역할을 보여준다. Staff는 안 보여준다. */
+  showRole?: boolean;
 }
 
 /**
  * Instagram · GitHub 아이콘은 실제로는 사람마다 다른 계정으로 연결돼야 하지만,
  * `Staff` 타입에 아직 그 URL 필드가 없어 지금은 장식용으로만 보여준다.
  */
-export function LeaderCard({ staff }: LeaderCardProps) {
+export function LeaderCard({ staff, showRole = true }: LeaderCardProps) {
   const gradient = PHOTO_GRADIENTS[(staff.order - 1) % PHOTO_GRADIENTS.length];
 
   return (
@@ -43,7 +45,7 @@ export function LeaderCard({ staff }: LeaderCardProps) {
             />
           </svg>
         </div>
-        <p className={styles.role}>{staff.staffRole}</p>
+        {showRole && <p className={styles.role}>{staff.staffRole}</p>}
         <p className={styles.department}>{staff.department}</p>
       </div>
     </div>
