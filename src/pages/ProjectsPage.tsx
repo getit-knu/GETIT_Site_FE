@@ -1,18 +1,21 @@
 import { useState } from "react";
 
 import { ProjectCard } from "../components/project/ProjectCard";
+import { ProjectDetailModal } from "../components/project/ProjectDetailModal";
 import {
   ALL_PROJECTS_FILTER,
   ProjectFilterTabs,
   type ProjectFilterValue,
 } from "../components/project/ProjectFilterTabs";
 import { PROJECTS } from "../mocks/project/projects";
+import type { Project } from "../types/project";
 
 import styles from "./ProjectsPage.module.scss";
 
 /** 전체 프로젝트 목록. Figma 와이어프레임(`4:2730`) 기준. */
 export default function ProjectsPage() {
   const [filter, setFilter] = useState<ProjectFilterValue>(ALL_PROJECTS_FILTER);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   const projects =
     filter === ALL_PROJECTS_FILTER ? PROJECTS : PROJECTS.filter((project) => project.semester === filter);
@@ -30,11 +33,13 @@ export default function ProjectsPage() {
         <ul className={styles.grid}>
           {projects.map((project) => (
             <li key={project.id}>
-              <ProjectCard project={project} />
+              <ProjectCard project={project} onClick={() => setSelectedProject(project)} />
             </li>
           ))}
         </ul>
       </div>
+
+      <ProjectDetailModal project={selectedProject} onClose={() => setSelectedProject(null)} />
     </div>
   );
 }
