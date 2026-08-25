@@ -18,7 +18,7 @@ interface LeaderCardProps {
 }
 
 /**
- * Instagram · Github 아이콘은 실제로는 사람마다 다른 계정으로 연결돼야 하지만,
+ * Instagram · GitHub 아이콘은 실제로는 사람마다 다른 계정으로 연결돼야 하지만,
  * `Staff` 타입에 아직 그 URL 필드가 없어 지금은 장식용으로만 보여준다.
  */
 export function LeaderCard({ staff }: LeaderCardProps) {
