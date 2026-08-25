@@ -21,4 +21,19 @@ describe("ProjectsPage", () => {
     const fallProjects = PROJECTS.filter((project) => project.semester === "2025 Fall");
     expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(fallProjects.length);
   });
+
+  it("카드를 클릭하면 상세 모달이 열리고, 닫기를 누르면 닫힌다", () => {
+    render(<ProjectsPage />);
+    const project = PROJECTS[0];
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("heading", { name: project.title, level: 3 }));
+
+    expect(screen.getByRole("dialog", { name: project.title })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "닫기" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
 });
