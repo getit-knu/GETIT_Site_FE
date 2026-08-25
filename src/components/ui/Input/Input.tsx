@@ -3,7 +3,7 @@ import clsx from "clsx";
 
 import styles from "./Input.module.scss";
 
-type InputType = "text" | "email" | "password" | "number" | "datetime-local";
+type InputType = "text" | "email" | "password" | "number" | "date" | "datetime-local";
 
 interface InputProps {
   label?: string;

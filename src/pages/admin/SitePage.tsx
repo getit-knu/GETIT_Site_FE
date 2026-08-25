@@ -7,6 +7,8 @@ import { siteErrorMessage, siteSaveErrorMessage } from "../../errors/site/errorM
 import { useSaveSiteSettings, useSiteSettings } from "../../hooks/site/useSiteSettings";
 import type { SiteSettings } from "../../types/site";
 
+import { ContentSections } from "./site/ContentSections";
+import { contentInvalidReason, fromDrafts, toDrafts } from "./site/contentDraft";
 import { invalidReason, SCHEDULE_FIELDS, toDraft, toSchedule } from "./site/scheduleDraft";
 import type { ScheduleDraft } from "./site/scheduleDraft";
 import { TracksSection } from "./site/TracksSection";
@@ -20,10 +22,16 @@ function SiteForm({ settings }: { settings: SiteSettings }) {
   const [year, setYear] = useState(String(settings.generation.year));
   const [schedule, setSchedule] = useState<ScheduleDraft>(() => toDraft(settings.schedule));
   const [tracks, setTracks] = useState<TrackDraft[]>(() => toTrackDrafts(settings.tracks));
+  const [curriculums, setCurriculums] = useState(() => toDrafts(settings.curriculums));
+  const [events, setEvents] = useState(() => toDrafts(settings.events));
+  const [faqs, setFaqs] = useState(() => toDrafts(settings.faqs));
   const save = useSaveSiteSettings();
 
   // 섹션이 늘어나면 이유도 늘어난다. 먼저 걸리는 것 하나만 보여준다.
-  const reason = invalidReason(generationNo, year, schedule) ?? tracksInvalidReason(tracks);
+  const reason =
+    invalidReason(generationNo, year, schedule) ??
+    tracksInvalidReason(tracks) ??
+    contentInvalidReason(curriculums, events, faqs);
 
   /**
    * 값을 고치면 지난 저장 결과를 지운다.
@@ -40,15 +48,11 @@ function SiteForm({ settings }: { settings: SiteSettings }) {
     save.mutate({
       generation: { generationNo: Number(generationNo), year: Number(year) },
       schedule: toSchedule(schedule),
+      // 이제 모든 섹션이 편집 대상이다. 10.20 은 화면 전체 상태를 한 트랜잭션으로 반영한다.
       tracks: toTracks(tracks),
-      /*
-        아직 편집 화면이 없는 섹션들이다. 10.20 은 개별 CRUD 가 아니라 화면 전체 상태를
-        한 트랜잭션으로 반영하므로, 빼고 보내면 **서버에서 지워진다.**
-        받은 그대로 되돌려 보낸다. 편집 UI 는 뒤따르는 이슈에서 붙인다.
-      */
-      curriculums: settings.curriculums,
-      events: settings.events,
-      faqs: settings.faqs,
+      curriculums: fromDrafts(curriculums),
+      events: fromDrafts(events),
+      faqs: fromDrafts(faqs),
     });
   }
 
@@ -80,6 +84,15 @@ function SiteForm({ settings }: { settings: SiteSettings }) {
       </section>
 
       <TracksSection tracks={tracks} onChange={setTracks} />
+
+      <ContentSections
+        curriculums={curriculums}
+        events={events}
+        faqs={faqs}
+        onCurriculumsChange={setCurriculums}
+        onEventsChange={setEvents}
+        onFaqsChange={setFaqs}
+      />
 
       <div className={styles.footer}>
         {/* 저장을 막는 이유를 미리 보여준다. 눌러 보고 알게 하지 않는다. */}
