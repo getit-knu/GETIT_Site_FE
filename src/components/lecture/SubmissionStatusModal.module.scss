@@ -1,0 +1,38 @@
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  margin-bottom: 0.75rem;
+  background-color: var(--admin-hover);
+  color: var(--admin-text-muted);
+  font-size: 0.8125rem;
+
+  strong {
+    color: var(--admin-text);
+    font-weight: 600;
+  }
+}
+
+.deadline {
+  margin-left: auto;
+}
+
+.backToFirst {
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 0.375rem;
+  background-color: var(--admin-surface);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8125rem;
+}

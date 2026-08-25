@@ -5,16 +5,28 @@ import {
   deleteLecture,
   getLectureDetail,
   getLectures,
+  getSubmissions,
   updateLecture,
 } from "../../apis/lecture/lecturesApi";
 import { queryKeys } from "../../apis/queryKeys";
-import type { LectureListParams, LecturePayload } from "../../types/lecture";
+import type { LectureListParams, LecturePayload, SubmissionListParams } from "../../types/lecture";
 
 export function useLectureBoard(params: LectureListParams) {
   return useQuery({
     queryKey: queryKeys.lectures.board(params),
     queryFn: () => getLectures(params),
     // 탭을 옮길 때 화면이 비었다가 다시 차지 않도록 이전 결과를 유지한다.
+    placeholderData: (previous) => previous,
+  });
+}
+
+/** 8.6. 강의를 고르지 않았으면(`null`) 조회하지 않는다. */
+export function useSubmissions(params: SubmissionListParams | null) {
+  return useQuery({
+    queryKey: queryKeys.lectures.submissions(params ?? { lectureId: 0 }),
+    queryFn: () => getSubmissions(params as SubmissionListParams),
+    enabled: params !== null,
+    // 필터를 바꿀 때 표가 비었다가 다시 차지 않도록 이전 결과를 유지한다.
     placeholderData: (previous) => previous,
   });
 }

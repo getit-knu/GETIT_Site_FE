@@ -1,5 +1,6 @@
 import * as feedbackMock from "../../mocks/lecture/feedbacks";
 import * as mock from "../../mocks/lecture/lectures";
+import * as submissionMock from "../../mocks/lecture/submissions";
 import type {
   Feedback,
   LectureBoard,
@@ -7,12 +8,14 @@ import type {
   LectureListParams,
   LecturePayload,
   NavigateParams,
+  SubmissionBoard,
   SubmissionDetail,
+  SubmissionListParams,
   SubmissionNavigation,
 } from "../../types/lecture";
 
 /**
- * 강의 관리 API. 명세서 8.1 · 8.5 · 8.7 ~ 8.10.
+ * 강의 관리 API. 명세서 8.1 · 8.5 ~ 8.10.
  *
  * **아직 목 데이터를 돌려준다.** 연동 이슈에서 `mock.*` 만 `client.*` 로 바꾸면 된다.
  */
@@ -31,6 +34,10 @@ export const createLecture = (payload: LecturePayload): Promise<void> => mock.cr
 
 /** `PUT /api/admin/lectures/{id}` */
 export const updateLecture = (id: number, payload: LecturePayload): Promise<void> => mock.updateLecture(id, payload);
+
+/** `GET /api/admin/lectures/{id}/submissions?submitted=&feedbackDone=&groupId=&page=` */
+export const getSubmissions = (params: SubmissionListParams): Promise<SubmissionBoard> =>
+  submissionMock.fetchSubmissions(params);
 
 /** `GET /api/admin/submissions/{id}` */
 export const getSubmissionDetail = (id: number): Promise<SubmissionDetail> => feedbackMock.fetchSubmissionDetail(id);

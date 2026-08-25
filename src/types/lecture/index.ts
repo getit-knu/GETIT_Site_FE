@@ -1,8 +1,10 @@
 /**
- * 강의 관리 타입. API 명세서 8.1 · 8.5 · 8.7 ~ 8.10.
+ * 강의 관리 타입. API 명세서 8.1 · 8.5 ~ 8.10.
  *
  * BE 에 admin lecture 컨트롤러가 아직 없다. 스키마가 생기면 `generated.ts` 에서 가져온다.
  */
+import type { Page } from "../qna";
+
 export interface SubCategory {
   id: number;
   name: string;
@@ -92,8 +94,47 @@ export interface LecturePayload {
   assignment: Assignment | null;
 }
 
-/** 제출 상태 (명세서 0.4). 마감 뒤에 낸 것은 `LATE` 다. */
+/** 제출 상태 (명세서 0.4). 마감 뒤에 낸 것은 `LATE` 다 — 낸 것과 같이 볼 수 없다. */
 export type SubmissionStatus = "SUBMITTED" | "LATE";
+
+/**
+ * 제출 현황 한 행 (8.6).
+ *
+ * **미제출자도 행으로 온다.** 그래서 제출물에 딸린 값은 전부 `null` 일 수 있다.
+ * 대상은 해당 기수의 활동 중인 부원 전체다.
+ */
+export interface SubmissionRow {
+  userId: number;
+  userName: string;
+  major: string;
+  submissionId: number | null;
+  submitted: boolean;
+  status: SubmissionStatus | null;
+  submittedAt: string | null;
+  feedbackDone: boolean;
+}
+
+/** 필터를 걸어도 **전체 기준** 집계다. 서버가 계산해 준다. */
+export interface SubmissionCounts {
+  submitted: number;
+  notSubmitted: number;
+  total: number;
+}
+
+/** 8.6 응답. 목록에 강의 정보와 집계가 함께 실려 온다. */
+export interface SubmissionBoard extends Page<SubmissionRow> {
+  lecture: { id: number; title: string; deadline: string };
+  counts: SubmissionCounts;
+}
+
+export interface SubmissionListParams {
+  lectureId: number;
+  /** 셋 다 `undefined` 면 전체다. */
+  submitted?: boolean;
+  feedbackDone?: boolean;
+  groupId?: number;
+  page?: number;
+}
 
 /**
  * 제출 파일 (8.7).
