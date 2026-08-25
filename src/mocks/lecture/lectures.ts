@@ -121,18 +121,42 @@ export async function fetchLectures(params: LectureListParams): Promise<LectureB
   return { tracks: structuredClone(TRACKS), lectures };
 }
 
+/**
+ * 강의 하나의 요약. 제출 현황 목(8.6)이 강의 정보를 여기서 가져간다.
+ *
+ * **목록과 같은 저장소를 봐야 한다.** 따로 표를 두면 새로 만든 강의가 제출 현황에서
+ * `LECTURE_NOT_FOUND` 가 되고, 제목·마감을 고쳐도 반영되지 않는다.
+ */
+export function lookupLecture(
+  id: number,
+): { id: number; title: string; deadline: string; generationId: number } | undefined {
+  const found = ALL.find((l) => l.id === id);
+  if (found === undefined) return undefined;
+
+  return {
+    id: found.id,
+    title: found.title,
+    deadline: found.deadline,
+    // 상세를 아직 만들지 않은 강의는 기본 기수를 쓴다.
+    generationId: details.get(id)?.generationId ?? DEFAULT_GENERATION_ID,
+  };
+}
+
 export async function deleteLecture(id: number): Promise<void> {
   await delay();
   const at = ALL.findIndex((l) => l.id === id);
   if (at >= 0) ALL.splice(at, 1);
 }
 
+/** 진행 기수. 목 전체가 이 기수로 돌아간다. */
+const DEFAULT_GENERATION_ID = 9;
+
 /** 8.2 · 8.4 가 다루는 값. 목록 응답에는 없는 것들이라 따로 들고 있는다. */
 const details = new Map<number, Omit<LectureDetail, "id" | "week" | "title">>();
 
 function detailDefaults(): Omit<LectureDetail, "id" | "week" | "title"> {
   return {
-    generationId: 9,
+    generationId: DEFAULT_GENERATION_ID,
     trackId: 1,
     subCategoryId: 1,
     description: "## 학습 구성\n기본 개념을 다룹니다.",

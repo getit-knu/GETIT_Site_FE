@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { fetchGroups } from "../group/groups";
+
+import { createLecture, fetchLectures, updateLecture } from "./lectures";
 import { fetchSubmissions } from "./submissions";
 
 /**
@@ -47,8 +50,9 @@ describe("fetchSubmissions", () => {
     const feedback = await fetchSubmissions({ lectureId: 101, feedbackDone: true });
     expect(feedback.content.every((row) => row.feedbackDone)).toBe(true);
 
+    // 조 배정은 조 편성 목을 따른다 — 2조 = 24 · 25.
     const group = await fetchSubmissions({ lectureId: 101, groupId: 2 });
-    expect(group.content.map((row) => row.userId)).toEqual([23, 24]);
+    expect(group.content.map((row) => row.userId)).toEqual([24, 25]);
   });
 
   it("강의마다 제출 내역이 다르다", async () => {
@@ -61,5 +65,84 @@ describe("fetchSubmissions", () => {
 
   it("없는 강의는 LECTURE_NOT_FOUND 로 거절한다", async () => {
     await expect(fetchSubmissions({ lectureId: 999 })).rejects.toMatchObject({ code: "LECTURE_NOT_FOUND" });
+  });
+
+  it("조 배정이 조 편성 목과 같다", async () => {
+    /*
+      두 목이 어긋나면 조 필터로 고른 조에 엉뚱한 사람이 나오고, 목에만 있는 조는
+      선택지에 없어 확인조차 못 한다.
+    */
+    const { groups } = await fetchGroups();
+    const board = await fetchSubmissions({ lectureId: 101 });
+    const shown = new Set(board.content.map((row) => row.userId));
+
+    for (const group of groups) {
+      const filtered = await fetchSubmissions({ lectureId: 101, groupId: group.id });
+      const expected = group.members.map((m) => m.userId).filter((id) => shown.has(id));
+
+      expect(filtered.content.map((row) => row.userId)).toEqual(expected);
+    }
+  });
+
+  it("다른 기수의 부원은 섞이지 않는다", async () => {
+    // 대상 모집단은 강의 기수의 활동 부원이다(명세서 8.6).
+    const board = await fetchSubmissions({ lectureId: 101 });
+
+    // 8기 부원(11 · 12)은 9기 강의에 나오면 안 된다.
+    expect(board.content.map((row) => row.userId)).not.toContain(11);
+    expect(board.content.map((row) => row.userId)).not.toContain(12);
+    expect(board.counts.total).toBe(6);
+  });
+
+  it("새로 만든 강의도 제출 현황이 열린다", async () => {
+    // 강의 표를 따로 두면 새 강의가 LECTURE_NOT_FOUND 가 된다.
+    await createLecture({
+      trackId: 1,
+      subCategoryId: null,
+      week: 12,
+      title: "새로 만든 강의",
+      description: "",
+      youtubeUrl: "",
+      materialUrl: "",
+      durationMinutes: null,
+      isPublished: false,
+      fileIds: [],
+      assignment: null,
+    });
+    const board = await fetchLectures({});
+    const made = board.lectures.find((l) => l.title === "새로 만든 강의");
+
+    const submissions = await fetchSubmissions({ lectureId: made!.id });
+    expect(submissions.lecture.title).toBe("새로 만든 강의");
+    // 아직 아무도 내지 않았지만 대상 부원은 행으로 나온다.
+    expect(submissions.content).toHaveLength(6);
+  });
+
+  it("강의 제목을 고치면 제출 현황에도 반영된다", async () => {
+    await updateLecture(102, {
+      trackId: 1,
+      subCategoryId: null,
+      week: 2,
+      title: "제목을 고쳤다",
+      description: "",
+      youtubeUrl: "",
+      materialUrl: "",
+      durationMinutes: null,
+      isPublished: true,
+      fileIds: [],
+      assignment: null,
+    });
+
+    const board = await fetchSubmissions({ lectureId: 102 });
+    expect(board.lecture.title).toBe("제목을 고쳤다");
+  });
+
+  it("제출 시각에 오프셋이 붙어 있다", async () => {
+    // 빼면 브라우저가 실행 환경의 시간대로 읽어 지각 여부까지 다르게 보인다.
+    const board = await fetchSubmissions({ lectureId: 101, submitted: true });
+
+    for (const row of board.content) {
+      expect(row.submittedAt).toMatch(/[+-]\d{2}:\d{2}$|Z$/);
+    }
   });
 });
