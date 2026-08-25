@@ -68,6 +68,54 @@ let staffs: Staff[] = [
     order: 2,
     generationNo: 9,
   },
+  {
+    id: 6,
+    userId: null,
+    name: "최민준",
+    staffRole: "SW 운영진",
+    section: "SW",
+    department: "소프트웨어학과 22",
+    introduction: "AI·데이터 파트를 담당하고 있습니다.",
+    profileImageUrl: null,
+    order: 3,
+    generationNo: 9,
+  },
+  {
+    id: 7,
+    userId: null,
+    name: "정하은",
+    staffRole: "SW 운영진",
+    section: "SW",
+    department: "컴퓨터공학과 23",
+    introduction: "인프라·배포를 담당하고 있습니다.",
+    profileImageUrl: null,
+    order: 4,
+    generationNo: 9,
+  },
+  {
+    id: 8,
+    userId: null,
+    name: "오지훈",
+    staffRole: "창업 운영진",
+    section: "STARTUP",
+    department: "경영학과 21",
+    introduction: "사업 기획을 담당하고 있습니다.",
+    profileImageUrl: null,
+    order: 1,
+    generationNo: 9,
+  },
+  {
+    id: 9,
+    userId: null,
+    name: "윤서아",
+    staffRole: "창업 운영진",
+    section: "STARTUP",
+    department: "산업공학과 22",
+    introduction: "마케팅을 담당하고 있습니다.",
+    profileImageUrl: null,
+    order: 2,
+    generationNo: 9,
+  },
 ];
 
 let features: FeatureToggle[] = [
@@ -87,7 +135,7 @@ let features: FeatureToggle[] = [
   },
 ];
 
-let nextStaffId = 6;
+let nextStaffId = 10;
 const delay = () => new Promise((r) => setTimeout(r, 200));
 
 /** 구역 안에서 order 순으로. 서버가 정렬해 준다. */
