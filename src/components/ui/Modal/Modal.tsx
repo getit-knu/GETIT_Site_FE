@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { useContext, useEffect, useId, useRef } from "react";
 import type { MouseEvent, ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -12,10 +13,11 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   closeOnOverlayClick?: boolean;
+  className?: string;
   children: ReactNode;
 }
 
-export function Modal({ isOpen, onClose, closeOnOverlayClick = true, children }: ModalProps) {
+export function Modal({ isOpen, onClose, closeOnOverlayClick = true, className, children }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const mouseDownTargetRef = useRef<EventTarget | null>(null);
   const titleId = useId();
@@ -95,7 +97,7 @@ export function Modal({ isOpen, onClose, closeOnOverlayClick = true, children }:
     >
       <div
         ref={dialogRef}
-        className={styles.dialog}
+        className={clsx(styles.dialog, className)}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

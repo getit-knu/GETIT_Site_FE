@@ -1,0 +1,119 @@
+@use "../../styles/abstracts/variables" as *;
+
+.dialog {
+  max-width: 47.5rem;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.headerRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.title {
+  margin: 0;
+  color: $color-heading;
+  font-size: 1.625rem;
+  font-weight: 700;
+}
+
+.meta {
+  margin: 0;
+  color: $color-text-secondary;
+  font-size: 0.875rem;
+}
+
+.closeButton {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 1rem;
+  background-color: $color-disabled-bg;
+  color: $color-text-primary;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.hero {
+  height: 20rem;
+  border-radius: 0.75rem;
+  background-size: cover;
+}
+
+.techStack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.sectionTitle {
+  margin: 0 0 0.625rem;
+  color: $color-heading;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.description {
+  margin: 0;
+  color: $color-text-primary;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.photos {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.photoPlaceholder {
+  height: 8.75rem;
+  flex: 1;
+  border-radius: 0.625rem;
+  background-color: $color-placeholder-bg;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.codeLink,
+.demoLink {
+  flex: 1;
+  border-radius: 9999px;
+  padding: 0.875rem 1.5rem;
+  text-align: center;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.codeLink {
+  background-color: $color-disabled-bg;
+  color: $color-text-primary;
+}
+
+.demoLink {
+  background-color: $color-accent;
+  color: $color-background;
+}
