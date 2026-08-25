@@ -28,15 +28,16 @@ describe("PublicLayout", () => {
     expect(screen.getByText("© 2026 GETIT. All rights reserved.")).toBeInTheDocument();
   });
 
-  it("홈만 실제 링크이고, 나머지 메뉴는 클릭할 수 없는 텍스트다", () => {
+  it("홈 · 프로젝트만 실제 링크이고, 나머지 메뉴는 클릭할 수 없는 텍스트다", () => {
     renderAt("/");
 
     const nav = within(screen.getByRole("banner"));
     expect(nav.getByRole("link", { name: "홈", current: "page" })).toBeInTheDocument();
-    for (const label of ["프로젝트", "운영진", "로그인", "지원하기"]) {
+    expect(nav.getByRole("link", { name: "프로젝트" })).toHaveAttribute("href", "/projects");
+    for (const label of ["운영진", "로그인", "지원하기"]) {
       expect(nav.getByText(label)).toBeInTheDocument();
     }
-    expect(nav.queryAllByRole("link")).toHaveLength(2); // GETIT 로고 + 홈
+    expect(nav.queryAllByRole("link")).toHaveLength(3); // GETIT 로고 + 홈 + 프로젝트
   });
 
   it("Footer 바로가기 항목도 아직 링크가 아니다", () => {

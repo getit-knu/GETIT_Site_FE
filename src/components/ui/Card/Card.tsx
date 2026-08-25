@@ -5,10 +5,11 @@ import styles from "./Card.module.scss";
 
 interface CardProps {
   onClick?: () => void;
+  className?: string;
   children: ReactNode;
 }
 
-export function Card({ onClick, children }: CardProps) {
+export function Card({ onClick, className, children }: CardProps) {
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (!onClick) return;
 
@@ -21,7 +22,7 @@ export function Card({ onClick, children }: CardProps) {
 
   return (
     <div
-      className={clsx(styles.card, onClick && styles.clickable)}
+      className={clsx(styles.card, onClick && styles.clickable, className)}
       onClick={onClick}
       onKeyDown={handleKeyDown}
       role={onClick ? "button" : undefined}
