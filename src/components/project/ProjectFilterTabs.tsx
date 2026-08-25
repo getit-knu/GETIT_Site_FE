@@ -17,13 +17,12 @@ interface ProjectFilterTabsProps {
 
 export function ProjectFilterTabs({ value, onChange }: ProjectFilterTabsProps) {
   return (
-    <div className={styles.tabs} role="tablist" aria-label="기수 필터">
+    <div className={styles.tabs} role="group" aria-label="기수 필터">
       {FILTERS.map((filter) => (
         <button
           key={filter}
           type="button"
-          role="tab"
-          aria-selected={value === filter}
+          aria-pressed={value === filter}
           className={clsx(styles.tab, value === filter && styles.active)}
           onClick={() => onChange(filter)}
         >

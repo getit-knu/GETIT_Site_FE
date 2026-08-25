@@ -33,7 +33,7 @@ describe("PublicLayout", () => {
 
     const nav = within(screen.getByRole("banner"));
     expect(nav.getByRole("link", { name: "홈", current: "page" })).toBeInTheDocument();
-    expect(nav.getByRole("link", { name: "프로젝트" })).toBeInTheDocument();
+    expect(nav.getByRole("link", { name: "프로젝트" })).toHaveAttribute("href", "/projects");
     for (const label of ["운영진", "로그인", "지원하기"]) {
       expect(nav.getByText(label)).toBeInTheDocument();
     }

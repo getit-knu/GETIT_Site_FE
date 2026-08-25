@@ -16,7 +16,7 @@ describe("ProjectsPage", () => {
   it("필터 탭을 선택하면 해당 기수 프로젝트만 보여준다", () => {
     render(<ProjectsPage />);
 
-    fireEvent.click(screen.getByRole("tab", { name: "2025 Fall" }));
+    fireEvent.click(screen.getByRole("button", { name: "2025 Fall" }));
 
     const fallProjects = PROJECTS.filter((project) => project.semester === "2025 Fall");
     expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(fallProjects.length);
