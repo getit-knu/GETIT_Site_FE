@@ -15,7 +15,20 @@ describe("LeadersPage", () => {
     expect(screen.getByRole("heading", { name: "Leader" })).toBeInTheDocument();
     for (const leader of leaders) {
       expect(screen.getByText(leader.name)).toBeInTheDocument();
-      expect(screen.getByText(leader.staffRole)).toBeInTheDocument();
+    }
+  });
+
+  it("Leader가 아닌 운영진은 SW·창업 구분 없이 하나의 Staff 섹션에 모아 보여준다", () => {
+    render(<LeadersPage />);
+
+    const staffMembers = getStaffsSnapshot().filter((staff) => staff.section !== "EXECUTIVE");
+    expect(staffMembers.length).toBeGreaterThan(0);
+
+    expect(screen.getByRole("heading", { name: "Staff" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "SW 운영진" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "창업 운영진" })).not.toBeInTheDocument();
+    for (const staff of staffMembers) {
+      expect(screen.getByText(staff.name)).toBeInTheDocument();
     }
   });
 });
