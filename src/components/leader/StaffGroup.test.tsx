@@ -40,4 +40,18 @@ describe("StaffGroup", () => {
     expect(screen.getByText("홍길동")).toBeInTheDocument();
     expect(screen.getByText("김운영")).toBeInTheDocument();
   });
+
+  it("showRole을 지정하지 않으면 기본적으로 역할을 숨긴다(Staff 그룹 기본값)", () => {
+    render(<StaffGroup title="Staff" staffs={STAFFS} />);
+
+    expect(screen.queryByText("회장")).not.toBeInTheDocument();
+    expect(screen.queryByText("총무")).not.toBeInTheDocument();
+  });
+
+  it("showRole이 true면 각 카드의 역할을 보여준다(Leader 그룹)", () => {
+    render(<StaffGroup title="Leader" staffs={STAFFS} showRole />);
+
+    expect(screen.getByText("회장")).toBeInTheDocument();
+    expect(screen.getByText("총무")).toBeInTheDocument();
+  });
 });

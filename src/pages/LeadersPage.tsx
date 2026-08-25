@@ -10,7 +10,10 @@ export default function LeadersPage() {
   const staffs = getStaffsSnapshot();
   const leaders = staffs.filter((staff) => staff.section === "EXECUTIVE");
   // SW·창업 운영진을 팀별로 나누지 않고 하나의 "Staff" 그룹으로 합친다(팀 논의 후 결정).
-  const staffMembers = staffs.filter((staff) => staff.section !== "EXECUTIVE");
+  // 팀 구분이 없어졌으니 section 기준 정렬은 의미가 없다 — 이름 가나다순으로만 보여준다.
+  const staffMembers = staffs
+    .filter((staff) => staff.section !== "EXECUTIVE")
+    .sort((a, b) => a.name.localeCompare(b.name, "ko"));
 
   return (
     <div className={styles.page}>
@@ -20,7 +23,7 @@ export default function LeadersPage() {
           <p className={styles.subtitle}>GETIT을 이끌어가는 열정적인 운영진들을 만나보세요</p>
         </div>
 
-        <StaffGroup title="Leader" staffs={leaders} />
+        <StaffGroup title="Leader" staffs={leaders} showRole />
         <StaffGroup title="Staff" staffs={staffMembers} />
       </div>
     </div>

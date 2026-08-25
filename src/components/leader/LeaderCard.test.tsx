@@ -26,4 +26,12 @@ describe("LeaderCard", () => {
     expect(screen.getByText("회장")).toBeInTheDocument();
     expect(screen.getByText("컴퓨터공학과 21")).toBeInTheDocument();
   });
+
+  it("showRole이 false면 역할을 숨긴다", () => {
+    render(<LeaderCard staff={STAFF} showRole={false} />);
+
+    expect(screen.getByText("홍길동")).toBeInTheDocument();
+    expect(screen.queryByText("회장")).not.toBeInTheDocument();
+    expect(screen.getByText("컴퓨터공학과 21")).toBeInTheDocument();
+  });
 });

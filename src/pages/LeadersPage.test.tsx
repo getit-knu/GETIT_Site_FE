@@ -18,7 +18,7 @@ describe("LeadersPage", () => {
     }
   });
 
-  it("Leader가 아닌 운영진은 SW·창업 구분 없이 하나의 Staff 섹션에 모아 보여준다", () => {
+  it("Leader가 아닌 운영진은 SW·창업 구분 없이 하나의 Staff 섹션에 이름 가나다순으로 모아 보여준다", () => {
     render(<LeadersPage />);
 
     const staffMembers = staffsMock.getStaffsSnapshot().filter((staff) => staff.section !== "EXECUTIVE");
@@ -27,8 +27,15 @@ describe("LeadersPage", () => {
     expect(screen.getByRole("heading", { name: "Staff" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "SW 운영진" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "창업 운영진" })).not.toBeInTheDocument();
-    for (const staff of staffMembers) {
-      expect(screen.getByText(staff.name)).toBeInTheDocument();
+    // 팀 구분을 없앴으니 카드 안에도 "SW 운영진"·"창업 운영진" 역할 문구가 없어야 한다.
+    expect(screen.queryByText("SW 운영진")).not.toBeInTheDocument();
+    expect(screen.queryByText("창업 운영진")).not.toBeInTheDocument();
+
+    const names = staffMembers.map((staff) => staff.name).sort((a, b) => a.localeCompare(b, "ko"));
+    const rendered = names.map((name) => screen.getByText(name));
+    for (let i = 1; i < rendered.length; i++) {
+      // 가나다순으로 배치됐다면 이전 이름이 DOM 상에서 다음 이름보다 앞에 있어야 한다.
+      expect(rendered[i - 1].compareDocumentPosition(rendered[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     }
   });
 
