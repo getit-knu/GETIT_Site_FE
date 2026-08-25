@@ -3,11 +3,13 @@ import { getStaffsSnapshot } from "../mocks/site/staffs";
 
 import styles from "./LeadersPage.module.scss";
 
-const STAFFS = getStaffsSnapshot();
-const LEADERS = STAFFS.filter((staff) => staff.section === "EXECUTIVE");
-
 /** 운영진 소개. Figma 와이어프레임(`4:2442`) 기준. 지금은 Leader(회장단) 섹션만 다룬다. */
 export default function LeadersPage() {
+  // 모듈 최상단에서 한 번만 읽으면 이후 어드민에서 운영진을 수정해도 새로고침 전까지
+  // 반영되지 않는다(mock이 메모리 안 배열이라 스냅샷이 그대로 캐싱됨). 렌더마다 새로 읽는다.
+  const staffs = getStaffsSnapshot();
+  const leaders = staffs.filter((staff) => staff.section === "EXECUTIVE");
+
   return (
     <div className={styles.page}>
       <div className={styles.inner}>
@@ -19,7 +21,7 @@ export default function LeadersPage() {
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Leader</h2>
           <ul className={styles.grid}>
-            {LEADERS.map((leader) => (
+            {leaders.map((leader) => (
               <li key={leader.id}>
                 <LeaderCard staff={leader} />
               </li>
