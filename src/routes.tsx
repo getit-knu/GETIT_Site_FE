@@ -45,11 +45,17 @@ const areaRoutes: RouteObject[] = [
   { path: "/403", lazy: page(() => import("./pages/ForbiddenPage")) },
 
   // ── 부원 ────────────────────────────────────────────────
-  // 운영진도 부원 화면을 볼 수 있어야 한다.
+  // 운영진도 부원 화면을 볼 수 있어야 한다. RequireRole 이 MemberLayout 을 감싸는
+  // 순서는 어드민과 같은 이유(권한 없는 사용자에게 셸이 스치지 않도록)다.
   {
     path: "/member",
     element: <RequireRole allowed={["MEMBER", "ADMIN"]} />,
-    children: [{ index: true, lazy: page(() => import("./pages/member/MemberHomePage")) }],
+    children: [
+      {
+        lazy: layout(() => import("./components/layout/MemberLayout"), "MemberLayout"),
+        children: [{ index: true, lazy: page(() => import("./pages/member/MemberHomePage")) }],
+      },
+    ],
   },
 
   // ── 어드민 ──────────────────────────────────────────────
