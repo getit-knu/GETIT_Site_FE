@@ -25,7 +25,9 @@ export function Nav() {
           <NavLink to="/projects" className={({ isActive }) => clsx(styles.link, isActive && styles.active)}>
             프로젝트
           </NavLink>
-          <span className={styles.link}>운영진</span>
+          <NavLink to="/leaders" className={({ isActive }) => clsx(styles.link, isActive && styles.active)}>
+            운영진
+          </NavLink>
           <span className={styles.link}>로그인</span>
           <NavLink to="/apply" className={styles.cta}>
             지원하기

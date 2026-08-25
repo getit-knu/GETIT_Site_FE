@@ -29,6 +29,18 @@ let staffs: Staff[] = [
     department: "경영학과 22",
     introduction: "회계를 맡고 있습니다.",
     profileImageUrl: null,
+    order: 3,
+    generationNo: 9,
+  },
+  {
+    id: 5,
+    userId: null,
+    name: "이서준",
+    staffRole: "부회장",
+    section: "EXECUTIVE",
+    department: "컴퓨터공학과 20",
+    introduction: "회장을 보좌하고 있습니다.",
+    profileImageUrl: null,
     order: 2,
     generationNo: 9,
   },
@@ -75,7 +87,7 @@ let features: FeatureToggle[] = [
   },
 ];
 
-let nextStaffId = 5;
+let nextStaffId = 6;
 const delay = () => new Promise((r) => setTimeout(r, 200));
 
 /** 구역 안에서 order 순으로. 서버가 정렬해 준다. */
@@ -85,6 +97,18 @@ function sorted(): Staff[] {
 
 export async function fetchStaffs(): Promise<Staff[]> {
   await delay();
+  return structuredClone(sorted());
+}
+
+/**
+ * 공개 사이트(운영진 소개 페이지)용 동기 스냅샷.
+ *
+ * `fetchStaffs()`(→ `getStaffs()`, 관리자 전용 `GET /api/admin/setting/staffs`)를 공개
+ * 페이지가 그대로 타면, 실제 API가 붙었을 때 로그인 없이 관리자 엔드포인트를 호출하는
+ * 모양이 된다. 공개 사이트 전용 API가 따로 생기기 전까지, 로딩 상태 없이 바로 쓰는
+ * Home·프로젝트 쇼케이스와 같은 방식으로 이 데이터만 동기로 노출한다.
+ */
+export function getStaffsSnapshot(): Staff[] {
   return structuredClone(sorted());
 }
 
