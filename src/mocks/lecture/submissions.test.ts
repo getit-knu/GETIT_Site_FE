@@ -145,4 +145,14 @@ describe("fetchSubmissions", () => {
       expect(row.submittedAt).toMatch(/[+-]\d{2}:\d{2}$|Z$/);
     }
   });
+
+  it("마감을 그 날 끝 시각으로 준다", async () => {
+    /*
+      8.1 은 날짜만 주는데 8.6 은 시각까지 준다. 날짜를 그대로 넘기면 브라우저가
+      UTC 자정으로 읽어 화면에 "마감 09:00" 이 뜬다.
+    */
+    const board = await fetchSubmissions({ lectureId: 101 });
+
+    expect(board.lecture.deadline).toBe("2026-06-05T23:59:59+09:00");
+  });
 });

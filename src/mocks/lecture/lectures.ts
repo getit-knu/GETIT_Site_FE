@@ -122,6 +122,17 @@ export async function fetchLectures(params: LectureListParams): Promise<LectureB
 }
 
 /**
+ * 목록의 마감(날짜)을 그 날 끝 시각으로 바꾼다.
+ *
+ * 8.1 은 `2026-06-05` 처럼 날짜만 주는데 8.6 은 `2026-06-05T23:59:59+09:00` 을 준다.
+ * 날짜만 그대로 넘기면 브라우저가 UTC 자정으로 읽어 화면에 **마감 09:00** 이 뜬다.
+ */
+function toDeadlineInstant(deadline: string): string {
+  if (deadline === "") return "";
+  return /^\d{4}-\d{2}-\d{2}$/.test(deadline) ? `${deadline}T23:59:59+09:00` : deadline;
+}
+
+/**
  * 강의 하나의 요약. 제출 현황 목(8.6)이 강의 정보를 여기서 가져간다.
  *
  * **목록과 같은 저장소를 봐야 한다.** 따로 표를 두면 새로 만든 강의가 제출 현황에서
@@ -136,7 +147,7 @@ export function lookupLecture(
   return {
     id: found.id,
     title: found.title,
-    deadline: found.deadline,
+    deadline: toDeadlineInstant(found.deadline),
     // 상세를 아직 만들지 않은 강의는 기본 기수를 쓴다.
     generationId: details.get(id)?.generationId ?? DEFAULT_GENERATION_ID,
   };
