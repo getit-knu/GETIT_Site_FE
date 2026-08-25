@@ -1,4 +1,5 @@
 @use "../styles/abstracts/variables" as *;
+@use "../styles/abstracts/form-field";
 
 .page {
   background-color: $color-background;
@@ -84,6 +85,34 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
   margin-top: 1.5rem;
+}
+
+.selectField {
+  @include form-field.field-wrapper;
+}
+
+.selectLabel {
+  @include form-field.field-label;
+}
+
+.select {
+  padding: 0.625rem 0.75rem;
+  border: 1px solid $color-border;
+  border-radius: 0.5rem;
+  background-color: $color-surface;
+  color: $color-text-primary;
+  font-size: 0.875rem;
+
+  &:focus-visible {
+    outline: 2px solid $color-accent;
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    background-color: $color-disabled-bg;
+    color: $color-text-secondary;
+    cursor: not-allowed;
+  }
 }
 
 .fieldStack {

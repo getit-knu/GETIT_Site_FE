@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 
+import { COLLEGES, getMajorsByCollege } from "../mocks/college/collegeMajors";
 import { Input } from "../components/ui/Input/Input";
 import { TextArea } from "../components/ui/TextArea/TextArea";
 
@@ -9,8 +10,10 @@ interface ApplyFormState {
   name: string;
   email: string;
   phone: string;
-  college: string;
-  major: string;
+  /** 0 = 미선택. */
+  collegeId: number;
+  /** 0 = 미선택. 단과 대학이 바뀌면 같이 초기화된다. */
+  majorId: number;
   studentId: string;
   motivation: string;
   experience: string;
@@ -22,8 +25,8 @@ const INITIAL_FORM: ApplyFormState = {
   name: "",
   email: "",
   phone: "",
-  college: "",
-  major: "",
+  collegeId: 0,
+  majorId: 0,
   studentId: "",
   motivation: "",
   experience: "",
@@ -42,10 +45,23 @@ const MOTIVATION_MAX_LENGTH = 300;
  */
 export default function ApplyPage() {
   const [form, setForm] = useState<ApplyFormState>(INITIAL_FORM);
+  const collegeSelectId = useId();
+  const majorSelectId = useId();
 
   function update<K extends keyof ApplyFormState>(key: K) {
     return (value: string) => setForm((prev) => ({ ...prev, [key]: value }));
   }
+
+  function handleCollegeChange(collegeId: number) {
+    // 단과 대학이 바뀌면 이전 대학의 전공이 그대로 남아있으면 안 된다.
+    setForm((prev) => ({ ...prev, collegeId, majorId: 0 }));
+  }
+
+  function handleMajorChange(majorId: number) {
+    setForm((prev) => ({ ...prev, majorId }));
+  }
+
+  const majorOptions = getMajorsByCollege(form.collegeId);
 
   return (
     <div className={styles.page}>
@@ -89,8 +105,45 @@ export default function ApplyPage() {
                     placeholder="example@email.com"
                   />
                   <Input label="전화번호 *" value={form.phone} onChange={update("phone")} placeholder="010-1234-5678" />
-                  <Input label="단과 대학 *" value={form.college} onChange={update("college")} placeholder="OO대학교" />
-                  <Input label="전공 *" value={form.major} onChange={update("major")} placeholder="경영학과" />
+                  <div className={styles.selectField}>
+                    <label htmlFor={collegeSelectId} className={styles.selectLabel}>
+                      단과 대학 *
+                    </label>
+                    <select
+                      id={collegeSelectId}
+                      className={styles.select}
+                      value={form.collegeId}
+                      onChange={(event) => handleCollegeChange(Number(event.target.value))}
+                    >
+                      <option value={0}>단과 대학을 선택해주세요</option>
+                      {COLLEGES.map((college) => (
+                        <option key={college.id} value={college.id}>
+                          {college.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className={styles.selectField}>
+                    <label htmlFor={majorSelectId} className={styles.selectLabel}>
+                      전공 *
+                    </label>
+                    <select
+                      id={majorSelectId}
+                      className={styles.select}
+                      value={form.majorId}
+                      disabled={form.collegeId === 0}
+                      onChange={(event) => handleMajorChange(Number(event.target.value))}
+                    >
+                      <option value={0}>
+                        {form.collegeId === 0 ? "단과 대학을 먼저 선택해주세요" : "전공을 선택해주세요"}
+                      </option>
+                      {majorOptions.map((major) => (
+                        <option key={major.id} value={major.id}>
+                          {major.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <Input
                     label="학번(10자) *"
                     value={form.studentId}

@@ -36,4 +36,33 @@ describe("ApplyPage", () => {
     expect(screen.getByRole("button", { name: "임시 저장" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "제출하기" })).toBeInTheDocument();
   });
+
+  it("단과 대학을 고르기 전엔 전공을 고를 수 없고, 고르면 그 대학의 전공만 보여준다", () => {
+    render(<ApplyPage />);
+
+    const majorSelect = screen.getByLabelText("전공 *");
+    expect(majorSelect).toBeDisabled();
+    expect(screen.queryByRole("option", { name: "경영학과" })).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("단과 대학 *"), { target: { value: "1" } });
+
+    expect(majorSelect).not.toBeDisabled();
+    expect(screen.getByRole("option", { name: "경영학과" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "기계공학과" })).not.toBeInTheDocument();
+  });
+
+  it("단과 대학을 바꾸면 이미 고른 전공이 초기화된다", () => {
+    render(<ApplyPage />);
+
+    const collegeSelect = screen.getByLabelText("단과 대학 *");
+    const majorSelect = screen.getByLabelText("전공 *");
+
+    fireEvent.change(collegeSelect, { target: { value: "1" } });
+    fireEvent.change(majorSelect, { target: { value: "1" } });
+    expect(majorSelect).toHaveValue("1");
+
+    fireEvent.change(collegeSelect, { target: { value: "2" } });
+
+    expect(majorSelect).toHaveValue("0");
+  });
 });
