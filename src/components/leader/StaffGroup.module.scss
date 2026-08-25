@@ -1,0 +1,21 @@
+@use "../../styles/abstracts/variables" as *;
+
+.section {
+  margin-top: 3rem;
+}
+
+.sectionTitle {
+  margin: 0;
+  color: $color-heading;
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 14rem);
+  gap: 1.5rem;
+  padding: 0;
+  margin: 2rem 0 0;
+  list-style: none;
+}
