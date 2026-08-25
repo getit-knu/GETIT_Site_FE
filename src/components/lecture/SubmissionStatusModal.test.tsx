@@ -185,6 +185,29 @@ describe("SubmissionStatusModal", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("강의를 찾을 수 없습니다");
   });
 
+  it("모르는 코드에는 제출 현황 문구를 쓴다", async () => {
+    // 강의 문구를 쓰면 "강의 목록을 불러오지 못했습니다" 가 떠서 목록 탓으로 읽힌다.
+    vi.mocked(api.getSubmissions).mockRejectedValue({ code: "SOMETHING_NEW", message: "" });
+    renderModal();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("제출 현황을 불러오지 못했습니다.");
+  });
+
+  it("보던 페이지가 범위를 벗어나면 첫 페이지로 돌아갈 길을 준다", async () => {
+    /*
+      빈 페이지가 곧 "조건에 맞는 사람이 없다" 는 뜻은 아니다. 그렇게 말해 버리면
+      이유를 오해하고, 돌아갈 방법도 사라진다.
+    */
+    vi.mocked(api.getSubmissions).mockResolvedValue(board({ content: [], totalElements: 120, totalPages: 3, page: 5 }));
+    renderModal();
+
+    expect(await screen.findByText(/이 페이지에는 부원이 없습니다/)).toBeInTheDocument();
+    expect(screen.queryByText("조건에 맞는 부원이 없습니다.")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "첫 페이지로" }));
+    expect(lastParams()?.page).toBe(0);
+  });
+
   it("조 목록을 못 받아도 현황은 보여준다", async () => {
     // 필터 선택지를 위한 부수적인 조회다. 이것 때문에 본 화면이 막히면 안 된다.
     vi.mocked(groupsApi.getGroups).mockRejectedValue({ code: "UNKNOWN", message: "?" });

@@ -67,3 +67,16 @@ export function feedbackErrorMessage(error: unknown): string {
   const { code } = error as ApiErrorPayload;
   return FEEDBACK_ERROR_MESSAGES[code] ?? FEEDBACK_FALLBACK;
 }
+
+/** 제출 현황(8.6) 코드. 강의 표를 그대로 쓰되 대체 문구만 이 화면에 맞춘다. */
+const SUBMISSIONS_FALLBACK = "제출 현황을 불러오지 못했습니다.";
+
+/**
+ * 제출 현황 조회 실패 문구.
+ *
+ * 강의 문구를 쓰면 "강의 목록을 불러오지 못했습니다" 가 떠서, 정작 제출 현황이
+ * 안 열린 것인데 목록 탓으로 읽힌다.
+ */
+export function submissionsErrorMessage(error: unknown): string {
+  return messageFor(error, SUBMISSIONS_FALLBACK);
+}

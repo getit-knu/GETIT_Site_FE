@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { lectureErrorMessage } from "../../errors/lecture/errorMessages";
+import { submissionsErrorMessage } from "../../errors/lecture/errorMessages";
 import { useGroupBoard } from "../../hooks/group/useGroups";
 import { useSubmissions } from "../../hooks/lecture/useLectures";
 import { formatDateTime } from "../../libs/formatDate";
@@ -133,12 +133,28 @@ export function SubmissionStatusModal({ lectureId, onClose }: SubmissionStatusMo
         )}
 
         {isPending && <TableSkeleton columns={COLUMNS.length} />}
-        {isError && <ErrorState message={lectureErrorMessage(error)} onRetry={() => void refetch()} />}
+        {isError && <ErrorState message={submissionsErrorMessage(error)} onRetry={() => void refetch()} />}
+
+        {/*
+          빈 페이지가 곧 "조건에 맞는 사람이 없다" 는 뜻은 아니다. 조건에 맞는 사람이
+          있는데 보던 페이지만 범위를 벗어났을 수 있다(필터를 좁혔거나 명단이 바뀐 경우).
+          그때 "없습니다" 라고 하면 이유를 오해하고, 첫 페이지로 돌아갈 길도 사라진다.
+        */}
+        {data && data.content.length === 0 && data.totalElements > 0 && (
+          <EmptyState
+            message={`이 페이지에는 부원이 없습니다. 전체 ${data.totalElements}명은 ${data.totalPages}페이지까지 있습니다.`}
+            action={
+              <button type="button" className={styles.backToFirst} onClick={() => setPage(0)}>
+                첫 페이지로
+              </button>
+            }
+          />
+        )}
 
         {data &&
-          (data.content.length === 0 ? (
+          (data.content.length === 0 && data.totalElements === 0 ? (
             <EmptyState message="조건에 맞는 부원이 없습니다." />
-          ) : (
+          ) : data.content.length === 0 ? null : (
             <>
               <DataTable
                 columns={COLUMNS}
