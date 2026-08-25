@@ -16,6 +16,7 @@ interface InputProps {
   error?: string;
   type?: InputType;
   disabled?: boolean;
+  maxLength?: number;
 }
 
 export function Input({
@@ -28,6 +29,7 @@ export function Input({
   error,
   type = "text",
   disabled,
+  maxLength,
 }: InputProps) {
   const id = useId();
 
@@ -48,6 +50,7 @@ export function Input({
         aria-label={label ? undefined : ariaLabel}
         placeholder={placeholder}
         disabled={disabled}
+        maxLength={maxLength}
       />
       {error && (
         <p role="alert" className={styles.errorMessage}>
