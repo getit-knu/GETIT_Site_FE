@@ -3,7 +3,13 @@ import { Link, useParams } from "react-router";
 
 import { Button } from "../../components/ui/Button/Button";
 import { TextArea } from "../../components/ui/TextArea/TextArea";
-import { getMemberLectureDetail, submitAssignment } from "../../mocks/lecture/memberLectureDetail";
+import { EmptyState } from "../../components/ui/states/States";
+import {
+  askQuestion,
+  getMemberLectureDetail,
+  submitAssignment,
+  type QaEntry,
+} from "../../mocks/lecture/memberLectureDetail";
 import type { Assignment } from "../../types/lecture";
 
 import styles from "./LectureDetailPage.module.scss";
@@ -95,11 +101,11 @@ function AssignmentSection({ lectureId, assignment, alreadySubmitted }: Assignme
                 <span>{file ? file.name : "파일 선택하기"}</span>
               </label>
 
-              <div className={styles.assignmentFormRow}>
+              <div className={styles.formRow}>
                 <TextArea value={comment} onChange={setComment} placeholder="코멘트 (선택사항)" rows={3} />
               </div>
 
-              <div className={styles.assignmentSubmitRow}>
+              <div className={styles.submitRow}>
                 <Button onClick={handleSubmit} disabled={!file} isLoading={submitting}>
                   과제 제출하기
                 </Button>
@@ -112,7 +118,80 @@ function AssignmentSection({ lectureId, assignment, alreadySubmitted }: Assignme
   );
 }
 
-/** 강의 시청. Figma 와이어프레임(`6:6528`) 기준. Q&A 섹션은 스코프 밖(#119) — 후속 이슈(#134)로 분리. */
+function QnaAvatar() {
+  return (
+    <span className={styles.qnaAvatar} aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" focusable="false">
+        <circle cx="12" cy="8" r="3.5" fill="currentColor" />
+        <path d="M5 19c0-3.314 3.134-6 7-6s7 2.686 7 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    </span>
+  );
+}
+
+interface QnaSectionProps {
+  lectureId: number;
+  initialQuestions: QaEntry[];
+}
+
+/** Q&A. mock이라 새로고침하면 새로 쓴 질문은 사라진다. */
+function QnaSection({ lectureId, initialQuestions }: QnaSectionProps) {
+  const [questions, setQuestions] = useState(initialQuestions);
+  const [draft, setDraft] = useState("");
+  const [asking, setAsking] = useState(false);
+
+  async function handleAsk() {
+    if (!draft.trim()) return;
+    setAsking(true);
+    const created = await askQuestion(lectureId, draft.trim());
+    setQuestions((prev) => [...prev, created]);
+    setDraft("");
+    setAsking(false);
+  }
+
+  return (
+    <div className={styles.qnaCard}>
+      <h2 className={styles.materialsHeading}>Q&A</h2>
+
+      {questions.length === 0 ? (
+        <div className={styles.qnaEmpty}>
+          <EmptyState message="등록된 질문이 없습니다." />
+        </div>
+      ) : (
+        <ul className={styles.qnaList}>
+          {questions.map((question) => (
+            <li key={question.id} className={styles.qnaItem}>
+              <QnaAvatar />
+              <div className={styles.qnaBody}>
+                <p className={styles.qnaAuthor}>{question.authorName}</p>
+                <p className={styles.qnaContent}>{question.content}</p>
+                {question.answer && (
+                  <div className={styles.qnaAnswer}>
+                    <p className={styles.qnaAnswerLabel}>답변</p>
+                    <p className={styles.qnaAnswerText}>{question.answer}</p>
+                  </div>
+                )}
+                <p className={styles.qnaDate}>{question.createdAt}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className={styles.formRow}>
+        <TextArea value={draft} onChange={setDraft} placeholder="질문을 입력하세요" rows={3} />
+      </div>
+
+      <div className={styles.submitRow}>
+        <Button onClick={handleAsk} disabled={!draft.trim()} isLoading={asking}>
+          질문하기
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/** 강의 시청. Figma 와이어프레임(`6:6528`) 기준. */
 export default function LectureDetailPage() {
   const { id } = useParams();
   const lecture = getMemberLectureDetail(Number(id));
@@ -215,6 +294,8 @@ export default function LectureDetailPage() {
               assignment={lecture.assignment}
               alreadySubmitted={lecture.completed}
             />
+
+            <QnaSection lectureId={lecture.id} initialQuestions={lecture.questions} />
           </aside>
         </div>
       </div>

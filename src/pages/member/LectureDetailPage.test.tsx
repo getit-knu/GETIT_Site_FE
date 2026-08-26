@@ -71,4 +71,39 @@ describe("LectureDetailPage", () => {
 
     expect(await screen.findByText("과제를 제출했습니다.")).toBeInTheDocument();
   });
+
+  it("기존 질문과 답변을 렌더링한다", () => {
+    renderAt("/member/lectures/1");
+
+    expect(screen.getByText("김부원")).toBeInTheDocument();
+    expect(screen.getByText("CSS flexbox와 grid의 차이점이 무엇인가요?")).toBeInTheDocument();
+    expect(
+      screen.getByText("Flexbox는 1차원 레이아웃에 적합하고, Grid는 2차원 레이아웃에 적합합니다."),
+    ).toBeInTheDocument();
+  });
+
+  it("질문이 없으면 빈 상태를 보여준다", () => {
+    renderAt("/member/lectures/2");
+
+    expect(screen.getByText("등록된 질문이 없습니다.")).toBeInTheDocument();
+  });
+
+  it("질문을 입력하기 전엔 질문하기 버튼이 비활성화고, 입력하면 목록에 추가된다", async () => {
+    const user = userEvent.setup();
+    renderAt("/member/lectures/2");
+
+    const askButton = screen.getByRole("button", { name: "질문하기" });
+    expect(askButton).toBeDisabled();
+
+    await user.type(screen.getByPlaceholderText("질문을 입력하세요"), "과제는 어디에 제출하나요?");
+    expect(askButton).toBeEnabled();
+
+    await user.click(askButton);
+
+    // "나"는 새 질문 목록 항목에만 나타난다 — textarea는 값이 안 지워진 동안 같은 문구를
+    // 여전히 담고 있어, 그 문구로 먼저 기다리면 아직 안 끝난 상태에서 통과해버릴 수 있다.
+    expect(await screen.findByText("나")).toBeInTheDocument();
+    expect(screen.getByText("과제는 어디에 제출하나요?")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("질문을 입력하세요")).toHaveValue("");
+  });
 });
