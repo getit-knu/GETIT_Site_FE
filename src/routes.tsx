@@ -58,6 +58,7 @@ const areaRoutes: RouteObject[] = [
         children: [
           { index: true, lazy: page(() => import("./pages/member/LectureListPage")) },
           { path: "lectures/:id", lazy: page(() => import("./pages/member/LectureDetailPage")) },
+          { path: "me", lazy: page(() => import("./pages/member/MyPage")) },
         ],
       },
     ],
