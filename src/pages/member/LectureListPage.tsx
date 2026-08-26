@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 
 import { LectureFilterTabs } from "../../components/lecture/LectureFilterTabs";
 import { ALL_LECTURES_FILTER, filterLectures } from "../../components/lecture/lectureFilters";
@@ -9,6 +10,7 @@ import styles from "./LectureListPage.module.scss";
 
 /** 강좌 목록. Figma 와이어프레임(`6:6147`) 기준. `/member` 진입점. */
 export default function LectureListPage() {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState(ALL_LECTURES_FILTER);
   // 렌더마다 새로 읽는다 — 모듈 최상단에서 한 번만 읽으면 캐싱되는 문제를 #104 리뷰에서 겪었다.
   const lectures = getMemberLecturesSnapshot();
@@ -27,7 +29,7 @@ export default function LectureListPage() {
         <ul className={styles.grid}>
           {filtered.map((lecture) => (
             <li key={lecture.id}>
-              <MemberLectureCard lecture={lecture} />
+              <MemberLectureCard lecture={lecture} onClick={() => navigate(`/member/lectures/${lecture.id}`)} />
             </li>
           ))}
         </ul>
