@@ -21,7 +21,6 @@ function formatDuration(minutes: number): string {
 
 interface MemberLectureCardProps {
   lecture: MemberLecture;
-  /** 지금은 아무도 넘기지 않는다. 강의 시청 페이지(#119)가 생기면 그때 연결한다. */
   onClick?: () => void;
 }
 
