@@ -9,8 +9,14 @@ import type {
 } from "../../types/lecture";
 import { lookupUpload } from "../file/files";
 
-/** BE 에 admin lecture 컨트롤러가 아직 없어 화면을 먼저 만든다. */
-const TRACKS: Track[] = [
+/**
+ * BE 에 admin lecture 컨트롤러가 아직 없어 화면을 먼저 만든다.
+ *
+ * `export` 하는 이유: 트랙 · 소분류는 순수 분류 데이터라 부원 화면(강좌 목록)의 필터 탭도
+ * 같은 걸 쓴다 — 강의 목록 자체(`fetchLectures`)는 admin 전용 엔드포인트라 그대로 재사용하지
+ * 않지만, 이 분류 체계까지 따로 만들면 관리자·부원 화면의 트랙 이름이 어긋날 수 있다.
+ */
+export const TRACKS: Track[] = [
   {
     id: 1,
     name: "SW",

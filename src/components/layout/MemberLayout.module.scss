@@ -43,6 +43,12 @@
   color: $color-text-primary;
   font-size: 1rem;
   font-weight: 500;
+  text-decoration: none;
+}
+
+.active {
+  color: $color-accent;
+  font-weight: 600;
 }
 
 .icon {

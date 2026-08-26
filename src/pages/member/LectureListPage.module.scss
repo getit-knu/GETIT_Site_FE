@@ -1,0 +1,37 @@
+@use "../../styles/abstracts/variables" as *;
+@use "../../styles/abstracts/container";
+
+.page {
+  padding: 2rem 0 4rem;
+  background-color: $color-background;
+}
+
+.inner {
+  @include container.content-width;
+}
+
+.heading {
+  margin-bottom: 1.25rem;
+}
+
+.title {
+  margin: 0;
+  color: $color-heading;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  margin: 0.5rem 0 0;
+  color: $color-text-secondary;
+  font-size: 1rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  padding: 0;
+  margin: 2rem 0 0;
+  list-style: none;
+}
