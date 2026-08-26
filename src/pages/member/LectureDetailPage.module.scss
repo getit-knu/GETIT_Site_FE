@@ -188,3 +188,95 @@ $card-shadow:
   padding: 3rem 0 1rem;
   color: $color-text-secondary;
 }
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.assignmentCard {
+  border: 1px solid $color-placeholder-bg;
+  border-radius: 1rem;
+  padding: 1.5625rem;
+  background-color: $color-background;
+  box-shadow: $card-shadow;
+}
+
+.assignmentInfo {
+  margin-top: 1rem;
+  border: 1px solid #dbeafe;
+  border-radius: 0.875rem;
+  padding: 1.0625rem;
+  background-color: #eff6ff;
+}
+
+.assignmentTitle {
+  margin: 0;
+  color: $color-heading;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.assignmentDescription {
+  margin: 0.5rem 0 0;
+  color: $color-text-primary;
+  font-size: 0.8125rem;
+}
+
+.assignmentDeadline {
+  margin: 0.75rem 0 0;
+  color: $color-text-secondary;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.assignmentDone {
+  margin: 1rem 0 0;
+  color: $color-accent;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  border: 2px dashed $color-border;
+  border-radius: 0.875rem;
+  padding: 1.625rem;
+  color: $color-accent;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  svg {
+    width: 1.75rem;
+    height: 1.75rem;
+    color: $color-text-secondary;
+  }
+}
+
+.assignmentFormRow {
+  margin-top: 1rem;
+}
+
+.assignmentSubmitRow {
+  margin-top: 0.75rem;
+
+  button {
+    width: 100%;
+  }
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
