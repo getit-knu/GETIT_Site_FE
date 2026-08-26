@@ -1,6 +1,10 @@
+import { useState } from "react";
 import { Link, useParams } from "react-router";
 
-import { getMemberLectureDetail } from "../../mocks/lecture/memberLectureDetail";
+import { Button } from "../../components/ui/Button/Button";
+import { TextArea } from "../../components/ui/TextArea/TextArea";
+import { getMemberLectureDetail, submitAssignment } from "../../mocks/lecture/memberLectureDetail";
+import type { Assignment } from "../../types/lecture";
 
 import styles from "./LectureDetailPage.module.scss";
 
@@ -32,7 +36,83 @@ function BackLink() {
   );
 }
 
-/** 강의 시청. Figma 와이어프레임(`6:6528`) 기준. 과제 제출·Q&A 섹션은 스코프 밖(#119) — 후속 이슈로 분리. */
+interface AssignmentSectionProps {
+  lectureId: number;
+  assignment: Assignment | null;
+  /** `MemberLecture.completed` — 이 강의의 과제를 본인이 이미 제출했는지. */
+  alreadySubmitted: boolean;
+}
+
+/** 과제 제출. mock이라 실제로 서버에 남지 않고, 페이지를 벗어나면 제출 상태가 사라진다. */
+function AssignmentSection({ lectureId, assignment, alreadySubmitted }: AssignmentSectionProps) {
+  const [file, setFile] = useState<File | null>(null);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  async function handleSubmit() {
+    if (!file) return;
+    setSubmitting(true);
+    await submitAssignment(lectureId, file, comment);
+    setSubmitting(false);
+    setSubmitted(true);
+  }
+
+  return (
+    <div className={styles.assignmentCard}>
+      <h2 className={styles.materialsHeading}>과제 제출</h2>
+
+      {!assignment ? (
+        <p className={styles.noMaterials}>등록된 과제가 없습니다.</p>
+      ) : (
+        <>
+          <div className={styles.assignmentInfo}>
+            <h3 className={styles.assignmentTitle}>{assignment.title}</h3>
+            <p className={styles.assignmentDescription}>{assignment.description}</p>
+            <p className={styles.assignmentDeadline}>마감: {assignment.deadline}</p>
+          </div>
+
+          {alreadySubmitted || submitted ? (
+            <p className={styles.assignmentDone}>{submitted ? "과제를 제출했습니다." : "이미 제출한 과제입니다."}</p>
+          ) : (
+            <>
+              <label className={styles.dropzone}>
+                <input
+                  type="file"
+                  aria-label="과제 파일 선택"
+                  className={styles.visuallyHidden}
+                  onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                />
+                <svg viewBox="0 0 28 28" fill="none" aria-hidden="true" focusable="false">
+                  <path
+                    d="M14 4v14m0 0l-5-5m5 5l5-5M6 22h16"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span>{file ? file.name : "파일 선택하기"}</span>
+              </label>
+
+              <div className={styles.assignmentFormRow}>
+                <TextArea value={comment} onChange={setComment} placeholder="코멘트 (선택사항)" rows={3} />
+              </div>
+
+              <div className={styles.assignmentSubmitRow}>
+                <Button onClick={handleSubmit} disabled={!file} isLoading={submitting}>
+                  과제 제출하기
+                </Button>
+              </div>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/** 강의 시청. Figma 와이어프레임(`6:6528`) 기준. Q&A 섹션은 스코프 밖(#119) — 후속 이슈(#134)로 분리. */
 export default function LectureDetailPage() {
   const { id } = useParams();
   const lecture = getMemberLectureDetail(Number(id));
@@ -129,6 +209,12 @@ export default function LectureDetailPage() {
                 </ul>
               )}
             </div>
+
+            <AssignmentSection
+              lectureId={lecture.id}
+              assignment={lecture.assignment}
+              alreadySubmitted={lecture.completed}
+            />
           </aside>
         </div>
       </div>
