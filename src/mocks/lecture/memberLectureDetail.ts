@@ -2,6 +2,20 @@ import type { Assignment, LectureFile } from "../../types/lecture";
 
 import { getMemberLecturesSnapshot, type MemberLecture } from "./memberLectures";
 
+/**
+ * 강의 상세 전용 Q&A 항목. admin `types/qna`(`#23`)와는 별개다 — 그쪽은 `lectureTitle` 문자열만
+ * 갖고 있어 강의별 필터링이 안 되고, 부원이 질문을 "쓰는" 기능 자체가 없어 여기서 새로 둔다.
+ */
+export interface QaEntry {
+  id: number;
+  authorName: string;
+  content: string;
+  /** 아직 답변하지 않았으면 `null`. */
+  answer: string | null;
+  /** `YYYY-MM-DD`. */
+  createdAt: string;
+}
+
 export interface MemberLectureDetail extends MemberLecture {
   instructorName: string;
   /** `YYYY-MM-DD`. */
@@ -11,6 +25,7 @@ export interface MemberLectureDetail extends MemberLecture {
   materials: LectureFile[];
   /** 없는 강의는 `null`. `completed`가 이미 본인 제출 여부라 제출 폼과 함께 쓴다. */
   assignment: Assignment | null;
+  questions: QaEntry[];
 }
 
 type DetailExtra = Omit<MemberLectureDetail, keyof MemberLecture>;
@@ -22,6 +37,7 @@ const DEFAULT_EXTRA: DetailExtra = {
   youtubeUrl: "https://youtube.com/watch?v=abc123",
   materials: [],
   assignment: null,
+  questions: [],
 };
 
 /** id별 상세 mock. 없는 id는 `DEFAULT_EXTRA`로 채운다. */
@@ -40,6 +56,15 @@ const DETAIL_EXTRAS: Record<number, DetailExtra> = {
       description: "HTML과 CSS를 사용하여 자신을 소개하는 웹 페이지를 만들어보세요.",
       deadline: "2026-06-19",
     },
+    questions: [
+      {
+        id: 9001,
+        authorName: "김부원",
+        content: "CSS flexbox와 grid의 차이점이 무엇인가요?",
+        answer: "Flexbox는 1차원 레이아웃에 적합하고, Grid는 2차원 레이아웃에 적합합니다.",
+        createdAt: "2026-06-02",
+      },
+    ],
   },
   2: {
     instructorName: "GETIT 운영진",
@@ -52,6 +77,7 @@ const DETAIL_EXTRAS: Record<number, DetailExtra> = {
       description: "미디어 쿼리를 사용해 화면 크기에 따라 배치가 바뀌는 카드 레이아웃을 만들어보세요.",
       deadline: "2026-06-12",
     },
+    questions: [],
   },
 };
 
@@ -70,4 +96,20 @@ export async function submitAssignment(lectureId: number, file: File, comment: s
   void file;
   void comment;
   await delay();
+}
+
+let nextQuestionId = 9101;
+
+/** BE 부원용 질문 작성 엔드포인트가 없어 새로고침하면 사라진다. */
+export async function askQuestion(lectureId: number, content: string): Promise<QaEntry> {
+  void lectureId;
+  await delay();
+
+  return {
+    id: nextQuestionId++,
+    authorName: "나",
+    content,
+    answer: null,
+    createdAt: new Date().toISOString().slice(0, 10),
+  };
 }
