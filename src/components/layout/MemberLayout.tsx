@@ -13,9 +13,8 @@ import styles from "./MemberLayout.module.scss";
  * 권한 검사는 여기서 하지 않는다. 라우트 트리에서 `RequireRole` 이 이 레이아웃을
  * 감싸므로, 여기까지 왔다는 것은 이미 부원(또는 운영진)이라는 뜻이다.
  *
- * 운영진 · 내정보는 아직 화면(공개 `/leaders`, 이 이슈의 후속인 내정보 페이지)이 없어
- * `PublicLayout`의 `Nav`와 같은 이유로 클릭되지 않는 텍스트로 남긴다. 강좌 목록은
- * `/member` 자체가 그 화면이라(#118) 실제 링크로 바꿨다.
+ * 운영진은 아직 화면(공개 `/leaders`)이 없어 `PublicLayout`의 `Nav`와 같은 이유로
+ * 클릭되지 않는 텍스트로 남긴다. 강좌 목록(#118) · 내정보(#120)는 화면이 생겨 실제 링크다.
  */
 export function MemberLayout() {
   const navigate = useNavigate();
@@ -62,7 +61,7 @@ export function MemberLayout() {
               </svg>
               강좌 목록
             </NavLink>
-            <span className={styles.link}>
+            <NavLink to="/member/me" className={({ isActive }) => clsx(styles.link, isActive && styles.active)}>
               <svg className={styles.icon} viewBox="0 0 18 18" fill="none" aria-hidden="true" focusable="false">
                 <circle cx="9" cy="6" r="2.75" stroke="currentColor" strokeWidth="1.3" />
                 <path
@@ -73,7 +72,7 @@ export function MemberLayout() {
                 />
               </svg>
               내정보
-            </span>
+            </NavLink>
             <button type="button" className={styles.logoutButton} onClick={() => void handleLogout()}>
               Logout
             </button>

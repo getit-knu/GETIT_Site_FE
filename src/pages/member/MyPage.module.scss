@@ -1,0 +1,219 @@
+@use "../../styles/abstracts/variables" as *;
+
+$card-shadow:
+  0 1px 3px rgb(0 0 0 / 10%),
+  0 1px 2px -1px rgb(0 0 0 / 10%);
+
+.page {
+  padding: 2rem 0 4rem;
+  background-color: $color-background;
+}
+
+// 이 화면만 894px 폭 — 다른 부원 화면(1280px)보다 좁은 Figma 지정값이라 공용
+// content-width 믹스인을 그대로 쓰지 않는다.
+.inner {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 896px;
+  margin-inline: auto;
+  padding-inline: 2rem;
+}
+
+.title {
+  margin: 0 0 2rem;
+  color: $color-heading;
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+.profileCard {
+  margin-bottom: 1.5rem;
+  border-radius: 1rem;
+  padding: 2rem;
+  background-color: $color-background;
+  box-shadow: $card-shadow;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.avatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 9999px;
+  background-color: $color-accent;
+  color: $color-background;
+  font-size: 1.875rem;
+  font-weight: 700;
+  object-fit: cover;
+}
+
+.name {
+  margin: 0;
+  color: $color-heading;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  margin: 0.5rem 0 0;
+  color: $color-text-secondary;
+  font-size: 1rem;
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-top: 2rem;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.label {
+  margin: 0;
+  color: $color-text-secondary;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.infoValue {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  border-radius: 0.625rem;
+  padding: 0.75rem;
+  background-color: $color-placeholder-bg;
+  color: $color-heading;
+  font-size: 1rem;
+
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+    color: $color-text-secondary;
+  }
+}
+
+.statsCard {
+  margin-bottom: 1.5rem;
+  border-radius: 1rem;
+  padding: 2rem;
+  background-color: $color-background;
+  box-shadow: $card-shadow;
+}
+
+.sectionTitle {
+  margin: 0;
+  color: $color-heading;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.sectionTitleSm {
+  margin: 0;
+  color: $color-heading;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.statBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 0.875rem;
+  padding: 1.5rem;
+
+  svg {
+    width: 2rem;
+    height: 2rem;
+  }
+}
+
+.statBlue {
+  background-color: #eff6ff;
+  color: $color-accent;
+}
+
+.statGreen {
+  background-color: #f0fdf4;
+  color: #00a63e;
+}
+
+.statValue {
+  margin-top: 0.75rem;
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+.statLabel {
+  margin: 0.25rem 0 0;
+  color: $color-text-secondary;
+  font-size: 1rem;
+}
+
+.historyCard {
+  border-radius: 1rem;
+  padding: 1.5rem;
+  background-color: $color-background;
+  box-shadow: $card-shadow;
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historyRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-radius: 0.875rem;
+  padding: 1rem;
+  background-color: $color-placeholder-bg;
+}
+
+.historyStatus {
+  margin: 0;
+  color: $color-heading;
+  font-size: 1rem;
+}
+
+.danger {
+  color: $color-danger;
+}
+
+.warning {
+  color: #d08700;
+}
+
+.historyWeeks {
+  color: $color-text-secondary;
+  font-size: 0.875rem;
+}
