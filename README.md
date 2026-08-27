@@ -148,7 +148,25 @@ src/
 | ------------------- | ----------------------------------------------------------- |
 | `VITE_API_BASE_URL` | 백엔드 API 서버 주소 (로컬 개발 시 `http://localhost:8080`) |
 
+프로덕션 값은 로컬과 다르므로 코드/`.env` 파일에 넣지 않고 Cloudflare Pages 대시보드의 **Settings → Environment variables**에 등록합니다(아래 배포 섹션 참고). BE가 실제로 배포되어 주소가 확정되면 그 값을 `VITE_API_BASE_URL`로 등록합니다.
+
 ## 배포
 
 - PR 생성 시 GitHub Actions에서 Lint / TypeCheck / Format / Build 4개 검증이 자동으로 실행되며, `develop` 브랜치 보호 규칙의 필수 상태 체크로 등록되어 있음
-- `main` 브랜치에 머지되면 GitHub Actions를 통해 Cloudflare Pages로 자동 배포 (예정)
+- `main` 브랜치에 머지되면 GitHub Actions를 통해 Cloudflare Pages로 자동 배포 (예정, 구성 진행 중)
+
+### Cloudflare Pages 대시보드 설정
+
+Pages 프로젝트를 새로 만들 때(또는 기존 프로젝트의 Settings → Build & deployments에서) 아래 값을 입력합니다.
+
+| 항목                   | 값                                                                     |
+| ---------------------- | ---------------------------------------------------------------------- |
+| Framework preset       | Vite                                                                   |
+| Build command          | `pnpm build`                                                           |
+| Build output directory | `dist`                                                                 |
+| Root directory         | `/` (저장소 루트)                                                      |
+| Node.js version        | `.nvmrc`(`24.15.0`) 기준 — Environment variables에 `NODE_VERSION` 추가 |
+
+- SPA 라우팅 처리(`/admin` 같은 하위 경로 새로고침 시 404 방지)는 `public/_redirects`로 이미 구성되어 있어 별도 설정이 필요 없습니다.
+- 커스텀 도메인은 아직 구매 전이라, 이 문서 기준으로는 Cloudflare가 자동 발급하는 `*.pages.dev` 기본 주소로 서비스됩니다. 도메인 구매 후 Custom domains에서 연결하고, BE CORS 허용 origin에도 추가해야 합니다.
+- GitHub Actions를 통한 배포로 전환하면(진행 중, 트래킹 [#158](https://github.com/getit-knu/GETIT_Site_FE/issues/158)) `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID`를 저장소 Settings → Secrets에 등록해야 합니다.
