@@ -13,7 +13,8 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(5, 14rem);
+  // 고정 5열 대신 좁은 화면에서 자연스럽게 줄어들도록 한다(#113).
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: 1.5rem;
   padding: 0;
   margin: 2rem 0 0;
