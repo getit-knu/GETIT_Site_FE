@@ -1,5 +1,6 @@
 @use "../styles/abstracts/variables" as *;
 @use "../styles/abstracts/form-field";
+@use "../styles/abstracts/breakpoints" as *;
 
 .page {
   background-color: $color-background;
@@ -24,6 +25,10 @@
   color: $color-heading;
   font-size: 3rem;
   font-weight: 700;
+
+  @media (width <= $breakpoint-mobile) {
+    font-size: 2rem;
+  }
 }
 
 .subtitle {
@@ -40,6 +45,10 @@
   box-shadow:
     0 20px 12.5px rgb(0 0 0 / 10%),
     0 8px 5px rgb(0 0 0 / 10%);
+
+  @media (width <= $breakpoint-mobile) {
+    padding: 1.5rem;
+  }
 }
 
 .cardHeader {
@@ -85,6 +94,10 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
   margin-top: 1.5rem;
+
+  @media (width <= $breakpoint-mobile) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .selectField {
