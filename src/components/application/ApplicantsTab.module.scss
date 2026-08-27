@@ -107,18 +107,3 @@
     background-color: var(--admin-hover);
   }
 }
-
-.nameButton {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--admin-accent);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-
-  &:hover {
-    text-decoration: underline;
-  }
-}

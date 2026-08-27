@@ -86,6 +86,12 @@ const QUESTIONS = [
   "GETIT에서 어떤 프로젝트를 하고 싶으신가요?",
 ];
 
+/** CHOICE/CHECKBOX 답변이 화면에서 어떻게 보이는지 확인하려고 "김지원"에게만 붙인다. */
+const TRACK_OPTIONS = [
+  { id: "sw", label: "SW 개발" },
+  { id: "startup", label: "창업" },
+];
+
 /** 저장한 점수. 서버가 들고 있는 것을 흉내 낸다. */
 const TOTAL_MAX = CRITERIA.reduce((sum, c) => sum + c.maxScore, 0);
 
@@ -155,15 +161,41 @@ export async function fetchApplicationDetail(id: number, params: ApplicantListPa
     grade: applicant.grade,
     status: applicant.status,
     submittedAt: applicant.submittedAt,
-    answers: QUESTIONS.map((question, i) => ({
-      questionId: i + 1,
-      order: i + 1,
-      question,
-      type: "TEXT",
-      // 마지막 문항은 비워 둔 지원자가 있다. 화면이 그 경우를 견뎌야 한다.
-      answerText: i === 2 && id % 2 === 0 ? null : `${applicant.applicantName}의 ${i + 1}번 답변입니다.`,
-      selectedOptions: null,
-    })),
+    answers: [
+      ...QUESTIONS.map((question, i) => ({
+        questionId: i + 1,
+        order: i + 1,
+        question,
+        type: "TEXT",
+        // 마지막 문항은 비워 둔 지원자가 있다. 화면이 그 경우를 견뎌야 한다.
+        answerText: i === 2 && id % 2 === 0 ? null : `${applicant.applicantName}의 ${i + 1}번 답변입니다.`,
+        selectedOptions: null,
+        options: null,
+      })),
+      // CHOICE/CHECKBOX 답변이 화면에서 어떻게 보이는지 확인하려고 "김지원"에게만 붙인다.
+      ...(applicant.applicantName === "김지원"
+        ? [
+            {
+              questionId: 4,
+              order: 4,
+              question: "희망 트랙을 선택해주세요",
+              type: "CHOICE",
+              answerText: null,
+              selectedOptions: ["sw"],
+              options: TRACK_OPTIONS,
+            },
+            {
+              questionId: 5,
+              order: 5,
+              question: "개인정보 수집 및 이용에 동의해주세요",
+              type: "CHECKBOX",
+              answerText: null,
+              selectedOptions: ["agree"],
+              options: [{ id: "agree", label: "동의합니다" }],
+            },
+          ]
+        : []),
+    ],
     evaluation: {
       evaluated: applicant.evaluated,
       totalScore: applicant.totalScore,

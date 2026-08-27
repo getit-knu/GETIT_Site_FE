@@ -1,3 +1,4 @@
+import type { QuestionOption } from "../recruitment";
 import type { Page } from "../qna";
 
 /**
@@ -52,6 +53,15 @@ export interface ApplicationAnswer {
   /** **비워 둔 문항은 `null`.** 화면에 "답변 없음" 을 보여준다. */
   answerText: string | null;
   selectedOptions: string[] | null;
+  /**
+   * `CHOICE`/`CHECKBOX` 문항의 선택지 라벨. `selectedOptions` 는 id 만 담고 있어
+   * 화면에 보여줄 텍스트를 알 수 없다 — 지금은 목에서 같이 내려준다.
+   *
+   * **실제 BE 응답(`ApplicationAnswerResult`)엔 이 필드가 없다.** `questionId`·`answerText`·
+   * `selectedOptions` 만 오고, 문항 텍스트·타입·옵션 라벨은 `GET /admin/recruitment/questions`
+   * 를 따로 불러 조인해야 한다 — 연동 시점(#107)에 이 타입 자체를 다시 손봐야 한다.
+   */
+  options: QuestionOption[] | null;
 }
 
 /** 평가 기준 한 줄. `score` 는 아직 매기지 않았으면 `null`. */

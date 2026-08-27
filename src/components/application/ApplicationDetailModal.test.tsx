@@ -29,6 +29,7 @@ function detail(over: Partial<ApplicationDetail> = {}): ApplicationDetail {
         type: "TEXT",
         answerText: "금융과 IT의 융합에 관심이 많습니다.",
         selectedOptions: null,
+        options: null,
       },
       {
         questionId: 2,
@@ -37,6 +38,7 @@ function detail(over: Partial<ApplicationDetail> = {}): ApplicationDetail {
         type: "TEXT",
         answerText: null,
         selectedOptions: null,
+        options: null,
       },
     ],
     evaluation: {
@@ -101,6 +103,72 @@ describe("ApplicationDetailModal", () => {
 
   it("비워 둔 문항은 '답변 없음' 으로 채운다", async () => {
     // 빈 자리로 두면 화면이 깨진 것처럼 보인다.
+    renderModal();
+
+    expect(await screen.findByText("답변 없음")).toBeInTheDocument();
+  });
+
+  it("객관식 답변은 선택된 선택지의 라벨을 보여준다", async () => {
+    vi.mocked(api.getApplicationDetail).mockResolvedValue(
+      detail({
+        answers: [
+          {
+            questionId: 3,
+            order: 3,
+            question: "희망 트랙을 선택해주세요",
+            type: "CHOICE",
+            answerText: null,
+            selectedOptions: ["sw"],
+            options: [
+              { id: "sw", label: "SW 개발" },
+              { id: "startup", label: "창업" },
+            ],
+          },
+        ],
+      }),
+    );
+    renderModal();
+
+    expect(await screen.findByText("SW 개발")).toBeInTheDocument();
+  });
+
+  it("체크박스에 동의했으면 '동의함' 을 보여준다", async () => {
+    vi.mocked(api.getApplicationDetail).mockResolvedValue(
+      detail({
+        answers: [
+          {
+            questionId: 4,
+            order: 4,
+            question: "개인정보 수집 및 이용에 동의해주세요",
+            type: "CHECKBOX",
+            answerText: null,
+            selectedOptions: ["agree"],
+            options: [{ id: "agree", label: "동의합니다" }],
+          },
+        ],
+      }),
+    );
+    renderModal();
+
+    expect(await screen.findByText("동의함")).toBeInTheDocument();
+  });
+
+  it("체크박스에 동의하지 않았으면 '답변 없음' 을 보여준다", async () => {
+    vi.mocked(api.getApplicationDetail).mockResolvedValue(
+      detail({
+        answers: [
+          {
+            questionId: 4,
+            order: 4,
+            question: "개인정보 수집 및 이용에 동의해주세요",
+            type: "CHECKBOX",
+            answerText: null,
+            selectedOptions: null,
+            options: [{ id: "agree", label: "동의합니다" }],
+          },
+        ],
+      }),
+    );
     renderModal();
 
     expect(await screen.findByText("답변 없음")).toBeInTheDocument();

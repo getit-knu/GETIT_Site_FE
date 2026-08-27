@@ -3,12 +3,33 @@ import { useState } from "react";
 import { applicationErrorMessage } from "../../errors/application/errorMessages";
 import { useApplicationDetail, useSaveEvaluation } from "../../hooks/application/useApplicationDetail";
 import { formatDateTime } from "../../libs/formatDate";
-import type { ApplicantListParams, ApplicationDetail } from "../../types/application";
+import type { ApplicantListParams, ApplicationAnswer, ApplicationDetail } from "../../types/application";
 import { Button } from "../ui/Button/Button";
 import { PaginatedModal } from "../ui/PaginatedModal/PaginatedModal";
 import { ErrorState } from "../ui/states/States";
 
 import styles from "./ApplicationDetailModal.module.scss";
+
+/**
+ * 문항 타입별로 답변을 사람이 읽을 텍스트로 바꾼다.
+ *
+ * `TEXT` 는 `answerText`, `CHOICE`/`CHECKBOX` 는 `selectedOptions`(id) 를 `options`(라벨)
+ * 에서 찾아 보여준다. `CHECKBOX` 는 단일 동의 문항이라 체크 여부만 있으면 된다.
+ */
+function answerDisplay(answer: ApplicationAnswer): { text: string; empty: boolean } {
+  if (answer.type === "CHECKBOX") {
+    const checked = (answer.selectedOptions?.length ?? 0) > 0;
+    return checked ? { text: "동의함", empty: false } : { text: "답변 없음", empty: true };
+  }
+
+  if (answer.type === "CHOICE") {
+    const selectedId = answer.selectedOptions?.[0];
+    const label = selectedId ? answer.options?.find((o) => o.id === selectedId)?.label : undefined;
+    return label !== undefined ? { text: label, empty: false } : { text: "답변 없음", empty: true };
+  }
+
+  return answer.answerText !== null ? { text: answer.answerText, empty: false } : { text: "답변 없음", empty: true };
+}
 
 /** 입력 중에는 빈 칸을 허용해야 지우고 다시 칠 수 있다. */
 type Draft = Record<number, string>;
@@ -168,15 +189,16 @@ export function ApplicationDetailModal({
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>지원서 내용</h3>
             <ol className={styles.answers}>
-              {data.answers.map((answer) => (
-                <li key={answer.questionId}>
-                  <p className={styles.question}>{answer.question}</p>
-                  {/* 비워 둔 문항이 있다. 빈 자리로 두면 화면이 깨진 것처럼 보인다. */}
-                  <p className={answer.answerText === null ? styles.noAnswer : styles.answer}>
-                    {answer.answerText ?? "답변 없음"}
-                  </p>
-                </li>
-              ))}
+              {data.answers.map((answer) => {
+                // 비워 둔 문항이 있다. 빈 자리로 두면 화면이 깨진 것처럼 보인다.
+                const { text, empty } = answerDisplay(answer);
+                return (
+                  <li key={answer.questionId}>
+                    <p className={styles.question}>{answer.question}</p>
+                    <p className={empty ? styles.noAnswer : styles.answer}>{text}</p>
+                  </li>
+                );
+              })}
             </ol>
           </section>
 
