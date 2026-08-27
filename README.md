@@ -172,4 +172,4 @@ Pages 프로젝트를 새로 만들 때(또는 기존 프로젝트의 Settings �
 
 - SPA 라우팅 처리(`/admin` 같은 하위 경로 새로고침 시 404 방지)는 `public/_redirects`로 이미 구성되어 있어 별도 설정이 필요 없습니다.
 - 커스텀 도메인은 아직 구매 전이라, 이 문서 기준으로는 Cloudflare가 자동 발급하는 `*.pages.dev` 기본 주소로 서비스됩니다. 도메인 구매 후 Custom domains에서 연결하고, BE CORS 허용 origin에도 추가해야 합니다.
-- Git 연동 방식이라 API 토큰을 GitHub Secrets에 등록할 필요가 없습니다. (한때 GitHub Actions + wrangler-action 방식도 검토했으나 Git 연동으로 최종 결정 — 그때 등록했던 `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID`/`CLOUDFLARE_PAGES_PROJECT_NAME`은 더 이상 쓰이지 않음)
+- Git 연동 방식이라 API 토큰을 GitHub Secrets에 등록할 필요가 없습니다.
