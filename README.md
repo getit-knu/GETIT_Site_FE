@@ -153,7 +153,9 @@ src/
 ## 배포
 
 - PR 생성 시 GitHub Actions에서 Lint / TypeCheck / Format / Build 4개 검증이 자동으로 실행되며, `develop` 브랜치 보호 규칙의 필수 상태 체크로 등록되어 있음
-- `main` 브랜치에 머지되면 GitHub Actions를 통해 Cloudflare Pages로 자동 배포 (예정, 구성 진행 중)
+- Cloudflare Pages가 이 저장소와 **Git 연동**되어 있어, 별도 배포 워크플로우 없이 Cloudflare가 알아서 빌드·배포합니다.
+  - **Production**: Cloudflare 대시보드에서 Production branch를 `main`으로 지정 — `main`에 push되면 자동으로 프로덕션에 배포됩니다.
+  - **Preview**: 그 외 모든 브랜치/PR은 push할 때마다 자동으로 프리뷰 URL이 생성됩니다 — 리뷰 시 실제 동작을 바로 확인할 수 있습니다.
 
 ### Cloudflare Pages 대시보드 설정
 
@@ -165,8 +167,9 @@ Pages 프로젝트를 새로 만들 때(또는 기존 프로젝트의 Settings �
 | Build command          | `pnpm build`                                                           |
 | Build output directory | `dist`                                                                 |
 | Root directory         | `/` (저장소 루트)                                                      |
+| Production branch      | `main`                                                                 |
 | Node.js version        | `.nvmrc`(`24.15.0`) 기준 — Environment variables에 `NODE_VERSION` 추가 |
 
 - SPA 라우팅 처리(`/admin` 같은 하위 경로 새로고침 시 404 방지)는 `public/_redirects`로 이미 구성되어 있어 별도 설정이 필요 없습니다.
 - 커스텀 도메인은 아직 구매 전이라, 이 문서 기준으로는 Cloudflare가 자동 발급하는 `*.pages.dev` 기본 주소로 서비스됩니다. 도메인 구매 후 Custom domains에서 연결하고, BE CORS 허용 origin에도 추가해야 합니다.
-- GitHub Actions를 통한 배포로 전환하면(진행 중, 트래킹 [#158](https://github.com/getit-knu/GETIT_Site_FE/issues/158)) `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID`를 저장소 Settings → Secrets에 등록해야 합니다.
+- Git 연동 방식이라 API 토큰을 GitHub Secrets에 등록할 필요가 없습니다. (한때 GitHub Actions + wrangler-action 방식도 검토했으나 Git 연동으로 최종 결정 — 그때 등록했던 `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID`/`CLOUDFLARE_PAGES_PROJECT_NAME`은 더 이상 쓰이지 않음)
