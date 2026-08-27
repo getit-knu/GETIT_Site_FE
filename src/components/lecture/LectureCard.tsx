@@ -43,10 +43,10 @@ export function LectureCard({ lecture, onSubmissions, onFeedback, onEdit, onDele
       </div>
 
       <div className={styles.actions}>
-        <button type="button" onClick={() => onFeedback(lecture.id)}>
+        <button type="button" className={styles.feedback} onClick={() => onFeedback(lecture.id)}>
           과제 피드백
         </button>
-        <button type="button" onClick={() => onSubmissions(lecture.id)}>
+        <button type="button" className={styles.submissions} onClick={() => onSubmissions(lecture.id)}>
           제출 현황
         </button>
         <button type="button" onClick={() => onEdit(lecture.id)}>
