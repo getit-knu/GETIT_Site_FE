@@ -41,6 +41,7 @@ const areaRoutes: RouteObject[] = [
       { path: "/projects", lazy: page(() => import("./pages/ProjectsPage")) },
       { path: "/apply", lazy: page(() => import("./pages/ApplyPage")) },
       { path: "/leaders", lazy: page(() => import("./pages/LeadersPage")) },
+      { path: "/login", lazy: page(() => import("./pages/LoginPage")) },
     ],
   },
   { path: "/oauth/callback", lazy: page(() => import("./pages/OAuthCallbackPage")) },
