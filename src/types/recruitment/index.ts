@@ -20,7 +20,7 @@ export interface RecruitmentSchedule {
 /** 6.2 저장 요청. `interviewEndAt` 은 보내지 않는다. */
 export type SchedulePayload = Omit<RecruitmentSchedule, "generationId" | "generationNo" | "year" | "interviewEndAt">;
 
-export type QuestionType = "TEXT" | "CHOICE";
+export type QuestionType = "TEXT" | "CHOICE" | "CHECKBOX";
 
 export interface QuestionOption {
   id: string;
@@ -36,7 +36,7 @@ export interface RecruitmentQuestion {
   required: boolean;
   /** `TEXT` 만 쓴다. */
   maxLength: number | null;
-  /** `CHOICE` 만 쓴다. */
+  /** `CHOICE`, `CHECKBOX` 만 쓴다. `CHECKBOX` 는 항상 1개다. */
   options: QuestionOption[] | null;
 }
 

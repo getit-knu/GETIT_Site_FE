@@ -23,6 +23,7 @@ const FILTERS: { value: TypeFilter; label: string }[] = [
   { value: "all", label: "전체" },
   { value: "TEXT", label: "서술형" },
   { value: "CHOICE", label: "객관식" },
+  { value: "CHECKBOX", label: "체크박스" },
 ];
 
 /** 문항은 하나씩 저장한다. 평가 기준과 달리 서로 얽힌 제약이 없다. */
@@ -102,16 +103,18 @@ export function QuestionsSection({ locked }: { locked: boolean }) {
         <Button
           variant="secondary"
           disabled={busy}
-          onClick={() =>
+          onClick={() => {
+            // 걸러 보고 있으면 그 유형으로 만든다. 만들자마자 사라지면 안 된다.
+            const type: QuestionType = filter === "all" ? "TEXT" : filter;
             create.mutate({
-              // 걸러 보고 있으면 그 유형으로 만든다. 만들자마자 사라지면 안 된다.
-              type: filter === "CHOICE" ? "CHOICE" : "TEXT",
+              type,
               content: "새 문항",
               required: false,
-              maxLength: filter === "CHOICE" ? null : 300,
-              options: filter === "CHOICE" ? [{ id: "opt-1", label: "선택지 1" }] : null,
-            })
-          }
+              maxLength: type === "TEXT" ? 300 : null,
+              options:
+                type === "TEXT" ? null : [{ id: "opt-1", label: type === "CHECKBOX" ? "동의합니다" : "선택지 1" }],
+            });
+          }}
         >
           + 문항 추가
         </Button>

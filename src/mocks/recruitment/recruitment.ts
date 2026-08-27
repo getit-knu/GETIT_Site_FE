@@ -69,8 +69,17 @@ let questions: RecruitmentQuestion[] = [
       { id: "startup", label: "창업" },
     ],
   },
+  {
+    id: 4,
+    order: 4,
+    type: "CHECKBOX",
+    content: "개인정보 수집 및 이용에 동의해주세요",
+    required: true,
+    maxLength: null,
+    options: [{ id: "agree", label: "동의합니다" }],
+  },
 ];
-let nextQuestionId = 4;
+let nextQuestionId = 5;
 
 const reorder = () => questions.forEach((q, i) => (q.order = i + 1));
 
