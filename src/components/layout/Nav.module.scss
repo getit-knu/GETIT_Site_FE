@@ -17,19 +17,11 @@
 .inner {
   @include container.content-width;
 
+  position: relative;
   display: flex;
   height: 4rem;
   align-items: center;
   justify-content: space-between;
-
-  // 좁은 화면엔 메뉴가 한 줄에 다 안 들어간다. 로고 아래로 내려 세로로 쌓는다.
-  @media (width <= $breakpoint-mobile) {
-    height: auto;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
-    padding-block: 0.75rem;
-  }
 }
 
 .logo {
@@ -37,21 +29,53 @@
   font-size: 1.5rem;
   font-weight: 700;
   text-decoration: none;
+}
+
+.menuToggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: $color-text-primary;
+  cursor: pointer;
+
+  svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
 
   @media (width <= $breakpoint-mobile) {
-    text-align: center;
+    display: inline-flex;
   }
 }
 
 .links {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 2rem;
 
+  // 좁은 화면에서는 기본으로 숨기고, 햄버거 버튼을 눌러야 nav 바로 아래 드롭다운으로
+  // 펼쳐진다. `.inner`가 `position: relative`라 그 기준으로 붙는다.
   @media (width <= $breakpoint-mobile) {
-    justify-content: center;
-    gap: 1rem 1.5rem;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 0.5rem 0;
+    background-color: $color-background;
+    border-bottom: 1px solid #e5e7eb;
+
+    &.open {
+      display: flex;
+    }
   }
 }
 
@@ -60,6 +84,11 @@
   font-size: 1rem;
   font-weight: 500;
   text-decoration: none;
+
+  @media (width <= $breakpoint-mobile) {
+    padding: 0.75rem 2rem;
+    text-align: center;
+  }
 }
 
 .active {
@@ -77,4 +106,9 @@
   color: $color-background;
   font-size: 1rem;
   font-weight: 600;
+
+  @media (width <= $breakpoint-mobile) {
+    margin: 0.5rem 2rem 0;
+    text-align: center;
+  }
 }
