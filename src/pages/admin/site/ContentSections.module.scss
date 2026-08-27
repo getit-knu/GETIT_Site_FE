@@ -3,6 +3,9 @@
   border: 1px solid var(--admin-border);
   border-radius: 0.75rem;
   background-color: var(--admin-surface);
+
+  // 섹션 네비게이션 바 높이만큼 여유를 둔다. 안 두면 앵커로 이동했을 때 그 바에 가려진다.
+  scroll-margin-top: 3.5rem;
 }
 
 .sectionTitle {

@@ -18,6 +18,35 @@ import { toTrackDrafts, toTracks, tracksInvalidReason } from "./site/tracksDraft
 import type { TrackDraft } from "./site/tracksDraft";
 import styles from "./SitePage.module.scss";
 
+const SECTION_NAV_ITEMS = [
+  { id: "generation", label: "진행 기수" },
+  { id: "schedule", label: "모집 일정" },
+  { id: "tracks", label: "강의 분류" },
+  { id: "curriculums", label: "커리큘럼" },
+  { id: "events", label: "행사 일정" },
+  { id: "faqs", label: "FAQ" },
+  { id: "staffs", label: "운영진" },
+  { id: "features", label: "기능 활성화" },
+] as const;
+
+/**
+ * 섹션 8개로 바로 이동하는 sticky 앵커 바.
+ *
+ * 페이지 내부 이동일 뿐이라 `<a href="#id">`를 그대로 쓴다 — react-router `Link`가 아니다.
+ * 스크롤 위치에 따라 현재 섹션을 강조하는 기능(scroll-spy)은 범위 밖이라 넣지 않았다.
+ */
+function SiteSectionNav() {
+  return (
+    <nav className={styles.sectionNav} aria-label="사이트 관리 섹션 바로가기">
+      {SECTION_NAV_ITEMS.map((item) => (
+        <a key={item.id} href={`#${item.id}`} className={styles.sectionNavLink}>
+          {item.label}
+        </a>
+      ))}
+    </nav>
+  );
+}
+
 /** 조회한 뒤에만 마운트한다. 그래야 `useState` 초기값으로 기존 값을 넣을 수 있다. */
 function SiteForm({ settings }: { settings: SiteSettings }) {
   const [generationNo, setGenerationNo] = useState(String(settings.generation.generationNo));
@@ -60,7 +89,9 @@ function SiteForm({ settings }: { settings: SiteSettings }) {
 
   return (
     <>
-      <section className={styles.section}>
+      <SiteSectionNav />
+
+      <section id="generation" className={styles.section}>
         <h2 className={styles.sectionTitle}>진행 기수</h2>
         <div className={styles.grid}>
           <Input label="기수" type="number" value={generationNo} onChange={(v) => edit(() => setGenerationNo(v))} />
@@ -68,7 +99,7 @@ function SiteForm({ settings }: { settings: SiteSettings }) {
         </div>
       </section>
 
-      <section className={styles.section}>
+      <section id="schedule" className={styles.section}>
         <h2 className={styles.sectionTitle}>모집 일정</h2>
         <div className={styles.grid}>
           {SCHEDULE_FIELDS.map(({ key, label }) => (

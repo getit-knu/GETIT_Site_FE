@@ -16,7 +16,7 @@ export function FeaturesSection() {
   const toggle = useToggleFeature();
 
   return (
-    <section className={styles.section}>
+    <section id="features" className={styles.section}>
       <h2 className={styles.sectionTitle}>기능 활성화</h2>
       <p className={styles.hint}>
         끄면 공개 사이트에서 해당 화면이 보이지 않습니다. 켜기 전에 화면이 준비됐는지 확인해 주세요.

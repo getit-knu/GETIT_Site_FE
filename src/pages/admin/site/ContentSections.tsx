@@ -10,6 +10,7 @@ import type { Draft } from "./contentDraft";
 import { emptyCurriculum, emptyEvent, emptyFaq, EVENT_TYPES } from "./contentDraft";
 
 interface ListSectionProps<T> {
+  id: string;
   title: string;
   addLabel: string;
   emptyMessage: string;
@@ -25,9 +26,9 @@ interface ListSectionProps<T> {
  * 행 안의 입력은 섹션마다 달라 `renderRow` 로 넘긴다 — 여기에 분기를 두면
  * 섹션이 늘어날 때마다 이 컴포넌트가 뒤덮인다.
  */
-function ListSection<T>({ title, addLabel, emptyMessage, rows, onChange, onAdd, renderRow }: ListSectionProps<T>) {
+function ListSection<T>({ id, title, addLabel, emptyMessage, rows, onChange, onAdd, renderRow }: ListSectionProps<T>) {
   return (
-    <section className={styles.section}>
+    <section id={id} className={styles.section}>
       <h2 className={styles.sectionTitle}>{title}</h2>
 
       {rows.length === 0 ? (
@@ -79,6 +80,7 @@ export function ContentSections({
   return (
     <>
       <ListSection
+        id="curriculums"
         title="커리큘럼"
         addLabel="+ 커리큘럼 추가"
         emptyMessage="등록된 커리큘럼이 없습니다."
@@ -102,6 +104,7 @@ export function ContentSections({
       />
 
       <ListSection
+        id="events"
         title="행사 일정"
         addLabel="+ 행사 추가"
         emptyMessage="등록된 행사가 없습니다."
@@ -139,6 +142,7 @@ export function ContentSections({
       />
 
       <ListSection
+        id="faqs"
         title="FAQ"
         addLabel="+ FAQ 추가"
         emptyMessage="등록된 FAQ 가 없습니다."
