@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
 
 import { DataTable, type Column } from "./DataTable";
 
@@ -17,6 +18,18 @@ const rows: Row[] = [
 const columns: Column<Row>[] = [
   { header: "이름", render: (r) => r.name },
   { header: "점수", render: (r) => `${r.score}점`, align: "right" },
+];
+
+const columnsWithButton: Column<Row>[] = [
+  ...columns,
+  {
+    header: "처리",
+    render: (r) => (
+      <button type="button" aria-label={`${r.name} 처리`}>
+        처리
+      </button>
+    ),
+  },
 ];
 
 function renderTable(override?: Partial<Parameters<typeof DataTable<Row>>[0]>) {
@@ -71,5 +84,53 @@ describe("DataTable", () => {
 
     const bodyRows = screen.getAllByRole("row").slice(1);
     expect(within(bodyRows[0]).getByText("박부원")).toBeInTheDocument();
+  });
+
+  it("onRowClick 을 주지 않으면 행을 눌러도 아무 일도 없다", async () => {
+    renderTable();
+
+    const bodyRows = screen.getAllByRole("row").slice(1);
+    await userEvent.click(bodyRows[0]);
+
+    // 클릭 핸들러 자체가 없으니 예외 없이 지나가는 것으로 충분하다.
+    expect(bodyRows[0]).toBeInTheDocument();
+  });
+
+  it("행을 클릭하면 onRowClick 이 그 행으로 불린다", async () => {
+    const onRowClick = vi.fn();
+    renderTable({ onRowClick });
+
+    const bodyRows = screen.getAllByRole("row").slice(1);
+    await userEvent.click(bodyRows[0]);
+
+    expect(onRowClick).toHaveBeenCalledWith(rows[0]);
+  });
+
+  it("행에 포커스를 두고 Enter 를 누르면 onRowClick 이 불린다", async () => {
+    const onRowClick = vi.fn();
+    renderTable({ onRowClick });
+
+    const bodyRows = screen.getAllByRole("row").slice(1);
+    bodyRows[0].focus();
+    await userEvent.keyboard("{Enter}");
+
+    expect(onRowClick).toHaveBeenCalledWith(rows[0]);
+  });
+
+  it("행 안의 버튼을 클릭하면 onRowClick 이 불리지 않는다", async () => {
+    const onRowClick = vi.fn();
+    render(
+      <DataTable
+        columns={columnsWithButton}
+        rows={rows}
+        rowKey={(r) => r.id}
+        caption="점수표"
+        onRowClick={onRowClick}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "김부원 처리" }));
+
+    expect(onRowClick).not.toHaveBeenCalled();
   });
 });

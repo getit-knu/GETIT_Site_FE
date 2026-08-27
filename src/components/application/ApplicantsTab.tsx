@@ -80,15 +80,7 @@ export function ApplicantsTab() {
   }
 
   const columns: Column<Applicant>[] = [
-    {
-      header: "이름",
-      width: "6rem",
-      render: (a) => (
-        <button type="button" className={styles.nameButton} onClick={() => openModal("application", a.id)}>
-          {a.applicantName}
-        </button>
-      ),
-    },
+    { header: "이름", width: "6rem", render: (a) => a.applicantName },
     { header: "소속", render: (a) => `${a.college} ${a.major}`, width: "14rem" },
     { header: "학년", render: (a) => `${a.grade}학년`, width: "5rem", align: "center" },
     {
@@ -203,7 +195,13 @@ export function ApplicantsTab() {
 
       {data && data.content.length > 0 && (
         <>
-          <DataTable columns={columns} rows={data.content} rowKey={(a) => a.id} caption="지원자 목록" />
+          <DataTable
+            columns={columns}
+            rows={data.content}
+            rowKey={(a) => a.id}
+            caption="지원자 목록"
+            onRowClick={(a) => openModal("application", a.id)}
+          />
           <Pagination page={data.page} totalPages={data.totalPages} onChange={(next) => update({ page: next })} />
         </>
       )}

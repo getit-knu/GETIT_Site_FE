@@ -295,16 +295,25 @@ describe("ApplicantsTab", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("엑셀 다운로드에 실패했습니다.");
   });
 
-  it("이름을 누르면 상세 모달이 열리고 주소에 남는다", async () => {
+  it("행을 누르면 상세 모달이 열리고 주소에 남는다", async () => {
     // 열고 닫는 경로가 끊겨도 모달 자체 테스트로는 알 수 없다.
     vi.mocked(api.getApplicationDetail).mockResolvedValue(detail());
     const router = renderPage();
 
-    await userEvent.click(await screen.findByRole("button", { name: "김지원" }));
+    await userEvent.click((await screen.findByText("김지원")).closest("tr")!);
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     expect(router.state.location.search).toContain("modal=application");
     expect(router.state.location.search).toContain("id=42");
+  });
+
+  it("합격·불합격 버튼을 눌러도 모달은 열리지 않는다", async () => {
+    // 행 클릭과 셀 안 버튼 클릭이 서로 방해하면 안 된다.
+    renderPage();
+
+    await userEvent.click(await screen.findByRole("button", { name: "김지원 합격 처리" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("상세 조회에 목록 필터를 그대로 넘긴다", async () => {
@@ -312,7 +321,7 @@ describe("ApplicantsTab", () => {
     vi.mocked(api.getApplicationDetail).mockResolvedValue(detail());
     renderPage("/admin/applications?status=DOC_PASS");
 
-    await userEvent.click(await screen.findByRole("button", { name: "김지원" }));
+    await userEvent.click((await screen.findByText("김지원")).closest("tr")!);
 
     await waitFor(() => expect(api.getApplicationDetail).toHaveBeenCalled());
     expect(vi.mocked(api.getApplicationDetail).mock.lastCall?.[1]).toMatchObject({ status: "DOC_PASS" });
