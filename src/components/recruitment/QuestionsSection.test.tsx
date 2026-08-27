@@ -97,6 +97,17 @@ describe("QuestionsSection", () => {
     expect(lastUpdate()?.[1].maxLength).not.toBeNull();
   });
 
+  it("서술형을 체크박스로 바꾸면 선택지를 하나 만든다", async () => {
+    renderSection();
+    await screen.findByLabelText("1번 문항 유형");
+
+    await userEvent.selectOptions(screen.getByLabelText("1번 문항 유형"), "CHECKBOX");
+
+    await waitFor(() => expect(api.updateQuestion).toHaveBeenCalled());
+    expect(lastUpdate()?.[1]).toMatchObject({ type: "CHECKBOX", maxLength: null });
+    expect(lastUpdate()?.[1].options).toHaveLength(1);
+  });
+
   it("선택지를 더할 수 있다", async () => {
     renderSection();
     await screen.findByLabelText("2번 문항 유형");
@@ -113,6 +124,25 @@ describe("QuestionsSection", () => {
     renderSection();
 
     expect(await screen.findByRole("button", { name: "1번 문항 1번 선택지 삭제" })).toBeDisabled();
+  });
+
+  it("체크박스 문항은 선택지를 하나만 보여주고 더하거나 지울 수 없다", async () => {
+    vi.mocked(api.getQuestions).mockResolvedValue([
+      {
+        id: 1,
+        order: 1,
+        type: "CHECKBOX",
+        content: "동의",
+        required: true,
+        maxLength: null,
+        options: [{ id: "agree", label: "동의합니다" }],
+      },
+    ]);
+    renderSection();
+
+    expect(await screen.findByLabelText("1번 문항 1번 선택지")).toHaveValue("동의합니다");
+    expect(screen.queryByLabelText("1번 문항 1번 선택지 삭제")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "+ 선택지" })).not.toBeInTheDocument();
   });
 
   it("유형으로 걸러 볼 수 있다", async () => {
@@ -156,6 +186,18 @@ describe("QuestionsSection", () => {
     await userEvent.click(screen.getByRole("button", { name: "+ 문항 추가" }));
 
     expect(vi.mocked(api.createQuestion).mock.lastCall?.[0]).toMatchObject({ type: "CHOICE", maxLength: null });
+  });
+
+  it("걸러 보는 유형이 체크박스면 그 유형으로 만들고 선택지를 하나 채운다", async () => {
+    renderSection();
+    await screen.findByLabelText("1번 문항 유형");
+
+    await userEvent.selectOptions(filter(), "CHECKBOX");
+    await userEvent.click(screen.getByRole("button", { name: "+ 문항 추가" }));
+
+    const created = vi.mocked(api.createQuestion).mock.lastCall?.[0];
+    expect(created).toMatchObject({ type: "CHECKBOX", maxLength: null });
+    expect(created?.options).toHaveLength(1);
   });
 
   it("해당 유형이 없으면 안내를 보여준다", async () => {
