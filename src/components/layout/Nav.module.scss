@@ -1,5 +1,6 @@
 @use "../../styles/abstracts/variables" as *;
 @use "../../styles/abstracts/container";
+@use "../../styles/abstracts/breakpoints" as *;
 
 .nav {
   position: sticky;
@@ -20,6 +21,15 @@
   height: 4rem;
   align-items: center;
   justify-content: space-between;
+
+  // 좁은 화면엔 메뉴가 한 줄에 다 안 들어간다. 로고 아래로 내려 세로로 쌓는다.
+  @media (width <= $breakpoint-mobile) {
+    height: auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding-block: 0.75rem;
+  }
 }
 
 .logo {
@@ -27,12 +37,22 @@
   font-size: 1.5rem;
   font-weight: 700;
   text-decoration: none;
+
+  @media (width <= $breakpoint-mobile) {
+    text-align: center;
+  }
 }
 
 .links {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 2rem;
+
+  @media (width <= $breakpoint-mobile) {
+    justify-content: center;
+    gap: 1rem 1.5rem;
+  }
 }
 
 .link {
