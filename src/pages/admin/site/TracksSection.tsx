@@ -30,7 +30,7 @@ export function TracksSection({ tracks, onChange }: TracksSectionProps) {
   }
 
   return (
-    <section className={styles.section}>
+    <section id="tracks" className={styles.section}>
       <h2 className={styles.sectionTitle}>강의 분류</h2>
 
       {tracks.length === 0 ? (

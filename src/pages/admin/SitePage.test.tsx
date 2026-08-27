@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -221,5 +221,20 @@ describe("SitePage", () => {
     await userEvent.clear(await screen.findByLabelText("대분류 이름 SW"));
     expect(screen.getByText("이름이 비어 있는 대분류가 있습니다.")).toBeInTheDocument();
     expect(saveButton()).toBeDisabled();
+  });
+
+  it("섹션 8개로 이동하는 네비게이션을 렌더링한다", async () => {
+    renderPage();
+    await screen.findByLabelText("기수");
+
+    const nav = screen.getByRole("navigation", { name: "사이트 관리 섹션 바로가기" });
+    const sectionIds = ["generation", "schedule", "tracks", "curriculums", "events", "faqs", "staffs", "features"];
+
+    const links = within(nav).getAllByRole("link");
+    expect(links).toHaveLength(sectionIds.length);
+    for (const id of sectionIds) {
+      expect(links.some((link) => link.getAttribute("href") === `#${id}`)).toBe(true);
+      expect(document.getElementById(id)).toBeInTheDocument();
+    }
   });
 });

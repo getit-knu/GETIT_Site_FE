@@ -151,7 +151,7 @@ export function StaffsSection({ generationNo }: { generationNo: number }) {
   }
 
   return (
-    <section className={styles.section}>
+    <section id="staffs" className={styles.section}>
       <h2 className={styles.sectionTitle}>운영진</h2>
 
       {isPending && <p className={styles.hint}>불러오는 중…</p>}
