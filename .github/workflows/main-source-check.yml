@@ -1,0 +1,15 @@
+name: Main Source Branch Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR must come from develop
+        if: github.head_ref != 'develop'
+        run: |
+          echo "main 브랜치로의 PR은 develop 브랜치에서만 생성할 수 있습니다. (현재 소스 브랜치: ${{ github.head_ref }})"
+          exit 1
