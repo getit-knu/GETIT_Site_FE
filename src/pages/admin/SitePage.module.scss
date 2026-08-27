@@ -11,16 +11,22 @@
   background-color: var(--admin-surface);
 
   // 섹션 네비게이션 바 높이만큼 여유를 둔다. 안 두면 앵커로 이동했을 때 그 바에 가려진다.
-  scroll-margin-top: 5.25rem;
+  scroll-margin-top: 3.5rem;
 }
 
 .sectionNav {
   position: sticky;
-  top: 0;
+
+  // `.content`(AdminLayout)의 padding(1.75rem) 안쪽에서 sticky가 멈춰서, 그 패딩만큼
+  // topbar와 틈이 생겨 스크롤되는 섹션이 그 틈으로 잠깐씩 비쳐 보였다. top을 그만큼
+  // 음수로 줘서 topbar에 완전히 붙인다(음수 마진으로는 안 먹혔다 — sticky는 이 값을
+  // 스크롤 여부와 무관하게 항상 오프셋으로 적용한다).
+  top: -1.75rem;
   z-index: 1;
+  margin: 0 -1.75rem;
   display: flex;
   gap: 0.25rem;
-  padding: 0.625rem 0;
+  padding: 0.625rem 1.75rem;
   overflow-x: auto;
   border-bottom: 1px solid var(--admin-border);
   background-color: var(--admin-surface);
