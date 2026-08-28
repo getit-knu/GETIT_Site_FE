@@ -1,4 +1,5 @@
 @use "../../styles/abstracts/variables" as *;
+@use "../../styles/abstracts/breakpoints" as *;
 @use "../../styles/abstracts/container";
 
 .section {
@@ -8,6 +9,10 @@
   align-items: center;
   padding: 8rem 2rem;
   background-color: $color-background;
+
+  @media (width <= $breakpoint-mobile) {
+    padding: 5rem 1.5rem;
+  }
 }
 
 .inner {
@@ -28,6 +33,11 @@
   color: $color-heading;
   font-size: 3.75rem;
   font-weight: 700;
+  word-break: keep-all;
+
+  @media (width <= $breakpoint-mobile) {
+    font-size: 2.25rem;
+  }
 }
 
 .subtitle {
