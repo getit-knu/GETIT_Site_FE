@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test --pass-with-no-tests",
-    "prepare": "husky"
+    "prepare": "husky",
+    "generate:api": "openapi-typescript --output src/apis/generated.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.4",
@@ -42,6 +43,7 @@
     "husky": "^9.1.7",
     "jsdom": "^30.0.1",
     "lint-staged": "^17.3.0",
+    "openapi-typescript": "^7.13.0",
     "prettier": "^3.9.6",
     "sass": "^1.102.0",
     "typescript": "~6.0.2",

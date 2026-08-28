@@ -126,6 +126,16 @@ src/
     └── {domain}/
 ```
 
+## API 타입 생성
+
+`src/apis/generated.ts`는 BE의 OpenAPI 스펙(`/v3/api-docs`)에서 [openapi-typescript](https://openapi-ts.dev/)로 생성합니다. **손으로 수정하지 않습니다** — 다시 생성하면 덮어써집니다.
+
+```bash
+pnpm generate:api http://localhost:8080/v3/api-docs
+```
+
+BE를 로컬에서 띄운 상태에서 위 명령을 실행하면 됩니다. 스펙 URL은 로컬/배포 환경마다 다르므로 명령 인자로 매번 넘깁니다(예: 배포된 BE 주소로 바꿔서 실행). `types/{domain}/index.ts`는 이 파일에서 필요한 타입만 재노출하는 용도로 씁니다(직접 새 타입을 정의하지 않음).
+
 ## 스타일링
 
 - CSS Modules(SCSS)를 사용합니다. 컴포넌트와 같은 위치에 `ComponentName.module.scss`로 작성하고 `import styles from "./ComponentName.module.scss"`로 가져옵니다.
