@@ -1,11 +1,8 @@
+import { Link } from "react-router";
+
 import styles from "./Hero.module.scss";
 
-/**
- * Home 최상단 히어로.
- *
- * "9기 지원하러 가기" · "프로젝트 구경하기"는 지원하기 · 프로젝트 페이지가 아직 없어
- * Nav와 같은 이유로 클릭되지 않는 텍스트로 둔다. 페이지가 생기면 링크로 바꾼다.
- */
+/** Home 최상단 히어로. "9기 지원하러 가기"는 `/apply`, "프로젝트 구경하기"는 `/projects`로 이동한다. */
 export function Hero() {
   return (
     <section className={styles.hero}>
@@ -23,7 +20,7 @@ export function Hero() {
         <p className={styles.description}>상상을 현실로 만드는 IT 창업 동아리, GET IT입니다.</p>
 
         <div className={styles.actions}>
-          <span className={styles.primaryCta}>
+          <Link to="/apply" className={styles.primaryCta}>
             9기 지원하러 가기
             <svg className={styles.ctaIcon} viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
               <path
@@ -34,8 +31,10 @@ export function Hero() {
                 strokeLinejoin="round"
               />
             </svg>
-          </span>
-          <span className={styles.secondaryCta}>프로젝트 구경하기</span>
+          </Link>
+          <Link to="/projects" className={styles.secondaryCta}>
+            프로젝트 구경하기
+          </Link>
         </div>
       </div>
     </section>
