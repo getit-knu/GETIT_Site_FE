@@ -34,12 +34,46 @@
   font-size: 1.25rem;
 }
 
+// 원본과 복제본(marquee) 사이 이음매도 카드 사이 간격과 같아야 자연스럽다.
+// track의 gap이 아니라 각 목록의 오른쪽 margin으로 줘야 두 목록의 폭이 정확히 같아진다.
 .grid {
   display: flex;
+  flex-shrink: 0;
   gap: 1.5rem;
+  margin: 0 1.5rem 0 0;
   padding: 0;
-  margin: 0;
   list-style: none;
+}
+
+// section 자체엔 폭 제한이 없어(Figma 원본 그대로), 카드가 많아지면 배경 바깥으로
+// 넘쳤다. marquee가 그 폭만큼만 보여주고 넘치는 부분은 잘라낸다.
+.marquee {
+  overflow: hidden;
+  width: 100%;
+
+  &:hover .track {
+    animation-play-state: paused;
+  }
+}
+
+// 두 목록(.grid) 폭이 정확히 같으므로 정확히 -50% 이동하면 복제본이 원본이 있던
+// 자리에 딱 맞게 와서 끊김 없이 반복된다.
+.track {
+  display: flex;
+  width: max-content;
+  animation: activity-scroll 30s linear infinite;
+}
+
+@keyframes activity-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    animation: none;
+  }
 }
 
 .card {
