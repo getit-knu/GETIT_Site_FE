@@ -12,11 +12,12 @@
   text-decoration: none;
 }
 
-// 카드 배경 없이 텍스트만 떠 있다. mix-blend-mode 로 밝은 섹션 위에서는 어둡게,
-// Footer 처럼 어두운 배경 위에서는 밝게 — 뒤에 뭐가 있든 자동으로 대비가 생기게 한다.
+// 카드 배경 없이 텍스트만 떠 있다. mix-blend-mode로 배경에 따라 자동으로 대비를
+// 주려고 했으나, 실제로 켜보니 이 페이지의 주 배경($color-background, 거의 흰색)
+// 위에서 거의 안 보일 정도로 흐려져서 포기했다 — Footer 같은 어두운 구간은
+// 스크롤 중 잠깐이라, 대부분인 밝은 배경에 맞춰 진한 색을 그대로 쓴다.
 .ddayLabel {
-  color: #fff;
-  mix-blend-mode: difference;
+  color: $color-heading;
   font-size: 1.125rem;
   font-weight: 700;
 }
