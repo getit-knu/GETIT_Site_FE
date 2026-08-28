@@ -1,7 +1,5 @@
 @use "../../styles/abstracts/variables" as *;
 
-// 어느 섹션 위에 떠 있어도 읽혀야 해서 자체 배경·그림자를 가진 카드로 띄운다
-// (기존엔 ProjectShowcase 안에서 알려진 밝은 배경 위에만 있었어서 배경이 없었다).
 .badge {
   position: fixed;
   right: 2rem;
@@ -11,17 +9,14 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  border-radius: 1.5rem;
-  padding: 1rem 1.25rem;
-  background-color: $color-background;
-  box-shadow:
-    0 20px 25px -5px rgb(0 0 0 / 15%),
-    0 8px 10px -6px rgb(0 0 0 / 15%);
   text-decoration: none;
 }
 
+// 카드 배경 없이 텍스트만 떠 있다. mix-blend-mode 로 밝은 섹션 위에서는 어둡게,
+// Footer 처럼 어두운 배경 위에서는 밝게 — 뒤에 뭐가 있든 자동으로 대비가 생기게 한다.
 .ddayLabel {
-  color: $color-heading;
+  color: #fff;
+  mix-blend-mode: difference;
   font-size: 1.125rem;
   font-weight: 700;
 }
