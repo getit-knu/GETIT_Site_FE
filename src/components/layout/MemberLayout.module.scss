@@ -1,4 +1,5 @@
 @use "../../styles/abstracts/variables" as *;
+@use "../../styles/abstracts/breakpoints" as *;
 @use "../../styles/abstracts/container";
 
 .layout {
@@ -17,6 +18,7 @@
 .inner {
   @include container.content-width;
 
+  position: relative;
   display: flex;
   height: 4rem;
   align-items: center;
@@ -30,10 +32,50 @@
   text-decoration: none;
 }
 
+.menuToggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: $color-text-primary;
+  cursor: pointer;
+
+  svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  @media (width <= $breakpoint-mobile) {
+    display: inline-flex;
+  }
+}
+
 .links {
   display: flex;
   align-items: center;
   gap: 2rem;
+
+  @media (width <= $breakpoint-mobile) {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 0.5rem 0;
+    background-color: $color-background;
+    border-bottom: 1px solid $color-placeholder-bg;
+
+    &.open {
+      display: flex;
+    }
+  }
 }
 
 .link {
@@ -44,6 +86,10 @@
   font-size: 1rem;
   font-weight: 500;
   text-decoration: none;
+
+  @media (width <= $breakpoint-mobile) {
+    padding: 0.75rem 2rem;
+  }
 }
 
 .active {
@@ -63,4 +109,9 @@
   cursor: pointer;
   font-size: 1rem;
   font-weight: 500;
+
+  @media (width <= $breakpoint-mobile) {
+    padding: 0.75rem 2rem;
+    text-align: center;
+  }
 }
