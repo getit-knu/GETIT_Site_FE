@@ -1,18 +1,77 @@
 @use "../../styles/abstracts/variables" as *;
 @use "../../styles/abstracts/container";
+@use "../../styles/abstracts/breakpoints" as *;
 
 .section {
   @include container.full-viewport-section;
 
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
   padding: 8rem 0;
   background-color: $color-background;
 }
 
+// 장식용 블롭. Hero의 블롭과 같은 톤·애니메이션을 재사용해 Home 섹션들끼리 통일감을 준다.
+.blobBlue,
+.blobTeal {
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  animation: blob 7s infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+
+  @media (width <= $breakpoint-mobile) {
+    display: none;
+  }
+}
+
+.blobBlue {
+  top: -3.75rem;
+  right: -7.5rem;
+  width: 32.5rem;
+  height: 30rem;
+  background-color: #dce4ff;
+  opacity: 0.45;
+}
+
+.blobTeal {
+  bottom: -6.25rem;
+  left: -8.75rem;
+  width: 35rem;
+  height: 32.5rem;
+  background-color: #e8ecfb;
+  opacity: 0.55;
+  animation-delay: 2s;
+}
+
+@keyframes blob {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(1.875rem, -3.125rem) scale(1.1);
+  }
+
+  66% {
+    transform: translate(-1.25rem, 1.25rem) scale(0.9);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
 .inner {
   @include container.content-width;
 
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -31,56 +90,161 @@
   color: $color-heading;
   font-size: 3.75rem;
   font-weight: 700;
+
+  @media (width <= $breakpoint-mobile) {
+    font-size: 2rem;
+  }
 }
 
 .subtitle {
   margin: 0;
   color: $color-text-secondary;
   font-size: 1.25rem;
+
+  @media (width <= $breakpoint-mobile) {
+    font-size: 0.9375rem;
+  }
 }
 
-.grid {
-  display: grid;
+.timeline {
+  margin-top: 5.5rem;
   width: 100%;
-  margin-top: 5rem;
-  gap: 2rem;
-  grid-template-columns: repeat(2, 1fr);
+  max-width: 57.5rem;
+  display: flex;
+  flex-direction: column;
 }
 
-.card {
-  border-radius: 1rem;
-  padding: 2.5rem;
+.semester + .semester {
+  margin-top: 6.5rem;
+}
+
+.semesterBadgeRow {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 3.5rem;
+}
+
+.semesterBadge {
+  background-color: $color-accent;
+  color: $color-background;
+  font-size: 1.375rem;
+  font-weight: 700;
+  padding: 1rem 2.25rem;
+  border-radius: 9999px;
+  box-shadow:
+    0 10px 7.5px rgb(0 0 0 / 10%),
+    0 4px 3px rgb(0 0 0 / 10%);
+
+  @media (width <= $breakpoint-mobile) {
+    font-size: 0.9375rem;
+    padding: 0.625rem 1.375rem;
+  }
+}
+
+.timelineList {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2.25rem;
+}
+
+// 학기 안 모든 항목을 관통하는 세로선. 각 .row 는 그 위에 얹힌 노드 하나씩을 가진다.
+.spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 0.125rem;
+  background-color: rgb(40 57 151 / 18%);
+  transform: translateX(-50%);
+
+  @media (width <= $breakpoint-mobile) {
+    left: 0.375rem;
+  }
+}
+
+.row {
+  position: relative;
+  display: flex;
+  min-height: 2.125rem;
+
+  &[data-side="left"] {
+    justify-content: flex-end;
+    padding-right: calc(50% + 1.75rem);
+  }
+
+  &[data-side="right"] {
+    justify-content: flex-start;
+    padding-left: calc(50% + 1.75rem);
+  }
+
+  @media (width <= $breakpoint-mobile) {
+    &[data-side="left"],
+    &[data-side="right"] {
+      justify-content: flex-start;
+      padding-right: 0;
+      padding-left: 1.75rem;
+    }
+  }
+}
+
+.node {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 0.1875rem solid $color-background;
+  border-radius: 50%;
+  background-color: $color-accent;
+  transform: translate(-50%, -50%);
+
+  @media (width <= $breakpoint-mobile) {
+    left: 0.375rem;
+  }
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  width: 23.75rem;
+  box-sizing: border-box;
   background-color: $color-surface;
+  padding: 1.125rem 1.625rem;
+  border-radius: 1.125rem;
+  box-shadow:
+    0 20px 12.5px rgb(0 0 0 / 10%),
+    0 8px 5px rgb(0 0 0 / 10%);
+
+  @media (width <= $breakpoint-mobile) {
+    width: 100%;
+    padding: 0.75rem 1.125rem;
+    border-radius: 0.875rem;
+  }
 }
 
-.semesterTitle {
-  margin: 0 0 1.25rem;
+.chipIndex {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: 50%;
+  background-color: rgb(40 57 151 / 8%);
   color: $color-accent;
-  font-size: 1.75rem;
+  font-size: 0.9375rem;
   font-weight: 700;
 }
 
-.itemList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.875rem;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+.chipLabel {
   color: $color-text-primary;
-  font-size: 1.125rem;
-}
+  font-size: 1.1875rem;
+  font-weight: 500;
 
-.dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background-color: $color-accent;
+  @media (width <= $breakpoint-mobile) {
+    font-size: 0.9375rem;
+  }
 }
