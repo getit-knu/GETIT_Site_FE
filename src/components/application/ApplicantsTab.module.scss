@@ -1,3 +1,5 @@
+@use "../../styles/abstracts/breakpoints" as *;
+
 .tab {
   display: flex;
   flex-direction: column;
@@ -22,6 +24,13 @@
   display: flex;
   align-items: flex-end;
   gap: 0.5rem;
+
+  // 검색창+평가 필터+엑셀 다운로드가 한 줄에 다 안 들어가면 버튼이 세로로
+  // 짓눌려 글자가 한 자씩 줄바꿈되던 문제 — 좁은 화면에서는 줄바꿈을 허용한다.
+  @media (width <= $breakpoint-mobile) {
+    flex-wrap: wrap;
+    width: 100%;
+  }
 }
 
 .tab,
