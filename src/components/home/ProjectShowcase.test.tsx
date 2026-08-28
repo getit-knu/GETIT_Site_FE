@@ -13,11 +13,10 @@ describe("ProjectShowcase", () => {
     }
   });
 
-  it("프로젝트 · 지원하기 페이지가 아직 없어 링크가 아니다", () => {
+  it("프로젝트 목록 페이지가 아직 없어 링크가 아니다", () => {
     render(<ProjectShowcase />);
 
     expect(screen.getByText("모든 프로젝트 보기")).toBeInTheDocument();
-    expect(screen.getByText("지원하기")).toBeInTheDocument();
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 });
