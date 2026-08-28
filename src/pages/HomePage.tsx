@@ -2,6 +2,7 @@ import { useEffect } from "react";
 
 import { ActivityPhotos } from "../components/home/ActivityPhotos";
 import { CurriculumTimeline } from "../components/home/CurriculumTimeline";
+import { DdayBadge } from "../components/home/DdayBadge";
 import { FAQSection } from "../components/home/FAQSection";
 import { Hero } from "../components/home/Hero";
 import { ProjectShowcase } from "../components/home/ProjectShowcase";
@@ -18,6 +19,7 @@ export default function HomePage() {
 
   return (
     <>
+      <DdayBadge />
       <Hero />
       <ScheduleCalendar />
       <ActivityPhotos />

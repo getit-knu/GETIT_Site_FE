@@ -3,8 +3,11 @@ import { PROJECTS } from "../../mocks/home/projects";
 import styles from "./ProjectShowcase.module.scss";
 
 /**
- * "모든 프로젝트 보기" · "지원하기"는 프로젝트 목록 · 지원하기 페이지가 아직 없어
- * Nav와 같은 이유로 클릭되지 않는 텍스트로 둔다.
+ * "모든 프로젝트 보기"는 프로젝트 목록 페이지가 아직 없어 Nav와 같은 이유로 클릭되지
+ * 않는 텍스트로 둔다.
+ *
+ * D-Day 지원하기 배지는 이 섹션 안이 아니라 `HomePage`의 `DdayBadge`로 뺐다(#170) —
+ * 홈 화면 전체에서 스크롤을 따라다녀야 해서 섹션 하나에 갇혀 있으면 안 된다.
  */
 export function ProjectShowcase() {
   return (
@@ -40,22 +43,6 @@ export function ProjectShowcase() {
               />
             </svg>
           </span>
-
-          <div className={styles.applyBadge}>
-            <span className={styles.ddayLabel}>D-DAY</span>
-            <span className={styles.applyCta}>
-              지원하기
-              <svg className={styles.applyIcon} viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
-                <path
-                  d="M7.5 15L12.5 10L7.5 5"
-                  stroke="currentColor"
-                  strokeWidth="1.66667"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-          </div>
         </div>
       </div>
     </section>
