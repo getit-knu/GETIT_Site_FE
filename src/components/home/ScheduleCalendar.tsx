@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState, type WheelEvent } from "react";
 
 import { SCHEDULE_2026 } from "../../mocks/home/schedule";
@@ -100,14 +101,14 @@ export function ScheduleCalendar() {
         <div className={styles.calendarCard} onWheel={handleWheel}>
           <div className={styles.calendarHeader}>
             <button type="button" className={styles.navButton} aria-label="이전 달" onClick={() => stepMonth(-1)}>
-              ‹
+              <ChevronLeft aria-hidden="true" />
             </button>
             <div>
               <p className={styles.calendarMonth}>{month}월</p>
               <p className={styles.calendarYear}>{YEAR}</p>
             </div>
             <button type="button" className={styles.navButton} aria-label="다음 달" onClick={() => stepMonth(1)}>
-              ›
+              <ChevronRight aria-hidden="true" />
             </button>
           </div>
 
