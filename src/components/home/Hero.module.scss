@@ -1,4 +1,5 @@
 @use "../../styles/abstracts/variables" as *;
+@use "../../styles/abstracts/breakpoints" as *;
 @use "../../styles/abstracts/container";
 
 .hero {
@@ -11,6 +12,10 @@
   justify-content: center;
   padding: 9rem 2rem;
   background-color: $color-background;
+
+  @media (width <= $breakpoint-mobile) {
+    padding: 6rem 1.5rem;
+  }
 }
 
 // 장식용 블롭. 콘텐츠 흐름에 영향 없는 배경 장식이라 콘텐츠보다 먼저 두고 z-index로 뒤에 깐다.
@@ -92,6 +97,10 @@
   font-style: italic;
   font-weight: 800;
   line-height: 1.3333;
+
+  @media (width <= $breakpoint-mobile) {
+    font-size: 2.5rem;
+  }
 }
 
 .headingAccent {
@@ -102,12 +111,21 @@
   margin: 1.5rem 0 0;
   color: $color-text-secondary;
   font-size: 1.25rem;
+
+  @media (width <= $breakpoint-mobile) {
+    font-size: 1rem;
+  }
 }
 
 .actions {
   display: flex;
   gap: 1rem;
   margin-top: 3rem;
+
+  @media (width <= $breakpoint-mobile) {
+    flex-direction: column;
+    width: 100%;
+  }
 }
 
 .primaryCta {
@@ -123,6 +141,11 @@
   color: #fff;
   font-size: 1.125rem;
   font-weight: 700;
+
+  @media (width <= $breakpoint-mobile) {
+    justify-content: center;
+    width: 100%;
+  }
 }
 
 .ctaIcon {
@@ -142,4 +165,9 @@
   color: $color-text-primary;
   font-size: 1.125rem;
   font-weight: 700;
+
+  @media (width <= $breakpoint-mobile) {
+    justify-content: center;
+    width: 100%;
+  }
 }
