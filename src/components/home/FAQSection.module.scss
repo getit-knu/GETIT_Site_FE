@@ -16,7 +16,11 @@
 }
 
 .inner {
-  max-width: 48rem;
+  // `width: 100%`가 없으면 이 섹션의 `.section { display: flex }`가 `.inner`를
+  // max-width까지 채우지 않고 콘텐츠 크기(가장 긴 질문 텍스트)로 줄여버려, FAQ 카드가
+  // 실제로는 max-width의 절반도 안 되는 폭으로 렌더링되던 버그였다.
+  width: 100%;
+  max-width: 60rem;
   margin-inline: auto;
 }
 

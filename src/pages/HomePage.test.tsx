@@ -1,11 +1,13 @@
 import { render, screen } from "@testing-library/react";
+import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 
 import HomePage from "./HomePage";
 
 describe("HomePage", () => {
   it("Figma 와이어프레임 순서대로 6개 섹션을 모두 렌더링한다", () => {
-    render(<HomePage />);
+    const router = createMemoryRouter([{ path: "/", Component: HomePage }], { initialEntries: ["/"] });
+    render(<RouterProvider router={router} />);
 
     const headings = screen.getAllByRole("heading", { level: 1 }).concat(screen.getAllByRole("heading", { level: 2 }));
     const headingTexts = headings.map((heading) => heading.textContent);

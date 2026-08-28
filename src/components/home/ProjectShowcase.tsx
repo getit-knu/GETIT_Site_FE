@@ -1,11 +1,10 @@
+import { Link } from "react-router";
+
 import { PROJECTS } from "../../mocks/home/projects";
 
 import styles from "./ProjectShowcase.module.scss";
 
 /**
- * "모든 프로젝트 보기"는 프로젝트 목록 페이지가 아직 없어 Nav와 같은 이유로 클릭되지
- * 않는 텍스트로 둔다.
- *
  * D-Day 지원하기 배지는 이 섹션 안이 아니라 `HomePage`의 `DdayBadge`로 뺐다(#170) —
  * 홈 화면 전체에서 스크롤을 따라다녀야 해서 섹션 하나에 갇혀 있으면 안 된다.
  */
@@ -31,7 +30,7 @@ export function ProjectShowcase() {
         </ul>
 
         <div className={styles.footer}>
-          <span className={styles.viewAllLink}>
+          <Link to="/projects" className={styles.viewAllLink}>
             모든 프로젝트 보기
             <svg className={styles.viewAllIcon} viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
               <path
@@ -42,7 +41,7 @@ export function ProjectShowcase() {
                 strokeLinejoin="round"
               />
             </svg>
-          </span>
+          </Link>
         </div>
       </div>
     </section>
