@@ -28,6 +28,17 @@ export async function fetchSchedule(): Promise<RecruitmentSchedule> {
   return { ...schedule };
 }
 
+/**
+ * 공개 홈 화면(D-Day 배지)용 동기 스냅샷.
+ *
+ * `fetchSchedule`은 `GET /api/admin/recruitment/schedule` — 관리자 전용이라 로그인 안 한
+ * 방문자가 보는 공개 화면에서 그대로 쓰면 안 된다. 실제 공개용 모집 일정 엔드포인트가
+ * 생기면 이 함수를 그걸로 바꾼다.
+ */
+export function getScheduleSnapshot(): RecruitmentSchedule {
+  return { ...schedule };
+}
+
 export async function saveSchedule(payload: SchedulePayload): Promise<RecruitmentSchedule> {
   await delay();
   // 서버가 막는 것을 목도 막는다. 화면 검증이 빠지면 여기서 걸린다.
