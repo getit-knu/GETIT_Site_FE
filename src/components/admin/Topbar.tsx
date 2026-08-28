@@ -16,12 +16,20 @@ function initialOf(name: string): string {
 interface TopbarProps {
   title: string;
   user: Me | undefined;
+  onMenuClick: () => void;
 }
 
-export function Topbar({ title, user }: TopbarProps) {
+export function Topbar({ title, user, onMenuClick }: TopbarProps) {
   return (
     <header className={styles.topbar}>
-      <h1 className={styles.title}>{title}</h1>
+      <div className={styles.left}>
+        <button type="button" className={styles.menuButton} aria-label="메뉴 열기" onClick={onMenuClick}>
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
+        <h1 className={styles.title}>{title}</h1>
+      </div>
 
       <div className={styles.right}>
         {/*
