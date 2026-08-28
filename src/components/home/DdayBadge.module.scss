@@ -1,0 +1,44 @@
+@use "../../styles/abstracts/variables" as *;
+
+// 어느 섹션 위에 떠 있어도 읽혀야 해서 자체 배경·그림자를 가진 카드로 띄운다
+// (기존엔 ProjectShowcase 안에서 알려진 밝은 배경 위에만 있었어서 배경이 없었다).
+.badge {
+  position: fixed;
+  right: 2rem;
+  bottom: 2rem;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 1.5rem;
+  padding: 1rem 1.25rem;
+  background-color: $color-background;
+  box-shadow:
+    0 20px 25px -5px rgb(0 0 0 / 15%),
+    0 8px 10px -6px rgb(0 0 0 / 15%);
+  text-decoration: none;
+}
+
+.ddayLabel {
+  color: $color-heading;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.applyCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 1rem 2rem;
+  background-color: $color-accent;
+  color: #fff;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.applyIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
