@@ -1,7 +1,10 @@
+import type { components } from "../../apis/generated";
+
 /**
  * 지원 시스템 설정 타입. API 명세서 6.1 ~ 6.11.
  *
  * BE 에 admin recruitment 컨트롤러가 아직 없다. 스키마가 생기면 `generated.ts` 에서 가져온다.
+ * (공개 모집 상태 조회는 이미 스키마가 있어 아래 `RecruitmentStatus` 부터 재노출한다.)
  */
 
 /** 6.1 모집 일정. `interviewEndAt` 은 서버가 `totalEndAt` 으로 맞춘다. */
@@ -64,4 +67,24 @@ export interface CriterionDraft {
   name: string;
   guideline: string;
   maxScore: number;
+}
+
+export type RecruitmentPhase = NonNullable<components["schemas"]["RecruitmentStatusResult"]["phase"]>;
+
+export type ScheduleWindow = Required<components["schemas"]["ScheduleWindow"]>;
+
+/**
+ * `GET /api/public/recruitment/status` 응답. `dDay`·`applyEnabled`는 BE가 계산해서 준다.
+ *
+ * `applyEnabled`가 `false`(예정된 모집이 없음)면 `generationNo`/`year`/`dDay`/`schedule`은
+ * `null`로 온다(실제로 확인함) — 생성된 스키마엔 `| null`이 안 잡혀 있어 손으로 되돌린다.
+ */
+export interface RecruitmentStatus {
+  generationNo: number | null;
+  year: number | null;
+  phase: RecruitmentPhase;
+  dDay: number | null;
+  message: string;
+  applyEnabled: boolean;
+  schedule: ScheduleWindow | null;
 }

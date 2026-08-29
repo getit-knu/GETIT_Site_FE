@@ -1,0 +1,34 @@
+import type { College, Major } from "../../types/college";
+import type { RecruitmentStatus } from "../../types/recruitment";
+import type { StaffDirectory } from "../../types/site";
+import { client } from "../client";
+
+/**
+ * 공개 데이터 API. 명세서 2.6 · 2.7 · 4.x.
+ *
+ * 전부 로그인이 필요 없다 — `RequireRole` 밖(공개 라우트)에서도 호출된다.
+ */
+
+/** `GET /api/public/staffs` */
+export async function getStaffs(): Promise<StaffDirectory> {
+  const { data } = await client.get<StaffDirectory>("/api/public/staffs");
+  return data;
+}
+
+/** `GET /api/public/colleges` */
+export async function getColleges(): Promise<College[]> {
+  const { data } = await client.get<College[]>("/api/public/colleges");
+  return data;
+}
+
+/** `GET /api/public/majors` */
+export async function getMajors(): Promise<Major[]> {
+  const { data } = await client.get<Major[]>("/api/public/majors");
+  return data;
+}
+
+/** `GET /api/public/recruitment/status` */
+export async function getRecruitmentStatus(): Promise<RecruitmentStatus> {
+  const { data } = await client.get<RecruitmentStatus>("/api/public/recruitment/status");
+  return data;
+}

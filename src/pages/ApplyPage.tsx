@@ -1,6 +1,8 @@
 import { useId, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
-import { COLLEGES, getMajorsByCollege } from "../mocks/college/collegeMajors";
+import { getColleges, getMajors } from "../apis/public/publicApi";
+import { queryKeys } from "../apis/queryKeys";
 import { Input } from "../components/ui/Input/Input";
 import { TextArea } from "../components/ui/TextArea/TextArea";
 
@@ -61,7 +63,9 @@ export default function ApplyPage() {
     setForm((prev) => ({ ...prev, majorId }));
   }
 
-  const majorOptions = getMajorsByCollege(form.collegeId);
+  const { data: colleges = [] } = useQuery({ queryKey: queryKeys.public.colleges(), queryFn: getColleges });
+  const { data: majors = [] } = useQuery({ queryKey: queryKeys.public.majors(), queryFn: getMajors });
+  const majorOptions = majors.filter((major) => major.collegeId === form.collegeId);
 
   return (
     <div className={styles.page}>
@@ -116,7 +120,7 @@ export default function ApplyPage() {
                       onChange={(event) => handleCollegeChange(Number(event.target.value))}
                     >
                       <option value={0}>단과 대학을 선택해주세요</option>
-                      {COLLEGES.map((college) => (
+                      {colleges.map((college) => (
                         <option key={college.id} value={college.id}>
                           {college.name}
                         </option>
