@@ -75,13 +75,7 @@ export function toSchedule(draft: ScheduleDraft): SiteSchedule {
  *
  * 눌러 보고 알게 하지 않는다. 서버도 막는 조건이지만 왕복하기 전에 화면에서 알린다.
  */
-export function invalidReason(generationNo: string, year: string, draft: ScheduleDraft): string | null {
-  const no = Number(generationNo);
-  if (!Number.isInteger(no) || no < 1) return "기수는 1 이상의 정수여야 합니다.";
-
-  const y = Number(year);
-  if (!Number.isInteger(y) || y < 2000) return "연도를 올바르게 입력해 주세요.";
-
+export function invalidReason(draft: ScheduleDraft): string | null {
   const missing = SCHEDULE_FIELDS.find(({ key }) => draft[key] === "");
   if (missing) return `${missing.label} 일시를 입력해 주세요.`;
 

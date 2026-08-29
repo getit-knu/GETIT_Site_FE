@@ -66,12 +66,15 @@ export const queryKeys = {
     submissions: (params: SubmissionListParams) => [...queryKeys.lectures.all, "submissions", params] as const,
   },
 
-  /** 사이트 설정은 섹션이 한 덩어리로 오간다(10.20). 키를 쪼개지 않는다. */
   site: {
     all: ["site"] as const,
+    // 모집 일정 · 강의 분류 · FAQ. 아직 실제 엔드포인트가 없어 한 덩어리로 오간다.
     settings: () => [...queryKeys.site.all, "settings"] as const,
-    // 운영진·기능 토글은 10.20 일괄 저장과 무관하게 개별로 오간다. 키를 나눈다.
+    // 진행 기수 · 운영진 · 행사 · 커리큘럼 · 기능 토글은 각자 실제(또는 개별) 엔드포인트라 키를 나눈다.
+    generation: () => [...queryKeys.site.all, "generation"] as const,
     staffs: () => [...queryKeys.site.all, "staffs"] as const,
+    curriculums: () => [...queryKeys.site.all, "curriculums"] as const,
+    events: () => [...queryKeys.site.all, "events"] as const,
     features: () => [...queryKeys.site.all, "features"] as const,
   },
 

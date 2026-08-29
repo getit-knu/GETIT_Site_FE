@@ -1,13 +1,16 @@
-import type { FeatureToggle, Staff, StaffPayload, StaffSection } from "../../types/site";
+import type { FeatureToggle, Staff } from "../../types/site";
 
 /**
- * 운영진 프로필 · 기능 토글 목 (명세서 10.21 ~ 10.24).
+ * 운영진 스냅샷 · 기능 토글 목.
  *
- * BE 에 admin setting 컨트롤러가 아직 없어 화면을 먼저 만든다.
- * 앞의 섹션들과 달리 **개별 엔드포인트로 즉시 반영**된다.
+ * 운영진 CRUD 는 실제 BE 엔드포인트로 옮겨갔다(#194) — 이 배열은 이제 공개 사이트
+ * (`LeadersPage`)가 쓰는 `getStaffsSnapshot()` 의 시드 데이터로만 남는다. 공개 사이트가
+ * 실제 `GET /api/public/staffs` 로 옮겨가면(#187) 이 파일 전체를 지운다.
+ *
+ * 기능 토글은 아직 실제 엔드포인트가 없어 목으로 남긴다.
  */
 
-let staffs: Staff[] = [
+const staffs: Staff[] = [
   {
     id: 1,
     userId: 3,
@@ -135,85 +138,16 @@ let features: FeatureToggle[] = [
   },
 ];
 
-let nextStaffId = 10;
 const delay = () => new Promise((r) => setTimeout(r, 200));
-
-/** 구역 안에서 order 순으로. 서버가 정렬해 준다. */
-function sorted(): Staff[] {
-  return [...staffs].sort((a, b) => a.section.localeCompare(b.section) || a.order - b.order);
-}
-
-export async function fetchStaffs(): Promise<Staff[]> {
-  await delay();
-  return structuredClone(sorted());
-}
 
 /**
  * 공개 사이트(운영진 소개 페이지)용 동기 스냅샷.
  *
- * `fetchStaffs()`(→ `getStaffs()`, 관리자 전용 `GET /api/admin/setting/staffs`)를 공개
- * 페이지가 그대로 타면, 실제 API가 붙었을 때 로그인 없이 관리자 엔드포인트를 호출하는
- * 모양이 된다. 공개 사이트 전용 API가 따로 생기기 전까지, 로딩 상태 없이 바로 쓰는
- * Home·프로젝트 쇼케이스와 같은 방식으로 이 데이터만 동기로 노출한다.
+ * 로딩 상태 없이 바로 쓰는 Home·프로젝트 쇼케이스와 같은 방식으로 이 데이터만 동기로
+ * 노출한다. 구역 안에서 order 순으로 정렬한다(서버가 정렬해 주는 것과 같은 기준).
  */
 export function getStaffsSnapshot(): Staff[] {
-  return structuredClone(sorted());
-}
-
-export async function createStaff(payload: StaffPayload): Promise<Staff> {
-  await delay();
-  if (payload.name.trim() === "") throw { code: "INVALID_INPUT", message: "이름을 입력해 주세요." };
-
-  const inSection = staffs.filter((s) => s.section === payload.section);
-  const staff: Staff = {
-    id: nextStaffId++,
-    userId: payload.userId,
-    name: payload.name,
-    staffRole: payload.staffRole,
-    section: payload.section,
-    department: payload.department,
-    introduction: payload.introduction,
-    profileImageUrl: null,
-    order: inSection.length + 1,
-    generationNo: payload.generationNo,
-  };
-  staffs.push(staff);
-  return structuredClone(staff);
-}
-
-export async function updateStaff(id: number, payload: StaffPayload): Promise<Staff> {
-  await delay();
-  const found = staffs.find((s) => s.id === id);
-  if (found === undefined) throw { code: "STAFF_NOT_FOUND", message: "운영진을 찾을 수 없습니다." };
-
-  // 구역이 바뀌면 새 구역 끝으로 간다. 옛 구역의 순서 자리를 들고 갈 수 없다.
-  if (found.section !== payload.section) {
-    found.order = staffs.filter((s) => s.section === payload.section).length + 1;
-  }
-
-  Object.assign(found, {
-    userId: payload.userId,
-    name: payload.name,
-    staffRole: payload.staffRole,
-    section: payload.section,
-    department: payload.department,
-    introduction: payload.introduction,
-  });
-  return structuredClone(found);
-}
-
-export async function deleteStaff(id: number): Promise<void> {
-  await delay();
-  staffs = staffs.filter((s) => s.id !== id);
-}
-
-/** 10.22. `section` 안에서만 순서를 다시 매긴다. */
-export async function reorderStaffs(section: StaffSection, orderedIds: number[]): Promise<void> {
-  await delay();
-  orderedIds.forEach((id, at) => {
-    const found = staffs.find((s) => s.id === id && s.section === section);
-    if (found !== undefined) found.order = at + 1;
-  });
+  return structuredClone([...staffs].sort((a, b) => a.section.localeCompare(b.section) || a.order - b.order));
 }
 
 export async function fetchFeatures(): Promise<FeatureToggle[]> {

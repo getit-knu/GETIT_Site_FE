@@ -44,47 +44,34 @@ describe("toLocalInput · toIso", () => {
 
 describe("invalidReason", () => {
   it("올바른 입력은 막지 않는다", () => {
-    expect(invalidReason("9", "2026", draft())).toBeNull();
-  });
-
-  it("기수와 연도를 검사한다", () => {
-    expect(invalidReason("0", "2026", draft())).toBe("기수는 1 이상의 정수여야 합니다.");
-    expect(invalidReason("", "2026", draft())).toBe("기수는 1 이상의 정수여야 합니다.");
-    expect(invalidReason("9.5", "2026", draft())).toBe("기수는 1 이상의 정수여야 합니다.");
-    expect(invalidReason("9", "1999", draft())).toBe("연도를 올바르게 입력해 주세요.");
+    expect(invalidReason(draft())).toBeNull();
   });
 
   it("빈 일시를 어느 칸인지 짚어 알린다", () => {
-    expect(invalidReason("9", "2026", { ...draft(), documentEndAt: "" })).toBe("서류 접수 마감 일시를 입력해 주세요.");
+    expect(invalidReason({ ...draft(), documentEndAt: "" })).toBe("서류 접수 마감 일시를 입력해 주세요.");
   });
 
   it("마감이 시작보다 빠르면 막는다", () => {
-    expect(invalidReason("9", "2026", { ...draft(), totalEndAt: "2026-08-01T00:00" })).toBe(
-      "전체 모집 마감이 시작보다 빠릅니다.",
-    );
-    expect(invalidReason("9", "2026", { ...draft(), documentEndAt: "2026-08-01T00:00" })).toBe(
+    expect(invalidReason({ ...draft(), totalEndAt: "2026-08-01T00:00" })).toBe("전체 모집 마감이 시작보다 빠릅니다.");
+    expect(invalidReason({ ...draft(), documentEndAt: "2026-08-01T00:00" })).toBe(
       "서류 접수 마감이 시작보다 빠릅니다.",
     );
   });
 
   it("서류 · 면접이 전체 모집 기간을 벗어나면 막는다", () => {
     // 벗어나면 공개 사이트의 단계 표기가 어긋난다.
-    expect(invalidReason("9", "2026", { ...draft(), documentStartAt: "2026-08-01T00:00" })).toBe(
+    expect(invalidReason({ ...draft(), documentStartAt: "2026-08-01T00:00" })).toBe(
       "서류 접수가 전체 모집 시작보다 빠릅니다.",
     );
-    expect(invalidReason("9", "2026", { ...draft(), interviewStartAt: "2026-09-05T00:00" })).toBe(
-      "면접이 서류 마감보다 빠릅니다.",
-    );
-    expect(invalidReason("9", "2026", { ...draft(), interviewStartAt: "2026-10-05T00:00" })).toBe(
+    expect(invalidReason({ ...draft(), interviewStartAt: "2026-09-05T00:00" })).toBe("면접이 서류 마감보다 빠릅니다.");
+    expect(invalidReason({ ...draft(), interviewStartAt: "2026-10-05T00:00" })).toBe(
       "면접이 전체 모집 마감보다 늦습니다.",
     );
   });
 
   it("시작과 마감이 같은 것도 막는다", () => {
     const d = draft();
-    expect(invalidReason("9", "2026", { ...d, totalEndAt: d.totalStartAt })).toBe(
-      "전체 모집 마감이 시작보다 빠릅니다.",
-    );
+    expect(invalidReason({ ...d, totalEndAt: d.totalStartAt })).toBe("전체 모집 마감이 시작보다 빠릅니다.");
   });
 
   it("형태가 어긋난 일시는 어느 칸인지 짚어 막는다", () => {
@@ -92,26 +79,22 @@ describe("invalidReason", () => {
       비어 있지 않다고 쓸 수 있는 값은 아니다. 막지 않으면 저장 버튼이 열린 채
       빈 일정이 서버로 나간다.
     */
-    expect(invalidReason("9", "2026", { ...draft(), interviewStartAt: "2026-09-15" })).toBe(
+    expect(invalidReason({ ...draft(), interviewStartAt: "2026-09-15" })).toBe(
       "면접 시작 일시 형식이 올바르지 않습니다.",
     );
-    expect(invalidReason("9", "2026", { ...draft(), totalStartAt: "아무거나" })).toBe(
+    expect(invalidReason({ ...draft(), totalStartAt: "아무거나" })).toBe(
       "전체 모집 시작 일시 형식이 올바르지 않습니다.",
     );
   });
 
   it("서류가 전체 마감을 넘으면 서류 칸을 짚는다", () => {
     // 면접 검사에도 걸리지만 "면접이 늦습니다" 로는 고쳐야 할 칸을 알 수 없다.
-    expect(
-      invalidReason("9", "2026", {
-        ...draft(),
-        documentEndAt: "2026-10-15T23:59",
-        interviewStartAt: "2026-10-20T00:00",
-      }),
-    ).toBe("서류 접수 마감이 전체 모집 마감보다 늦습니다.");
+    expect(invalidReason({ ...draft(), documentEndAt: "2026-10-15T23:59", interviewStartAt: "2026-10-20T00:00" })).toBe(
+      "서류 접수 마감이 전체 모집 마감보다 늦습니다.",
+    );
 
     expect(
-      invalidReason("9", "2026", {
+      invalidReason({
         ...draft(),
         documentStartAt: "2026-10-01T00:00",
         documentEndAt: "2026-10-15T23:59",
