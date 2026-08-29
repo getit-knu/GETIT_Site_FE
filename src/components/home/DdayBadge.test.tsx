@@ -1,55 +1,68 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+import { getRecruitmentStatus } from "../../apis/public/publicApi";
+import type { RecruitmentStatus } from "../../types/recruitment";
 
 import { DdayBadge } from "./DdayBadge";
 
-// mocks/recruitment/recruitment.ts 의 documentStartAt~documentEndAt: 2026-09-01 ~ 2026-09-10 23:59.
+vi.mock("../../apis/public/publicApi");
+
+const SCHEDULE = {
+  totalStartAt: "2026-09-01T00:00",
+  totalEndAt: "2026-09-30T23:59",
+  documentStartAt: "2026-09-01T00:00",
+  documentEndAt: "2026-09-10T23:59",
+  interviewStartAt: "2026-09-15T00:00",
+  interviewEndAt: "2026-09-30T23:59",
+};
+
+function status(overrides: Partial<RecruitmentStatus>): RecruitmentStatus {
+  return {
+    generationNo: 9,
+    year: 2026,
+    phase: "DOCUMENT_OPEN",
+    dDay: 2,
+    message: "",
+    applyEnabled: true,
+    schedule: SCHEDULE,
+    ...overrides,
+  };
+}
 
 function renderBadge() {
   const router = createMemoryRouter([{ path: "/", element: <DdayBadge /> }], { initialEntries: ["/"] });
-  return render(<RouterProvider router={router} />);
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  );
 }
 
 describe("DdayBadge", () => {
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("서류 접수 기간 전에는 아무것도 보여주지 않는다", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-08-20T12:00"));
-
+  it("applyEnabled가 false면 아무것도 보여주지 않는다", async () => {
+    vi.mocked(getRecruitmentStatus).mockResolvedValue(status({ applyEnabled: false, phase: "BEFORE_OPEN" }));
     renderBadge();
 
+    await vi.waitFor(() => expect(getRecruitmentStatus).toHaveBeenCalled());
     expect(screen.queryByText("지원하기")).not.toBeInTheDocument();
   });
 
-  it("서류 접수 기간이 지나면 아무것도 보여주지 않는다", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-09-11T00:00"));
-
+  it("applyEnabled가 true면 남은 일수와 함께 지원하기 링크를 보여준다", async () => {
+    vi.mocked(getRecruitmentStatus).mockResolvedValue(status({ dDay: 2 }));
     renderBadge();
 
-    expect(screen.queryByText("지원하기")).not.toBeInTheDocument();
-  });
-
-  it("서류 접수 기간 안이면 남은 일수와 함께 지원하기 링크를 보여준다", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-09-08T09:00"));
-
-    renderBadge();
-
-    expect(screen.getByText("D-2")).toBeInTheDocument();
+    expect(await screen.findByText("D-2")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /지원하기/ })).toHaveAttribute("href", "/apply");
   });
 
-  it("마감 당일에는 시각과 무관하게 D-DAY로 보여준다", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-09-10T08:00"));
-
+  it("dDay가 0이면 D-DAY로 보여준다", async () => {
+    vi.mocked(getRecruitmentStatus).mockResolvedValue(status({ dDay: 0 }));
     renderBadge();
 
-    expect(screen.getByText("D-DAY")).toBeInTheDocument();
+    expect(await screen.findByText("D-DAY")).toBeInTheDocument();
   });
 });

@@ -148,18 +148,6 @@ export async function fetchStaffs(): Promise<Staff[]> {
   return structuredClone(sorted());
 }
 
-/**
- * 공개 사이트(운영진 소개 페이지)용 동기 스냅샷.
- *
- * `fetchStaffs()`(→ `getStaffs()`, 관리자 전용 `GET /api/admin/setting/staffs`)를 공개
- * 페이지가 그대로 타면, 실제 API가 붙었을 때 로그인 없이 관리자 엔드포인트를 호출하는
- * 모양이 된다. 공개 사이트 전용 API가 따로 생기기 전까지, 로딩 상태 없이 바로 쓰는
- * Home·프로젝트 쇼케이스와 같은 방식으로 이 데이터만 동기로 노출한다.
- */
-export function getStaffsSnapshot(): Staff[] {
-  return structuredClone(sorted());
-}
-
 export async function createStaff(payload: StaffPayload): Promise<Staff> {
   await delay();
   if (payload.name.trim() === "") throw { code: "INVALID_INPUT", message: "이름을 입력해 주세요." };

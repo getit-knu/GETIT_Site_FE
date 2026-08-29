@@ -1,7 +1,10 @@
+import type { components } from "../../apis/generated";
+
 /**
  * 사이트 설정 타입. API 명세서 10절.
  *
  * BE 에 admin setting 컨트롤러가 아직 없다. 스키마가 생기면 `generated.ts` 에서 가져온다.
+ * (공개 운영진 조회는 이미 스키마가 있어 아래 `PublicStaff` 부터 재노출한다.)
  */
 
 /** 10.1 진행 기수. 활성 기수는 하나뿐이다. */
@@ -119,6 +122,27 @@ export interface StaffPayload {
   introduction: string;
   fileId: number | null;
   generationNo: number;
+}
+
+/**
+ * `GET /api/public/staffs` 응답. 운영진 소개 페이지(`LeadersPage`) 전용 — 로그인이
+ * 필요 없고, 어드민 `Staff`에 있는 `userId`/`generationNo` 같은 관리용 필드가 없다.
+ *
+ * `profileImageUrl`은 생성된 스키마에 `| null`이 안 잡혀 있다(springdoc이 Java 필드의
+ * null 가능성을 그대로 못 옮김) — 사진 없는 운영진은 실제로 `null`이라 손으로 되돌린다.
+ */
+export type PublicStaff = Omit<Required<components["schemas"]["PublicStaffResult"]>, "profileImageUrl"> & {
+  profileImageUrl: string | null;
+};
+
+export interface StaffSectionGroup {
+  section: StaffSection;
+  sectionName: string;
+  staffs: PublicStaff[];
+}
+
+export interface StaffDirectory {
+  sections: StaffSectionGroup[];
 }
 
 /**

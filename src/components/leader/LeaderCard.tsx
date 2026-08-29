@@ -1,4 +1,4 @@
-import type { Staff } from "../../types/site";
+import type { PublicStaff } from "../../types/site";
 
 import styles from "./LeaderCard.module.scss";
 
@@ -14,7 +14,7 @@ const PHOTO_GRADIENTS = [
 ];
 
 interface LeaderCardProps {
-  staff: Staff;
+  staff: PublicStaff;
   /** Leader(회장단)만 회장·부회장·총무 구분이 의미 있어 역할을 보여준다. Staff는 안 보여준다. */
   showRole?: boolean;
 }
