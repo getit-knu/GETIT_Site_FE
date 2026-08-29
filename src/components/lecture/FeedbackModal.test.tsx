@@ -99,6 +99,18 @@ describe("FeedbackModal", () => {
     expect(screen.getByText("부족한 부분이 있으면 알려주세요.")).toBeInTheDocument();
   });
 
+  it("링크로 제출된 것은 파일 대신 링크를 보여준다", async () => {
+    // file·linkUrl은 서로 배타적이다(명세서 8.7).
+    vi.mocked(api.getSubmissionDetail).mockResolvedValue(
+      detail({ file: null, linkUrl: "https://github.com/getit-knu/example" }),
+    );
+    renderModal();
+
+    const link = await screen.findByRole("link", { name: "https://github.com/getit-knu/example" });
+    expect(link).toHaveAttribute("href", "https://github.com/getit-knu/example");
+    expect(screen.queryByText(/미리보기를 지원하지 않습니다/)).not.toBeInTheDocument();
+  });
+
   it("미리보기를 지원하지 않는 파일은 내려받기만 준다", async () => {
     // previewable 은 서버가 정한다. FE 가 contentType 을 다시 보고 열려 들면 안 된다.
     renderModal();

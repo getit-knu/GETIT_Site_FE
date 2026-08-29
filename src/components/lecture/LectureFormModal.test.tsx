@@ -140,6 +140,48 @@ describe("LectureFormModal", () => {
     expect(submit()).toBeDisabled();
   });
 
+  it("제출 방식을 하나도 선택하지 않으면 저장을 막는다", async () => {
+    renderModal(null);
+
+    await userEvent.type(titleBox(), "새 강의");
+    await userEvent.type(weekBox(), "1");
+    await userEvent.click(screen.getByLabelText("과제 있음"));
+    await userEvent.type(screen.getByLabelText("과제 제목 *"), "과제");
+    await userEvent.type(screen.getByLabelText("과제 설명 (Markdown)"), "설명");
+    await userEvent.type(screen.getByLabelText("마감 기한 *"), "2026-06-19T23:59");
+    // 기본값(파일)을 끄면 아무 방식도 안 남는다.
+    await userEvent.click(screen.getByLabelText("파일"));
+
+    expect(screen.getByText("과제 제출 방식을 하나 이상 선택해 주세요.")).toBeInTheDocument();
+    expect(submit()).toBeDisabled();
+  });
+
+  it("링크를 허용하면 안내 문구 입력칸이 나타나고 저장에 실린다", async () => {
+    renderModal(null);
+
+    await userEvent.type(titleBox(), "새 강의");
+    await userEvent.type(weekBox(), "1");
+    await userEvent.click(screen.getByLabelText("과제 있음"));
+    await userEvent.type(screen.getByLabelText("과제 제목 *"), "과제");
+    await userEvent.type(screen.getByLabelText("과제 설명 (Markdown)"), "설명");
+    await userEvent.type(screen.getByLabelText("마감 기한 *"), "2026-06-19T23:59");
+
+    expect(screen.queryByLabelText("링크 안내 문구")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText("링크"));
+    await userEvent.type(screen.getByLabelText("링크 안내 문구"), "구글 드라이브 링크");
+    await userEvent.click(submit());
+
+    expect(api.createLecture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assignment: expect.objectContaining({
+          allowedTypes: ["FILE", "LINK"],
+          linkPlaceholder: "구글 드라이브 링크",
+        }),
+      }),
+    );
+  });
+
   it("소분류를 고르지 않으면 null 로 보낸다", async () => {
     // 0 은 화면에서 쓰는 값일 뿐 서버가 아는 소분류 id 가 아니다.
     renderModal(null);
