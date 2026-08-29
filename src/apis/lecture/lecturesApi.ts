@@ -1,8 +1,7 @@
-import * as feedbackMock from "../../mocks/lecture/feedbacks";
-import * as mock from "../../mocks/lecture/lectures";
-import * as submissionMock from "../../mocks/lecture/submissions";
+import { client } from "../client";
 import type {
-  Feedback,
+  FeedbackCreateResult,
+  FeedbackUpdateResult,
   LectureBoard,
   LectureDetail,
   LectureListParams,
@@ -17,39 +16,70 @@ import type {
 /**
  * 강의 관리 API. 명세서 8.1 · 8.5 ~ 8.10.
  *
- * **아직 목 데이터를 돌려준다.** 연동 이슈에서 `mock.*` 만 `client.*` 로 바꾸면 된다.
+ * 타입은 `generated.ts` 를 쓰지 않는다 — `types/lecture/index.ts` 상단 주석 참고.
  */
 
-/** `GET /api/admin/lectures?trackId=&subCategoryId=&generationId=` */
-export const getLectures = (params: LectureListParams): Promise<LectureBoard> => mock.fetchLectures(params);
+/** `GET /api/admin/lectures?trackId=&subCategoryId=` */
+export async function getLectures(params: LectureListParams): Promise<LectureBoard> {
+  const { data } = await client.get<LectureBoard>("/api/admin/lectures", { params });
+  return data;
+}
 
 /** `DELETE /api/admin/lectures/{id}` */
-export const deleteLecture = (id: number): Promise<void> => mock.deleteLecture(id);
+export async function deleteLecture(id: number): Promise<void> {
+  await client.delete(`/api/admin/lectures/${id}`);
+}
 
 /** `GET /api/admin/lectures/{id}` — 수정 폼 프리필용. 비공개 강의도 조회된다. */
-export const getLectureDetail = (id: number): Promise<LectureDetail> => mock.fetchLectureDetail(id);
+export async function getLectureDetail(id: number): Promise<LectureDetail> {
+  const { data } = await client.get<LectureDetail>(`/api/admin/lectures/${id}`);
+  return data;
+}
 
 /** `POST /api/admin/lectures` */
-export const createLecture = (payload: LecturePayload): Promise<void> => mock.createLecture(payload);
+export async function createLecture(payload: LecturePayload): Promise<void> {
+  await client.post("/api/admin/lectures", payload);
+}
 
 /** `PUT /api/admin/lectures/{id}` */
-export const updateLecture = (id: number, payload: LecturePayload): Promise<void> => mock.updateLecture(id, payload);
+export async function updateLecture(id: number, payload: LecturePayload): Promise<void> {
+  await client.put(`/api/admin/lectures/${id}`, payload);
+}
 
 /** `GET /api/admin/lectures/{id}/submissions?submitted=&feedbackDone=&groupId=&page=` */
-export const getSubmissions = (params: SubmissionListParams): Promise<SubmissionBoard> =>
-  submissionMock.fetchSubmissions(params);
+export async function getSubmissions(params: SubmissionListParams): Promise<SubmissionBoard> {
+  const { lectureId, ...query } = params;
+  const { data } = await client.get<SubmissionBoard>(`/api/admin/lectures/${lectureId}/submissions`, {
+    params: query,
+  });
+  return data;
+}
 
 /** `GET /api/admin/submissions/{id}` */
-export const getSubmissionDetail = (id: number): Promise<SubmissionDetail> => feedbackMock.fetchSubmissionDetail(id);
+export async function getSubmissionDetail(id: number): Promise<SubmissionDetail> {
+  const { data } = await client.get<SubmissionDetail>(`/api/admin/submissions/${id}`);
+  return data;
+}
 
 /** `POST /api/admin/submissions/{id}/feedback` */
-export const createFeedback = (submissionId: number, content: string): Promise<Feedback> =>
-  feedbackMock.createFeedback(submissionId, content);
+export async function createFeedback(submissionId: number, content: string): Promise<FeedbackCreateResult> {
+  const { data } = await client.post<FeedbackCreateResult>(`/api/admin/submissions/${submissionId}/feedback`, {
+    content,
+  });
+  return data;
+}
 
 /** `PUT /api/admin/feedbacks/{feedbackId}` */
-export const updateFeedback = (feedbackId: number, content: string): Promise<Feedback> =>
-  feedbackMock.updateFeedback(feedbackId, content);
+export async function updateFeedback(feedbackId: number, content: string): Promise<FeedbackUpdateResult> {
+  const { data } = await client.put<FeedbackUpdateResult>(`/api/admin/feedbacks/${feedbackId}`, { content });
+  return data;
+}
 
-/** `GET /api/admin/lectures/{id}/submissions/navigate?currentSubmissionId=…` */
-export const navigateSubmissions = (params: NavigateParams): Promise<SubmissionNavigation> =>
-  feedbackMock.navigate(params);
+/** `GET /api/admin/lectures/{id}/submissions/navigate?currentSubmissionId=&submitted=&feedbackDone=&groupId=` */
+export async function navigateSubmissions(params: NavigateParams): Promise<SubmissionNavigation> {
+  const { lectureId, ...query } = params;
+  const { data } = await client.get<SubmissionNavigation>(`/api/admin/lectures/${lectureId}/submissions/navigate`, {
+    params: query,
+  });
+  return data;
+}

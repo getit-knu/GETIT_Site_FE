@@ -1,6 +1,18 @@
-import type { Assignment, LectureFile } from "../../types/lecture";
+import type { LectureFile } from "../../types/lecture";
 
 import { getMemberLecturesSnapshot, type MemberLecture } from "./memberLectures";
+
+/**
+ * 부원 화면용 과제 요약. `types/lecture`의 `Assignment`(관리자 8.x 스펙)는 제출 방식
+ * 제어값(`id`·`allowedTypes`·`linkPlaceholder`)까지 갖고 있어 지금 이 화면이 그리는
+ * "제목 · 설명 · 마감"만으로는 억지로 끼워 맞추는 셈이라 따로 둔다. 부원용 제출 폼을
+ * 만들 때(BE 부원용 제출 엔드포인트가 생기면) 필요한 값을 그때 추가한다.
+ */
+export interface MemberAssignment {
+  title: string;
+  description: string;
+  deadline: string;
+}
 
 /**
  * 강의 상세 전용 Q&A 항목. admin `types/qna`(`#23`)와는 별개다 — 그쪽은 `lectureTitle` 문자열만
@@ -24,7 +36,7 @@ export interface MemberLectureDetail extends MemberLecture {
   youtubeUrl: string;
   materials: LectureFile[];
   /** 없는 강의는 `null`. `completed`가 이미 본인 제출 여부라 제출 폼과 함께 쓴다. */
-  assignment: Assignment | null;
+  assignment: MemberAssignment | null;
   questions: QaEntry[];
 }
 

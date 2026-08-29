@@ -22,10 +22,10 @@ export function useSaveFeedback(submissionId: number | null) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ feedbackId, content }: { feedbackId: number | null; content: string }) =>
+    mutationFn: async ({ feedbackId, content }: { feedbackId: number | null; content: string }) =>
       feedbackId === null
-        ? api.createFeedback(submissionId as number, content)
-        : api.updateFeedback(feedbackId, content),
+        ? await api.createFeedback(submissionId as number, content)
+        : await api.updateFeedback(feedbackId, content),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.lectures.all });
       await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
