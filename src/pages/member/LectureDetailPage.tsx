@@ -8,9 +8,9 @@ import {
   askQuestion,
   getMemberLectureDetail,
   submitAssignment,
+  type MemberAssignment,
   type QaEntry,
 } from "../../mocks/lecture/memberLectureDetail";
-import type { Assignment } from "../../types/lecture";
 
 import styles from "./LectureDetailPage.module.scss";
 
@@ -44,7 +44,7 @@ function BackLink() {
 
 interface AssignmentSectionProps {
   lectureId: number;
-  assignment: Assignment | null;
+  assignment: MemberAssignment | null;
   /** `MemberLecture.completed` — 이 강의의 과제를 본인이 이미 제출했는지. */
   alreadySubmitted: boolean;
 }

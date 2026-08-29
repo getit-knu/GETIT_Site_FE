@@ -1,11 +1,16 @@
+import type { components } from "../../apis/generated";
+
 /**
  * 사이트 설정 타입.
  *
  * **진행 기수 · 운영진 · 행사 · 커리큘럼은 실제 BE `Setting` 도메인(각각 별도 컨트롤러)에서
- * 가져온다.** `generated.ts` 를 쓰지 않는다 — 이 BE는 중첩 클래스 이름이 다른 도메인과
- * 겹치면 springdoc이 스키마를 잘못 등록하는 버그가 있다(`types/lecture/index.ts` 상단 주석에
- * 실제 확인한 사례가 있다). 그래서 `domain/setting/*` 의 Java 소스를 직접 읽고 그 필드
- * 그대로 옮겼다.
+ * 가져온다.** 이 부분은 `generated.ts` 를 쓰지 않는다 — 이 BE는 중첩 클래스 이름이 다른
+ * 도메인과 겹치면 springdoc이 스키마를 잘못 등록하는 버그가 있다(`types/lecture/index.ts`
+ * 상단 주석에 실제 확인한 사례가 있다). 그래서 `domain/setting/*` 의 Java 소스를 직접
+ * 읽고 그 필드 그대로 옮겼다.
+ *
+ * **공개 운영진 조회(`PublicStaff` 이하)는 다르다** — 이미 스키마가 있어 `generated.ts`
+ * 에서 그대로 재노출한다.
  *
  * 모집 일정 · 강의 분류 · FAQ는 아직 BE 연동 전이라(각각 #190·#195·미배정) 목 데이터로 남는다.
  */
@@ -152,6 +157,27 @@ export interface StaffPayload {
   introduction: string;
   fileId: number | null;
   generationNo: number;
+}
+
+/**
+ * `GET /api/public/staffs` 응답. 운영진 소개 페이지(`LeadersPage`) 전용 — 로그인이
+ * 필요 없고, 어드민 `Staff`에 있는 `userId`/`generationNo` 같은 관리용 필드가 없다.
+ *
+ * `profileImageUrl`은 생성된 스키마에 `| null`이 안 잡혀 있다(springdoc이 Java 필드의
+ * null 가능성을 그대로 못 옮김) — 사진 없는 운영진은 실제로 `null`이라 손으로 되돌린다.
+ */
+export type PublicStaff = Omit<Required<components["schemas"]["PublicStaffResult"]>, "profileImageUrl"> & {
+  profileImageUrl: string | null;
+};
+
+export interface StaffSectionGroup {
+  section: StaffSection;
+  sectionName: string;
+  staffs: PublicStaff[];
+}
+
+export interface StaffDirectory {
+  sections: StaffSectionGroup[];
 }
 
 /**

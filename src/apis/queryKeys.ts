@@ -115,4 +115,13 @@ export const queryKeys = {
     details: () => [...queryKeys.questions.all, "detail"] as const,
     detail: (id: number) => [...queryKeys.questions.details(), id] as const,
   },
+
+  /** 로그인 없이 공개 라우트에서도 쓴다. 어드민 쪽(`site`/`recruitment`)과는 별개 키다. */
+  public: {
+    all: ["public"] as const,
+    staffs: () => [...queryKeys.public.all, "staffs"] as const,
+    colleges: () => [...queryKeys.public.all, "colleges"] as const,
+    majors: () => [...queryKeys.public.all, "majors"] as const,
+    recruitmentStatus: () => [...queryKeys.public.all, "recruitment-status"] as const,
+  },
 } as const;

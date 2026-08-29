@@ -6,8 +6,13 @@ import type { ApiErrorPayload } from "../../apis/client";
  * **에러 코드는 BE 가 도메인별로 발급한다. FE 가 새로 짓지 않는다.**
  */
 const RECRUITMENT_ERROR_MESSAGES: Record<string, string> = {
-  RECRUITMENT_ALREADY_STARTED: "모집이 시작되어 수정할 수 없습니다.",
-  INVALID_CRITERIA_TOTAL: "평가 기준 배점 합계는 100점이어야 합니다.",
+  ACTIVE_GENERATION_NOT_FOUND: "진행 중인 기수가 없습니다.",
+  SCHEDULE_NOT_FOUND: "모집 일정을 찾을 수 없습니다.",
+  QUESTION_NOT_FOUND: "질문 항목을 찾을 수 없습니다.",
+  CRITERION_NOT_FOUND: "평가 기준을 찾을 수 없습니다.",
+  // 서버는 매 쓰기마다 100 을 넘는지만 본다(`saveCriteria` 주석 참고). 화면 자체
+  // validation("100점이어야 합니다")과 문구가 갈리지 않도록 여기도 "100점"을 기준으로 안내한다.
+  INVALID_CRITERIA_TOTAL: "평가 기준 배점 합계가 100점을 넘었습니다. 100점에 맞춰 다시 입력해 주세요.",
   VALIDATION_FAILED: "입력한 일정이 올바르지 않습니다. 기간 순서를 확인해 주세요.",
   FORBIDDEN: "설정을 볼 권한이 없습니다.",
   UNAUTHORIZED: "로그인이 필요합니다.",

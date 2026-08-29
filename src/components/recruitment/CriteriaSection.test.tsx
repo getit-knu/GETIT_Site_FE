@@ -139,6 +139,26 @@ describe("CriteriaSection", () => {
     expect(await screen.findByText(/현재 110점/)).toBeInTheDocument();
   });
 
+  it("저장이 실패해도 초안을 비워 다시 받아온 서버 상태를 보여준다", async () => {
+    /*
+      saveCriteria 는 요청을 여러 번 나눠 보낸다 — 중간에 하나가 실패하면 서버는 이미
+      일부만 반영된 상태다. 실패했다고 쓰던 초안을 그대로 두면 방금 무엇까지 반영됐는지
+      모른 채 다시 저장을 누르게 된다.
+    */
+    vi.mocked(api.saveCriteria).mockRejectedValue({ code: "FORBIDDEN", message: "?" });
+    renderSection();
+
+    const name = await screen.findByDisplayValue("전공 적합성");
+    await userEvent.clear(name);
+    await userEvent.type(name, "고친 이름");
+    await userEvent.click(saveButton());
+
+    // 실패 후에는 다시 조회해 초안(고친 이름)이 아니라 서버 값(원래 이름)을 보여준다.
+    expect(await screen.findByDisplayValue("전공 적합성")).toBeInTheDocument();
+    expect(screen.queryByDisplayValue("고친 이름")).not.toBeInTheDocument();
+    expect(api.getCriteria).toHaveBeenCalledTimes(2);
+  });
+
   it("조회에 실패하면 오류와 재시도를 보여준다", async () => {
     vi.mocked(api.getCriteria).mockRejectedValue({ code: "FORBIDDEN", message: "?" });
     renderSection();

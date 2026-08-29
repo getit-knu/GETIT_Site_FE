@@ -64,7 +64,13 @@ export function CriteriaSection({ locked }: { locked: boolean }) {
         guideline: r.guideline.trim(),
         maxScore: Number(r.maxScore),
       })),
-      { onSuccess: () => setRows(null) },
+      {
+        // 실패해도 초안을 비운다. saveCriteria 는 여러 요청으로 나뉘어 나가서, 중간에
+        // 하나가 실패하면 서버는 이미 일부만 반영된 상태다 — 실패했다고 원래 쓰던 초안을
+        // 그대로 두면 방금 무엇까지 반영됐는지 모른 채 다시 저장을 누르게 된다. 비우면
+        // 훅이 다시 받아온 실제 서버 상태로 화면이 채워져, 그걸 보고 다시 편집할 수 있다.
+        onSettled: () => setRows(null),
+      },
     );
   }
 
