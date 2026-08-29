@@ -7,7 +7,12 @@ import type { ApiErrorPayload } from "../../apis/client";
  */
 const FILE_ERROR_MESSAGES: Record<string, string> = {
   INVALID_FILE_EXTENSION: "올릴 수 없는 형식입니다.",
-  FILE_SIZE_EXCEEDED: "파일이 너무 큽니다.",
+  INVALID_FILE_SIZE: "파일이 너무 큽니다.",
+  FILE_NOT_FOUND: "파일을 찾을 수 없습니다.",
+  FILE_IN_USE: "다른 곳에서 쓰고 있어 지울 수 없습니다.",
+  FILE_ALREADY_CONNECTED: "이미 다른 항목에 연결된 파일입니다.",
+  FILE_NOT_UPLOADED: "업로드가 끝나지 않은 파일입니다.",
+  FILE_SIZE_MISMATCH: "신고한 크기와 실제 파일이 달라 처리할 수 없습니다.",
   UNAUTHORIZED: "로그인이 필요합니다.",
   FORBIDDEN: "파일을 올릴 권한이 없습니다.",
 };
