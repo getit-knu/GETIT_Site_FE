@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { queryKeys } from "../../apis/queryKeys";
 import { deleteUser, getUsers, promoteApplicants, updateUser } from "../../apis/user/usersApi";
-import type { UpdateUserPayload, UserListParams } from "../../types/user";
+import type { PromotionResult, UpdateUserPayload, UserListParams } from "../../types/user";
 
 export function useUsers(params: UserListParams) {
   return useQuery({
@@ -31,4 +31,4 @@ export const useUpdateUser = () =>
 export const useDeleteUser = () => useUserMutation((id: number) => deleteUser(id));
 
 /** 인자가 없다. `void` 를 명시해야 `mutate()` 를 인자 없이 부를 수 있다. */
-export const usePromoteApplicants = () => useUserMutation<void, number>(() => promoteApplicants());
+export const usePromoteApplicants = () => useUserMutation<void, PromotionResult>(() => promoteApplicants());
