@@ -4,7 +4,7 @@ import type { StaffDirectory } from "../../types/site";
 import { client } from "../client";
 
 /**
- * 공개 데이터 API. 명세서 2.6 · 2.7 · 4.x.
+ * 공개 데이터 API. 명세서 2.3 · 2.6 · 2.7 · 2.8.
  *
  * 전부 로그인이 필요 없다 — `RequireRole` 밖(공개 라우트)에서도 호출된다.
  */
