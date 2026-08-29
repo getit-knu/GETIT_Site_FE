@@ -4,7 +4,13 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as api from "../../apis/lecture/lecturesApi";
-import type { Feedback, SubmissionDetail, SubmissionFile } from "../../types/lecture";
+import type {
+  Feedback,
+  FeedbackCreateResult,
+  FeedbackUpdateResult,
+  SubmissionDetail,
+  SubmissionFile,
+} from "../../types/lecture";
 
 import { FeedbackModal } from "./FeedbackModal";
 
@@ -30,12 +36,29 @@ const feedback = (over: Partial<Feedback> = {}): Feedback => ({
   ...over,
 });
 
+const createResult = (over: Partial<FeedbackCreateResult> = {}): FeedbackCreateResult => ({
+  id: 9002,
+  submissionId: 3005,
+  adminName: "김운영",
+  content: "좋습니다.",
+  createdAt: "2026-06-06T11:00:00+09:00",
+  ...over,
+});
+
+const updateResult = (over: Partial<FeedbackUpdateResult> = {}): FeedbackUpdateResult => ({
+  id: 9001,
+  content: "고친 내용",
+  updatedAt: "2026-06-06T11:00:00+09:00",
+  ...over,
+});
+
 function detail(over: Partial<SubmissionDetail> = {}): SubmissionDetail {
   return {
     id: 3005,
     lecture: { id: 101, title: "HTML/CSS 기초" },
     user: { id: 24, name: "이재민", major: "컴퓨터공학과" },
     file: ZIP,
+    linkUrl: null,
     comment: "부족한 부분이 있으면 알려주세요.",
     submittedAt: "2026-06-04T20:11:00+09:00",
     status: "SUBMITTED",
@@ -64,10 +87,8 @@ describe("FeedbackModal", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(api.getSubmissionDetail).mockResolvedValue(detail());
-    vi.mocked(api.createFeedback).mockResolvedValue(feedback({ id: 9002, content: "좋습니다." }));
-    vi.mocked(api.updateFeedback).mockResolvedValue(
-      feedback({ content: "고친 내용", updatedAt: "2026-06-06T11:00:00+09:00" }),
-    );
+    vi.mocked(api.createFeedback).mockResolvedValue(createResult());
+    vi.mocked(api.updateFeedback).mockResolvedValue(updateResult());
   });
 
   it("제출자와 기존 피드백을 보여준다", async () => {

@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { lectureErrorMessage, lectureSaveErrorMessage } from "../../errors/lecture/errorMessages";
 import { useLectureDetail, useSaveLecture } from "../../hooks/lecture/useLectures";
-import type { LectureDetail, LectureFile, LecturePayload, Track } from "../../types/lecture";
+import type { LectureDetail, LectureFile, LecturePayload, SubmissionType, Track } from "../../types/lecture";
 import { Button } from "../ui/Button/Button";
 import { Input } from "../ui/Input/Input";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "../ui/Modal/Modal";
@@ -29,6 +29,10 @@ interface Draft {
   assignmentTitle: string;
   assignmentDescription: string;
   assignmentDeadline: string;
+  /** 파일 · 링크 중 이 과제가 받을 제출 방식. 최소 하나는 있어야 한다. */
+  allowedTypes: SubmissionType[];
+  /** `LINK` 를 허용할 때만 쓴다(예: "구글 드라이브 링크"). */
+  linkPlaceholder: string;
 }
 
 function emptyDraft(trackId: number): Draft {
@@ -47,6 +51,8 @@ function emptyDraft(trackId: number): Draft {
     assignmentTitle: "",
     assignmentDescription: "",
     assignmentDeadline: "",
+    allowedTypes: ["FILE"],
+    linkPlaceholder: "",
   };
 }
 
@@ -67,6 +73,8 @@ function toDraft(detail: LectureDetail): Draft {
     assignmentTitle: detail.assignment?.title ?? "",
     assignmentDescription: detail.assignment?.description ?? "",
     assignmentDeadline: detail.assignment?.deadline ?? "",
+    allowedTypes: detail.assignment?.allowedTypes ?? ["FILE"],
+    linkPlaceholder: detail.assignment?.linkPlaceholder ?? "",
   };
 }
 
@@ -96,7 +104,9 @@ function invalidReason(draft: Draft): string | null {
 
   if (draft.hasAssignment) {
     if (draft.assignmentTitle.trim() === "") return "과제 제목을 입력해 주세요.";
+    if (draft.assignmentDescription.trim() === "") return "과제 설명을 입력해 주세요.";
     if (draft.assignmentDeadline === "") return "과제 마감 기한을 입력해 주세요.";
+    if (draft.allowedTypes.length === 0) return "과제 제출 방식을 하나 이상 선택해 주세요.";
   }
   return null;
 }
@@ -119,6 +129,8 @@ function toPayload(draft: Draft): LecturePayload {
           title: draft.assignmentTitle.trim(),
           description: draft.assignmentDescription,
           deadline: draft.assignmentDeadline,
+          allowedTypes: draft.allowedTypes,
+          linkPlaceholder: draft.allowedTypes.includes("LINK") ? draft.linkPlaceholder.trim() || null : null,
         }
       : null,
   };
@@ -224,6 +236,47 @@ function LectureForm({ lectureId, tracks, initial, files, onClose }: FormProps) 
               value={draft.assignmentDeadline}
               onChange={(assignmentDeadline) => set({ assignmentDeadline })}
             />
+
+            <div className={styles.field}>
+              <span className={styles.label}>제출 방식 *</span>
+              <label className={styles.checkbox}>
+                <input
+                  type="checkbox"
+                  checked={draft.allowedTypes.includes("FILE")}
+                  onChange={(e) =>
+                    set({
+                      allowedTypes: e.target.checked
+                        ? [...draft.allowedTypes, "FILE"]
+                        : draft.allowedTypes.filter((t) => t !== "FILE"),
+                    })
+                  }
+                />
+                파일
+              </label>
+              <label className={styles.checkbox}>
+                <input
+                  type="checkbox"
+                  checked={draft.allowedTypes.includes("LINK")}
+                  onChange={(e) =>
+                    set({
+                      allowedTypes: e.target.checked
+                        ? [...draft.allowedTypes, "LINK"]
+                        : draft.allowedTypes.filter((t) => t !== "LINK"),
+                    })
+                  }
+                />
+                링크
+              </label>
+            </div>
+
+            {draft.allowedTypes.includes("LINK") && (
+              <Input
+                label="링크 안내 문구"
+                placeholder="예) 구글 드라이브 링크"
+                value={draft.linkPlaceholder}
+                onChange={(linkPlaceholder) => set({ linkPlaceholder })}
+              />
+            )}
           </div>
         )}
 

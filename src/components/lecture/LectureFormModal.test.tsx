@@ -37,7 +37,14 @@ function detail(over: Partial<LectureDetail> = {}): LectureDetail {
     durationMinutes: 120,
     isPublished: true,
     files: [{ fileId: 501, displayName: "강의 자료.pdf", url: "https://cdn/1", size: 2048 }],
-    assignment: { id: 201, title: "소개 페이지 만들기", description: "설명", deadline: "2026-06-19T23:59" },
+    assignment: {
+      id: 201,
+      title: "소개 페이지 만들기",
+      description: "설명",
+      deadline: "2026-06-19T23:59",
+      allowedTypes: ["FILE"],
+      linkPlaceholder: null,
+    },
     ...over,
   };
 }
