@@ -101,7 +101,7 @@ describe("AttachmentsField", () => {
   });
 
   it("업로드에 실패하면 이유를 보여주고 fileIds 를 건드리지 않는다", async () => {
-    vi.mocked(filesApi.uploadFile).mockRejectedValue({ code: "FILE_SIZE_EXCEEDED", message: "?" });
+    vi.mocked(filesApi.uploadFile).mockRejectedValue({ code: "INVALID_FILE_SIZE", message: "?" });
     render(<Harness />);
 
     await userEvent.upload(picker(), file("새 자료.pdf"));
