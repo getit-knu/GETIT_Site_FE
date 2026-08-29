@@ -70,6 +70,15 @@
   white-space: pre-wrap;
 }
 
+.submissionLink {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+
+  a {
+    word-break: break-all;
+  }
+}
+
 .feedbacks {
   margin-bottom: 0.75rem;
 }

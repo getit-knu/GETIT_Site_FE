@@ -128,7 +128,15 @@ function SubmissionBody({ detail }: { detail: SubmissionDetail }) {
         <span className={styles.when}>{formatDateTime(detail.submittedAt)}</span>
       </div>
 
-      <SubmissionFileView file={detail.file} />
+      {/* 파일·링크는 서로 배타적이다(명세서 8.7) — 제출 방식에 맞는 쪽만 온다. */}
+      {detail.file !== null && <SubmissionFileView file={detail.file} />}
+      {detail.linkUrl !== null && (
+        <p className={styles.submissionLink}>
+          <a href={detail.linkUrl} target="_blank" rel="noreferrer">
+            {detail.linkUrl}
+          </a>
+        </p>
+      )}
 
       {detail.comment !== "" && (
         <blockquote className={styles.comment}>

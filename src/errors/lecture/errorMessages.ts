@@ -8,6 +8,13 @@ import type { ApiErrorPayload } from "../../apis/client";
  */
 const LECTURE_ERROR_MESSAGES: Record<string, string> = {
   LECTURE_NOT_FOUND: "강의를 찾을 수 없습니다. 목록을 새로고침해 주세요.",
+  ACTIVE_GENERATION_NOT_FOUND: "진행 중인 기수가 없습니다.",
+  GENERATION_NOT_FOUND: "기수를 찾을 수 없습니다.",
+  TRACK_NOT_FOUND: "트랙을 찾을 수 없습니다. 목록을 새로고침해 주세요.",
+  SUBCATEGORY_NOT_FOUND: "소분류를 찾을 수 없습니다. 목록을 새로고침해 주세요.",
+  SUBCATEGORY_TRACK_MISMATCH: "소분류가 선택한 트랙에 속하지 않습니다.",
+  ASSIGNMENT_NOT_FOUND: "과제를 찾을 수 없습니다.",
+  VALIDATION_FAILED: "입력값을 확인해 주세요.",
   FORBIDDEN: "강의를 볼 권한이 없습니다.",
   UNAUTHORIZED: "로그인이 필요합니다.",
   MALFORMED_RESPONSE: "서버 응답을 읽지 못했습니다. 잠시 후 다시 시도해 주세요.",
@@ -51,6 +58,7 @@ const FEEDBACK_ERROR_MESSAGES: Record<string, string> = {
   SUBMISSION_NOT_FOUND: "제출물을 찾을 수 없습니다. 목록을 새로고침해 주세요.",
   FEEDBACK_NOT_FOUND: "피드백을 찾을 수 없습니다. 이미 지워졌을 수 있습니다.",
   NOT_RESOURCE_OWNER: "본인이 작성한 피드백만 수정할 수 있습니다.",
+  VALIDATION_FAILED: "피드백 내용을 확인해 주세요. (최대 2000자)",
   FORBIDDEN: "피드백을 남길 권한이 없습니다.",
   UNAUTHORIZED: "로그인이 필요합니다.",
 };

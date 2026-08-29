@@ -7,10 +7,11 @@ import { Pagination } from "../../components/ui/Pagination/Pagination";
 import { Select } from "../../components/ui/Select/Select";
 import { EmptyState, ErrorState, TableSkeleton } from "../../components/ui/states/States";
 import { userErrorMessage, userExportErrorMessage } from "../../errors/user/errorMessages";
+import { useGroupBoard } from "../../hooks/group/useGroups";
 import { useTableParams } from "../../hooks/ui/useTableParams";
 import { useDeleteUser, usePromoteApplicants, useUpdateUser, useUsers } from "../../hooks/user/useUsers";
 import { ROLES, type Role } from "../../types/auth";
-import type { AdminUser } from "../../types/user";
+import type { AdminUser, PromotionResult } from "../../types/user";
 
 import styles from "./MembersTab.module.scss";
 
@@ -25,23 +26,18 @@ const ROLE_TABS: { value: Role | undefined; label: string }[] = [
 
 const ROLE_OPTIONS = ROLES.map((role) => ({ value: role, label: ROLE_LABEL[role] }));
 
-/** 조 목록은 그룹 관리(#51)가 붙기 전까지 목록에 실린 값에서 모은다. */
-function groupOptions(users: AdminUser[]) {
-  const seen = new Map<number, string>();
-  users.forEach((u) => u.group && seen.set(u.group.id, u.group.name));
-  return [{ value: 0, label: "미배정" }, ...[...seen].map(([id, name]) => ({ value: id, label: name }))];
-}
-
 /** 와이어프레임 p8. `/admin/users` 의 사용자 관리 탭. */
 export function MembersTab() {
   const { page, filter: role, setPage, setFilter: setRole } = useTableParams("role", ROLES);
   const { data, isPending, isError, error, refetch } = useUsers({ role, page, size: PAGE_SIZE });
 
+  // 조 목록은 그룹 관리(#196)의 실제 조 편성을 그대로 쓴다. 못 받아도 사용자 목록 자체는 봐야 한다.
+  const { data: groupBoard } = useGroupBoard();
   const updateUser = useUpdateUser();
   const removeUser = useDeleteUser();
   const promote = usePromoteApplicants();
   const [exportError, setExportError] = useState<string | null>(null);
-  const [promoted, setPromoted] = useState<number | null>(null);
+  const [promoted, setPromoted] = useState<PromotionResult | null>(null);
 
   async function handleExport() {
     setExportError(null);
@@ -60,7 +56,7 @@ export function MembersTab() {
     if (!window.confirm(message)) return;
 
     setPromoted(null);
-    promote.mutate(undefined, { onSuccess: (count) => setPromoted(count) });
+    promote.mutate(undefined, { onSuccess: (result) => setPromoted(result) });
   }
 
   function handleDelete(user: AdminUser) {
@@ -69,14 +65,28 @@ export function MembersTab() {
     removeUser.mutate(user.id);
   }
 
-  const groups = groupOptions(data?.content ?? []);
+  const groups = [
+    { value: 0, label: "미배정" },
+    ...(groupBoard?.groups ?? []).map((g) => ({ value: g.id, label: g.name })),
+  ];
 
   const columns: Column<AdminUser>[] = [
     { header: "이름", render: (u) => u.name, width: "6rem" },
     { header: "이메일", render: (u) => u.email, width: "13rem" },
-    { header: "소속", render: (u) => `${u.college} ${u.major}`, width: "13rem" },
-    { header: "학년", render: (u) => `${u.studentYear}학년`, width: "5rem", align: "center" },
-    { header: "기수", render: (u) => `${u.generationNo}기`, width: "5rem", align: "center" },
+    // GUEST 는 아직 소속·학년·기수가 없을 수 있다.
+    { header: "소속", render: (u) => (u.college && u.major ? `${u.college} ${u.major}` : "-"), width: "13rem" },
+    {
+      header: "학년",
+      render: (u) => (u.studentYear === null ? "-" : `${u.studentYear}학년`),
+      width: "5rem",
+      align: "center",
+    },
+    {
+      header: "기수",
+      render: (u) => (u.generationNo === null ? "-" : `${u.generationNo}기`),
+      width: "5rem",
+      align: "center",
+    },
     {
       header: "권한",
       width: "7rem",
@@ -146,10 +156,13 @@ export function MembersTab() {
 
       {exportError && <ErrorState message={exportError} onRetry={() => void handleExport()} />}
 
-      {/* 눌러도 화면이 그대로면 됐는지 알 수 없다. 몇 명이 올라갔는지 알린다. */}
+      {/* 눌러도 화면이 그대로면 됐는지 알 수 없다. 몇 명이 올라갔는지, 몇 명이 제외됐는지 알린다. */}
       {promoted !== null && (
         <p className={styles.notice} role="status">
-          {promoted === 0 ? "승격할 합격자가 없습니다." : `${promoted}명을 부원으로 올렸습니다.`}
+          {promoted.promotedCount === 0
+            ? "승격할 합격자가 없습니다."
+            : `${promoted.promotedCount}명을 부원으로 올렸습니다.`}
+          {promoted.skippedCount > 0 && ` (이미 부원이거나 탈퇴 · 불합격 등으로 ${promoted.skippedCount}명 제외)`}
         </p>
       )}
 
