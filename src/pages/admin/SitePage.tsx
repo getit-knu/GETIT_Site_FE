@@ -4,11 +4,18 @@ import { Button } from "../../components/ui/Button/Button";
 import { Input } from "../../components/ui/Input/Input";
 import { ErrorState } from "../../components/ui/states/States";
 import { siteErrorMessage, siteSaveErrorMessage } from "../../errors/site/errorMessages";
-import { useSaveSiteSettings, useSiteSettings } from "../../hooks/site/useSiteSettings";
-import type { SiteSettings } from "../../types/site";
+import {
+  useGeneration,
+  useSaveGeneration,
+  useSaveSiteSettings,
+  useSiteSettings,
+} from "../../hooks/site/useSiteSettings";
+import type { Generation, SiteSettings } from "../../types/site";
 
-import { ContentSections } from "./site/ContentSections";
-import { contentInvalidReason, fromDrafts, toDrafts } from "./site/contentDraft";
+import { CurriculumsSection } from "./site/CurriculumsSection";
+import { EventsSection } from "./site/EventsSection";
+import { FaqSection } from "./site/FaqSection";
+import { toDrafts, fromDrafts } from "./site/faqDraft";
 import { FeaturesSection } from "./site/FeaturesSection";
 import { invalidReason, SCHEDULE_FIELDS, toDraft, toSchedule } from "./site/scheduleDraft";
 import type { ScheduleDraft } from "./site/scheduleDraft";
@@ -22,9 +29,9 @@ const SECTION_NAV_ITEMS = [
   { id: "generation", label: "진행 기수" },
   { id: "schedule", label: "모집 일정" },
   { id: "tracks", label: "강의 분류" },
+  { id: "faqs", label: "FAQ" },
   { id: "curriculums", label: "커리큘럼" },
   { id: "events", label: "행사 일정" },
-  { id: "faqs", label: "FAQ" },
   { id: "staffs", label: "운영진" },
   { id: "features", label: "기능 활성화" },
 ] as const;
@@ -48,21 +55,64 @@ function SiteSectionNav() {
 }
 
 /** 조회한 뒤에만 마운트한다. 그래야 `useState` 초기값으로 기존 값을 넣을 수 있다. */
-function SiteForm({ settings }: { settings: SiteSettings }) {
-  const [generationNo, setGenerationNo] = useState(String(settings.generation.generationNo));
-  const [year, setYear] = useState(String(settings.generation.year));
+function GenerationSection({ generation }: { generation: Generation }) {
+  const [generationNo, setGenerationNo] = useState(String(generation.generationNo));
+  const [year, setYear] = useState(String(generation.year));
+  const save = useSaveGeneration();
+
+  const no = Number(generationNo);
+  const yr = Number(year);
+  const reason =
+    !Number.isInteger(no) || no < 1
+      ? "기수는 1 이상의 정수여야 합니다."
+      : !Number.isInteger(yr) || yr < 1
+        ? "연도를 올바르게 입력해 주세요."
+        : null;
+
+  function edit(apply: () => void) {
+    if (save.isSuccess || save.isError) save.reset();
+    apply();
+  }
+
+  return (
+    <section id="generation" className={styles.section}>
+      <h2 className={styles.sectionTitle}>진행 기수</h2>
+      <div className={styles.grid}>
+        <Input label="기수" type="number" value={generationNo} onChange={(v) => edit(() => setGenerationNo(v))} />
+        <Input label="연도" type="number" value={year} onChange={(v) => edit(() => setYear(v))} />
+      </div>
+
+      {/* 새 기수를 활성화하면 기존 활성 기수가 내려간다. 되돌릴 수 없다. */}
+      <p className={styles.hint}>저장하면 이 기수가 활성 기수가 되고, 기존 활성 기수는 비활성화됩니다.</p>
+
+      <div className={styles.footer}>
+        {reason !== null && <p className={styles.reason}>{reason}</p>}
+        {save.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(save.error)}</p>}
+        {save.isSuccess && save.error === null && (
+          <p className={styles.saved} role="status">
+            저장했습니다.
+          </p>
+        )}
+        <Button
+          disabled={reason !== null || save.isPending}
+          onClick={() => save.mutate({ generationNo: no, year: yr })}
+        >
+          {save.isPending ? "저장 중…" : "진행 기수 저장"}
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+/** 조회한 뒤에만 마운트한다. 그래야 `useState` 초기값으로 기존 값을 넣을 수 있다. */
+function RestSectionsForm({ settings }: { settings: SiteSettings }) {
   const [schedule, setSchedule] = useState<ScheduleDraft>(() => toDraft(settings.schedule));
   const [tracks, setTracks] = useState<TrackDraft[]>(() => toTrackDrafts(settings.tracks));
-  const [curriculums, setCurriculums] = useState(() => toDrafts(settings.curriculums));
-  const [events, setEvents] = useState(() => toDrafts(settings.events));
   const [faqs, setFaqs] = useState(() => toDrafts(settings.faqs));
   const save = useSaveSiteSettings();
 
   // 섹션이 늘어나면 이유도 늘어난다. 먼저 걸리는 것 하나만 보여준다.
-  const reason =
-    invalidReason(generationNo, year, schedule) ??
-    tracksInvalidReason(tracks) ??
-    contentInvalidReason(curriculums, events, faqs);
+  const reason = invalidReason(schedule) ?? tracksInvalidReason(tracks) ?? null;
 
   /**
    * 값을 고치면 지난 저장 결과를 지운다.
@@ -76,29 +126,11 @@ function SiteForm({ settings }: { settings: SiteSettings }) {
   }
 
   function handleSave() {
-    save.mutate({
-      generation: { generationNo: Number(generationNo), year: Number(year) },
-      schedule: toSchedule(schedule),
-      // 이제 모든 섹션이 편집 대상이다. 10.20 은 화면 전체 상태를 한 트랜잭션으로 반영한다.
-      tracks: toTracks(tracks),
-      curriculums: fromDrafts(curriculums),
-      events: fromDrafts(events),
-      faqs: fromDrafts(faqs),
-    });
+    save.mutate({ schedule: toSchedule(schedule), tracks: toTracks(tracks), faqs: fromDrafts(faqs) });
   }
 
   return (
     <>
-      <SiteSectionNav />
-
-      <section id="generation" className={styles.section}>
-        <h2 className={styles.sectionTitle}>진행 기수</h2>
-        <div className={styles.grid}>
-          <Input label="기수" type="number" value={generationNo} onChange={(v) => edit(() => setGenerationNo(v))} />
-          <Input label="연도" type="number" value={year} onChange={(v) => edit(() => setYear(v))} />
-        </div>
-      </section>
-
       <section id="schedule" className={styles.section}>
         <h2 className={styles.sectionTitle}>모집 일정</h2>
         <div className={styles.grid}>
@@ -117,22 +149,7 @@ function SiteForm({ settings }: { settings: SiteSettings }) {
       </section>
 
       <TracksSection tracks={tracks} onChange={setTracks} />
-
-      <ContentSections
-        curriculums={curriculums}
-        events={events}
-        faqs={faqs}
-        onCurriculumsChange={setCurriculums}
-        onEventsChange={setEvents}
-        onFaqsChange={setFaqs}
-      />
-
-      {/*
-        아래 두 섹션은 `저장하기` 와 무관하다. 10.20 일괄 저장에 들어가지 않고
-        개별 엔드포인트로 즉시 반영된다(명세서 10.21 ~ 10.24).
-      */}
-      <StaffsSection generationNo={settings.generation.generationNo} />
-      <FeaturesSection />
+      <FaqSection faqs={faqs} onChange={(next) => edit(() => setFaqs(next))} />
 
       <div className={styles.footer}>
         {/* 저장을 막는 이유를 미리 보여준다. 눌러 보고 알게 하지 않는다. */}
@@ -154,18 +171,36 @@ function SiteForm({ settings }: { settings: SiteSettings }) {
 /**
  * 사이트 관리. 와이어프레임 p9.
  *
- * **섹션이 여럿이지만 저장은 하나다**(명세서 10.20). 강의 분류 · 커리큘럼 · 행사 · FAQ 는
- * 뒤따르는 이슈에서 이 폼 상태 위에 얹는다.
+ * **진행 기수 · 운영진 · 행사 · 커리큘럼은 각자 실제 CRUD 로 즉시 반영된다(#194).**
+ * 모집 일정 · 강의 분류 · FAQ 는 아직 실제 엔드포인트가 없어 한 폼에서 일괄 저장한다.
  */
 export default function SitePage() {
-  const { data, isPending, isError, error, refetch } = useSiteSettings();
+  const generationQuery = useGeneration();
+  const settingsQuery = useSiteSettings();
+
+  const isPending = generationQuery.isPending || settingsQuery.isPending;
+  const errorQuery = generationQuery.isError ? generationQuery : settingsQuery.isError ? settingsQuery : null;
 
   if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
-  if (isError) return <ErrorState message={siteErrorMessage(error)} onRetry={() => void refetch()} />;
+  if (errorQuery) {
+    return <ErrorState message={siteErrorMessage(errorQuery.error)} onRetry={() => void errorQuery.refetch()} />;
+  }
+
+  const generation = generationQuery.data as Generation;
 
   return (
     <div className={styles.page}>
-      <SiteForm settings={data} />
+      <SiteSectionNav />
+      <GenerationSection generation={generation} />
+      <RestSectionsForm settings={settingsQuery.data as SiteSettings} />
+      <CurriculumsSection generationId={generation.id} />
+      <EventsSection generationId={generation.id} />
+
+      {/*
+        아래 두 섹션은 위 폼들과 무관하다. 개별 엔드포인트로 즉시 반영된다.
+      */}
+      <StaffsSection generationNo={generation.generationNo} />
+      <FeaturesSection />
     </div>
   );
 }

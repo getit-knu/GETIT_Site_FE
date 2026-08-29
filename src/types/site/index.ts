@@ -1,13 +1,21 @@
 import type { components } from "../../apis/generated";
 
 /**
- * 사이트 설정 타입. API 명세서 10절.
+ * 사이트 설정 타입.
  *
- * BE 에 admin setting 컨트롤러가 아직 없다. 스키마가 생기면 `generated.ts` 에서 가져온다.
- * (공개 운영진 조회는 이미 스키마가 있어 아래 `PublicStaff` 부터 재노출한다.)
+ * **진행 기수 · 운영진 · 행사 · 커리큘럼은 실제 BE `Setting` 도메인(각각 별도 컨트롤러)에서
+ * 가져온다.** 이 부분은 `generated.ts` 를 쓰지 않는다 — 이 BE는 중첩 클래스 이름이 다른
+ * 도메인과 겹치면 springdoc이 스키마를 잘못 등록하는 버그가 있다(`types/lecture/index.ts`
+ * 상단 주석에 실제 확인한 사례가 있다). 그래서 `domain/setting/*` 의 Java 소스를 직접
+ * 읽고 그 필드 그대로 옮겼다.
+ *
+ * **공개 운영진 조회(`PublicStaff` 이하)는 다르다** — 이미 스키마가 있어 `generated.ts`
+ * 에서 그대로 재노출한다.
+ *
+ * 모집 일정 · 강의 분류 · FAQ는 아직 BE 연동 전이라(각각 #190·#195·미배정) 목 데이터로 남는다.
  */
 
-/** 10.1 진행 기수. 활성 기수는 하나뿐이다. */
+/** 진행 기수. 활성 기수는 하나뿐이다 — `PUT` 으로 새 기수를 활성화하면 기존 기수는 내려간다. */
 export interface Generation {
   id: number;
   generationNo: number;
@@ -15,14 +23,18 @@ export interface Generation {
   isActive: boolean;
 }
 
+/** `PUT /api/admin/setting/generation` 요청 본문. 시작·종료일은 없다 — 그건 모집 일정(별개 도메인)의 값이다. */
+export interface GenerationPayload {
+  generationNo: number;
+  year: number;
+}
+
 /**
- * 모집 일정 (10.20 의 `schedule`).
+ * 모집 일정.
  *
- * ⚠️ **6.1 · 6.2 `/admin/recruitment/schedule` 과 같은 데이터다.** 명세서가 두 경로로
- * 같은 값을 열어 두었고, 지원서 관리 설정 탭(#71)도 이 값을 고친다.
- * 여기서는 10.20 요청 본문의 계약만 다룬다 — 어느 화면이 주인인지는 팀이 정할 문제다.
- *
- * `interviewEndAt` 은 서버가 `totalEndAt` 으로 맞추므로 보내지 않는다.
+ * ⚠️ **`/admin/recruitment/schedule` 과 같은 개념의 데이터지만 별개 도메인이다(BE 확인함,
+ * `Generation` 엔티티에는 시작·종료일 필드가 아예 없다).** 이 화면은 아직 이 값을 저장할
+ * 실제 엔드포인트가 없어 목으로 남긴다 — 어느 화면이 주인인지는 팀이 정할 문제다.
  */
 export interface SiteSchedule {
   totalStartAt: string;
@@ -32,7 +44,7 @@ export interface SiteSchedule {
   interviewStartAt: string;
 }
 
-/** 10.3 강의 분류. `order` · `lectureCount` 는 조회에만 있다. */
+/** 강의 분류. `#195`에서 실제 BE `Setting.Category` 로 교체한다. 아직 목이다. */
 export interface SiteSubCategory {
   id: number | null;
   name: string;
@@ -44,30 +56,59 @@ export interface SiteTrack {
   subCategories: SiteSubCategory[];
 }
 
-/** 10.10 커리큘럼. */
+/**
+ * 커리큘럼.
+ *
+ * **트랙·주차 연결이 없다** — `order`(순번) + `title` + `subtitle` 뿐이다(BE 확인함).
+ * **별도 순서 변경 엔드포인트도 없다** — 추가·수정 요청에 `order` 를 직접 실어 보내면
+ * 서버가 그 사이로 끼워 넣고 나머지를 밀어 채운다.
+ */
 export interface Curriculum {
-  id: number | null;
+  id: number;
+  order: number;
   title: string;
   subtitle: string;
 }
 
+/** `POST`/`PUT /api/admin/setting/curriculums` 요청 본문. */
+export interface CurriculumPayload {
+  generationId: number;
+  title: string;
+  subtitle: string;
+  order: number;
+}
+
 /**
- * 10.14 행사 종류 (명세서 0.4 `EventType`).
+ * 행사 종류 (BE `EventType` enum).
  *
  * **`types/dashboard` 에도 `EventType` 이 있고 값이 다르다**(대시보드는 `WORKSHOP` 이 없다).
  * 한 파일에서 둘을 함께 쓰면 이름이 부딪히므로 도메인 접두어를 붙인다.
  */
 export type SiteEventType = "COMPETITION" | "WORKSHOP" | "EVENT";
 
+/** 행사 일정. `isVisible` 이 꺼진 행사는 공개 캘린더(`GET /api/public/events`)에 안 뜬다. */
 export interface SiteEvent {
-  id: number | null;
+  id: number;
   title: string;
+  place: string;
   startDate: string;
   endDate: string;
   type: SiteEventType;
+  isVisible: boolean;
 }
 
-/** 10.18 FAQ. */
+/** `POST`/`PUT /api/admin/setting/events` 요청 본문. */
+export interface SiteEventPayload {
+  generationId: number;
+  title: string;
+  place: string;
+  startDate: string;
+  endDate: string;
+  type: SiteEventType;
+  isVisible: boolean;
+}
+
+/** FAQ. 아직 실제 엔드포인트가 없어 목으로 남긴다. */
 export interface Faq {
   id: number | null;
   question: string;
@@ -75,29 +116,23 @@ export interface Faq {
 }
 
 /**
- * 사이트 관리 화면이 들고 있는 전체 상태.
+ * 아직 실제 엔드포인트가 없는 섹션들의 묶음(모집 일정 · 강의 분류 · FAQ).
  *
- * **10.20 은 개별 CRUD 가 아니라 화면 전체를 한 트랜잭션으로 반영한다.**
- * 그래서 일부만 보내면 **나머지 섹션이 지워진다.** 아직 편집 화면이 없는 섹션도
- * 조회해서 그대로 되돌려 보내야 한다.
+ * **진행 기수 · 운영진 · 행사 · 커리큘럼은 여기 없다** — 각자 실제 CRUD 엔드포인트로
+ * 개별 반영된다(#194).
  */
 export interface SiteSettings {
-  generation: Generation;
   schedule: SiteSchedule;
   tracks: SiteTrack[];
-  curriculums: Curriculum[];
-  events: SiteEvent[];
   faqs: Faq[];
 }
 
-/** 운영진 구역 (10.21). 순서는 **구역 안에서만** 다시 매긴다(10.22). */
+export type SiteSavePayload = SiteSettings;
+
+/** 운영진 구역. 순서는 **구역 안에서만** 다시 매긴다(`PUT .../staffs/order`). */
 export type StaffSection = "EXECUTIVE" | "SW" | "STARTUP";
 
-/**
- * 운영진 프로필 (10.21).
- *
- * **앞의 섹션들과 달리 10.20 일괄 저장에 들어가지 않는다.** 개별 엔드포인트로 즉시 반영된다.
- */
+/** 운영진 프로필. 개별 엔드포인트로 즉시 반영된다. */
 export interface Staff {
   id: number;
   /** 실제 계정 연결. 없으면 표시 전용 프로필이다. */
@@ -112,7 +147,7 @@ export interface Staff {
   generationNo: number;
 }
 
-/** 10.21 POST · PUT 요청 본문. `order` 는 서버가 매기므로 보내지 않는다. */
+/** `POST`/`PUT /api/admin/setting/staffs` 요청 본문. `order` 는 서버가 매기므로 보내지 않는다. */
 export interface StaffPayload {
   userId: number | null;
   name: string;
@@ -146,10 +181,10 @@ export interface StaffDirectory {
 }
 
 /**
- * 기능 토글 (10.23 · 10.24).
+ * 기능 토글.
  *
  * **`key` 는 BE 가 정한다.** 화면은 받은 목록을 그대로 그린다 — FE 에 키 목록을 두면
- * BE 가 기능을 추가해도 화면에 나오지 않는다.
+ * BE 가 기능을 추가해도 화면에 나오지 않는다. 아직 실제 엔드포인트가 없어 목으로 남긴다.
  */
 export interface FeatureToggle {
   key: string;
@@ -157,14 +192,4 @@ export interface FeatureToggle {
   enabled: boolean;
   updatedAt: string;
   updatedBy: string;
-}
-
-/** 10.20 요청 본문. 조회 전용 필드(`id` 의 일부 · `isActive`)는 빠진다. */
-export interface SiteSavePayload {
-  generation: { generationNo: number; year: number };
-  schedule: SiteSchedule;
-  tracks: SiteTrack[];
-  curriculums: Curriculum[];
-  events: SiteEvent[];
-  faqs: Faq[];
 }
