@@ -1,11 +1,11 @@
-import type { Staff } from "../../types/site";
+import type { PublicStaff } from "../../types/site";
 
 import { LeaderCard } from "./LeaderCard";
 import styles from "./StaffGroup.module.scss";
 
 interface StaffGroupProps {
   title: string;
-  staffs: Staff[];
+  staffs: PublicStaff[];
   /** Leader만 회장·부회장·총무 역할을 보여준다. Staff는 안 보여준다(기본값). */
   showRole?: boolean;
 }

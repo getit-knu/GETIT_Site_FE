@@ -60,8 +60,14 @@ describe("UsersPage", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(api.getUsers).mockResolvedValue(page([user()]));
-    vi.mocked(api.updateUser).mockResolvedValue();
+    vi.mocked(api.updateUser).mockResolvedValue(user());
     vi.mocked(api.deleteUser).mockResolvedValue();
+    // 사용자 관리 탭의 "조" 열도 실제 조 목록을 쓴다.
+    vi.mocked(groupApi.getGroups).mockResolvedValue({
+      generationNo: 9,
+      groups: [{ id: 1, name: "1조", memberCount: 0, members: [] }],
+      unassigned: [],
+    });
   });
 
   afterEach(() => {
@@ -147,7 +153,7 @@ describe("UsersPage", () => {
   it("확인하면 승격하고 몇 명이 올라갔는지 알린다", async () => {
     // 눌러도 화면이 그대로면 됐는지 알 수 없다.
     vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
-    vi.mocked(api.promoteApplicants).mockResolvedValue(3);
+    vi.mocked(api.promoteApplicants).mockResolvedValue({ promotedCount: 3, skippedCount: 0, skipped: [] });
     renderPage();
 
     await userEvent.click(await screen.findByRole("button", { name: "합격자 일괄 승격" }));
@@ -156,10 +162,28 @@ describe("UsersPage", () => {
     expect(await screen.findByRole("status")).toHaveTextContent("3명을 부원으로 올렸습니다.");
   });
 
+  it("제외된 인원이 있으면 함께 알린다", async () => {
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+    vi.mocked(api.promoteApplicants).mockResolvedValue({
+      promotedCount: 3,
+      skippedCount: 2,
+      skipped: [
+        { applicationId: 1, reason: "ALREADY_MEMBER" },
+        { applicationId: 2, reason: "USER_WITHDRAWN" },
+      ],
+    });
+    renderPage();
+
+    await userEvent.click(await screen.findByRole("button", { name: "합격자 일괄 승격" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("3명을 부원으로 올렸습니다.");
+    expect(screen.getByRole("status")).toHaveTextContent("2명 제외");
+  });
+
   it("승격할 대상이 없으면 그렇게 알린다", async () => {
     // "0명을 올렸습니다" 는 성공처럼 읽혀 혼란스럽다.
     vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
-    vi.mocked(api.promoteApplicants).mockResolvedValue(0);
+    vi.mocked(api.promoteApplicants).mockResolvedValue({ promotedCount: 0, skippedCount: 0, skipped: [] });
     renderPage();
 
     await userEvent.click(await screen.findByRole("button", { name: "합격자 일괄 승격" }));
