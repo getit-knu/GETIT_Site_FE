@@ -1,5 +1,7 @@
+import type { components } from "../../apis/generated";
+
 /**
- * 파일 업로드 타입. API 명세서 13.1 ~ 13.3.
+ * 파일 업로드 타입. `apis/generated.ts`(BE OpenAPI 스펙)에서 재노출한다.
  *
  * 업로드는 3단계다.
  * 1. `POST /files/presigned-url` → `fileId` + `uploadUrl`
@@ -13,9 +15,9 @@
  * 로컬처럼 Azure 저장소가 꺼진 환경) `POST /files`(multipart) 로 대신한다.** 2단계(저장소
  * 직접 PUT) 자체가 실패해도(CORS 미설정 등) 같은 이유로 이 경로로 넘어간다.
  */
-export type FilePurpose = "LECTURE_MATERIAL" | "ASSIGNMENT" | "PROFILE_IMAGE" | "PROJECT_THUMBNAIL";
+export type FilePurpose = components["schemas"]["PresignedUploadRequest"]["purpose"];
 
-/** 용도별 제한 (명세서 13.1). 서버도 막지만 눌러 보고 알게 하지 않는다. */
+/** 용도별 제한 (명세서 13.1). BE `FilePurpose` enum 내부 값이라 스펙에 안 실려 손으로 유지한다. */
 export interface PurposeLimit {
   maxBytes: number;
   extensions: string[];
@@ -34,20 +36,11 @@ export const PURPOSE_LIMITS: Record<FilePurpose, PurposeLimit> = {
   PROJECT_THUMBNAIL: { maxBytes: 5 * 1024 * 1024, extensions: ["png", "jpg", "jpeg", "webp"] },
 };
 
-export interface PresignedUrlRequest {
-  fileName: string;
-  contentType: string;
-  size: number;
-  purpose: FilePurpose;
-}
+export type PresignedUrlRequest = components["schemas"]["PresignedUploadRequest"];
 
-export interface PresignedUrl {
-  fileId: number;
-  uploadUrl: string;
-  method: string;
-  headers: Record<string, string>;
-  expiresIn: number;
-}
+// 생성된 스키마는 응답 필드를 전부 `?`(optional)로 잡는다 — springdoc이 실제로 항상
+// 채워주는 필드도 required 로 안 걷어준다. BE가 항상 채워 보내는 값이라 `Required` 로 다잡는다.
+export type PresignedUrl = Required<components["schemas"]["PresignedUploadResponse"]>;
 
 /** 업로드를 마친 파일. 아직 도메인에 연결되지 않은 상태다. */
 export interface UploadedFile {
@@ -57,18 +50,7 @@ export interface UploadedFile {
 }
 
 /** `POST /files`(multipart) 응답. presigned 방식을 못 쓰는 환경의 대체 경로. */
-export interface MultipartUploadResult {
-  fileId: number;
-  originalName: string;
-  url: string;
-  size: number;
-  contentType: string;
-}
+export type MultipartUploadResult = Required<components["schemas"]["FileUploadResponse"]>;
 
 /** `GET /files/{id}/download-url` 응답. 비공개 저장소라 요청마다 짧게 사는 주소를 새로 받는다. */
-export interface DownloadUrl {
-  downloadUrl: string;
-  fileName: string;
-  contentType: string;
-  expiresIn: number;
-}
+export type DownloadUrl = Required<components["schemas"]["DownloadUrlResponse"]>;
