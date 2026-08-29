@@ -38,5 +38,19 @@ export const useDeleteQuestion = () => useInvalidating((id: number) => api.delet
 export const useReorderQuestions = () =>
   useInvalidating((orderedIds: number[]) => api.reorderQuestions(orderedIds), keys.questions());
 
-export const useSaveCriteria = () =>
-  useInvalidating((drafts: CriterionDraft[]) => api.saveCriteria(drafts), keys.criteria());
+/**
+ * `saveCriteria` 는 요청을 여러 번 나눠 보낸다(diff 기반). 중간에 하나가 실패하면
+ * 서버는 이미 일부만 반영된 상태다 — 성공 때뿐 아니라 **실패 때도 다시 조회해서**
+ * 화면이 실제로 무엇이 저장됐는지 보여줘야 한다. 그래야 사용자가 진짜 상태를 보고
+ * 다시 편집·저장할 수 있다.
+ */
+export function useSaveCriteria() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (drafts: CriterionDraft[]) => api.saveCriteria(drafts),
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: keys.criteria() });
+    },
+  });
+}
