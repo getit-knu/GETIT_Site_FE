@@ -1,21 +1,13 @@
+import type { components } from "../../apis/generated";
+import type { Page } from "../qna";
+
 /**
  * 강의 관리 타입. API 명세서 8.1 · 8.5 ~ 8.10.
  *
- * **`generated.ts` 를 쓰지 않고 손으로 옮긴다.** BE `LectureRequest.Create`/`Update`,
- * `LectureAdminResult.ListResult`/`DetailResult`, `SubmissionDetailResult.Detail` 같은
- * 중첩 클래스 이름이 다른 도메인의 동명 중첩 클래스와 충돌해서(springdoc이 바깥 클래스
- * 없이 단순 이름으로만 스키마를 등록한다), `components["schemas"]["Create"]` 같은 이름이
- * 실제로는 완전히 다른 도메인의 모양을 가리키는 경우가 있다(실제 확인함 — `createLecture`가
- * 참조하는 `Create` 스키마가 강의 도메인이 아니라 `{content: string}` 뿐인 다른 도메인
- * 것으로 덮어써져 있었다). 그래서 이 도메인은 BE Java 소스(`domain/lecture/admin/dto/*`)를
- * 직접 읽고 그 필드 그대로 옮겼다.
+ * `apis/generated.ts`(BE OpenAPI 스펙)에서 재노출한다.
  */
-import type { Page } from "../qna";
 
-export interface SubCategory {
-  id: number;
-  name: string;
-}
+export type SubCategory = Required<components["schemas"]["CategorySummarySubCategoryBrief"]>;
 
 /** 대분류. 창업 빌드업 · 세미나처럼 **소분류가 비어 있는 트랙이 있다.** */
 export interface Track {
@@ -24,18 +16,7 @@ export interface Track {
   subCategories: SubCategory[];
 }
 
-export interface Lecture {
-  id: number;
-  week: number;
-  title: string;
-  description: string;
-  deadline: string;
-  submittedCount: number;
-  totalCount: number;
-  feedbackDoneCount: number;
-  /** 미공개 강의는 부원에게 보이지 않는다. */
-  isPublished: boolean;
-}
+export type Lecture = Required<components["schemas"]["LectureAdminResultLectureCard"]>;
 
 /**
  * 8.1 응답. **탭 구성과 목록이 한 번에 온다.**
@@ -52,7 +33,7 @@ export interface LectureListParams {
 }
 
 /** 과제 제출 방식. `allowedTypes`에 담긴 것만 받는다(파일·링크 둘 다 열어둘 수 있다). */
-export type SubmissionType = "FILE" | "LINK";
+export type SubmissionType = NonNullable<components["schemas"]["LectureRequestAssignmentPart"]["allowedTypes"]>[number];
 
 /** 강의에 붙은 과제(응답). 없는 강의는 `null`. */
 export interface Assignment {
@@ -76,12 +57,7 @@ export interface AssignmentPayload {
 }
 
 /** 이미 올라간 첨부. 수정 폼에서 목록으로 보여준다. */
-export interface LectureFile {
-  fileId: number;
-  displayName: string;
-  url: string;
-  size: number;
-}
+export type LectureFile = Required<components["schemas"]["LectureAdminResultFileItem"]>;
 
 /** 8.3 수정 폼 프리필용 단건 조회. */
 export interface LectureDetail {
@@ -117,7 +93,7 @@ export interface LecturePayload {
 }
 
 /** 제출 상태 (명세서 0.4). 마감 뒤에 낸 것은 `LATE` 다 — 낸 것과 같이 볼 수 없다. */
-export type SubmissionStatus = "SUBMITTED" | "LATE";
+export type SubmissionStatus = NonNullable<components["schemas"]["SubmissionOverviewResultRow"]["status"]>;
 
 /**
  * 제출 현황 한 행 (8.6).
@@ -137,11 +113,7 @@ export interface SubmissionRow {
 }
 
 /** 필터를 걸어도 **전체 기준** 집계다. 서버가 계산해 준다. */
-export interface SubmissionCounts {
-  submitted: number;
-  notSubmitted: number;
-  total: number;
-}
+export type SubmissionCounts = Required<components["schemas"]["SubmissionOverviewResultCounts"]>;
 
 /** 8.6 응답. 목록에 강의 정보와 집계가 함께 실려 온다. */
 export interface SubmissionBoard extends Page<SubmissionRow> {
@@ -189,20 +161,10 @@ export interface Feedback {
  * 8.8 응답. **`Feedback` 과 모양이 다르다.** `adminId`·`updatedAt` 대신 `submissionId` 가 온다 —
  * 새로 단 피드백엔 아직 수정 이력이 없기 때문이다.
  */
-export interface FeedbackCreateResult {
-  id: number;
-  submissionId: number;
-  adminName: string;
-  content: string;
-  createdAt: string;
-}
+export type FeedbackCreateResult = Required<components["schemas"]["FeedbackResultCreateResult"]>;
 
 /** 8.9 응답. 수정은 내용과 수정 시각만 돌아온다. */
-export interface FeedbackUpdateResult {
-  id: number;
-  content: string;
-  updatedAt: string;
-}
+export type FeedbackUpdateResult = Required<components["schemas"]["FeedbackResultUpdateResult"]>;
 
 /** 순차 탐색 위치 (8.7 · 8.10). 끝이면 그쪽 id 가 `null` 이다. */
 export interface SubmissionNavigation {

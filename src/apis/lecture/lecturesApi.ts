@@ -15,8 +15,6 @@ import type {
 
 /**
  * 강의 관리 API. 명세서 8.1 · 8.5 ~ 8.10.
- *
- * 타입은 `generated.ts` 를 쓰지 않는다 — `types/lecture/index.ts` 상단 주석 참고.
  */
 
 /** `GET /api/admin/lectures?trackId=&subCategoryId=` */
