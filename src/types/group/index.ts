@@ -1,20 +1,15 @@
-import type { Role } from "../auth";
+import type { components } from "../../apis/generated";
 
 /**
- * 조 관리 타입.
+ * 조 관리 타입. **`generated.ts`에서 재노출한다**(`types/user/index.ts` 상단 주석 참고 —
+ * 이 도메인도 스키마 이름 충돌 버그의 영향을 받은 적이 없었다).
  *
  * BE 확인: 조원 소속은 `Group` 엔티티가 아니라 `User.groupId`(단순 FK) 로 표현된다 —
- * 별도 매핑 테이블이 없다. `generated.ts` 는 안 쓴다(`types/user/index.ts` 상단 주석 참고).
+ * 별도 매핑 테이블이 없다.
  */
-export interface GroupMember {
-  userId: number;
-  name: string;
-  major: string;
-  role: Role;
-  /** 서버가 내려주는 한글 표기. FE 에 매핑 테이블을 두지 않는다. */
-  roleLabel: string;
-}
+export type GroupMember = Required<components["schemas"]["GroupMemberResult"]>;
 
+/** `members`는 `Required<>`가 최상위만 채워서(원소는 여전히 optional) 이미 다잡은 `GroupMember`로 손 조립한다. */
 export interface Group {
   id: number;
   name: string;
