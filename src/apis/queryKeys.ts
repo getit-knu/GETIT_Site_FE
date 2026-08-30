@@ -43,6 +43,14 @@ export const queryKeys = {
     detail: (id: number, params: ApplicantListParams) => [...queryKeys.applications.details(), id, params] as const,
   },
 
+  /** 로그인한 지원자 본인의 지원서. 어드민 `applications`와는 다른 도메인이다. */
+  myApplication: {
+    all: ["myApplication"] as const,
+    form: () => [...queryKeys.myApplication.all, "form"] as const,
+    mine: () => [...queryKeys.myApplication.all, "mine"] as const,
+    result: () => [...queryKeys.myApplication.all, "result"] as const,
+  },
+
   /**
    * 대시보드는 카드 5개가 각자 조회한다. 한 곳이 실패해도 나머지는 보여야 하므로
    * 키를 카드 단위로 나눈다.
@@ -68,13 +76,15 @@ export const queryKeys = {
 
   site: {
     all: ["site"] as const,
-    // 모집 일정 · 강의 분류 · FAQ. 아직 실제 엔드포인트가 없어 한 덩어리로 오간다.
+    // 모집 일정. 아직 실제 엔드포인트가 없다.
     settings: () => [...queryKeys.site.all, "settings"] as const,
-    // 진행 기수 · 운영진 · 행사 · 커리큘럼 · 기능 토글은 각자 실제(또는 개별) 엔드포인트라 키를 나눈다.
+    // 진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류 · FAQ · 기능 토글은 각자 실제(또는 개별) 엔드포인트라 키를 나눈다.
     generation: () => [...queryKeys.site.all, "generation"] as const,
     staffs: () => [...queryKeys.site.all, "staffs"] as const,
     curriculums: () => [...queryKeys.site.all, "curriculums"] as const,
     events: () => [...queryKeys.site.all, "events"] as const,
+    tracks: () => [...queryKeys.site.all, "tracks"] as const,
+    faqs: () => [...queryKeys.site.all, "faqs"] as const,
     features: () => [...queryKeys.site.all, "features"] as const,
   },
 
@@ -123,5 +133,6 @@ export const queryKeys = {
     colleges: () => [...queryKeys.public.all, "colleges"] as const,
     majors: () => [...queryKeys.public.all, "majors"] as const,
     recruitmentStatus: () => [...queryKeys.public.all, "recruitment-status"] as const,
+    faqs: () => [...queryKeys.public.all, "faqs"] as const,
   },
 } as const;

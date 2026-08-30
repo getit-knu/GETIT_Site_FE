@@ -20,6 +20,12 @@ const SITE_ERROR_MESSAGES: Record<string, string> = {
   INVALID_EVENT_PERIOD: "종료일이 시작일보다 빠릅니다.",
   // 커리큘럼
   CURRICULUM_NOT_FOUND: "커리큘럼을 찾을 수 없습니다. 목록을 새로고침해 주세요.",
+  // FAQ
+  FAQ_NOT_FOUND: "FAQ를 찾을 수 없습니다. 목록을 새로고침해 주세요.",
+  // 강의 분류
+  TRACK_NOT_FOUND: "대분류를 찾을 수 없습니다. 목록을 새로고침해 주세요.",
+  SUBCATEGORY_NOT_FOUND: "소분류를 찾을 수 없습니다. 목록을 새로고침해 주세요.",
+  CATEGORY_IN_USE: "연결된 강의가 있어 삭제할 수 없습니다.",
   // 공통
   VALIDATION_FAILED: "입력값을 확인해 주세요.",
   FORBIDDEN: "사이트 설정을 바꿀 권한이 없습니다.",
@@ -39,6 +45,11 @@ function messageFor(error: unknown, fallback: string): string {
 
 export function siteErrorMessage(error: unknown): string {
   return messageFor(error, READ_FALLBACK);
+}
+
+/** 특정 에러 코드인지. `ACTIVE_GENERATION_NOT_FOUND`처럼 에러가 아니라 정상 상태를 뜻하는 코드를 가려낼 때 쓴다. */
+export function isSiteErrorCode(error: unknown, code: string): boolean {
+  return typeof error === "object" && error !== null && "code" in error && (error as ApiErrorPayload).code === code;
 }
 
 /** 저장 실패에 조회용 문구가 뜨면 무엇이 안 됐는지 알 수 없다. */

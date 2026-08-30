@@ -1,3 +1,5 @@
+import type { components } from "../../apis/generated";
+
 /** Home 화면 목 데이터 타입. 실제 API가 생기기 전까지 정적/목업 콘텐츠에 쓴다. */
 export interface Activity {
   id: string;
@@ -33,9 +35,8 @@ export interface Project {
   gradient: string;
 }
 
-/** `answer`는 아직 실제 답변이 없어 임시 문구다. 실제 콘텐츠가 생기면 교체한다. */
-export interface FAQItem {
-  id: string;
-  question: string;
-  answer: string;
-}
+/**
+ * `GET /api/public/faqs` 응답(2.5, #212). 비공개(`isVisible: false`) 처리한 FAQ는
+ * 서버가 걸러서 안 준다 — 이 목록엔 그런 필드 자체가 없다.
+ */
+export type PublicFaq = Required<components["schemas"]["FaqPublicResult"]>;

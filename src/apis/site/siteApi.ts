@@ -4,6 +4,8 @@ import * as staffMock from "../../mocks/site/staffs";
 import type {
   Curriculum,
   CurriculumPayload,
+  Faq,
+  FaqPayload,
   FeatureToggle,
   Generation,
   GenerationPayload,
@@ -11,6 +13,7 @@ import type {
   SiteEventPayload,
   SiteSavePayload,
   SiteSettings,
+  SiteTrack,
   Staff,
   StaffPayload,
   StaffSection,
@@ -19,8 +22,8 @@ import type {
 /**
  * 사이트 설정 API.
  *
- * 진행 기수 · 운영진 · 행사 · 커리큘럼은 실제 `client` 호출이다. 모집 일정 · 강의 분류 ·
- * FAQ · 기능 토글은 아직 실제 엔드포인트가 없어 `mock.*`/`staffMock.*` 를 그대로 쓴다.
+ * 진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류 · FAQ는 실제 `client` 호출이다.
+ * 모집 일정 · 기능 토글은 아직 실제 엔드포인트가 없어 `mock.*`/`staffMock.*` 를 그대로 쓴다.
  */
 
 /** `GET /api/admin/setting/generation` */
@@ -35,7 +38,7 @@ export async function saveGeneration(payload: GenerationPayload): Promise<Genera
   return data;
 }
 
-/** 모집 일정 · 강의 분류 · FAQ 조회. */
+/** 모집 일정 조회. */
 export const getSiteSettings = (): Promise<SiteSettings> => mock.fetchSiteSettings();
 
 export const saveSiteSettings = (payload: SiteSavePayload): Promise<SiteSettings> => mock.saveSiteSettings(payload);
@@ -112,6 +115,98 @@ export async function updateEvent(id: number, payload: SiteEventPayload): Promis
 /** `DELETE /api/admin/setting/events/{id}` */
 export async function deleteEvent(id: number): Promise<void> {
   await client.delete(`/api/admin/setting/events/${id}`);
+}
+
+/** `GET /api/admin/setting/tracks` — 10.3. 대분류 트리(소분류 포함)를 통째로 준다. */
+export async function getTracks(): Promise<SiteTrack[]> {
+  const { data } = await client.get<SiteTrack[]>("/api/admin/setting/tracks");
+  return data;
+}
+
+interface TrackDraftInput {
+  id: number | null;
+  name: string;
+  subCategories: { id: number | null; name: string }[];
+}
+
+/**
+ * 강의 분류 저장. 명세서 10.4 ~ 10.9 개별 CRUD만 있고 일괄 저장 엔드포인트는 없다 —
+ * 최신 트리를 다시 조회해 비교하고, 삭제 → 수정 → 생성 순으로 나눠 보낸다
+ * (`recruitmentApi.saveCriteria`와 같은 접근).
+ *
+ * **대분류를 지우면 그 아래 소분류도 서버가 cascade로 같이 지운다** — 따로 지울 필요 없다.
+ * **강의가 연결된 분류는 서버가 `CATEGORY_IN_USE`로 막는다**(화면은 에러만 보여준다).
+ */
+export async function saveTracks(drafts: TrackDraftInput[]): Promise<void> {
+  const current = await getTracks();
+  const currentTracks = new Map(current.map((track) => [track.id, track]));
+  const draftTrackIds = new Set(drafts.flatMap((draft) => (draft.id !== null ? [draft.id] : [])));
+
+  for (const track of current.filter((track) => !draftTrackIds.has(track.id))) {
+    await client.delete(`/api/admin/setting/tracks/${track.id}`);
+  }
+
+  for (const draft of drafts) {
+    if (draft.id === null) continue;
+    const existing = currentTracks.get(draft.id);
+    if (existing === undefined) continue;
+
+    if (existing.name !== draft.name) {
+      await client.put(`/api/admin/setting/tracks/${draft.id}`, { name: draft.name });
+    }
+
+    const existingSubs = new Map(existing.subCategories.map((sub) => [sub.id, sub]));
+    const draftSubIds = new Set(draft.subCategories.flatMap((sub) => (sub.id !== null ? [sub.id] : [])));
+
+    for (const sub of existing.subCategories.filter((sub) => !draftSubIds.has(sub.id))) {
+      await client.delete(`/api/admin/setting/subcategories/${sub.id}`);
+    }
+
+    for (const sub of draft.subCategories) {
+      if (sub.id === null) continue;
+      const existingSub = existingSubs.get(sub.id);
+      if (existingSub !== undefined && existingSub.name !== sub.name) {
+        await client.put(`/api/admin/setting/subcategories/${sub.id}`, { name: sub.name });
+      }
+    }
+
+    for (const sub of draft.subCategories) {
+      if (sub.id !== null) continue;
+      await client.post("/api/admin/setting/subcategories", { trackId: draft.id, name: sub.name });
+    }
+  }
+
+  for (const draft of drafts) {
+    if (draft.id !== null) continue;
+
+    const { data } = await client.post<{ id: number }>("/api/admin/setting/tracks", { name: draft.name });
+    for (const sub of draft.subCategories) {
+      await client.post("/api/admin/setting/subcategories", { trackId: data.id, name: sub.name });
+    }
+  }
+}
+
+/** `GET /api/admin/setting/faqs` — 10.18. */
+export async function getFaqs(): Promise<Faq[]> {
+  const { data } = await client.get<Faq[]>("/api/admin/setting/faqs");
+  return data;
+}
+
+/** `POST /api/admin/setting/faqs` — 10.19. */
+export async function createFaq(payload: FaqPayload): Promise<Faq> {
+  const { data } = await client.post<Faq>("/api/admin/setting/faqs", payload);
+  return data;
+}
+
+/** `PUT /api/admin/setting/faqs/{id}` — 10.19. */
+export async function updateFaq(id: number, payload: FaqPayload): Promise<Faq> {
+  const { data } = await client.put<Faq>(`/api/admin/setting/faqs/${id}`, payload);
+  return data;
+}
+
+/** `DELETE /api/admin/setting/faqs/{id}` — 10.19. */
+export async function deleteFaq(id: number): Promise<void> {
+  await client.delete(`/api/admin/setting/faqs/${id}`);
 }
 
 /** `GET /api/admin/setting/features` — 아직 실제 엔드포인트가 없다. */

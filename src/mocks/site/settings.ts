@@ -1,10 +1,10 @@
 import type { SiteSavePayload, SiteSettings } from "../../types/site";
 
 /**
- * 모집 일정 · 강의 분류 · FAQ 목.
+ * 모집 일정 목.
  *
- * 진행 기수 · 운영진 · 행사 · 커리큘럼은 실제 BE 엔드포인트로 옮겨갔다(#194) — 이 목엔
- * 아직 실제 엔드포인트가 없는 나머지 섹션만 남는다.
+ * 진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류 · FAQ는 실제 BE 엔드포인트로
+ * 옮겨갔다(#194 · #195 · #212) — 이 목엔 아직 실제 엔드포인트가 없는 나머지 섹션만 남는다.
  */
 
 let state: SiteSettings = {
@@ -21,19 +21,6 @@ let state: SiteSettings = {
     documentEndAt: "2026-09-10T23:59:00+09:00",
     interviewStartAt: "2026-09-15T00:00:00+09:00",
   },
-  // 아직 편집 화면이 없는 섹션. 저장할 때 그대로 되돌려 보내야 지워지지 않는다.
-  tracks: [
-    {
-      id: 1,
-      name: "SW",
-      subCategories: [
-        { id: 1, name: "웹기초" },
-        { id: 2, name: "React.js" },
-      ],
-    },
-    { id: 2, name: "창업", subCategories: [{ id: 6, name: "Figma" }] },
-  ],
-  faqs: [{ id: 1, question: "동아리 활동 시간은?", answer: "매주 화요일 저녁 7시입니다." }],
 };
 
 const delay = () => new Promise((r) => setTimeout(r, 200));

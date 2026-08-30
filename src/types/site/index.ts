@@ -3,31 +3,25 @@ import type { components } from "../../apis/generated";
 /**
  * 사이트 설정 타입.
  *
- * **진행 기수 · 운영진 · 행사 · 커리큘럼은 실제 BE `Setting` 도메인(각각 별도 컨트롤러)에서
- * 가져온다.** 이 부분은 `generated.ts` 를 쓰지 않는다 — 이 BE는 중첩 클래스 이름이 다른
- * 도메인과 겹치면 springdoc이 스키마를 잘못 등록하는 버그가 있다(`types/lecture/index.ts`
- * 상단 주석에 실제 확인한 사례가 있다). 그래서 `domain/setting/*` 의 Java 소스를 직접
- * 읽고 그 필드 그대로 옮겼다.
+ * **`generated.ts`에서 재노출한다.** `domain/setting/*` DTO는 애초에 도메인 접두어가 붙은
+ * 고유한 이름(`GenerationResult`, `CurriculumResult` 등)이라 스키마 이름 충돌 버그
+ * (`getit-knu/GETIT_Site_BE#137`, `types/lecture/index.ts` 상단 주석 참고)의 영향을
+ * 받은 적이 없었다 — 예전엔 다른 도메인(강의 등)에서 실제로 충돌을 겪은 뒤라 이 파일도
+ * 안전하게 손타입으로 옮겨 뒀던 것인데, 다시 확인해 보니 애초에 그럴 필요가 없었다.
  *
- * **공개 운영진 조회(`PublicStaff` 이하)는 다르다** — 이미 스키마가 있어 `generated.ts`
- * 에서 그대로 재노출한다.
+ * 모집 일정은 아직 BE 연동 전이라(#190은 `/admin/recruitment/schedule`용이고 이 화면
+ * 몫은 별도 미배정) 목 데이터로 남는다.
  *
- * 모집 일정 · 강의 분류 · FAQ는 아직 BE 연동 전이라(각각 #190·#195·미배정) 목 데이터로 남는다.
+ * **FAQ는 실제 연동됨(#212).** **기능 토글은 아직 목이다** — BE에 실제로
+ * `GET`/`PUT /api/admin/setting/features` 엔드포인트가 있는 것을 확인했지만(2026-08-30,
+ * 예전엔 없었다), 이번 작업 범위 밖이라 손대지 않았다 — 다음 백로그 후보.
  */
 
 /** 진행 기수. 활성 기수는 하나뿐이다 — `PUT` 으로 새 기수를 활성화하면 기존 기수는 내려간다. */
-export interface Generation {
-  id: number;
-  generationNo: number;
-  year: number;
-  isActive: boolean;
-}
+export type Generation = Required<components["schemas"]["GenerationResult"]>;
 
 /** `PUT /api/admin/setting/generation` 요청 본문. 시작·종료일은 없다 — 그건 모집 일정(별개 도메인)의 값이다. */
-export interface GenerationPayload {
-  generationNo: number;
-  year: number;
-}
+export type GenerationPayload = components["schemas"]["GenerationUpdateRequest"];
 
 /**
  * 모집 일정.
@@ -44,16 +38,29 @@ export interface SiteSchedule {
   interviewStartAt: string;
 }
 
-/** 강의 분류. `#195`에서 실제 BE `Setting.Category` 로 교체한다. 아직 목이다. */
-export interface SiteSubCategory {
-  id: number | null;
+/** 강의 분류 소분류. `lectureCount`는 삭제 전 안내용(서버도 `CATEGORY_IN_USE`로 별도 막는다). */
+export type SiteSubCategory = Required<components["schemas"]["CategoryTreeResultSubCategoryNode"]>;
+
+/** 10.3 응답. 대분류 하나 + 그 아래 소분류 목록. */
+export interface SiteTrack {
+  id: number;
+  name: string;
+  order: number;
+  subCategories: SiteSubCategory[];
+}
+
+/**
+ * 10.4 · 10.5 요청 본문. 생성·수정 둘 다 이름뿐이다 — `order`는 생성 스키마엔 아예 없고
+ * (새 대분류는 항상 끝에 붙는다), 수정 스키마엔 있지만 이 화면엔 순서 변경 UI가 없어 안 쓴다.
+ */
+export interface TrackPayload {
   name: string;
 }
 
-export interface SiteTrack {
-  id: number | null;
+/** 10.7 요청 본문. 수정(10.8)은 `trackId` 없이 `name`만 보낸다. */
+export interface SubCategoryPayload {
+  trackId: number;
   name: string;
-  subCategories: SiteSubCategory[];
 }
 
 /**
@@ -63,101 +70,74 @@ export interface SiteTrack {
  * **별도 순서 변경 엔드포인트도 없다** — 추가·수정 요청에 `order` 를 직접 실어 보내면
  * 서버가 그 사이로 끼워 넣고 나머지를 밀어 채운다.
  */
-export interface Curriculum {
-  id: number;
-  order: number;
-  title: string;
-  subtitle: string;
-}
+export type Curriculum = Required<components["schemas"]["CurriculumResult"]>;
 
 /** `POST`/`PUT /api/admin/setting/curriculums` 요청 본문. */
-export interface CurriculumPayload {
-  generationId: number;
-  title: string;
-  subtitle: string;
-  order: number;
-}
+export type CurriculumPayload = components["schemas"]["CurriculumRequest"];
 
 /**
- * 행사 종류 (BE `EventType` enum).
+ * 행사 종류.
  *
  * **`types/dashboard` 에도 `EventType` 이 있고 값이 다르다**(대시보드는 `WORKSHOP` 이 없다).
  * 한 파일에서 둘을 함께 쓰면 이름이 부딪히므로 도메인 접두어를 붙인다.
  */
-export type SiteEventType = "COMPETITION" | "WORKSHOP" | "EVENT";
+export type SiteEventType = NonNullable<components["schemas"]["EventResult"]["type"]>;
 
 /** 행사 일정. `isVisible` 이 꺼진 행사는 공개 캘린더(`GET /api/public/events`)에 안 뜬다. */
-export interface SiteEvent {
-  id: number;
-  title: string;
-  place: string;
-  startDate: string;
-  endDate: string;
-  type: SiteEventType;
-  isVisible: boolean;
-}
+export type SiteEvent = Required<components["schemas"]["EventResult"]>;
 
 /** `POST`/`PUT /api/admin/setting/events` 요청 본문. */
-export interface SiteEventPayload {
-  generationId: number;
-  title: string;
-  place: string;
-  startDate: string;
-  endDate: string;
-  type: SiteEventType;
-  isVisible: boolean;
-}
-
-/** FAQ. 아직 실제 엔드포인트가 없어 목으로 남긴다. */
-export interface Faq {
-  id: number | null;
-  question: string;
-  answer: string;
-}
+export type SiteEventPayload = components["schemas"]["EventRequest"];
 
 /**
- * 아직 실제 엔드포인트가 없는 섹션들의 묶음(모집 일정 · 강의 분류 · FAQ).
+ * FAQ (10.18 · 10.19). `Curriculum`과 달리 기수 스코프가 없다(BE 확인함 — 요청·응답에
+ * generationId 없음) — 기수가 바뀌어도 유지되는 상시 문답이라 그렇다.
+ */
+export type Faq = Required<components["schemas"]["FaqResult"]>;
+
+/**
+ * `POST`/`PUT /api/admin/setting/faqs` 요청 본문. `order`는 커리큘럼과 같은 방식(BE
+ * 소스로 확인함) — 생성 시 생략하면 맨 뒤에 붙고, 수정 시 생략하면 순서를 유지한다.
+ * 값을 보내면 그 자리에 끼워 넣고 나머지를 밀거나 당긴다.
+ */
+export type FaqPayload = components["schemas"]["FaqRequest"];
+
+/**
+ * 아직 실제 엔드포인트가 없는 섹션의 묶음(모집 일정).
  *
- * **진행 기수 · 운영진 · 행사 · 커리큘럼은 여기 없다** — 각자 실제 CRUD 엔드포인트로
- * 개별 반영된다(#194).
+ * **진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류 · FAQ는 여기 없다** — 각자 실제
+ * CRUD 엔드포인트로 개별 반영된다(#194 · #195 · #212).
  */
 export interface SiteSettings {
   schedule: SiteSchedule;
-  tracks: SiteTrack[];
-  faqs: Faq[];
 }
 
 export type SiteSavePayload = SiteSettings;
 
 /** 운영진 구역. 순서는 **구역 안에서만** 다시 매긴다(`PUT .../staffs/order`). */
-export type StaffSection = "EXECUTIVE" | "SW" | "STARTUP";
+export type StaffSection = NonNullable<components["schemas"]["StaffRequest"]["section"]>;
 
-/** 운영진 프로필. 개별 엔드포인트로 즉시 반영된다. */
-export interface Staff {
-  id: number;
-  /** 실제 계정 연결. 없으면 표시 전용 프로필이다. */
+/**
+ * 운영진 프로필. 개별 엔드포인트로 즉시 반영된다.
+ *
+ * `userId`(실제 계정 연결 — 없으면 표시 전용 프로필)·`profileImageUrl`은 생성된
+ * 스키마에 `| null`이 안 잡혀 있다(springdoc 함정) — 손으로 되돌린다.
+ */
+export type Staff = Omit<Required<components["schemas"]["StaffResult"]>, "userId" | "profileImageUrl"> & {
   userId: number | null;
-  name: string;
-  staffRole: string;
-  section: StaffSection;
-  department: string;
-  introduction: string;
   profileImageUrl: string | null;
-  order: number;
-  generationNo: number;
-}
+};
 
-/** `POST`/`PUT /api/admin/setting/staffs` 요청 본문. `order` 는 서버가 매기므로 보내지 않는다. */
-export interface StaffPayload {
+/**
+ * `POST`/`PUT /api/admin/setting/staffs` 요청 본문. `order` 는 서버가 매기므로 보내지 않는다.
+ *
+ * `userId`(실제 계정 연결)·`fileId`(새로 올린 프로필 사진)는 스키마엔 optional이지만
+ * "연결 안 함"을 명시적으로 보내야 해서 `null`을 허용하도록 손으로 되돌린다.
+ */
+export type StaffPayload = Omit<Required<components["schemas"]["StaffRequest"]>, "userId" | "fileId"> & {
   userId: number | null;
-  name: string;
-  staffRole: string;
-  section: StaffSection;
-  department: string;
-  introduction: string;
   fileId: number | null;
-  generationNo: number;
-}
+};
 
 /**
  * `GET /api/public/staffs` 응답. 운영진 소개 페이지(`LeadersPage`) 전용 — 로그인이
@@ -184,7 +164,9 @@ export interface StaffDirectory {
  * 기능 토글.
  *
  * **`key` 는 BE 가 정한다.** 화면은 받은 목록을 그대로 그린다 — FE 에 키 목록을 두면
- * BE 가 기능을 추가해도 화면에 나오지 않는다. 아직 실제 엔드포인트가 없어 목으로 남긴다.
+ * BE 가 기능을 추가해도 화면에 나오지 않는다. 목으로 남긴다 — 실제로는 BE에
+ * `GET`/`PUT /api/admin/setting/features`가 있다(2026-08-30 재확인, `key`는
+ * `"STOCK_GAME" | "MOCK_INVESTMENT"`로 좁혀져 있음). 파일 상단 docblock 참고.
  */
 export interface FeatureToggle {
   key: string;

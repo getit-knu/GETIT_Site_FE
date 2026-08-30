@@ -1,57 +1,82 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+import { getFaqs } from "../../apis/public/publicApi";
+import type { PublicFaq } from "../../types/home";
 
 import { FAQSection } from "./FAQSection";
 
-const QUESTIONS = [
-  "동아리 활동 시간은 어떻게 되나요?",
-  "프로그래밍을 처음 배우는데 괜찮을까요?",
-  "회비가 있나요?",
-  "어떤 학과 학생들이 지원하나요?",
+vi.mock("../../apis/public/publicApi");
+
+const FAQS: PublicFaq[] = [
+  { id: 1, question: "동아리 활동 시간은 어떻게 되나요?", answer: "화요일 저녁 7시입니다.", order: 1 },
+  { id: 2, question: "회비가 있나요?", answer: "없습니다.", order: 2 },
 ];
 
-describe("FAQSection", () => {
-  it("제목과 질문 4개를 보여준다", () => {
-    render(<FAQSection />);
+function renderSection() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <FAQSection />
+    </QueryClientProvider>,
+  );
+}
 
-    expect(screen.getByRole("heading", { name: "자주 묻는 질문" })).toBeInTheDocument();
-    for (const question of QUESTIONS) {
-      expect(screen.getByText(question)).toBeInTheDocument();
+describe("FAQSection", () => {
+  it("FAQ가 없으면 아무것도 보여주지 않는다", async () => {
+    vi.mocked(getFaqs).mockResolvedValue([]);
+    const { container } = renderSection();
+
+    await vi.waitFor(() => expect(getFaqs).toHaveBeenCalled());
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("제목과 질문 목록을 보여준다", async () => {
+    vi.mocked(getFaqs).mockResolvedValue(FAQS);
+    renderSection();
+
+    expect(await screen.findByRole("heading", { name: "자주 묻는 질문" })).toBeInTheDocument();
+    for (const faq of FAQS) {
+      expect(screen.getByText(faq.question)).toBeInTheDocument();
     }
   });
 
-  it("처음에는 답변이 전부 접혀 있다", () => {
-    render(<FAQSection />);
+  it("처음에는 답변이 전부 접혀 있다", async () => {
+    vi.mocked(getFaqs).mockResolvedValue(FAQS);
+    renderSection();
 
-    for (const question of QUESTIONS) {
-      expect(screen.getByRole("button", { name: question })).toHaveAttribute("aria-expanded", "false");
+    for (const faq of FAQS) {
+      expect(await screen.findByRole("button", { name: faq.question })).toHaveAttribute("aria-expanded", "false");
     }
   });
 
   it("질문을 누르면 답변이 펼쳐지고, 다시 누르면 접힌다", async () => {
-    render(<FAQSection />);
+    vi.mocked(getFaqs).mockResolvedValue(FAQS);
+    renderSection();
 
-    const button = screen.getByRole("button", { name: "회비가 있나요?" });
+    const button = await screen.findByRole("button", { name: "회비가 있나요?" });
     await userEvent.click(button);
 
     expect(button).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByText("정확한 답변을 준비하고 있어요. 곧 업데이트할 예정입니다.")).toBeInTheDocument();
+    expect(screen.getByText("없습니다.")).toBeInTheDocument();
 
     await userEvent.click(button);
 
     expect(button).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByText("정확한 답변을 준비하고 있어요. 곧 업데이트할 예정입니다.")).not.toBeInTheDocument();
+    expect(screen.queryByText("없습니다.")).not.toBeInTheDocument();
   });
 
   it("한 번에 하나만 펼쳐진다", async () => {
-    render(<FAQSection />);
+    vi.mocked(getFaqs).mockResolvedValue(FAQS);
+    renderSection();
 
-    await userEvent.click(screen.getByRole("button", { name: "회비가 있나요?" }));
-    await userEvent.click(screen.getByRole("button", { name: "어떤 학과 학생들이 지원하나요?" }));
+    await userEvent.click(await screen.findByRole("button", { name: "회비가 있나요?" }));
+    await userEvent.click(screen.getByRole("button", { name: "동아리 활동 시간은 어떻게 되나요?" }));
 
     expect(screen.getByRole("button", { name: "회비가 있나요?" })).toHaveAttribute("aria-expanded", "false");
-    expect(screen.getByRole("button", { name: "어떤 학과 학생들이 지원하나요?" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "동아리 활동 시간은 어떻게 되나요?" })).toHaveAttribute(
       "aria-expanded",
       "true",
     );

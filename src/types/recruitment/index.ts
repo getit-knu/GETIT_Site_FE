@@ -84,7 +84,7 @@ export interface CriterionDraft {
 
 export type RecruitmentPhase = NonNullable<components["schemas"]["RecruitmentStatusResult"]["phase"]>;
 
-export type ScheduleWindow = Required<components["schemas"]["ScheduleWindow"]>;
+export type ScheduleWindow = Required<components["schemas"]["RecruitmentStatusResultScheduleWindow"]>;
 
 /**
  * `GET /api/public/recruitment/status` 응답. `dDay`·`applyEnabled`는 BE가 계산해서 준다.

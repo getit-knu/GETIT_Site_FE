@@ -1,0 +1,32 @@
+@use "../../styles/abstracts/variables" as *;
+@use "../../styles/abstracts/form-field";
+
+.field {
+  @include form-field.field-wrapper;
+
+  padding: 0;
+  border: none;
+  margin: 0;
+}
+
+.label {
+  @include form-field.field-label;
+}
+
+.optionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: $color-text-primary;
+  font-size: 0.875rem;
+
+  input {
+    accent-color: $color-accent;
+  }
+}
