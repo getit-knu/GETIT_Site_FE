@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import clsx from "clsx";
-import { Link, NavLink, Outlet, useNavigate } from "react-router";
+import { Link, NavLink, Outlet } from "react-router";
 
-import { logout } from "../../apis/auth/authApi";
-import { clearAccessToken } from "../../libs/accessToken";
+import { useLogout } from "../../hooks/auth/useLogout";
 
 import styles from "./MemberLayout.module.scss";
 
@@ -22,24 +20,9 @@ const NAV_LINKS_ID = "member-nav-links";
  * 좁은 화면에서는 공개 사이트 Nav(#154)와 같은 패턴으로 메뉴를 햄버거 버튼 뒤로 숨긴다(#179).
  */
 export function MemberLayout() {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const handleLogout = useLogout();
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
-
-  async function handleLogout() {
-    try {
-      await logout();
-    } catch {
-      // AdminLayout과 같은 이유 — 서버에 알리지 못해도 로그아웃은 진행한다.
-      // 여기서 멈추면 사용자는 버튼을 눌렀는데 아무 일도 일어나지 않는다.
-    }
-
-    // 토큰을 들고 있는 채로 화면만 돌려보내면 사용자는 나갔다고 믿는데 요청은 계속 인증된다.
-    clearAccessToken();
-    queryClient.clear();
-    void navigate("/", { replace: true });
-  }
 
   return (
     <div className={styles.layout}>
