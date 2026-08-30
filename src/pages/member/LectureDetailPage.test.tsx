@@ -75,6 +75,8 @@ function renderAt(path: string) {
 describe("LectureDetailPage", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    // Q&A는 QnaSection.test.tsx에서 따로 검증한다 — 여기선 조용히 비어 있게만 둔다.
+    vi.mocked(api.getMyLectureQuestions).mockResolvedValue([]);
   });
 
   it("강의 제목 · 영상 · 강의 자료를 렌더링한다", async () => {

@@ -47,3 +47,23 @@ export function useResubmitAssignment(lectureId: number) {
     },
   });
 }
+
+/** 4.6. 본인이 그 강의에 남긴 질문만 온다. */
+export function useMyLectureQuestions(lectureId: number) {
+  return useQuery({
+    queryKey: queryKeys.memberLectures.questions(lectureId),
+    queryFn: () => api.getMyLectureQuestions(lectureId),
+  });
+}
+
+/** 4.7. 등록 후 목록을 다시 조회해 화면을 갱신한다. */
+export function useCreateLectureQuestion(lectureId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (content: string) => api.createLectureQuestion(lectureId, content),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.memberLectures.questions(lectureId) });
+    },
+  });
+}

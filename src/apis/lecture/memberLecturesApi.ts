@@ -4,13 +4,15 @@ import type {
   MemberLectureBoard,
   MemberLectureDetail,
   MemberLectureListParams,
+  MemberQuestion,
+  MemberQuestionCreateResult,
   MemberTrack,
   MemberSubmissionDetail,
   SubmissionPayload,
 } from "../../types/lecture";
 
 /**
- * 부원 강의 조회 API. 명세서 4.1 ~ 4.4, #150(트랙 목록).
+ * 부원 강의 조회 API. 명세서 4.1 ~ 4.4·4.6·4.7, #150(트랙 목록).
  */
 
 /** `GET /api/member/tracks` — 소분류 없거나 발행 강의가 0개인 트랙도 포함한다(#193). */
@@ -57,5 +59,19 @@ export async function resubmitAssignment(
   payload: SubmissionPayload,
 ): Promise<MemberSubmissionDetail> {
   const { data } = await client.put<MemberSubmissionDetail>(`/api/member/submissions/${submissionId}`, payload);
+  return data;
+}
+
+/** `GET /api/member/lectures/{lectureId}/questions` — 본인이 그 강의에 남긴 질문만 온다. */
+export async function getMyLectureQuestions(lectureId: number): Promise<MemberQuestion[]> {
+  const { data } = await client.get<MemberQuestion[]>(`/api/member/lectures/${lectureId}/questions`);
+  return data;
+}
+
+/** `POST /api/member/lectures/{lectureId}/questions` */
+export async function createLectureQuestion(lectureId: number, content: string): Promise<MemberQuestionCreateResult> {
+  const { data } = await client.post<MemberQuestionCreateResult>(`/api/member/lectures/${lectureId}/questions`, {
+    content,
+  });
   return data;
 }

@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router";
 
 import { AssignmentSection, MaterialLink } from "../../components/lecture/AssignmentSection";
+import { QnaSection } from "../../components/lecture/QnaSection";
 import { ErrorState } from "../../components/ui/states/States";
 import { lectureErrorMessage } from "../../errors/lecture/errorMessages";
 import { useMemberLectureDetail } from "../../hooks/lecture/useMemberLectures";
@@ -117,6 +118,8 @@ function LectureDetailView({ lecture }: { lecture: MemberLectureDetail }) {
               assignment={lecture.assignment}
               mySubmission={lecture.mySubmission}
             />
+
+            <QnaSection lectureId={lecture.id} />
           </aside>
         </div>
       </div>

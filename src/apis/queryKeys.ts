@@ -134,6 +134,7 @@ export const queryKeys = {
     board: (params: MemberLectureListParams) => [...queryKeys.memberLectures.boards(), params] as const,
     details: () => [...queryKeys.memberLectures.all, "detail"] as const,
     detail: (id: number) => [...queryKeys.memberLectures.details(), id] as const,
+    questions: (lectureId: number) => [...queryKeys.memberLectures.all, "questions", lectureId] as const,
   },
 
   /**

@@ -308,3 +308,24 @@ export interface MemberSubmissionDetail {
   submittedAt: string;
   status: MemberSubmissionStatus;
 }
+
+/**
+ * 강의 Q&A(4.6·4.7). **본인이 그 강의에 남긴 질문만 온다** — BE `getMyQuestions()`가
+ * `authorId`로 필터링해서, 다른 부원이 쓴 질문은 안 보인다(공개 게시판이 아니라 개인별
+ * 질문 이력).
+ */
+export type MemberQuestionStatus = NonNullable<components["schemas"]["MemberQuestionResultListItem"]["status"]>;
+
+export type MemberQuestionAnswer = Required<components["schemas"]["MemberQuestionResultAnswerItem"]>;
+
+export interface MemberQuestion {
+  id: number;
+  authorName: string;
+  content: string;
+  createdAt: string;
+  status: MemberQuestionStatus;
+  answers: MemberQuestionAnswer[];
+}
+
+/** 4.7 응답. */
+export type MemberQuestionCreateResult = Required<components["schemas"]["MemberQuestionResultCreateResult"]>;

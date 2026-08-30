@@ -83,6 +83,13 @@ export function submissionSaveErrorMessage(error: unknown): string {
   return messageFor(error, SUBMISSION_SAVE_FALLBACK);
 }
 
+/** 강의 질문 등록(4.7) 실패 문구. */
+const QUESTION_SAVE_FALLBACK = "질문을 등록하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+
+export function questionSaveErrorMessage(error: unknown): string {
+  return messageFor(error, QUESTION_SAVE_FALLBACK);
+}
+
 /** 제출 현황(8.6) 코드. 강의 표를 그대로 쓰되 대체 문구만 이 화면에 맞춘다. */
 const SUBMISSIONS_FALLBACK = "제출 현황을 불러오지 못했습니다.";
 
