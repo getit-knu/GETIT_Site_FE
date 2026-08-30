@@ -3,6 +3,9 @@
 @use "../styles/abstracts/breakpoints" as *;
 
 .page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
   background-color: $color-background;
 }
 
@@ -12,7 +15,15 @@
   text-align: center;
 }
 
+/*
+ * 접수 기간이 아님·로그인 필요 같은 짧은 안내 문구만 있을 때, `.page`가 `.content`의
+ * 남는 세로 공간까지 채우도록 `flex: 1`을 줘서 이 그라디언트가 아래까지 이어지게 한다
+ * (안 그러면 문구 아래로 배경 없는 흰 여백이 생긴다).
+ */
 .hero {
+  display: flex;
+  flex: 1;
+  align-items: center;
   padding: 7rem 1rem 6rem;
   background-image: linear-gradient(129deg, #eff6ff 0%, #eef2ff 100%);
 }
