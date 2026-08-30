@@ -1,5 +1,4 @@
 import { client } from "../client";
-import * as mock from "../../mocks/site/settings";
 import type {
   Curriculum,
   CurriculumPayload,
@@ -11,8 +10,6 @@ import type {
   GenerationPayload,
   SiteEvent,
   SiteEventPayload,
-  SiteSavePayload,
-  SiteSettings,
   SiteTrack,
   Staff,
   StaffPayload,
@@ -23,7 +20,9 @@ import type {
  * 사이트 설정 API.
  *
  * 진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류 · FAQ · 기능 토글은 실제 `client` 호출이다.
- * 모집 일정만 아직 실제 엔드포인트가 없어 `mock.*` 를 그대로 쓴다.
+ * **모집 일정은 이 도메인에 없다** — 모집 관리와 같은 `apis/recruitment/recruitmentApi.ts`의
+ * `getSchedule`/`saveSchedule`을 그대로 쓴다(사이트 관리·모집 관리에 따로 있던 "모집 일정"이
+ * 서로 안 맞던 문제를 이렇게 하나로 합쳐 없앴다).
  */
 
 /** `GET /api/admin/setting/generation` */
@@ -37,11 +36,6 @@ export async function saveGeneration(payload: GenerationPayload): Promise<Genera
   const { data } = await client.put<Generation>("/api/admin/setting/generation", payload);
   return data;
 }
-
-/** 모집 일정 조회. */
-export const getSiteSettings = (): Promise<SiteSettings> => mock.fetchSiteSettings();
-
-export const saveSiteSettings = (payload: SiteSavePayload): Promise<SiteSettings> => mock.saveSiteSettings(payload);
 
 /** `GET /api/admin/setting/staffs` */
 export async function getStaffs(): Promise<Staff[]> {

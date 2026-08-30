@@ -1,25 +1,18 @@
 import { useState } from "react";
 
+import { ScheduleSection } from "../../components/recruitment/ScheduleSection";
 import { Button } from "../../components/ui/Button/Button";
 import { Input } from "../../components/ui/Input/Input";
 import { ErrorState } from "../../components/ui/states/States";
 import { isSiteErrorCode, siteErrorMessage, siteSaveErrorMessage } from "../../errors/site/errorMessages";
-import {
-  useGeneration,
-  useSaveGeneration,
-  useSaveSiteSettings,
-  useSaveTracks,
-  useSiteSettings,
-  useTracks,
-} from "../../hooks/site/useSiteSettings";
-import type { Generation, SiteSettings } from "../../types/site";
+import { useSettingsLocked } from "../../hooks/recruitment/useRecruitment";
+import { useGeneration, useSaveGeneration, useSaveTracks, useTracks } from "../../hooks/site/useSiteSettings";
+import type { Generation } from "../../types/site";
 
 import { CurriculumsSection } from "./site/CurriculumsSection";
 import { EventsSection } from "./site/EventsSection";
 import { FaqSection } from "./site/FaqSection";
 import { FeaturesSection } from "./site/FeaturesSection";
-import { invalidReason, SCHEDULE_FIELDS, toDraft, toSchedule } from "./site/scheduleDraft";
-import type { ScheduleDraft } from "./site/scheduleDraft";
 import { StaffsSection } from "./site/StaffsSection";
 import { TracksSection } from "./site/TracksSection";
 import { toTrackDrafts, toTracks, tracksInvalidReason } from "./site/tracksDraft";
@@ -115,65 +108,6 @@ function GenerationSection({ generation }: { generation: Generation | null }) {
   );
 }
 
-/** 조회한 뒤에만 마운트한다. 그래야 `useState` 초기값으로 기존 값을 넣을 수 있다. */
-function RestSectionsForm({ settings }: { settings: SiteSettings }) {
-  const [schedule, setSchedule] = useState<ScheduleDraft>(() => toDraft(settings.schedule));
-  const save = useSaveSiteSettings();
-
-  // 섹션이 늘어나면 이유도 늘어난다. 먼저 걸리는 것 하나만 보여준다.
-  const reason = invalidReason(schedule);
-
-  /**
-   * 값을 고치면 지난 저장 결과를 지운다.
-   *
-   * 그대로 두면 저장한 뒤 한 글자만 바꿔도 "저장했습니다." 가 계속 떠 있어,
-   * 아직 보내지 않은 값을 저장된 것으로 읽게 된다. 실패 문구도 마찬가지다.
-   */
-  function edit(apply: () => void) {
-    if (save.isSuccess || save.isError) save.reset();
-    apply();
-  }
-
-  function handleSave() {
-    save.mutate({ schedule: toSchedule(schedule) });
-  }
-
-  return (
-    <>
-      <section id="schedule" className={styles.section}>
-        <h2 className={styles.sectionTitle}>모집 일정</h2>
-        <div className={styles.grid}>
-          {SCHEDULE_FIELDS.map(({ key, label }) => (
-            <Input
-              key={key}
-              label={label}
-              type="datetime-local"
-              value={schedule[key]}
-              onChange={(value) => edit(() => setSchedule((prev) => ({ ...prev, [key]: value })))}
-            />
-          ))}
-        </div>
-        {/* 면접 마감은 서버가 전체 모집 마감으로 맞춘다(명세서 6.2). 입력칸을 두지 않는다. */}
-        <p className={styles.hint}>면접 마감은 전체 모집 마감과 같게 저장됩니다.</p>
-      </section>
-
-      <div className={styles.footer}>
-        {/* 저장을 막는 이유를 미리 보여준다. 눌러 보고 알게 하지 않는다. */}
-        {reason !== null && <p className={styles.reason}>{reason}</p>}
-        {save.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(save.error)}</p>}
-        {save.isSuccess && save.error === null && (
-          <p className={styles.saved} role="status">
-            저장했습니다.
-          </p>
-        )}
-        <Button disabled={reason !== null || save.isPending} onClick={handleSave}>
-          {save.isPending ? "저장 중…" : "저장하기"}
-        </Button>
-      </div>
-    </>
-  );
-}
-
 /**
  * 강의 분류. 트랙은 기수에 안 묶인다 — 개별 엔드포인트로 즉시 반영되지만(#195),
  * 트리 편집 UX는 여러 항목을 한 번에 고치는 게 자연스러워 초안 하나로 모아 두고
@@ -228,22 +162,21 @@ function TracksFormSection() {
 /**
  * 사이트 관리. 와이어프레임 p9.
  *
- * **진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류 · FAQ는 각자 실제 CRUD 로 즉시
- * 반영된다(#194 · #195 · #212).** 모집 일정만 아직 실제 엔드포인트가 없어 폼에서
- * 저장한다.
+ * **진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류 · FAQ · 모집 일정은 각자 실제 CRUD 로
+ * 즉시 반영된다(#194 · #195 · #212).** 모집 일정은 사이트 관리 전용 데이터가 아니라
+ * 모집 관리(`ApplicationsPage`)와 같은 `GET/PUT /api/admin/recruitment/schedule`을
+ * 공유한다 — 두 화면에 따로 있던 "모집 일정"이 서로 안 맞던 문제를 여기서 같은
+ * `ScheduleSection` 컴포넌트로 통일해 없앴다. 모집이 시작되면 그쪽과 똑같이 잠긴다.
  */
 export default function SitePage() {
   const generationQuery = useGeneration();
-  const settingsQuery = useSiteSettings();
+  const locked = useSettingsLocked();
 
   // 활성 기수가 아직 없는 것도 정상 상태다(배포 직후 등) — 페이지 전체를 막지 않는다.
   const generationMissing = isSiteErrorCode(generationQuery.error, "ACTIVE_GENERATION_NOT_FOUND");
+  const errorQuery = generationQuery.isError && !generationMissing ? generationQuery : null;
 
-  const isPending = generationQuery.isPending || settingsQuery.isPending;
-  const errorQuery =
-    generationQuery.isError && !generationMissing ? generationQuery : settingsQuery.isError ? settingsQuery : null;
-
-  if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
+  if (generationQuery.isPending) return <p className={styles.loading}>불러오는 중…</p>;
   if (errorQuery) {
     return <ErrorState message={siteErrorMessage(errorQuery.error)} onRetry={() => void errorQuery.refetch()} />;
   }
@@ -254,7 +187,7 @@ export default function SitePage() {
     <div className={styles.page}>
       <SiteSectionNav />
       <GenerationSection generation={generation} />
-      <RestSectionsForm settings={settingsQuery.data as SiteSettings} />
+      <ScheduleSection id="schedule" locked={locked} />
       <FaqSection />
       <TracksFormSection />
 
