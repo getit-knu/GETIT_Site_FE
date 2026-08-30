@@ -155,19 +155,30 @@ $card-shadow:
   list-style: none;
 }
 
+/* <a>(제출 요약)·<button>(강의 자료, 매번 새 서명 주소를 받아야 해 클릭 시 동작이 필요하다)
+   둘 다에 쓰인다 — 버튼 기본 테두리·배경·폰트를 지워 링크와 똑같이 보이게 한다. */
 .materialLink {
   display: flex;
+  width: 100%;
   align-items: center;
   justify-content: space-between;
+  border: 0;
   border-radius: 0.875rem;
   padding: 0.8125rem;
   background-color: $color-background;
   color: $color-text-primary;
+  font: inherit;
   font-size: 0.875rem;
   text-decoration: none;
+  cursor: pointer;
 
   &:hover {
     background-color: $color-placeholder-bg;
+  }
+
+  &:disabled {
+    color: $color-text-secondary;
+    cursor: default;
   }
 }
 
@@ -272,6 +283,48 @@ $card-shadow:
   }
 }
 
+/** 제출물에 달린 피드백. 어드민이 남긴다(8.9). */
+.feedbackList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feedbackItem {
+  border: 1px solid $color-placeholder-bg;
+  border-radius: 0.875rem;
+  padding: 1.0625rem;
+}
+
+.feedbackAuthor {
+  margin: 0;
+  color: $color-heading;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.feedbackContent {
+  margin: 0.25rem 0 0;
+  color: $color-text-primary;
+  font-size: 0.875rem;
+}
+
+.feedbackDate {
+  margin: 0.5rem 0 0;
+  color: $color-text-secondary;
+  font-size: 0.75rem;
+}
+
+.uploadError {
+  margin-top: 0.5rem;
+  color: $color-danger;
+  font-size: 0.8125rem;
+}
+
+/** 강의 Q&A(4.6·4.7). 본인이 이 강의에 남긴 질문만 보인다. */
 .qnaCard {
   border: 1px solid $color-placeholder-bg;
   border-radius: 1rem;
@@ -321,13 +374,6 @@ $card-shadow:
 .qnaBody {
   flex: 1;
   min-width: 0;
-}
-
-.qnaAuthor {
-  margin: 0;
-  color: $color-heading;
-  font-size: 0.875rem;
-  font-weight: 700;
 }
 
 .qnaContent {

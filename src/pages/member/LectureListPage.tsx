@@ -2,9 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 
 import { LectureFilterTabs } from "../../components/lecture/LectureFilterTabs";
-import { ALL_LECTURES_FILTER, filterLectures } from "../../components/lecture/lectureFilters";
+import { ALL_LECTURES_FILTER, filterToParams } from "../../components/lecture/lectureFilters";
 import { MemberLectureCard } from "../../components/lecture/MemberLectureCard";
-import { getMemberLecturesSnapshot } from "../../mocks/lecture/memberLectures";
+import { Pagination } from "../../components/ui/Pagination/Pagination";
+import { EmptyState, ErrorState } from "../../components/ui/states/States";
+import { lectureErrorMessage } from "../../errors/lecture/errorMessages";
+import { useMemberLectures, useMemberTracks } from "../../hooks/lecture/useMemberLectures";
 
 import styles from "./LectureListPage.module.scss";
 
@@ -12,9 +15,16 @@ import styles from "./LectureListPage.module.scss";
 export default function LectureListPage() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState(ALL_LECTURES_FILTER);
-  // 렌더마다 새로 읽는다 — 모듈 최상단에서 한 번만 읽으면 캐싱되는 문제를 #104 리뷰에서 겪었다.
-  const lectures = getMemberLecturesSnapshot();
-  const filtered = filterLectures(lectures, filter);
+  const [page, setPage] = useState(0);
+
+  const tracksQuery = useMemberTracks();
+  const tracks = tracksQuery.data ?? [];
+  const lecturesQuery = useMemberLectures({ ...filterToParams(filter, tracks), page });
+
+  function handleFilterChange(next: string) {
+    setFilter(next);
+    setPage(0);
+  }
 
   return (
     <div className={styles.page}>
@@ -24,15 +34,30 @@ export default function LectureListPage() {
           <p className={styles.subtitle}>수강 가능한 강의를 확인하고 학습을 시작하세요</p>
         </div>
 
-        <LectureFilterTabs lectures={lectures} value={filter} onChange={setFilter} />
+        {tracksQuery.isError ? (
+          <ErrorState message={lectureErrorMessage(tracksQuery.error)} onRetry={() => void tracksQuery.refetch()} />
+        ) : (
+          !tracksQuery.isPending && <LectureFilterTabs tracks={tracks} value={filter} onChange={handleFilterChange} />
+        )}
 
-        <ul className={styles.grid}>
-          {filtered.map((lecture) => (
-            <li key={lecture.id}>
-              <MemberLectureCard lecture={lecture} onClick={() => navigate(`/member/lectures/${lecture.id}`)} />
-            </li>
-          ))}
-        </ul>
+        {lecturesQuery.isPending ? (
+          <p className={styles.loading}>불러오는 중…</p>
+        ) : lecturesQuery.isError ? (
+          <ErrorState message={lectureErrorMessage(lecturesQuery.error)} onRetry={() => void lecturesQuery.refetch()} />
+        ) : lecturesQuery.data.content.length === 0 ? (
+          <EmptyState message="등록된 강의가 없습니다." />
+        ) : (
+          <>
+            <ul className={styles.grid}>
+              {lecturesQuery.data.content.map((lecture) => (
+                <li key={lecture.id}>
+                  <MemberLectureCard lecture={lecture} onClick={() => navigate(`/member/lectures/${lecture.id}`)} />
+                </li>
+              ))}
+            </ul>
+            <Pagination page={page} totalPages={lecturesQuery.data.totalPages} onChange={setPage} />
+          </>
+        )}
       </div>
     </div>
   );
