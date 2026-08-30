@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { recruitmentErrorMessage } from "../../errors/recruitment/errorMessages";
+import { isRecruitmentErrorCode, recruitmentErrorMessage } from "../../errors/recruitment/errorMessages";
 import { useSaveSchedule, useSchedule } from "../../hooks/recruitment/useRecruitment";
 import { formatDateTime } from "../../libs/formatDate";
 import { toIso, toLocalInput } from "../../libs/datetimeLocalInput";
@@ -20,6 +20,10 @@ const FIELDS: { key: keyof ScheduleDraft; label: string }[] = [
   { key: "documentEndAt", label: "서류 마감" },
   { key: "interviewStartAt", label: "면접 시작" },
 ];
+
+function emptyDraft(): ScheduleDraft {
+  return { totalStartAt: "", totalEndAt: "", documentStartAt: "", documentEndAt: "", interviewStartAt: "" };
+}
 
 function toDraft(schedule: RecruitmentSchedule): ScheduleDraft {
   return {
@@ -91,7 +95,15 @@ export function ScheduleSection({ locked, id }: ScheduleSectionProps) {
     );
   }
 
-  if (isError) {
+  /*
+    새 기수를 막 활성화해서 이 기수의 모집 일정을 한 번도 저장한 적 없으면 조회 자체가
+    404 SCHEDULE_NOT_FOUND 다(BE 확인함) — 오류가 아니라 "아직 없다"는 정상 상태다.
+    `PUT`은 이미 upsert 로 짜여 있어서(BE `updateSchedule` 확인함), 빈 폼에 값을 채워
+    저장하면 그게 곧 최초 생성이 된다. 그 외 실패는 그대로 막는다.
+  */
+  const scheduleMissing = isRecruitmentErrorCode(error, "SCHEDULE_NOT_FOUND");
+
+  if (isError && !scheduleMissing) {
     const errorState = <ErrorState message={recruitmentErrorMessage(error)} onRetry={() => void refetch()} />;
     return id !== undefined ? (
       <section id={id} className={styles.section}>
@@ -102,16 +114,20 @@ export function ScheduleSection({ locked, id }: ScheduleSectionProps) {
     );
   }
 
-  const draft: ScheduleDraft = edited ?? toDraft(data);
+  const draft: ScheduleDraft = edited ?? (data ? toDraft(data) : emptyDraft());
   const reason = invalidReason(draft);
+  // 이미 저장된 값이 있을 때만 서버가 준 값으로 보여준다 — 새로 만드는 중엔 아직 없다.
+  const totalEndPreview = draft.totalEndAt !== "" ? formatDateTime(toIso(draft.totalEndAt)) : null;
 
   return (
     <section id={id} className={styles.section}>
       <header className={styles.head}>
-        <h3 className={styles.title}>
-          모집 일정 · {data.generationNo}기 ({data.year})
-        </h3>
+        <h3 className={styles.title}>{data ? `모집 일정 · ${data.generationNo}기 (${data.year})` : "모집 일정"}</h3>
       </header>
+
+      {scheduleMissing && (
+        <p className={styles.hint}>아직 설정된 모집 일정이 없습니다. 입력하고 저장하면 새로 만들어집니다.</p>
+      )}
 
       <div className={styles.fields}>
         {FIELDS.map(({ key, label }) => (
@@ -129,7 +145,9 @@ export function ScheduleSection({ locked, id }: ScheduleSectionProps) {
       </div>
 
       {/* 면접 종료는 요청에 없다. 서버가 전체 종료로 맞춘다(명세서 6.2). */}
-      <p className={styles.lockNotice}>면접 종료는 전체 종료({formatDateTime(data.totalEndAt)})와 같게 설정됩니다.</p>
+      <p className={styles.lockNotice}>
+        면접 종료는 전체 종료{totalEndPreview && `(${totalEndPreview})`}와 같게 설정됩니다.
+      </p>
 
       <div className={styles.actions}>
         <Button
