@@ -6,22 +6,6 @@ export interface Activity {
   label: string;
 }
 
-export type ScheduleEventTag = "event" | "seminar";
-
-export interface ScheduleEvent {
-  id: string;
-  day: number;
-  title: string;
-  date: string;
-  tag: ScheduleEventTag;
-}
-
-/** `month`는 1~12. 실제 일정 API 연동 전까지 2026년 한 해만 목업으로 둔다. */
-export interface MonthlySchedule {
-  month: number;
-  events: ScheduleEvent[];
-}
-
 /**
  * `GET /api/public/faqs` 응답(2.5, #212). 비공개(`isVisible: false`) 처리한 FAQ는
  * 서버가 걸러서 안 준다 — 이 목록엔 그런 필드 자체가 없다.

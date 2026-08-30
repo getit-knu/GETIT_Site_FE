@@ -143,5 +143,6 @@ export const queryKeys = {
     faqs: () => [...queryKeys.public.all, "faqs"] as const,
     projects: (params: PublicProjectListParams) => [...queryKeys.public.all, "projects", params] as const,
     home: () => [...queryKeys.public.all, "home"] as const,
+    events: (year: number, month: number) => [...queryKeys.public.all, "events", year, month] as const,
   },
 } as const;

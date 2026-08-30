@@ -1,47 +1,78 @@
+import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState, type WheelEvent } from "react";
 
-import { SCHEDULE_2026 } from "../../mocks/home/schedule";
-import type { ScheduleEventTag } from "../../types/home";
+import { getEvents } from "../../apis/public/publicApi";
+import { queryKeys } from "../../apis/queryKeys";
+import type { SiteEventType } from "../../types/site";
 import { Badge } from "../ui/Badge/Badge";
 
 import styles from "./ScheduleCalendar.module.scss";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
-const YEAR = 2026;
 
-const TAG_BADGE_VARIANT: Record<ScheduleEventTag, "accent" | "info"> = {
-  event: "accent",
-  seminar: "info",
+/** 사이트 관리(#194)의 `EventsSection`과 같은 표기·톤. */
+const TYPE_LABEL: Record<SiteEventType, string> = { COMPETITION: "대회", WORKSHOP: "워크숍", EVENT: "행사" };
+const TYPE_BADGE_VARIANT: Record<SiteEventType, "accent" | "info" | "neutral"> = {
+  COMPETITION: "accent",
+  WORKSHOP: "info",
+  EVENT: "neutral",
 };
 
-/** monthIndex는 0~11(0=1월). 다음 달 0일 = 이번 달 마지막 날이라 말일수를 바로 구한다. */
-function daysInMonth(monthIndex: number) {
-  return new Date(YEAR, monthIndex + 1, 0).getDate();
+/** `monthIndex`는 0~11(0=1월). 다음 달 0일 = 이번 달 마지막 날이라 말일수를 바로 구한다. */
+function daysInMonth(year: number, monthIndex: number) {
+  return new Date(year, monthIndex + 1, 0).getDate();
 }
 
-function firstWeekday(monthIndex: number) {
-  return new Date(YEAR, monthIndex, 1).getDay();
+function firstWeekday(year: number, monthIndex: number) {
+  return new Date(year, monthIndex, 1).getDay();
+}
+
+/** `2026-01-05` → 5. 형태가 어긋나면 `NaN`(호출부가 `Number.isNaN`으로 거른다). */
+function dayOf(dateStr: string): number {
+  const day = Number(dateStr.slice(8, 10));
+  return Number.isInteger(day) ? day : NaN;
 }
 
 /**
- * Home 일정 캘린더. 실제 일정 API 연동 전까지 2026년 목업 데이터(mocks/home/schedule.ts)를
- * 월 단위로 보여준다. 좌우 버튼, 하단 점, 캘린더 위 휠 스크롤로 달을 넘길 수 있다.
+ * Home 일정 캘린더(#220). `GET /api/public/events?year=&month=`로 연동한다.
+ *
+ * 좌우 버튼, 하단 점, 캘린더 위 휠 스크롤로 달을 넘길 수 있다 — 연말·연초를 넘기면
+ * 연도도 함께 넘어간다(옛 목업은 2026년 한 해만 순환했다).
  */
 export function ScheduleCalendar() {
-  const [monthIndex, setMonthIndex] = useState(0);
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [monthIndex, setMonthIndex] = useState(now.getMonth());
   const lastWheelAt = useRef(0);
 
   const month = monthIndex + 1;
-  const events = SCHEDULE_2026[monthIndex]?.events ?? [];
-  const highlightedDays = new Set(events.map((event) => event.day));
+  const { data } = useQuery({ queryKey: queryKeys.public.events(year, month), queryFn: () => getEvents(year, month) });
+  const events = data?.events ?? [];
+
+  // 하루짜리든 여러 날짜에 걸치든, 이 달 범위 안에 걸리는 날을 전부 켠다.
+  const highlightedDays = new Set<number>();
+  for (const event of events) {
+    const start = event.startDate < `${year}-${String(month).padStart(2, "0")}-01` ? 1 : dayOf(event.startDate);
+    const lastDay = daysInMonth(year, monthIndex);
+    const endCap = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+    const end = event.endDate > endCap ? lastDay : dayOf(event.endDate);
+    if (Number.isNaN(start) || Number.isNaN(end)) continue;
+    for (let d = start; d <= end; d++) highlightedDays.add(d);
+  }
 
   /**
    * 함수형 업데이터를 쓴다 — 이전 달/다음 달 버튼을 빠르게 연달아 누르면 리렌더가 따라오기
    * 전에 두 클릭이 같은 monthIndex 값을 캡처해 둘 다 같은 달로 이동해 버린다.
    */
   function stepMonth(delta: number) {
-    setMonthIndex((current) => (((current + delta) % 12) + 12) % 12);
+    setMonthIndex((current) => {
+      const total = current + delta;
+      const next = ((total % 12) + 12) % 12;
+      const yearDelta = Math.floor(total / 12);
+      if (yearDelta !== 0) setYear((y) => y + yearDelta);
+      return next;
+    });
   }
 
   function goToMonth(index: number) {
@@ -50,17 +81,17 @@ export function ScheduleCalendar() {
 
   function handleWheel(event: WheelEvent<HTMLDivElement>) {
     // 트랙패드는 스크롤 한 번에 휠 이벤트를 여러 번 쏘아서, 너무 잦은 이벤트는 걸러낸다.
-    const now = Date.now();
-    if (now - lastWheelAt.current < 500) return;
-    lastWheelAt.current = now;
+    const nowMs = Date.now();
+    if (nowMs - lastWheelAt.current < 500) return;
+    lastWheelAt.current = nowMs;
 
     event.preventDefault();
     stepMonth(event.deltaY > 0 ? 1 : -1);
   }
 
   const calendarCells: Array<number | null> = [
-    ...Array.from({ length: firstWeekday(monthIndex) }, () => null),
-    ...Array.from({ length: daysInMonth(monthIndex) }, (_, index) => index + 1),
+    ...Array.from({ length: firstWeekday(year, monthIndex) }, () => null),
+    ...Array.from({ length: daysInMonth(year, monthIndex) }, (_, index) => index + 1),
   ];
 
   return (
@@ -70,7 +101,7 @@ export function ScheduleCalendar() {
           <div className={styles.eventsHeader}>
             <div>
               <h3 className={styles.eventsTitle}>
-                {YEAR}년 {month}월
+                {year}년 {month}월
               </h3>
               <p className={styles.eventsSubtitle}>GETIT 활동 일정</p>
             </div>
@@ -84,11 +115,14 @@ export function ScheduleCalendar() {
             <ul className={styles.eventList}>
               {events.map((event) => (
                 <li key={event.id} className={styles.eventItem}>
-                  <span className={styles.eventDay}>{event.day}</span>
+                  <span className={styles.eventDay}>{dayOf(event.startDate)}</span>
                   <div>
                     <h4 className={styles.eventTitle}>{event.title}</h4>
-                    <p className={styles.eventDate}>{event.date}</p>
-                    <Badge variant={TAG_BADGE_VARIANT[event.tag]}>{event.tag}</Badge>
+                    <p className={styles.eventDate}>
+                      {event.startDate}
+                      {event.endDate !== event.startDate && ` ~ ${event.endDate}`}
+                    </p>
+                    <Badge variant={TYPE_BADGE_VARIANT[event.type]}>{TYPE_LABEL[event.type]}</Badge>
                   </div>
                 </li>
               ))}
@@ -105,7 +139,7 @@ export function ScheduleCalendar() {
             </button>
             <div>
               <p className={styles.calendarMonth}>{month}월</p>
-              <p className={styles.calendarYear}>{YEAR}</p>
+              <p className={styles.calendarYear}>{year}</p>
             </div>
             <button type="button" className={styles.navButton} aria-label="다음 달" onClick={() => stepMonth(1)}>
               <ChevronRight aria-hidden="true" />
@@ -140,12 +174,12 @@ export function ScheduleCalendar() {
           </div>
 
           <div className={styles.pagination}>
-            {SCHEDULE_2026.map((item, index) => (
+            {Array.from({ length: 12 }, (_, index) => (
               <button
-                key={item.month}
+                key={index}
                 type="button"
                 className={index === monthIndex ? styles.dotActive : styles.dot}
-                aria-label={`${item.month}월로 이동`}
+                aria-label={`${index + 1}월로 이동`}
                 aria-current={index === monthIndex}
                 onClick={() => goToMonth(index)}
               />

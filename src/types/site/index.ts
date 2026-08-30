@@ -78,8 +78,9 @@ export type CurriculumPayload = components["schemas"]["CurriculumRequest"];
 /**
  * 행사 종류.
  *
- * **`types/dashboard` 에도 `EventType` 이 있고 값이 다르다**(대시보드는 `WORKSHOP` 이 없다).
- * 한 파일에서 둘을 함께 쓰면 이름이 부딪히므로 도메인 접두어를 붙인다.
+ * **`types/dashboard` 에도 `EventType` 이 있다**(값은 지금 같지만, 이름이 부딪히므로
+ * 도메인 접두어를 붙인다 — 두 도메인이 같은 스키마를 공유하는 건 아니라 값이 각자
+ * 바뀔 수 있다).
  */
 export type SiteEventType = NonNullable<components["schemas"]["EventResult"]["type"]>;
 
@@ -88,6 +89,19 @@ export type SiteEvent = Required<components["schemas"]["EventResult"]>;
 
 /** `POST`/`PUT /api/admin/setting/events` 요청 본문. */
 export type SiteEventPayload = components["schemas"]["EventRequest"];
+
+/**
+ * `GET /api/public/events?year=&month=` 응답(#220). Home "GETIT 활동 일정" 캘린더가 쓴다.
+ * `isVisible`이 꺼진 행사는 서버가 걸러서 안 준다 — 이 목록엔 그런 필드 자체가 없다.
+ */
+export type PublicEvent = Required<components["schemas"]["EventCalendarResultItem"]>;
+
+/** `Required<>`는 배열 원소 내부까지 못 채우므로 `PublicEvent`로 직접 합성한다. */
+export interface PublicEventCalendar {
+  year: number;
+  month: number;
+  events: PublicEvent[];
+}
 
 /**
  * FAQ (10.18 · 10.19). `Curriculum`과 달리 기수 스코프가 없다(BE 확인함 — 요청·응답에

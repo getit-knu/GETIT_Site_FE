@@ -3,12 +3,12 @@ import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import { getFaqs, getHome, getRecruitmentStatus } from "../apis/public/publicApi";
+import { getEvents, getFaqs, getHome, getRecruitmentStatus } from "../apis/public/publicApi";
 
 import HomePage from "./HomePage";
 
-// D-Day 배지 · FAQ · 커리큘럼/프로젝트 쇼케이스(publicApi)는 이 테스트의 관심사가
-// 아니다 — 섹션 순서만 확인한다.
+// D-Day 배지 · FAQ · 커리큘럼/프로젝트 쇼케이스 · 활동 일정(publicApi)은 이 테스트의
+// 관심사가 아니다 — 섹션 순서만 확인한다.
 vi.mock("../apis/public/publicApi");
 
 describe("HomePage", () => {
@@ -20,6 +20,7 @@ describe("HomePage", () => {
       featuredProjects: [{ id: 1, title: "프로젝트", description: "설명", thumbnailUrl: null }],
       features: { stockGame: false, mockInvestment: false },
     });
+    vi.mocked(getEvents).mockImplementation((year, month) => Promise.resolve({ year, month, events: [] }));
 
     const router = createMemoryRouter([{ path: "/", Component: HomePage }], { initialEntries: ["/"] });
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
