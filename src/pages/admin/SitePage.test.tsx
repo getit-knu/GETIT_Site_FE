@@ -14,8 +14,6 @@ const GENERATION: Generation = { id: 9, generationNo: 9, year: 2026, isActive: t
 const TRACKS: SiteTrack[] = [
   { id: 1, name: "SW", order: 1, subCategories: [{ id: 1, name: "웹기초", order: 1, lectureCount: 0 }] },
 ];
-const FAQS = [{ id: 1, question: "활동 시간은?", answer: "화요일 저녁 7시" }];
-
 function settings(over: Partial<SiteSettings> = {}): SiteSettings {
   return {
     schedule: {
@@ -25,7 +23,6 @@ function settings(over: Partial<SiteSettings> = {}): SiteSettings {
       documentEndAt: "2026-09-10T23:59:00+09:00",
       interviewStartAt: "2026-09-15T00:00:00+09:00",
     },
-    faqs: FAQS,
     ...over,
   };
 }
@@ -58,6 +55,7 @@ describe("SitePage", () => {
     vi.mocked(api.getEvents).mockResolvedValue([]);
     vi.mocked(api.getStaffs).mockResolvedValue([]);
     vi.mocked(api.getFeatures).mockResolvedValue([]);
+    vi.mocked(api.getFaqs).mockResolvedValue([]);
   });
 
   it("기존 기수와 일정을 채운다", async () => {
@@ -91,7 +89,7 @@ describe("SitePage", () => {
 
     expect(screen.getByText("기수는 1 이상의 정수여야 합니다.")).toBeInTheDocument();
     expect(generationSaveButton()).toBeDisabled();
-    // 일정 · FAQ · 강의 분류 저장은 기수와 무관하다.
+    // 일정 · 강의 분류 저장은 기수와 무관하다.
     expect(restSaveButton()).not.toBeDisabled();
     expect(tracksSaveButton()).not.toBeDisabled();
   });
@@ -107,16 +105,6 @@ describe("SitePage", () => {
 
     expect(await screen.findByText(/이미 활성화된 기수가 있습니다/)).toBeInTheDocument();
     expect(screen.getByLabelText("기수")).toHaveValue(12);
-  });
-
-  it("손대지 않은 FAQ 는 받은 그대로 나간다", async () => {
-    renderPage();
-    await screen.findByLabelText("기수");
-
-    await userEvent.click(restSaveButton());
-
-    await waitFor(() => expect(api.saveSiteSettings).toHaveBeenCalled());
-    expect(lastRestPayload()).toMatchObject({ faqs: FAQS });
   });
 
   it("손대지 않은 강의 분류는 받은 그대로 나간다", async () => {
@@ -187,7 +175,7 @@ describe("SitePage", () => {
     await userEvent.clear(await screen.findByLabelText("대분류 이름 SW"));
     expect(screen.getByText("이름이 비어 있는 대분류가 있습니다.")).toBeInTheDocument();
     expect(tracksSaveButton()).toBeDisabled();
-    // 일정 · FAQ 저장은 강의 분류와 무관하다.
+    // 일정 저장은 강의 분류와 무관하다.
     expect(restSaveButton()).not.toBeDisabled();
   });
 

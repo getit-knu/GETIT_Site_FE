@@ -4,6 +4,8 @@ import * as staffMock from "../../mocks/site/staffs";
 import type {
   Curriculum,
   CurriculumPayload,
+  Faq,
+  FaqPayload,
   FeatureToggle,
   Generation,
   GenerationPayload,
@@ -20,8 +22,8 @@ import type {
 /**
  * 사이트 설정 API.
  *
- * 진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류는 실제 `client` 호출이다. 모집 일정 ·
- * FAQ · 기능 토글은 아직 실제 엔드포인트가 없어 `mock.*`/`staffMock.*` 를 그대로 쓴다.
+ * 진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류 · FAQ는 실제 `client` 호출이다.
+ * 모집 일정 · 기능 토글은 아직 실제 엔드포인트가 없어 `mock.*`/`staffMock.*` 를 그대로 쓴다.
  */
 
 /** `GET /api/admin/setting/generation` */
@@ -36,7 +38,7 @@ export async function saveGeneration(payload: GenerationPayload): Promise<Genera
   return data;
 }
 
-/** 모집 일정 · 강의 분류 · FAQ 조회. */
+/** 모집 일정 조회. */
 export const getSiteSettings = (): Promise<SiteSettings> => mock.fetchSiteSettings();
 
 export const saveSiteSettings = (payload: SiteSavePayload): Promise<SiteSettings> => mock.saveSiteSettings(payload);
@@ -182,6 +184,29 @@ export async function saveTracks(drafts: TrackDraftInput[]): Promise<void> {
       await client.post("/api/admin/setting/subcategories", { trackId: data.id, name: sub.name });
     }
   }
+}
+
+/** `GET /api/admin/setting/faqs` — 10.18. */
+export async function getFaqs(): Promise<Faq[]> {
+  const { data } = await client.get<Faq[]>("/api/admin/setting/faqs");
+  return data;
+}
+
+/** `POST /api/admin/setting/faqs` — 10.19. */
+export async function createFaq(payload: FaqPayload): Promise<Faq> {
+  const { data } = await client.post<Faq>("/api/admin/setting/faqs", payload);
+  return data;
+}
+
+/** `PUT /api/admin/setting/faqs/{id}` — 10.19. */
+export async function updateFaq(id: number, payload: FaqPayload): Promise<Faq> {
+  const { data } = await client.put<Faq>(`/api/admin/setting/faqs/${id}`, payload);
+  return data;
+}
+
+/** `DELETE /api/admin/setting/faqs/{id}` — 10.19. */
+export async function deleteFaq(id: number): Promise<void> {
+  await client.delete(`/api/admin/setting/faqs/${id}`);
 }
 
 /** `GET /api/admin/setting/features` — 아직 실제 엔드포인트가 없다. */

@@ -17,7 +17,6 @@ import type { Generation, SiteSettings } from "../../types/site";
 import { CurriculumsSection } from "./site/CurriculumsSection";
 import { EventsSection } from "./site/EventsSection";
 import { FaqSection } from "./site/FaqSection";
-import { toDrafts, fromDrafts } from "./site/faqDraft";
 import { FeaturesSection } from "./site/FeaturesSection";
 import { invalidReason, SCHEDULE_FIELDS, toDraft, toSchedule } from "./site/scheduleDraft";
 import type { ScheduleDraft } from "./site/scheduleDraft";
@@ -119,7 +118,6 @@ function GenerationSection({ generation }: { generation: Generation | null }) {
 /** 조회한 뒤에만 마운트한다. 그래야 `useState` 초기값으로 기존 값을 넣을 수 있다. */
 function RestSectionsForm({ settings }: { settings: SiteSettings }) {
   const [schedule, setSchedule] = useState<ScheduleDraft>(() => toDraft(settings.schedule));
-  const [faqs, setFaqs] = useState(() => toDrafts(settings.faqs));
   const save = useSaveSiteSettings();
 
   // 섹션이 늘어나면 이유도 늘어난다. 먼저 걸리는 것 하나만 보여준다.
@@ -137,7 +135,7 @@ function RestSectionsForm({ settings }: { settings: SiteSettings }) {
   }
 
   function handleSave() {
-    save.mutate({ schedule: toSchedule(schedule), faqs: fromDrafts(faqs) });
+    save.mutate({ schedule: toSchedule(schedule) });
   }
 
   return (
@@ -158,8 +156,6 @@ function RestSectionsForm({ settings }: { settings: SiteSettings }) {
         {/* 면접 마감은 서버가 전체 모집 마감으로 맞춘다(명세서 6.2). 입력칸을 두지 않는다. */}
         <p className={styles.hint}>면접 마감은 전체 모집 마감과 같게 저장됩니다.</p>
       </section>
-
-      <FaqSection faqs={faqs} onChange={(next) => edit(() => setFaqs(next))} />
 
       <div className={styles.footer}>
         {/* 저장을 막는 이유를 미리 보여준다. 눌러 보고 알게 하지 않는다. */}
@@ -232,9 +228,9 @@ function TracksFormSection() {
 /**
  * 사이트 관리. 와이어프레임 p9.
  *
- * **진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류는 각자 실제 CRUD 로 즉시
- * 반영된다(#194 · #195).** 모집 일정 · FAQ 는 아직 실제 엔드포인트가 없어 한 폼에서
- * 일괄 저장한다.
+ * **진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류 · FAQ는 각자 실제 CRUD 로 즉시
+ * 반영된다(#194 · #195 · #212).** 모집 일정만 아직 실제 엔드포인트가 없어 폼에서
+ * 저장한다.
  */
 export default function SitePage() {
   const generationQuery = useGeneration();
@@ -259,6 +255,7 @@ export default function SitePage() {
       <SiteSectionNav />
       <GenerationSection generation={generation} />
       <RestSectionsForm settings={settingsQuery.data as SiteSettings} />
+      <FaqSection />
       <TracksFormSection />
 
       {/*
