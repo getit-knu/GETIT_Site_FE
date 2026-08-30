@@ -173,6 +173,44 @@ describe("SitePage", () => {
     expect(restSaveButton()).toBeDisabled();
   });
 
+  it("활성 기수가 없으면 오류 화면 대신 빈 기수 등록 폼을 보여준다", async () => {
+    // 배포 직후처럼 활성 기수가 하나도 없는 상태 — BE가 404로 응답한다.
+    vi.mocked(api.getGeneration).mockRejectedValue({ code: "ACTIVE_GENERATION_NOT_FOUND", message: "?" });
+    renderPage();
+
+    expect(await screen.findByLabelText("기수")).toHaveValue(null);
+    expect(screen.getByLabelText("연도")).toHaveValue(null);
+    expect(screen.getByText(/아직 진행 중인 기수가 없습니다/)).toBeInTheDocument();
+    // 페이지 전체가 오류로 막히지 않는다 — 나머지 폼도 그대로 뜬다.
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(restSaveButton()).toBeInTheDocument();
+  });
+
+  it("활성 기수가 없으면 기수에 딸린 섹션(커리큘럼·행사·운영진)은 숨기고 나머지는 그대로 둔다", async () => {
+    vi.mocked(api.getGeneration).mockRejectedValue({ code: "ACTIVE_GENERATION_NOT_FOUND", message: "?" });
+    renderPage();
+
+    await screen.findByLabelText("기수");
+    expect(document.getElementById("curriculums")).not.toBeInTheDocument();
+    expect(document.getElementById("events")).not.toBeInTheDocument();
+    expect(document.getElementById("staffs")).not.toBeInTheDocument();
+    expect(api.getCurriculums).not.toHaveBeenCalled();
+    // 기수와 무관한 섹션은 계속 뜬다.
+    expect(document.getElementById("features")).toBeInTheDocument();
+  });
+
+  it("활성 기수가 없을 때 저장하면 새 기수를 만든다", async () => {
+    vi.mocked(api.getGeneration).mockRejectedValue({ code: "ACTIVE_GENERATION_NOT_FOUND", message: "?" });
+    renderPage();
+
+    await userEvent.type(await screen.findByLabelText("기수"), "9");
+    await userEvent.type(screen.getByLabelText("연도"), "2026");
+    await userEvent.click(generationSaveButton());
+
+    await waitFor(() => expect(api.saveGeneration).toHaveBeenCalled());
+    expect(vi.mocked(api.saveGeneration).mock.lastCall?.[0]).toEqual({ generationNo: 9, year: 2026 });
+  });
+
   it("섹션 8개로 이동하는 네비게이션을 렌더링한다", async () => {
     renderPage();
     await screen.findByLabelText("기수");

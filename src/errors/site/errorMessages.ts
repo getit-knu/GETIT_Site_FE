@@ -41,6 +41,11 @@ export function siteErrorMessage(error: unknown): string {
   return messageFor(error, READ_FALLBACK);
 }
 
+/** 특정 에러 코드인지. `ACTIVE_GENERATION_NOT_FOUND`처럼 에러가 아니라 정상 상태를 뜻하는 코드를 가려낼 때 쓴다. */
+export function isSiteErrorCode(error: unknown, code: string): boolean {
+  return typeof error === "object" && error !== null && "code" in error && (error as ApiErrorPayload).code === code;
+}
+
 /** 저장 실패에 조회용 문구가 뜨면 무엇이 안 됐는지 알 수 없다. */
 export function siteSaveErrorMessage(error: unknown): string {
   return messageFor(error, SAVE_FALLBACK);
