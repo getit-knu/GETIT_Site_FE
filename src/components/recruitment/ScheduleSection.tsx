@@ -65,21 +65,48 @@ function invalidReason(draft: ScheduleDraft): string | null {
   return null;
 }
 
-export function ScheduleSection({ locked }: { locked: boolean }) {
+interface ScheduleSectionProps {
+  locked: boolean;
+  /** 사이트 관리(`SitePage`)의 섹션 네비게이션 앵커용. 모집 관리에선 안 쓴다. */
+  id?: string;
+}
+
+/**
+ * `id`가 있는 곳(`SitePage`)은 로딩·실패 상태에서도 `<section>`을 유지한다 — 그래야
+ * 섹션 네비게이션 앵커가 화면이 채워지기 전에도 존재한다(`CurriculumsSection` 등과 같은
+ * 이유). `id`가 없는 곳(`ApplicationsPage`)은 앵커가 필요 없어 그대로 둔다.
+ */
+export function ScheduleSection({ locked, id }: ScheduleSectionProps) {
   const { data, isPending, isError, error, refetch } = useSchedule();
   const save = useSaveSchedule();
   const [edited, setEdited] = useState<ScheduleDraft | null>(null);
 
-  if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
+  if (isPending) {
+    return id !== undefined ? (
+      <section id={id} className={styles.section}>
+        <p className={styles.loading}>불러오는 중…</p>
+      </section>
+    ) : (
+      <p className={styles.loading}>불러오는 중…</p>
+    );
+  }
+
   if (isError) {
-    return <ErrorState message={recruitmentErrorMessage(error)} onRetry={() => void refetch()} />;
+    const errorState = <ErrorState message={recruitmentErrorMessage(error)} onRetry={() => void refetch()} />;
+    return id !== undefined ? (
+      <section id={id} className={styles.section}>
+        {errorState}
+      </section>
+    ) : (
+      errorState
+    );
   }
 
   const draft: ScheduleDraft = edited ?? toDraft(data);
   const reason = invalidReason(draft);
 
   return (
-    <section className={styles.section}>
+    <section id={id} className={styles.section}>
       <header className={styles.head}>
         <h3 className={styles.title}>
           모집 일정 · {data.generationNo}기 ({data.year})

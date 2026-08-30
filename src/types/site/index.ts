@@ -9,8 +9,11 @@ import type { components } from "../../apis/generated";
  * 받은 적이 없었다 — 예전엔 다른 도메인(강의 등)에서 실제로 충돌을 겪은 뒤라 이 파일도
  * 안전하게 손타입으로 옮겨 뒀던 것인데, 다시 확인해 보니 애초에 그럴 필요가 없었다.
  *
- * 모집 일정은 아직 BE 연동 전이라(#190은 `/admin/recruitment/schedule`용이고 이 화면
- * 몫은 별도 미배정) 목 데이터로 남는다.
+ * **모집 일정은 이 파일에 없다** — `Generation` 엔티티엔 시작·종료일 필드가 아예 없고
+ * (BE 확인함), 실제 모집 일정은 별개 도메인인 `types/recruitment`의
+ * `RecruitmentSchedule`/`SchedulePayload`다. 예전엔 사이트 관리 전용 목 데이터
+ * (`SiteSchedule`)로 따로 있었는데, 모집 관리 화면의 진짜 일정과 서로 안 맞는 문제가 있어
+ * 사이트 관리도 그 도메인을 그대로 쓰도록 합쳤다.
  *
  * **FAQ(#212)·기능 토글(#221)은 실제 연동됨.**
  */
@@ -20,21 +23,6 @@ export type Generation = Required<components["schemas"]["GenerationResult"]>;
 
 /** `PUT /api/admin/setting/generation` 요청 본문. 시작·종료일은 없다 — 그건 모집 일정(별개 도메인)의 값이다. */
 export type GenerationPayload = components["schemas"]["GenerationUpdateRequest"];
-
-/**
- * 모집 일정.
- *
- * ⚠️ **`/admin/recruitment/schedule` 과 같은 개념의 데이터지만 별개 도메인이다(BE 확인함,
- * `Generation` 엔티티에는 시작·종료일 필드가 아예 없다).** 이 화면은 아직 이 값을 저장할
- * 실제 엔드포인트가 없어 목으로 남긴다 — 어느 화면이 주인인지는 팀이 정할 문제다.
- */
-export interface SiteSchedule {
-  totalStartAt: string;
-  totalEndAt: string;
-  documentStartAt: string;
-  documentEndAt: string;
-  interviewStartAt: string;
-}
 
 /** 강의 분류 소분류. `lectureCount`는 삭제 전 안내용(서버도 `CATEGORY_IN_USE`로 별도 막는다). */
 export type SiteSubCategory = Required<components["schemas"]["CategoryTreeResultSubCategoryNode"]>;
@@ -113,18 +101,6 @@ export type Faq = Required<components["schemas"]["FaqResult"]>;
  * 값을 보내면 그 자리에 끼워 넣고 나머지를 밀거나 당긴다.
  */
 export type FaqPayload = components["schemas"]["FaqRequest"];
-
-/**
- * 아직 실제 엔드포인트가 없는 섹션의 묶음(모집 일정).
- *
- * **진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류 · FAQ는 여기 없다** — 각자 실제
- * CRUD 엔드포인트로 개별 반영된다(#194 · #195 · #212).
- */
-export interface SiteSettings {
-  schedule: SiteSchedule;
-}
-
-export type SiteSavePayload = SiteSettings;
 
 /** 운영진 구역. 순서는 **구역 안에서만** 다시 매긴다(`PUT .../staffs/order`). */
 export type StaffSection = NonNullable<components["schemas"]["StaffRequest"]["section"]>;
