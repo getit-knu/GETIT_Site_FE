@@ -1,6 +1,7 @@
 import type { ApplicantListParams } from "../types/application";
 import type { LectureListParams, SubmissionListParams } from "../types/lecture";
 import type { QuestionListParams } from "../types/qna";
+import type { AdminProjectListParams } from "../types/project";
 import type { UserListParams } from "../types/user";
 
 /**
@@ -86,6 +87,12 @@ export const queryKeys = {
     tracks: () => [...queryKeys.site.all, "tracks"] as const,
     faqs: () => [...queryKeys.site.all, "faqs"] as const,
     features: () => [...queryKeys.site.all, "features"] as const,
+  },
+
+  /** 어드민 프로젝트 관리(#222). 필터(학기)·페이지마다 캐시가 갈라진다. */
+  projects: {
+    all: ["projects"] as const,
+    board: (params: AdminProjectListParams) => [...queryKeys.projects.all, "board", params] as const,
   },
 
   users: {
