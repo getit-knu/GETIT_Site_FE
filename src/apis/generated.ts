@@ -276,6 +276,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/setting/activity-photos/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 활동 사진 수정
+         * @description 사진 교체 · 노출 여부 · 순서를 바꾼다.
+         */
+        put: operations["updatePhoto"];
+        post?: never;
+        /** 활동 사진 삭제 */
+        delete: operations["deletePhoto"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/recruitment/schedule": {
         parameters: {
             query?: never;
@@ -375,10 +396,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * 서류 평가 점수 조회
+         * @description 운영진 전체의 종합 결과. 기준별 평가자 점수와 평균을 함께 준다.
+         */
+        get: operations["getScores"];
         /**
          * 서류 평가 점수 저장
-         * @description 명세서 7.3
+         * @description 명세서 7.3. 로그인한 운영진 본인의 점수로 저장하고 종합 결과를 반환한다.
          */
         put: operations["saveScores"];
         post?: never;
@@ -872,6 +897,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/setting/activity-photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 활동 사진 목록
+         * @description 숨긴 사진도 포함해 순서대로 반환한다.
+         */
+        get: operations["getPhotos"];
+        put?: never;
+        /**
+         * 활동 사진 등록
+         * @description 미리 업로드한 fileId 를 연결한다. order 를 비우면 맨 뒤에 붙는다.
+         */
+        post: operations["createPhoto"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/recruitment/questions": {
         parameters: {
             query?: never;
@@ -1184,6 +1233,46 @@ export interface paths {
          * @description 명세서 2.6
          */
         get: operations["getColleges"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/activity-photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 활동 사진 조회
+         * @description 노출로 설정된 사진만 순서대로 반환한다.
+         */
+        get: operations["getPhotos_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/member/tracks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 대분류 목록
+         * @description 소분류가 없거나 발행된 강의가 없는 트랙도 포함한다. 강의 목록의 tabs 로는 보이지 않는다.
+         */
+        get: operations["getTracks"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2052,6 +2141,28 @@ export interface components {
             title?: string;
             subtitle?: string;
         };
+        ActivityPhotoRequest: {
+            /** Format: int64 */
+            fileId: number;
+            isVisible: boolean;
+            /** Format: int32 */
+            order?: number;
+        };
+        ActivityPhotoResult: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int32 */
+            order?: number;
+            /** Format: int64 */
+            fileId?: number;
+            imageUrl?: string;
+            isVisible?: boolean;
+        };
+        ApiResponseActivityPhotoResult: {
+            success?: boolean;
+            data?: components["schemas"]["ActivityPhotoResult"];
+            error?: components["schemas"]["ErrorResponse"];
+        };
         RecruitmentScheduleUpdateRequest: {
             /** Format: date-time */
             totalStartAt: string;
@@ -2153,26 +2264,40 @@ export interface components {
         EvaluationScoreSaveRequest: {
             scores: components["schemas"]["EvaluationScoreItem"][];
         };
-        ApiResponseEvaluationScoreSaveResult: {
+        ApiResponseEvaluationSummaryResult: {
             success?: boolean;
-            data?: components["schemas"]["EvaluationScoreSaveResult"];
+            data?: components["schemas"]["EvaluationSummaryResult"];
             error?: components["schemas"]["ErrorResponse"];
         };
-        EvaluationScoreResult: {
+        EvaluationSummaryResult: {
+            /** Format: int64 */
+            applicationId?: number;
+            criteria?: components["schemas"]["EvaluationSummaryResultCriterionScore"][];
+            /** Format: double */
+            totalScore?: number;
+            /** Format: int32 */
+            evaluatorCount?: number;
+            /** Format: int32 */
+            myTotalScore?: number;
+        };
+        EvaluationSummaryResultCriterionScore: {
             /** Format: int64 */
             criterionId?: number;
             criterionName?: string;
             /** Format: int32 */
             maxScore?: number;
+            /** Format: double */
+            averageScore?: number;
+            /** Format: int32 */
+            myScore?: number;
+            evaluatorScores?: components["schemas"]["EvaluationSummaryResultEvaluatorScore"][];
+        };
+        EvaluationSummaryResultEvaluatorScore: {
+            /** Format: int64 */
+            evaluatorId?: number;
+            evaluatorName?: string;
             /** Format: int32 */
             score?: number;
-        };
-        EvaluationScoreSaveResult: {
-            /** Format: int64 */
-            applicationId?: number;
-            scores?: components["schemas"]["EvaluationScoreResult"][];
-            /** Format: int32 */
-            totalScore?: number;
         };
         BulkDecisionRequest: {
             applicationIds: number[];
@@ -2234,6 +2359,8 @@ export interface components {
             techStacks?: string[];
             codeUrl?: string;
             demoUrl?: string;
+            /** Format: int64 */
+            fileId?: number;
             thumbnailUrl?: string;
             isFeatured?: boolean;
             /** Format: int32 */
@@ -2380,7 +2507,7 @@ export interface components {
             /** Format: int64 */
             size: number;
             /** @enum {string} */
-            purpose: "LECTURE_MATERIAL" | "ASSIGNMENT" | "PROFILE_IMAGE" | "PROJECT_THUMBNAIL";
+            purpose: "LECTURE_MATERIAL" | "ASSIGNMENT" | "PROFILE_IMAGE" | "PROJECT_THUMBNAIL" | "ACTIVITY_PHOTO";
         };
         ApiResponsePresignedUploadResponse: {
             success?: boolean;
@@ -2838,6 +2965,34 @@ export interface components {
             id?: number;
             name?: string;
         };
+        ActivityPhotoPublicResult: {
+            /** Format: int64 */
+            id?: number;
+            imageUrl?: string;
+            /** Format: int32 */
+            order?: number;
+        };
+        ApiResponseListActivityPhotoPublicResult: {
+            success?: boolean;
+            data?: components["schemas"]["ActivityPhotoPublicResult"][];
+            error?: components["schemas"]["ErrorResponse"];
+        };
+        ApiResponseListTrackResult: {
+            success?: boolean;
+            data?: components["schemas"]["TrackResult"][];
+            error?: components["schemas"]["ErrorResponse"];
+        };
+        TrackResult: {
+            /** Format: int64 */
+            id?: number;
+            name?: string;
+            subCategories?: components["schemas"]["TrackResultSubCategory"][];
+        };
+        TrackResultSubCategory: {
+            /** Format: int64 */
+            id?: number;
+            name?: string;
+        };
         ApiResponseMeSummaryResultResponse: {
             success?: boolean;
             data?: components["schemas"]["MeSummaryResultResponse"];
@@ -2911,8 +3066,11 @@ export interface components {
         };
         LectureResultTab: {
             /** Format: int64 */
+            trackId?: number;
+            trackName?: string;
+            /** Format: int64 */
             subCategoryId?: number;
-            name?: string;
+            subCategoryName?: string;
             /** Format: int64 */
             count?: number;
         };
@@ -3262,6 +3420,11 @@ export interface components {
             data?: components["schemas"]["CurriculumResult"][];
             error?: components["schemas"]["ErrorResponse"];
         };
+        ApiResponseListActivityPhotoResult: {
+            success?: boolean;
+            data?: components["schemas"]["ActivityPhotoResult"][];
+            error?: components["schemas"]["ErrorResponse"];
+        };
         ApiResponseListApplicationQuestionResult: {
             success?: boolean;
             data?: components["schemas"]["ApplicationQuestionResult"][];
@@ -3288,6 +3451,9 @@ export interface components {
             id?: number;
             name?: string;
             studentNumber?: string;
+            college?: string;
+            /** Format: int32 */
+            grade?: number;
             /** @enum {string} */
             status?: "DRAFT" | "SUBMITTED" | "DOC_PASS" | "DOC_FAIL" | "FINAL_PASS" | "FINAL_FAIL";
             /** Format: date-time */
@@ -4109,6 +4275,52 @@ export interface operations {
             };
         };
     };
+    updatePhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActivityPhotoRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseActivityPhotoResult"];
+                };
+            };
+        };
+    };
+    deletePhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     getSchedule: {
         parameters: {
             query?: never;
@@ -4267,6 +4479,28 @@ export interface operations {
             };
         };
     };
+    getScores: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseEvaluationSummaryResult"];
+                };
+            };
+        };
+    };
     saveScores: {
         parameters: {
             query?: never;
@@ -4288,7 +4522,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseEvaluationScoreSaveResult"];
+                    "application/json": components["schemas"]["ApiResponseEvaluationSummaryResult"];
                 };
             };
         };
@@ -4632,7 +4866,7 @@ export interface operations {
     upload: {
         parameters: {
             query: {
-                purpose: "LECTURE_MATERIAL" | "ASSIGNMENT" | "PROFILE_IMAGE" | "PROJECT_THUMBNAIL";
+                purpose: "LECTURE_MATERIAL" | "ASSIGNMENT" | "PROFILE_IMAGE" | "PROJECT_THUMBNAIL" | "ACTIVITY_PHOTO";
             };
             header?: never;
             path?: never;
@@ -5064,6 +5298,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResponseCurriculumResult"];
+                };
+            };
+        };
+    };
+    getPhotos: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListActivityPhotoResult"];
+                };
+            };
+        };
+    };
+    createPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActivityPhotoRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseActivityPhotoResult"];
                 };
             };
         };
@@ -5513,6 +5791,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResponseListCollegeResult"];
+                };
+            };
+        };
+    };
+    getPhotos_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListActivityPhotoPublicResult"];
+                };
+            };
+        };
+    };
+    getTracks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListTrackResult"];
                 };
             };
         };

@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { getApplicants, updateStatus } from "../../apis/application/applicationsApi";
+import { decideApplication, decideApplicationsBulk, getApplicants } from "../../apis/application/applicationsApi";
 import { queryKeys } from "../../apis/queryKeys";
-import type { ApplicantListParams } from "../../types/application";
+import type { ApplicantListParams, BulkDecisionPayload } from "../../types/application";
 
 export function useApplicants(params: ApplicantListParams) {
   return useQuery({
@@ -13,13 +13,24 @@ export function useApplicants(params: ApplicantListParams) {
   });
 }
 
-export function useUpdateStatus() {
+export function useDecideApplication() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, passed }: { id: number; passed: boolean }) => updateStatus(id, passed),
+    mutationFn: ({ id, passed }: { id: number; passed: boolean }) => decideApplication(id, passed),
     onSuccess: async () => {
       // 합·불을 정하면 status 도 바뀐다. 상태 필터가 걸려 있으면 그 행이 목록에서 빠진다.
+      await queryClient.invalidateQueries({ queryKey: queryKeys.applications.all });
+    },
+  });
+}
+
+export function useDecideApplicationsBulk() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: BulkDecisionPayload) => decideApplicationsBulk(payload),
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.applications.all });
     },
   });

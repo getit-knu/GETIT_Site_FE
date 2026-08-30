@@ -56,9 +56,30 @@
   font-weight: 600;
 }
 
-// 평가 전 총점. 0 점과 헷갈리지 않게 흐리게 둔다.
+// 값이 없는 칸(학번·소속 미입력, 결정 불가한 상태의 합·불 칸)을 흐리게 둔다.
 .none {
   color: var(--admin-text-disabled);
+}
+
+.selectedCount {
+  align-self: center;
+  color: var(--admin-text-muted);
+  font-size: 0.875rem;
+}
+
+.selectAllRow {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--admin-text-muted);
+  font-size: 0.8125rem;
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    cursor: pointer;
+  }
 }
 
 .decision {
@@ -68,9 +89,7 @@
 }
 
 .pass,
-.passActive,
-.fail,
-.failActive {
+.fail {
   padding: 0.25rem 0.5rem;
   border: 1px solid var(--admin-border);
   border-radius: 0.375rem;
@@ -86,16 +105,14 @@
   }
 }
 
-.pass:hover:not(:disabled),
-.passActive {
+.pass:hover:not(:disabled) {
   border-color: #059669;
   background-color: #ecfdf5;
   color: #059669;
   font-weight: 600;
 }
 
-.fail:hover:not(:disabled),
-.failActive {
+.fail:hover:not(:disabled) {
   border-color: #dc2626;
   background-color: #fef2f2;
   color: #dc2626;

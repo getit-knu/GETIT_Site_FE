@@ -34,6 +34,7 @@ export const PURPOSE_LIMITS: Record<FilePurpose, PurposeLimit> = {
   },
   PROFILE_IMAGE: { maxBytes: 5 * 1024 * 1024, extensions: ["png", "jpg", "jpeg", "webp"] },
   PROJECT_THUMBNAIL: { maxBytes: 5 * 1024 * 1024, extensions: ["png", "jpg", "jpeg", "webp"] },
+  ACTIVITY_PHOTO: { maxBytes: 5 * 1024 * 1024, extensions: ["png", "jpg", "jpeg", "webp"] },
 };
 
 export type PresignedUrlRequest = components["schemas"]["PresignedUploadRequest"];

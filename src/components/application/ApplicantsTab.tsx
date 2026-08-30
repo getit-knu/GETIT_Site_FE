@@ -1,26 +1,20 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { exportApplicants } from "../../apis/application/applicationsApi";
 import { Badge } from "../../components/ui/Badge/Badge";
 import { Button } from "../../components/ui/Button/Button";
 import { DataTable, type Column } from "../../components/ui/DataTable/DataTable";
-import { Input } from "../../components/ui/Input/Input";
 import { Pagination } from "../../components/ui/Pagination/Pagination";
-import { Select } from "../../components/ui/Select/Select";
 import { EmptyState, ErrorState, TableSkeleton } from "../../components/ui/states/States";
 import { applicationErrorMessage, applicationExportErrorMessage } from "../../errors/application/errorMessages";
-import { useApplicants, useUpdateStatus } from "../../hooks/application/useApplicants";
-import {
-  EVALUATED_CHOICES,
-  useApplicantFilters,
-  type EvaluatedChoice,
-} from "../../hooks/application/useApplicantFilters";
-import { useDebouncedValue } from "../../hooks/ui/useDebouncedValue";
+import { useApplicantFilters } from "../../hooks/application/useApplicantFilters";
+import { useApplicants, useDecideApplicationsBulk } from "../../hooks/application/useApplicants";
 import { useModalParams } from "../../hooks/ui/useModalParams";
 import { formatDateTime } from "../../libs/formatDate";
 import type { Applicant, ApplicationStatus } from "../../types/application";
 
 import { ApplicationDetailModal } from "./ApplicationDetailModal";
+import { DecisionButtons } from "./DecisionButtons";
 import styles from "./ApplicantsTab.module.scss";
 
 const PAGE_SIZE = 10;
@@ -46,66 +40,88 @@ const STATUS_TABS: { value: ApplicationStatus | undefined; label: string }[] = [
   ...FILTERABLE_STATUSES.map((s) => ({ value: s, label: STATUS_LABEL[s] })),
 ];
 
-const EVALUATED_LABEL: Record<EvaluatedChoice, string> = {
-  all: "평가 전체",
-  done: "평가 완료",
-  todo: "미평가",
+/** `SUBMITTED`→`DOC_PASS`/`DOC_FAIL`, `DOC_PASS`→`FINAL_PASS`/`FINAL_FAIL`(BE `nextDecisionStatus` 확인함). */
+const BULK_TARGET: Partial<Record<ApplicationStatus, { pass: ApplicationStatus; fail: ApplicationStatus }>> = {
+  SUBMITTED: { pass: "DOC_PASS", fail: "DOC_FAIL" },
+  DOC_PASS: { pass: "FINAL_PASS", fail: "FINAL_FAIL" },
 };
-
-const EVALUATED_OPTIONS = EVALUATED_CHOICES.map((value) => ({ value, label: EVALUATED_LABEL[value] }));
 
 /** 와이어프레임 p7. `/admin/applications` 의 지원자 목록 탭. */
 export function ApplicantsTab() {
-  const { status, evaluatedChoice, evaluated, keyword, page, update } = useApplicantFilters();
+  const { status, page, update } = useApplicantFilters();
+  const params = { status, page, size: PAGE_SIZE };
 
-  // 입력 중에는 URL 을 건드리지 않는다. 글자마다 주소가 바뀌면 기록이 지저분해진다.
-  const [draftKeyword, setDraftKeyword] = useState(keyword);
-  const settledKeyword = useDebouncedValue(draftKeyword);
-
-  // 타이핑이 멈추면 그때 URL 에 옮긴다. 그래야 새로고침·링크 공유에도 검색어가 남는다.
-  useEffect(() => {
-    if (settledKeyword !== keyword) update({ keyword: settledKeyword });
-  }, [settledKeyword, keyword, update]);
-
-  const { data, isPending, isError, error, refetch } = useApplicants({
-    status,
-    evaluated,
-    keyword: keyword || undefined,
-    page,
-    size: PAGE_SIZE,
-  });
-
-  const updateStatus = useUpdateStatus();
+  const { data, isPending, isError, error, refetch } = useApplicants(params);
   const { modal, id: openedId, openModal, closeModal } = useModalParams();
   const [exportError, setExportError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+
+  /*
+    필터·페이지가 바뀌면 화면에 안 보이는 행을 실수로 계속 선택해 둔 채가 되지 않게 비운다.
+    useEffect 대신 렌더 중에 직접 비교해서 리셋한다(React 공식 패턴) — 커밋 이후에 도는
+    effect로 하면 한 프레임 동안 낡은 선택이 그대로 보이는 캐스케이드 렌더가 생긴다.
+  */
+  const [prevFilterKey, setPrevFilterKey] = useState(`${status ?? ""}-${page}`);
+  const filterKey = `${status ?? ""}-${page}`;
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey);
+    setSelectedIds(new Set());
+  }
+
+  const decideBulk = useDecideApplicationsBulk();
 
   async function handleExport() {
     setExportError(null);
     try {
-      await exportApplicants();
+      await exportApplicants(params);
     } catch (caught) {
       // 문구는 BE ErrorCode 에서 가져온다. FE 가 코드를 새로 짓지 않는다.
       setExportError(applicationExportErrorMessage(caught));
     }
   }
 
+  function toggleAll(checked: boolean) {
+    setSelectedIds(checked ? new Set(data?.content.map((a) => a.id) ?? []) : new Set());
+  }
+
+  function toggleOne(id: number, checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  // 상태 필터를 하나로 좁혔을 때만 일괄 처리를 켠다 — 선택된 행 전부가 같은 선행 상태여야
+  // BE `decideBulk`가 요구하는 "하나의 목표 상태"가 의미를 갖는다.
+  const bulkTarget = status ? BULK_TARGET[status] : undefined;
+
+  function handleBulkDecide(target: ApplicationStatus) {
+    decideBulk.mutate(
+      { applicationIds: [...selectedIds], status: target },
+      { onSuccess: () => setSelectedIds(new Set()) },
+    );
+  }
+
   const columns: Column<Applicant>[] = [
-    { header: "이름", width: "6rem", render: (a) => a.applicantName },
-    { header: "소속", render: (a) => `${a.college} ${a.major}`, width: "14rem" },
-    { header: "학년", render: (a) => `${a.grade}학년`, width: "5rem", align: "center" },
     {
-      header: "총점",
-      width: "5rem",
-      align: "center",
-      // 평가 전에는 점수가 없다. 0 점으로 보이면 안 된다.
-      render: (a) => (a.totalScore === null ? <span className={styles.none}>—</span> : a.totalScore),
+      header: "",
+      width: "2.5rem",
+      render: (a) => (
+        <input
+          type="checkbox"
+          aria-label={`${a.name} 선택`}
+          checked={selectedIds.has(a.id)}
+          onChange={(e) => toggleOne(a.id, e.target.checked)}
+          onClick={(e) => e.stopPropagation()}
+        />
+      ),
     },
-    {
-      header: "평가",
-      width: "6rem",
-      align: "center",
-      render: (a) => <Badge variant={a.evaluated ? "neutral" : "info"}>{a.evaluated ? "완료" : "미평가"}</Badge>,
-    },
+    { header: "이름", width: "6rem", render: (a) => a.name },
+    { header: "학번", width: "7rem", render: (a) => a.studentNumber ?? <span className={styles.none}>—</span> },
+    { header: "소속", render: (a) => a.college ?? <span className={styles.none}>—</span>, width: "10rem" },
+    { header: "학년", width: "5rem", align: "center", render: (a) => `${a.grade}학년` },
     {
       header: "상태",
       width: "7rem",
@@ -115,32 +131,9 @@ export function ApplicantsTab() {
     { header: "제출일", render: (a) => formatDateTime(a.submittedAt), width: "10rem" },
     {
       header: "합·불",
-      width: "8rem",
+      width: "9rem",
       align: "center",
-      render: (a) => (
-        <div className={styles.decision}>
-          <button
-            type="button"
-            className={a.passed === true ? styles.passActive : styles.pass}
-            aria-label={`${a.applicantName} 합격 처리`}
-            aria-pressed={a.passed === true}
-            disabled={updateStatus.isPending}
-            onClick={() => updateStatus.mutate({ id: a.id, passed: true })}
-          >
-            합격
-          </button>
-          <button
-            type="button"
-            className={a.passed === false ? styles.failActive : styles.fail}
-            aria-label={`${a.applicantName} 불합격 처리`}
-            aria-pressed={a.passed === false}
-            disabled={updateStatus.isPending}
-            onClick={() => updateStatus.mutate({ id: a.id, passed: false })}
-          >
-            불합격
-          </button>
-        </div>
-      ),
+      render: (a) => <DecisionButtons id={a.id} name={a.name} status={a.status} />,
     },
   ];
 
@@ -163,13 +156,25 @@ export function ApplicantsTab() {
         </div>
 
         <div className={styles.filters}>
-          <Input value={draftKeyword} onChange={setDraftKeyword} placeholder="이름 검색" ariaLabel="지원자 이름 검색" />
-          <Select
-            ariaLabel="평가 여부"
-            value={evaluatedChoice}
-            options={EVALUATED_OPTIONS}
-            onChange={(next) => update({ evaluated: next })}
-          />
+          {bulkTarget && selectedIds.size > 0 && (
+            <>
+              <span className={styles.selectedCount}>{selectedIds.size}명 선택됨</span>
+              <Button
+                variant="secondary"
+                disabled={decideBulk.isPending}
+                onClick={() => handleBulkDecide(bulkTarget.pass)}
+              >
+                일괄 {STATUS_LABEL[bulkTarget.pass]}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={decideBulk.isPending}
+                onClick={() => handleBulkDecide(bulkTarget.fail)}
+              >
+                일괄 {STATUS_LABEL[bulkTarget.fail]}
+              </Button>
+            </>
+          )}
           <Button variant="secondary" onClick={() => void handleExport()}>
             엑셀 다운로드
           </Button>
@@ -177,19 +182,14 @@ export function ApplicantsTab() {
       </div>
 
       {exportError && <ErrorState message={exportError} onRetry={() => void handleExport()} />}
+      {decideBulk.error !== null && <ErrorState message={applicationErrorMessage(decideBulk.error)} />}
 
       {isPending && <TableSkeleton columns={columns.length} rows={PAGE_SIZE} />}
 
       {isError && <ErrorState message={applicationErrorMessage(error)} onRetry={() => void refetch()} />}
 
       {data && data.content.length === 0 && data.totalElements === 0 && (
-        <EmptyState
-          message={
-            keyword || status || evaluated !== undefined
-              ? "조건에 맞는 지원자가 없습니다."
-              : "접수된 지원서가 없습니다."
-          }
-        />
+        <EmptyState message={status ? "조건에 맞는 지원자가 없습니다." : "접수된 지원서가 없습니다."} />
       )}
 
       {data && data.content.length === 0 && data.totalElements > 0 && (
@@ -205,6 +205,16 @@ export function ApplicantsTab() {
 
       {data && data.content.length > 0 && (
         <>
+          <div className={styles.selectAllRow}>
+            <label>
+              <input
+                type="checkbox"
+                checked={selectedIds.size > 0 && selectedIds.size === data.content.length}
+                onChange={(e) => toggleAll(e.target.checked)}
+              />
+              이 페이지 전체 선택
+            </label>
+          </div>
           <DataTable
             columns={columns}
             rows={data.content}
@@ -220,7 +230,7 @@ export function ApplicantsTab() {
         <ApplicationDetailModal
           applicationId={openedId}
           // 순차 탐색이 목록과 같은 순서를 따르려면 필터를 그대로 넘겨야 한다(명세서 7.5).
-          listParams={{ status, evaluated, keyword: keyword || undefined }}
+          listParams={{ status }}
           onNavigate={(next) => openModal("application", next)}
           onClose={closeModal}
         />
