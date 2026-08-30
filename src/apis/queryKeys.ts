@@ -120,6 +120,12 @@ export const queryKeys = {
     me: () => [...queryKeys.auth.all, "me"] as const,
   },
 
+  /** 부원 본인 관련. 어드민 `dashboard`·`users`와는 다른 도메인이다. */
+  member: {
+    all: ["member"] as const,
+    summary: () => [...queryKeys.member.all, "summary"] as const,
+  },
+
   /**
    * 다른 도메인이 따라야 할 표준 형태.
    * 목록은 필터마다 캐시가 갈라지므로 필터 객체를 키에 포함한다.

@@ -1,7 +1,4 @@
-import clsx from "clsx";
-
 import { useSession } from "../../hooks/auth/useSession";
-import { getMyPageStats } from "../../mocks/member/myPageStats";
 
 import styles from "./MyPage.module.scss";
 
@@ -13,7 +10,6 @@ function initialOf(name: string): string {
 /** 내 정보(마이페이지). Figma 와이어프레임(`7:6721`) 기준. */
 export default function MyPage() {
   const { user } = useSession();
-  const stats = getMyPageStats();
 
   // RequireRole 이 이 라우트까지 오는 걸 이미 보장해서, 여기 도달했으면 로그인 상태다.
   if (!user) return null;
@@ -75,62 +71,6 @@ export default function MyPage() {
               </div>
             </div>
           </div>
-        </div>
-
-        <div className={styles.statsCard}>
-          <h3 className={styles.sectionTitle}>학습 통계</h3>
-          <div className={styles.statsGrid}>
-            <div className={clsx(styles.statBox, styles.statBlue)}>
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
-                <path
-                  d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5V5.5Z"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5V5.5Z"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <strong className={styles.statValue}>{stats.lecturesTaken}</strong>
-              <p className={styles.statLabel}>수강한 강의</p>
-            </div>
-
-            <div className={clsx(styles.statBox, styles.statGreen)}>
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
-                <circle cx="12" cy="9" r="5.5" stroke="currentColor" strokeWidth="1.5" />
-                <path
-                  d="M8.5 13.5 7 21l5-2.5 5 2.5-1.5-7.5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <strong className={styles.statValue}>{stats.assignmentsSubmitted}</strong>
-              <p className={styles.statLabel}>제출한 과제</p>
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.historyCard}>
-          <h3 className={styles.sectionTitleSm}>과제 제출 내역</h3>
-          <ul className={styles.historyList}>
-            {stats.submissionHistory.map((entry) => (
-              <li key={`${entry.status}-${entry.weeks}`} className={styles.historyRow}>
-                <p className={styles.historyStatus}>
-                  {entry.status}:{" "}
-                  <strong className={entry.status === "미제출" ? styles.danger : styles.warning}>
-                    {entry.count}회
-                  </strong>
-                </p>
-                <span className={styles.historyWeeks}>{entry.weeks}</span>
-              </li>
-            ))}
-          </ul>
         </div>
       </div>
     </div>
