@@ -1,18 +1,5 @@
-.section {
-  padding: 1.25rem;
-  border: 1px solid var(--admin-border);
-  border-radius: 0.75rem;
-  background-color: var(--admin-surface);
-
-  // 섹션 네비게이션 바 높이만큼 여유를 둔다. 안 두면 앵커로 이동했을 때 그 바에 가려진다.
-  scroll-margin-top: 3.5rem;
-}
-
-.sectionTitle {
-  margin: 0 0 0.875rem;
-  font-size: 0.9375rem;
-  font-weight: 600;
-}
+// `<section id="tracks">`·제목 스타일은 `SitePage.module.scss`(`.section`/`.sectionTitle`) 걸
+// 그대로 쓴다 — 감싸는 쪽이 `SitePage.tsx`로 옮겨갔다(TracksSection.tsx 상단 주석 참고).
 
 .tracks {
   display: flex;
@@ -77,6 +64,35 @@
 
 .hint {
   margin: 0;
+  color: var(--admin-text-muted);
+  font-size: 0.8125rem;
+}
+
+// 섹션이 계속 늘어나므로 저장은 화면 아래에 붙여 둔다(SitePage.module.scss와 동일 스타일).
+.footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.875rem;
+  padding: 0.75rem 1.25rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 0.75rem;
+  background-color: var(--admin-surface);
+}
+
+.reason {
+  margin: 0;
+  margin-right: auto;
+  color: #dc2626;
+  font-size: 0.8125rem;
+}
+
+.saved {
+  margin: 0;
+  margin-right: auto;
   color: var(--admin-text-muted);
   font-size: 0.8125rem;
 }

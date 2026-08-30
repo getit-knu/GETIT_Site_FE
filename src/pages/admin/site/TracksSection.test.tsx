@@ -13,12 +13,13 @@ const TRACKS: SiteTrack[] = [
   {
     id: 1,
     name: "SW",
+    order: 1,
     subCategories: [
-      { id: 1, name: "웹기초" },
-      { id: 2, name: "React.js" },
+      { id: 1, name: "웹기초", order: 1, lectureCount: 0 },
+      { id: 2, name: "React.js", order: 2, lectureCount: 0 },
     ],
   },
-  { id: 3, name: "세미나", subCategories: [] },
+  { id: 3, name: "세미나", order: 2, subCategories: [] },
 ];
 
 const onChange = vi.fn();
@@ -35,13 +36,19 @@ function Harness({ initial = TRACKS }: { initial?: SiteTrack[] }) {
           onChange(toTracks(next));
           setTracks(next);
         }}
+        onSave={() => {}}
+        saving={false}
+        reason={null}
+        saveError={null}
+        saved={false}
       />
       <output>{JSON.stringify(toTracks(tracks))}</output>
     </>
   );
 }
 
-const result = (): SiteTrack[] => JSON.parse(screen.getByRole("status").textContent ?? "[]") as SiteTrack[];
+const result = (): ReturnType<typeof toTracks> =>
+  JSON.parse(screen.getByRole("status").textContent ?? "[]") as ReturnType<typeof toTracks>;
 const trackBox = (name: string) => screen.getByLabelText(`대분류 이름 ${name}`);
 
 describe("TracksSection", () => {
@@ -54,7 +61,7 @@ describe("TracksSection", () => {
   });
 
   it("소분류가 없는 대분류를 견딘다", () => {
-    render(<Harness initial={[{ id: 3, name: "세미나", subCategories: [] }]} />);
+    render(<Harness initial={[{ id: 3, name: "세미나", order: 1, subCategories: [] }]} />);
 
     expect(trackBox("세미나")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "+ 소분류 추가" })).toHaveLength(1);

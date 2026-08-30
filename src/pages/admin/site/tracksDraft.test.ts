@@ -8,18 +8,30 @@ const TRACKS: SiteTrack[] = [
   {
     id: 1,
     name: "SW",
+    order: 1,
     subCategories: [
-      { id: 1, name: "웹기초" },
-      { id: 2, name: "React.js" },
+      { id: 1, name: "웹기초", order: 1, lectureCount: 0 },
+      { id: 2, name: "React.js", order: 2, lectureCount: 0 },
     ],
   },
   // 소분류가 비어 있는 대분류가 있다. 화면이 이 경우를 견뎌야 한다.
-  { id: 3, name: "세미나", subCategories: [] },
+  { id: 3, name: "세미나", order: 2, subCategories: [] },
 ];
 
 describe("toTrackDrafts · toTracks", () => {
-  it("손대지 않으면 값이 그대로 돌아온다", () => {
-    expect(toTracks(toTrackDrafts(TRACKS))).toEqual(TRACKS);
+  it("손대지 않으면 id · 이름 · 소분류가 그대로 돌아온다", () => {
+    // toTracks 는 저장용 입력이라 order · lectureCount 는 안 담는다.
+    expect(toTracks(toTrackDrafts(TRACKS))).toEqual([
+      {
+        id: 1,
+        name: "SW",
+        subCategories: [
+          { id: 1, name: "웹기초" },
+          { id: 2, name: "React.js" },
+        ],
+      },
+      { id: 3, name: "세미나", subCategories: [] },
+    ]);
   });
 
   it("항목마다 서로 다른 화면 key 를 준다", () => {

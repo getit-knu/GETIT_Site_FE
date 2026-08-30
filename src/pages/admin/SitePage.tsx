@@ -8,7 +8,9 @@ import {
   useGeneration,
   useSaveGeneration,
   useSaveSiteSettings,
+  useSaveTracks,
   useSiteSettings,
+  useTracks,
 } from "../../hooks/site/useSiteSettings";
 import type { Generation, SiteSettings } from "../../types/site";
 
@@ -28,8 +30,8 @@ import styles from "./SitePage.module.scss";
 const SECTION_NAV_ITEMS = [
   { id: "generation", label: "진행 기수" },
   { id: "schedule", label: "모집 일정" },
-  { id: "tracks", label: "강의 분류" },
   { id: "faqs", label: "FAQ" },
+  { id: "tracks", label: "강의 분류" },
   { id: "curriculums", label: "커리큘럼" },
   { id: "events", label: "행사 일정" },
   { id: "staffs", label: "운영진" },
@@ -117,12 +119,11 @@ function GenerationSection({ generation }: { generation: Generation | null }) {
 /** 조회한 뒤에만 마운트한다. 그래야 `useState` 초기값으로 기존 값을 넣을 수 있다. */
 function RestSectionsForm({ settings }: { settings: SiteSettings }) {
   const [schedule, setSchedule] = useState<ScheduleDraft>(() => toDraft(settings.schedule));
-  const [tracks, setTracks] = useState<TrackDraft[]>(() => toTrackDrafts(settings.tracks));
   const [faqs, setFaqs] = useState(() => toDrafts(settings.faqs));
   const save = useSaveSiteSettings();
 
   // 섹션이 늘어나면 이유도 늘어난다. 먼저 걸리는 것 하나만 보여준다.
-  const reason = invalidReason(schedule) ?? tracksInvalidReason(tracks) ?? null;
+  const reason = invalidReason(schedule);
 
   /**
    * 값을 고치면 지난 저장 결과를 지운다.
@@ -136,7 +137,7 @@ function RestSectionsForm({ settings }: { settings: SiteSettings }) {
   }
 
   function handleSave() {
-    save.mutate({ schedule: toSchedule(schedule), tracks: toTracks(tracks), faqs: fromDrafts(faqs) });
+    save.mutate({ schedule: toSchedule(schedule), faqs: fromDrafts(faqs) });
   }
 
   return (
@@ -158,7 +159,6 @@ function RestSectionsForm({ settings }: { settings: SiteSettings }) {
         <p className={styles.hint}>면접 마감은 전체 모집 마감과 같게 저장됩니다.</p>
       </section>
 
-      <TracksSection tracks={tracks} onChange={setTracks} />
       <FaqSection faqs={faqs} onChange={(next) => edit(() => setFaqs(next))} />
 
       <div className={styles.footer}>
@@ -179,10 +179,62 @@ function RestSectionsForm({ settings }: { settings: SiteSettings }) {
 }
 
 /**
+ * 강의 분류. 트랙은 기수에 안 묶인다 — 개별 엔드포인트로 즉시 반영되지만(#195),
+ * 트리 편집 UX는 여러 항목을 한 번에 고치는 게 자연스러워 초안 하나로 모아 두고
+ * `저장하기`에서 diff 를 계산한다.
+ *
+ * 저장 뒤에는 `drafts` 를 비워 서버가 새로 매긴 id 로 다시 채운다 — 비우지 않으면
+ * 방금 만든 항목이 계속 `id: null` 로 남아 다음 저장에서 또 새로 생성돼 버린다
+ * (부분 실패 시에도 마찬가지로 비운다 — 어디까지 반영됐는지 서버 상태를 다시 봐야 한다).
+ *
+ * `<section id="tracks">`를 조회 중 · 실패 상태에서도 유지한다(Curriculum·Events와 같은
+ * 모양) — 그래야 섹션 네비게이션 앵커가 로딩 중에도 항상 존재한다.
+ */
+function TracksFormSection() {
+  const { data, isPending, isError, error, refetch } = useTracks();
+  const save = useSaveTracks();
+  const [drafts, setDrafts] = useState<TrackDraft[] | null>(null);
+
+  const tracks = drafts ?? (data ? toTrackDrafts(data) : []);
+  const reason = tracksInvalidReason(tracks);
+
+  function edit(apply: () => void) {
+    if (save.isSuccess || save.isError) save.reset();
+    apply();
+  }
+
+  function handleSave() {
+    save.mutate(toTracks(tracks), { onSettled: () => setDrafts(null) });
+  }
+
+  return (
+    <section id="tracks" className={styles.section}>
+      <h2 className={styles.sectionTitle}>강의 분류</h2>
+
+      {isPending && <p className={styles.hint}>불러오는 중…</p>}
+      {isError && <ErrorState message={siteErrorMessage(error)} onRetry={() => void refetch()} />}
+
+      {data && (
+        <TracksSection
+          tracks={tracks}
+          onChange={(next) => edit(() => setDrafts(next))}
+          onSave={handleSave}
+          saving={save.isPending}
+          reason={reason}
+          saveError={save.error !== null ? siteSaveErrorMessage(save.error) : null}
+          saved={save.isSuccess}
+        />
+      )}
+    </section>
+  );
+}
+
+/**
  * 사이트 관리. 와이어프레임 p9.
  *
- * **진행 기수 · 운영진 · 행사 · 커리큘럼은 각자 실제 CRUD 로 즉시 반영된다(#194).**
- * 모집 일정 · 강의 분류 · FAQ 는 아직 실제 엔드포인트가 없어 한 폼에서 일괄 저장한다.
+ * **진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류는 각자 실제 CRUD 로 즉시
+ * 반영된다(#194 · #195).** 모집 일정 · FAQ 는 아직 실제 엔드포인트가 없어 한 폼에서
+ * 일괄 저장한다.
  */
 export default function SitePage() {
   const generationQuery = useGeneration();
@@ -207,6 +259,7 @@ export default function SitePage() {
       <SiteSectionNav />
       <GenerationSection generation={generation} />
       <RestSectionsForm settings={settingsQuery.data as SiteSettings} />
+      <TracksFormSection />
 
       {/*
         커리큘럼 · 행사 · 운영진은 활성 기수에 딸린 데이터라 기수부터 있어야 의미가 있다.
