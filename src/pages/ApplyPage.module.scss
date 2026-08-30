@@ -154,10 +154,30 @@
 
 .footerInner {
   display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 50rem;
-  gap: 1rem;
+  gap: 0.5rem;
   padding: 0 1rem;
+}
+
+.buttonsRow {
+  display: flex;
+  gap: 1rem;
+}
+
+.reason {
+  margin: 0;
+  color: $color-danger;
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
+.saved {
+  margin: 0;
+  color: $color-text-secondary;
+  font-size: 0.8125rem;
+  text-align: center;
 }
 
 .saveButton,
@@ -169,6 +189,11 @@
   cursor: pointer;
   font-size: 1rem;
   font-weight: 700;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
 }
 
 .saveButton {
@@ -179,4 +204,28 @@
 .submitButton {
   background-color: $color-accent;
   color: $color-background;
+}
+
+.loginCta {
+  display: inline-block;
+  margin-top: 1.5rem;
+  border-radius: 0.75rem;
+  padding: 0.875rem 2rem;
+  background-color: $color-accent;
+  color: $color-background;
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.resultInfo {
+  margin: 0 0 0.5rem;
+  color: $color-text-primary;
+  font-size: 0.9375rem;
+}
+
+.nextStep {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid $color-placeholder-bg;
 }
