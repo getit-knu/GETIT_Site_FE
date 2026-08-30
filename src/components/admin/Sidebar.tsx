@@ -29,7 +29,9 @@ export function Sidebar({ open, onClose, onLogout }: SidebarProps) {
       {open && <div className={styles.backdrop} aria-hidden="true" onClick={onClose} />}
 
       <nav className={clsx(styles.sidebar, open && styles.open)} aria-label="관리자 메뉴">
-        <div className={styles.brand}>GETIT</div>
+        <NavLink to="/" className={styles.brand} onClick={onClose}>
+          GETIT
+        </NavLink>
 
         <ul className={styles.menu}>
           {ADMIN_MENU.map((item) => (

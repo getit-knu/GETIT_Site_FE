@@ -55,4 +55,10 @@ describe("PaginatedModal", () => {
 
     expect(screen.getByRole("button", { name: "저장" })).toBeInTheDocument();
   });
+
+  it("current · total을 생략하면(개수를 안 주는 순차 탐색) 카운터를 안 보여준다", () => {
+    renderModal({ current: undefined, total: undefined });
+
+    expect(screen.queryByText(/\d+ \/ \d+/)).not.toBeInTheDocument();
+  });
 });

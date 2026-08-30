@@ -1,15 +1,8 @@
-import type { MemberLecture } from "../../mocks/lecture/memberLectures";
-import { TRACKS } from "../../mocks/lecture/lectures";
+import { formatDateTime } from "../../libs/formatDate";
+import type { MemberLectureCard as LectureCardData } from "../../types/lecture";
 import { Card } from "../ui/Card/Card";
 
 import styles from "./MemberLectureCard.module.scss";
-
-function resolveTrackLabel(lecture: MemberLecture): string {
-  const track = TRACKS.find((t) => t.id === lecture.trackId);
-  if (!track) return "";
-  if (lecture.subCategoryId === null) return track.name;
-  return track.subCategories.find((sub) => sub.id === lecture.subCategoryId)?.name ?? track.name;
-}
 
 function formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60);
@@ -20,12 +13,15 @@ function formatDuration(minutes: number): string {
 }
 
 interface MemberLectureCardProps {
-  lecture: MemberLecture;
+  lecture: LectureCardData;
   onClick?: () => void;
 }
 
 /** 부원용 강좌 목록 카드. 어드민의 `LectureCard`(진행도·관리 액션 위주)와는 용도가 달라 이름을 구분했다. */
 export function MemberLectureCard({ lecture, onClick }: MemberLectureCardProps) {
+  // 소분류 없이 트랙에 직접 연결된 강의는 subCategoryName이 없다 — 이때는 트랙 이름을 보여준다.
+  const trackLabel = lecture.subCategoryName ?? lecture.trackName;
+
   return (
     <Card className={styles.card} onClick={onClick}>
       <div className={styles.thumbnail} aria-hidden="true">
@@ -43,17 +39,20 @@ export function MemberLectureCard({ lecture, onClick }: MemberLectureCardProps) 
 
       <div className={styles.content}>
         <div className={styles.meta}>
-          <span className={styles.trackBadge}>{resolveTrackLabel(lecture)}</span>
-          <span className={styles.duration}>
-            <svg className={styles.durationIcon} viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
-              <circle cx="8" cy="8" r="6.25" stroke="currentColor" strokeWidth="1.3" />
-              <path d="M8 4.5V8l2.5 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-            </svg>
-            {formatDuration(lecture.durationMinutes)}
-          </span>
+          <span className={styles.trackBadge}>{trackLabel}</span>
+          {lecture.durationMinutes !== null && (
+            <span className={styles.duration}>
+              <svg className={styles.durationIcon} viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
+                <circle cx="8" cy="8" r="6.25" stroke="currentColor" strokeWidth="1.3" />
+                <path d="M8 4.5V8l2.5 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+              </svg>
+              {formatDuration(lecture.durationMinutes)}
+            </span>
+          )}
         </div>
         <h3 className={styles.title}>{lecture.title}</h3>
-        <p className={styles.deadline}>마감 {lecture.deadline}</p>
+        {/* 과제가 없는 강의는 마감이 없다. */}
+        {lecture.deadline !== null && <p className={styles.deadline}>마감 {formatDateTime(lecture.deadline)}</p>}
       </div>
     </Card>
   );

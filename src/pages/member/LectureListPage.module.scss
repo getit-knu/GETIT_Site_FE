@@ -28,6 +28,13 @@
   font-size: 1rem;
 }
 
+.loading {
+  padding: 2rem 0;
+  color: $color-text-secondary;
+  font-size: 0.9375rem;
+  text-align: center;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

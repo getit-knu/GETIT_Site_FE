@@ -1,9 +1,17 @@
+@use "../../styles/abstracts/variables" as *;
+
 .layout {
   display: flex;
   min-height: 100vh;
   flex-direction: column;
 }
 
+/*
+ * 콘텐츠가 짧은 화면(빈 목록·안내 문구뿐인 상태 등)에서는 `flex: 1`이 늘린 여백에
+ * 배경색이 없어 흰 여백이 그대로 비쳐 미완성처럼 보였다 — 사이트 기본 배경(#f8f8f8)을
+ * 깔아 두면 각 페이지의 `.page` 배경이 짧게 끝나도 자연스럽게 이어진다.
+ */
 .content {
   flex: 1;
+  background-color: $color-background;
 }

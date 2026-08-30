@@ -1,5 +1,5 @@
 import type { ApplicantListParams } from "../types/application";
-import type { LectureListParams, SubmissionListParams } from "../types/lecture";
+import type { LectureListParams, MemberLectureListParams, SubmissionListParams } from "../types/lecture";
 import type { QuestionListParams } from "../types/qna";
 import type { AdminProjectListParams, PublicProjectListParams } from "../types/project";
 import type { UserListParams } from "../types/user";
@@ -40,8 +40,11 @@ export const queryKeys = {
     lists: () => [...queryKeys.applications.all, "list"] as const,
     list: (params: ApplicantListParams) => [...queryKeys.applications.lists(), params] as const,
     details: () => [...queryKeys.applications.all, "detail"] as const,
-    // 필터가 바뀌면 navigation 도 달라진다. 키에 함께 넣어 캐시가 섞이지 않게 한다.
-    detail: (id: number, params: ApplicantListParams) => [...queryKeys.applications.details(), id, params] as const,
+    detail: (id: number) => [...queryKeys.applications.details(), id] as const,
+    // 필터가 바뀌면 이전·다음도 달라진다. 키에 함께 넣어 캐시가 섞이지 않게 한다.
+    adjacent: (id: number, params: ApplicantListParams) =>
+      [...queryKeys.applications.all, "adjacent", id, params] as const,
+    scores: (id: number) => [...queryKeys.applications.all, "scores", id] as const,
   },
 
   /** 로그인한 지원자 본인의 지원서. 어드민 `applications`와는 다른 도메인이다. */
@@ -124,6 +127,17 @@ export const queryKeys = {
   member: {
     all: ["member"] as const,
     summary: () => [...queryKeys.member.all, "summary"] as const,
+  },
+
+  /** 부원 강의 조회(4.x, #193). 어드민 `lectures`와는 스키마·엔드포인트가 다른 별개 도메인이다. */
+  memberLectures: {
+    all: ["memberLectures"] as const,
+    tracks: () => [...queryKeys.memberLectures.all, "tracks"] as const,
+    boards: () => [...queryKeys.memberLectures.all, "board"] as const,
+    board: (params: MemberLectureListParams) => [...queryKeys.memberLectures.boards(), params] as const,
+    details: () => [...queryKeys.memberLectures.all, "detail"] as const,
+    detail: (id: number) => [...queryKeys.memberLectures.details(), id] as const,
+    questions: (lectureId: number) => [...queryKeys.memberLectures.all, "questions", lectureId] as const,
   },
 
   /**

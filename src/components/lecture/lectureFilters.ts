@@ -1,40 +1,40 @@
-import type { MemberLecture } from "../../mocks/lecture/memberLectures";
-import { TRACKS } from "../../mocks/lecture/lectures";
+import type { MemberLectureListParams, MemberTrack } from "../../types/lecture";
 
 export const ALL_LECTURES_FILTER = "ALL";
 
 export interface LectureFilterOption {
   key: string;
   label: string;
-  matches: (lecture: MemberLecture) => boolean;
+  trackId: number;
+  subCategoryId: number | null;
 }
 
 /**
  * 소분류가 있는 트랙은 소분류별로, 없는 트랙(창업 빌드업 · 세미나)은 트랙 자체로 탭을 만든다.
- * Figma도 이렇게 트랙과 소분류를 한 줄에 평평하게 나열한다.
+ * `GET /api/member/tracks`(#150·#193)가 소분류·발행 강의 유무와 무관하게 전체 트랙을 주므로
+ * 이걸 그대로 재료로 쓴다 — 강의 목록 응답의 `tabs`(소분류 기준이라 일부 트랙이 빠짐)는 안 쓴다.
  */
-export function buildLectureFilterOptions(): LectureFilterOption[] {
-  return TRACKS.flatMap((track) =>
+export function buildLectureFilterOptions(tracks: MemberTrack[]): LectureFilterOption[] {
+  return tracks.flatMap((track): LectureFilterOption[] =>
     track.subCategories.length > 0
       ? track.subCategories.map((sub) => ({
           key: `sub-${sub.id}`,
           label: sub.name,
-          matches: (lecture: MemberLecture) => lecture.subCategoryId === sub.id,
+          trackId: track.id,
+          subCategoryId: sub.id,
         }))
-      : [
-          {
-            key: `track-${track.id}`,
-            label: track.name,
-            matches: (lecture: MemberLecture) => lecture.trackId === track.id && lecture.subCategoryId === null,
-          },
-        ],
+      : [{ key: `track-${track.id}`, label: track.name, trackId: track.id, subCategoryId: null }],
   );
 }
 
-/** 페이지가 필터 값에 맞는 강의만 골라낼 때 쓴다. 탭의 매칭 규칙과 다르게 굴면 안 되니 여기서 함께 관리한다. */
-export function filterLectures(lectures: MemberLecture[], value: string): MemberLecture[] {
-  if (value === ALL_LECTURES_FILTER) return lectures;
+/** 선택한 탭을 서버 쿼리 파라미터로 바꾼다. "전체"는 둘 다 생략한다. */
+export function filterToParams(value: string, tracks: MemberTrack[]): MemberLectureListParams {
+  if (value === ALL_LECTURES_FILTER) return {};
 
-  const option = buildLectureFilterOptions().find((o) => o.key === value);
-  return option ? lectures.filter(option.matches) : lectures;
+  const option = buildLectureFilterOptions(tracks).find((o) => o.key === value);
+  if (!option) return {};
+
+  return option.subCategoryId !== null
+    ? { trackId: option.trackId, subCategoryId: option.subCategoryId }
+    : { trackId: option.trackId };
 }

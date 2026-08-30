@@ -15,10 +15,15 @@ function filenameFrom(header: string | undefined): string | null {
  * 파일을 내려받는다. 엑셀 다운로드(명세서 7.6 · 9.5)에 쓴다.
  *
  * @param fallbackName 서버가 `Content-Disposition` 을 주지 않을 때 쓸 이름
+ * @param params 목록 필터 그대로. 다운로드도 지금 보고 있는 조건대로 나가야 한다.
  */
-export async function downloadFile(url: string, fallbackName: string): Promise<void> {
+export async function downloadFile(
+  url: string,
+  fallbackName: string,
+  params?: Record<string, string | number | undefined>,
+): Promise<void> {
   // 실패는 인터셉터가 이미 ApiErrorPayload 로 바꿔 던진다. Blob 해석도 거기서 한다.
-  const response = await client.get<Blob>(url, { responseType: "blob" });
+  const response = await client.get<Blob>(url, { responseType: "blob", params });
 
   const name = filenameFrom(response.headers["content-disposition"] as string | undefined);
   const href = URL.createObjectURL(response.data);
