@@ -1,4 +1,4 @@
-import * as mock from "../../mocks/dashboard/dashboard";
+import { client } from "../client";
 import type {
   DashboardSummary,
   OngoingLecture,
@@ -7,23 +7,34 @@ import type {
   UpcomingEvent,
 } from "../../types/dashboard";
 
-/**
- * 어드민 대시보드 API. 명세서 5.1 ~ 5.5.
- *
- * **아직 목 데이터를 돌려준다.** 연동 이슈에서 `mock.*` 만 `client.get` 으로 바꾸면 된다.
- */
+/** 어드민 대시보드 API. 명세서 5.1 ~ 5.5. */
 
 /** `GET /api/admin/dashboard/summary` */
-export const getSummary = (): Promise<DashboardSummary> => mock.fetchSummary();
+export async function getSummary(): Promise<DashboardSummary> {
+  const { data } = await client.get<DashboardSummary>("/api/admin/dashboard/summary");
+  return data;
+}
 
 /** `GET /api/admin/dashboard/recent-questions?size=5` */
-export const getRecentQuestions = (): Promise<RecentQuestion[]> => mock.fetchRecentQuestions();
+export async function getRecentQuestions(): Promise<RecentQuestion[]> {
+  const { data } = await client.get<RecentQuestion[]>("/api/admin/dashboard/recent-questions");
+  return data;
+}
 
-/** `GET /api/admin/dashboard/submission-status?size=5` */
-export const getSubmissionStatus = (): Promise<SubmissionStatus> => mock.fetchSubmissionStatus();
+/** `GET /api/admin/dashboard/submission-status?trackId=&size=5` */
+export async function getSubmissionStatus(): Promise<SubmissionStatus> {
+  const { data } = await client.get<SubmissionStatus>("/api/admin/dashboard/submission-status");
+  return data;
+}
 
 /** `GET /api/admin/dashboard/upcoming-events` */
-export const getUpcomingEvents = (): Promise<UpcomingEvent[]> => mock.fetchUpcomingEvents();
+export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
+  const { data } = await client.get<UpcomingEvent[]>("/api/admin/dashboard/upcoming-events");
+  return data;
+}
 
 /** `GET /api/admin/dashboard/ongoing-lectures` */
-export const getOngoingLectures = (): Promise<OngoingLecture[]> => mock.fetchOngoingLectures();
+export async function getOngoingLectures(): Promise<OngoingLecture[]> {
+  const { data } = await client.get<OngoingLecture[]>("/api/admin/dashboard/ongoing-lectures");
+  return data;
+}
