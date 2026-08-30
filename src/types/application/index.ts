@@ -15,10 +15,12 @@ export type { Page };
 /**
  * 지원서 상태.
  *
- * TODO: 명세서 예시에서 `SUBMITTED` · `DOC_PASS` 만 확인했다. `DRAFT` 는 목록에서
- * 제외된다(5.1 의 `totalApplicants` 산출 기준). 나머지 값은 BE 와 맞춰야 한다.
+ * BE `ApplicationStatus` enum 전체(#189 작업 중 소스로 확인함 — 예전 TODO였던
+ * "나머지 값은 BE 와 맞춰야 한다" 해소). **`DRAFT` 는 어드민 목록에서 제외된다**
+ * (5.1 의 `totalApplicants` 산출 기준) — 그래서 `Applicant.status` 로는 안 오지만,
+ * 타입 자체는 지원자 본인 쪽(`MyApplicationResult.status` 등)에서 필요해 넣어 둔다.
  */
-export const APPLICATION_STATUSES = ["SUBMITTED", "DOC_PASS", "DOC_FAIL"] as const;
+export const APPLICATION_STATUSES = ["DRAFT", "SUBMITTED", "DOC_PASS", "DOC_FAIL", "FINAL_PASS", "FINAL_FAIL"] as const;
 
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
@@ -161,4 +163,53 @@ export interface ApplicationFormResult {
   deadline: string;
   basicInfoPrefill: BasicInfo;
   questions: ApplicationFormQuestion[];
+}
+
+/**
+ * 내 지원서 문항 답변. **어드민용 `ApplicationAnswer`(7.2)와 다르다** — 문항 텍스트·타입·
+ * 옵션 라벨까지 조인해서 오는 어드민 응답과 달리, 이건 BE가 그대로 주는 얕은 모양이다
+ * (`questionId`로 `ApplicationFormResult.questions`와 직접 맞춰 봐야 한다).
+ */
+export interface MyApplicationAnswer {
+  questionId: number;
+  answerText: string | null;
+  selectedOptions: string[] | null;
+}
+
+/**
+ * `GET /api/applications/me` 응답 (3.2). **지원서가 아직 없으면 `null`이다** — BE가 이걸
+ * 에러가 아니라 정상 상태로 설계했다(활성 기수가 없어도 마찬가지로 `null`).
+ */
+export interface MyApplicationResult {
+  id: number;
+  generationNo: number;
+  status: ApplicationStatus;
+  basicInfo: BasicInfo;
+  answers: MyApplicationAnswer[];
+  /** 마지막으로 저장(임시저장 포함)된 시각. */
+  savedAt: string;
+  /** `DRAFT`면 아직 제출 전이라 `null`. */
+  submittedAt: string | null;
+}
+
+/** `PUT /api/applications/me/draft` · `POST /api/applications/me/submit` 요청 본문 (3.3 · 3.4 공용). */
+export interface ApplicationDraftPayload {
+  basicInfo: BasicInfo;
+  answers: MyApplicationAnswer[];
+}
+
+export type DraftSaveResult = Required<components["schemas"]["DraftSaveResult"]>;
+export type SubmitResult = Required<components["schemas"]["SubmitResult"]>;
+
+/** 합격 이후 다음 단계 안내. `DOC_PASS`일 때만 채워진다(그 외 상태는 `ApplicationDecisionResult.nextStep`이 `null`). */
+export type NextStep = Required<components["schemas"]["NextStep"]>;
+
+/** `GET /api/applications/me/result` 응답 (3.5). 제출한 지원서가 없으면 404(`RESOURCE_NOT_FOUND`)다. */
+export interface ApplicationDecisionResult {
+  generationNo: number;
+  status: ApplicationStatus;
+  statusLabel: string;
+  documentAnnouncedAt: string;
+  finalAnnouncedAt: string;
+  nextStep: NextStep | null;
 }

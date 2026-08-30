@@ -12,6 +12,18 @@ const APPLICATION_ERROR_MESSAGES: Record<string, string> = {
   FORBIDDEN: "지원서를 볼 권한이 없습니다.",
   UNAUTHORIZED: "로그인이 필요합니다.",
   MALFORMED_RESPONSE: "서버 응답을 읽지 못했습니다. 잠시 후 다시 시도해 주세요.",
+  // 지원서 양식 조회 · 임시저장 · 제출(3.1 ~ 3.4, #189에서 BE 소스로 확인함).
+  ACTIVE_GENERATION_NOT_FOUND: "진행 중인 기수가 없습니다.",
+  SCHEDULE_NOT_FOUND: "모집 일정을 찾을 수 없습니다.",
+  APPLICATION_NOT_OPEN: "모집 기간이 아닙니다.",
+  APPLICATION_DEADLINE_PASSED: "지원서 제출 기한이 지났습니다.",
+  ALREADY_SUBMITTED: "이미 제출한 지원서입니다.",
+  REQUIRED_ANSWER_MISSING: "필수 질문에 답변하지 않았습니다.",
+  ANSWER_LENGTH_EXCEEDED: "답변이 글자 수 제한을 초과했습니다.",
+  BASIC_INFO_INCOMPLETE: "이름 · 이메일 · 연락처 · 단과대학 · 전공 · 학년을 모두 입력해야 합니다.",
+  // 결과 조회(3.5)만의 문맥이다 — 이 엔드포인트에서 RESOURCE_NOT_FOUND는 항상
+  // "제출한 지원서가 없다"는 뜻이다(BE `ApplicationService.getResult` 참고).
+  RESOURCE_NOT_FOUND: "제출한 지원서가 없습니다.",
 };
 
 function messageFor(error: unknown, fallback: string): string {
@@ -28,3 +40,18 @@ export const applicationExportErrorMessage = (error: unknown) => messageFor(erro
 
 /** 지원서 양식 조회(본인 지원서)는 어드민 목록 조회와 문구가 다르다. */
 export const applicationFormErrorMessage = (error: unknown) => messageFor(error, "지원서 양식을 불러오지 못했습니다.");
+
+/** 내 지원서 조회(3.2). 지원서가 없는 건 `null` 응답으로 오지 이 에러가 아니다. */
+export const myApplicationErrorMessage = (error: unknown) => messageFor(error, "지원서를 불러오지 못했습니다.");
+
+/** 임시 저장 실패. */
+export const applicationSaveErrorMessage = (error: unknown) =>
+  messageFor(error, "지원서를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+
+/** 제출 실패 — 저장 실패와 문구가 다르다(뭐가 안 됐는지 헷갈리면 안 된다). */
+export const applicationSubmitErrorMessage = (error: unknown) =>
+  messageFor(error, "지원서를 제출하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+
+/** 결과 조회(3.5) 실패. */
+export const applicationResultErrorMessage = (error: unknown) =>
+  messageFor(error, "지원서 결과를 불러오지 못했습니다.");

@@ -18,22 +18,32 @@ import {
 import { useDebouncedValue } from "../../hooks/ui/useDebouncedValue";
 import { useModalParams } from "../../hooks/ui/useModalParams";
 import { formatDateTime } from "../../libs/formatDate";
-import { APPLICATION_STATUSES, type Applicant, type ApplicationStatus } from "../../types/application";
+import type { Applicant, ApplicationStatus } from "../../types/application";
 
 import { ApplicationDetailModal } from "./ApplicationDetailModal";
 import styles from "./ApplicantsTab.module.scss";
 
 const PAGE_SIZE = 10;
 
+/** BE `ApplicationStatus.label()`과 같은 한글 라벨(#189에서 소스로 확인함). */
 const STATUS_LABEL: Record<ApplicationStatus, string> = {
+  DRAFT: "임시 저장",
   SUBMITTED: "제출",
   DOC_PASS: "서류 합격",
   DOC_FAIL: "서류 불합격",
+  FINAL_PASS: "최종 합격",
+  FINAL_FAIL: "최종 불합격",
 };
+
+/**
+ * 이 목록 필터 탭에 실제로 나타날 수 있는 상태만 — `DRAFT`는 어드민 목록에 절대 안 나오고
+ * (5.1 `totalApplicants` 산출 기준), `FINAL_PASS`/`FINAL_FAIL` 필터는 이 화면 범위 밖이다.
+ */
+const FILTERABLE_STATUSES: ApplicationStatus[] = ["SUBMITTED", "DOC_PASS", "DOC_FAIL"];
 
 const STATUS_TABS: { value: ApplicationStatus | undefined; label: string }[] = [
   { value: undefined, label: "전체" },
-  ...APPLICATION_STATUSES.map((s) => ({ value: s, label: STATUS_LABEL[s] })),
+  ...FILTERABLE_STATUSES.map((s) => ({ value: s, label: STATUS_LABEL[s] })),
 ];
 
 const EVALUATED_LABEL: Record<EvaluatedChoice, string> = {

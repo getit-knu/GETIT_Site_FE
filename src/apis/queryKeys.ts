@@ -47,6 +47,8 @@ export const queryKeys = {
   myApplication: {
     all: ["myApplication"] as const,
     form: () => [...queryKeys.myApplication.all, "form"] as const,
+    mine: () => [...queryKeys.myApplication.all, "mine"] as const,
+    result: () => [...queryKeys.myApplication.all, "result"] as const,
   },
 
   /**
