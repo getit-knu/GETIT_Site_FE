@@ -122,4 +122,62 @@ describe("ScheduleSection", () => {
     expect(screen.getByText("면접은 서류 마감 뒤에 시작해야 합니다.")).toBeInTheDocument();
     expect(saveButton()).toBeDisabled();
   });
+
+  describe("아직 모집 일정을 저장한 적 없는 기수", () => {
+    // 새 기수를 막 활성화한 직후처럼 이 기수의 일정을 한 번도 저장한 적 없으면
+    // 조회 자체가 404 SCHEDULE_NOT_FOUND 다(BE 확인함) — 오류가 아니라 정상 상태다.
+    beforeEach(() => {
+      vi.mocked(api.getSchedule).mockRejectedValue({ code: "SCHEDULE_NOT_FOUND", message: "?" });
+    });
+
+    it("오류 화면 대신 빈 입력 폼을 보여준다", async () => {
+      renderSection();
+
+      expect(
+        await screen.findByText("아직 설정된 모집 일정이 없습니다. 입력하고 저장하면 새로 만들어집니다."),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(screen.getByLabelText("전체 시작")).toHaveValue("");
+      // 기수 번호 · 연도는 이 응답에 안 실려 온다(BE 확인함) — 일반 제목으로 대체한다.
+      expect(screen.getByRole("heading", { name: "모집 일정" })).toBeInTheDocument();
+    });
+
+    it("빈 채로는 저장할 수 없다", async () => {
+      renderSection();
+      await screen.findByLabelText("전체 시작");
+
+      expect(screen.getByText("모든 일정을 입력해 주세요.")).toBeInTheDocument();
+      expect(saveButton()).toBeDisabled();
+    });
+
+    it("값을 다 채우면 저장할 수 있고, PUT이 새로 만든다", async () => {
+      renderSection();
+      await screen.findByLabelText("전체 시작");
+
+      for (const [label, value] of [
+        [/^전체 시작/, "2026-09-01T00:00"],
+        [/^전체 종료/, "2026-09-30T23:59"],
+        [/^서류 시작/, "2026-09-01T00:00"],
+        [/^서류 마감/, "2026-09-10T23:59"],
+        [/^면접 시작/, "2026-09-15T00:00"],
+      ] as const) {
+        await userEvent.type(screen.getByLabelText(label), value);
+      }
+
+      expect(saveButton()).toBeEnabled();
+      await userEvent.click(saveButton());
+
+      await vi.waitFor(() => expect(api.saveSchedule).toHaveBeenCalled());
+      const payload = vi.mocked(api.saveSchedule).mock.lastCall?.[0];
+      expect(new Date(payload!.totalStartAt).toISOString()).toBe("2026-08-31T15:00:00.000Z");
+    });
+  });
+
+  it("SCHEDULE_NOT_FOUND가 아닌 다른 실패는 그대로 오류 화면으로 막는다", async () => {
+    vi.mocked(api.getSchedule).mockRejectedValue({ code: "FORBIDDEN", message: "?" });
+    renderSection();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("권한이 없습니다");
+    expect(screen.queryByLabelText("전체 시작")).not.toBeInTheDocument();
+  });
 });

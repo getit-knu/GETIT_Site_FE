@@ -55,13 +55,16 @@ describe("PublicLayout", () => {
     expect(nav.queryAllByRole("link")).toHaveLength(6); // GETIT 로고 + 홈 + 프로젝트 + 운영진 + 로그인 + 지원하기
   });
 
-  it("Footer 바로가기 항목도 아직 링크가 아니다", () => {
+  it("Footer 바로가기 항목이 실제 링크로 연결된다", () => {
     renderAt("/");
 
     const footer = within(screen.getByRole("contentinfo"));
-    for (const label of ["지원하기", "프로젝트", "운영진"]) {
-      expect(footer.getByText(label)).toBeInTheDocument();
-    }
-    expect(footer.queryByRole("link")).not.toBeInTheDocument();
+    expect(footer.getByRole("link", { name: "지원하기" })).toHaveAttribute("href", "/apply");
+    expect(footer.getByRole("link", { name: "프로젝트" })).toHaveAttribute("href", "/projects");
+    expect(footer.getByRole("link", { name: "운영진" })).toHaveAttribute("href", "/leaders");
+    expect(footer.getByRole("link", { name: "Instagram" })).toHaveAttribute(
+      "href",
+      "https://www.instagram.com/knu_get_it/",
+    );
   });
 });

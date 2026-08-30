@@ -32,17 +32,6 @@ export function Topbar({ title, user, onMenuClick }: TopbarProps) {
       </div>
 
       <div className={styles.right}>
-        {/*
-          와이어프레임에는 배지에 `2` 가 찍혀 있지만 대응하는 API 가 없다.
-          숫자를 지어내면 실제로 읽지 않은 항목이 있는 것처럼 보이므로 배지는 달지 않는다.
-          TODO: 알림 API 가 생기면 미확인 개수를 붙인다.
-        */}
-        <button type="button" className={styles.bell} aria-label="알림">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M13.7 21a2 2 0 01-3.4 0" />
-          </svg>
-        </button>
-
         {user && (
           <div className={styles.account}>
             <div className={styles.identity}>

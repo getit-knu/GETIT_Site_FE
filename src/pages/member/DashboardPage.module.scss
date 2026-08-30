@@ -1,0 +1,139 @@
+@use "../../styles/abstracts/variables" as *;
+@use "../../styles/abstracts/container";
+
+$card-shadow:
+  0 1px 3px rgb(0 0 0 / 10%),
+  0 1px 2px -1px rgb(0 0 0 / 10%);
+
+.page {
+  padding: 2rem 0 4rem;
+  background-color: $color-background;
+}
+
+.inner {
+  @include container.content-width;
+}
+
+.title {
+  margin: 0 0 2rem;
+  color: $color-heading;
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+.loading {
+  padding: 2rem 0;
+  color: $color-text-secondary;
+  font-size: 0.9375rem;
+  text-align: center;
+}
+
+.statsCard {
+  margin-bottom: 1.5rem;
+  border-radius: 1rem;
+  padding: 2rem;
+  background-color: $color-background;
+  box-shadow: $card-shadow;
+}
+
+.sectionTitle {
+  margin: 0;
+  color: $color-heading;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.sectionTitleSm {
+  margin: 0;
+  color: $color-heading;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.statBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 0.875rem;
+  padding: 1.5rem;
+
+  svg {
+    width: 2rem;
+    height: 2rem;
+  }
+}
+
+.statBlue {
+  background-color: #eff6ff;
+  color: $color-accent;
+}
+
+.statGreen {
+  background-color: #f0fdf4;
+  color: #00a63e;
+}
+
+.statValue {
+  margin-top: 0.75rem;
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+.statLabel {
+  margin: 0.25rem 0 0;
+  color: $color-text-secondary;
+  font-size: 1rem;
+}
+
+.historyCard {
+  border-radius: 1rem;
+  padding: 1.5rem;
+  background-color: $color-background;
+  box-shadow: $card-shadow;
+}
+
+.historyGroup {
+  margin-top: 1rem;
+}
+
+.historyStatus {
+  margin: 0;
+  color: $color-heading;
+  font-size: 1rem;
+}
+
+.danger {
+  color: $color-danger;
+}
+
+.warning {
+  color: #d08700;
+}
+
+.lectureList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lectureItem {
+  border-radius: 0.625rem;
+  padding: 0.75rem 1rem;
+  background-color: $color-placeholder-bg;
+  color: $color-text-secondary;
+  font-size: 0.875rem;
+}
