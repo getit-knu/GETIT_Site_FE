@@ -1,5 +1,5 @@
 import type { ApplicantListParams } from "../types/application";
-import type { LectureListParams, SubmissionListParams } from "../types/lecture";
+import type { LectureListParams, MemberLectureListParams, SubmissionListParams } from "../types/lecture";
 import type { QuestionListParams } from "../types/qna";
 import type { AdminProjectListParams, PublicProjectListParams } from "../types/project";
 import type { UserListParams } from "../types/user";
@@ -127,6 +127,17 @@ export const queryKeys = {
   member: {
     all: ["member"] as const,
     summary: () => [...queryKeys.member.all, "summary"] as const,
+  },
+
+  /** 부원 강의 조회(4.x, #193). 어드민 `lectures`와는 스키마·엔드포인트가 다른 별개 도메인이다. */
+  memberLectures: {
+    all: ["memberLectures"] as const,
+    tracks: () => [...queryKeys.memberLectures.all, "tracks"] as const,
+    boards: () => [...queryKeys.memberLectures.all, "board"] as const,
+    board: (params: MemberLectureListParams) => [...queryKeys.memberLectures.boards(), params] as const,
+    details: () => [...queryKeys.memberLectures.all, "detail"] as const,
+    detail: (id: number) => [...queryKeys.memberLectures.details(), id] as const,
+    questions: (lectureId: number) => [...queryKeys.memberLectures.all, "questions", lectureId] as const,
   },
 
   /**

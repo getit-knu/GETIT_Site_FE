@@ -1,18 +1,19 @@
 import clsx from "clsx";
 
-import type { MemberLecture } from "../../mocks/lecture/memberLectures";
+import type { MemberTrack } from "../../types/lecture";
 
 import { ALL_LECTURES_FILTER, buildLectureFilterOptions } from "./lectureFilters";
 import styles from "./LectureFilterTabs.module.scss";
 
 interface LectureFilterTabsProps {
-  lectures: MemberLecture[];
+  tracks: MemberTrack[];
   value: string;
   onChange: (value: string) => void;
 }
 
-export function LectureFilterTabs({ lectures, value, onChange }: LectureFilterTabsProps) {
-  const options = buildLectureFilterOptions();
+/** 개수 배지는 없다 — 소분류 기준 개수(`tabs[].count`)뿐이라 소분류 없는 트랙엔 값이 없다. */
+export function LectureFilterTabs({ tracks, value, onChange }: LectureFilterTabsProps) {
+  const options = buildLectureFilterOptions(tracks);
 
   return (
     <div className={styles.tabs} role="group" aria-label="트랙 필터">
@@ -22,7 +23,7 @@ export function LectureFilterTabs({ lectures, value, onChange }: LectureFilterTa
         className={clsx(styles.tab, value === ALL_LECTURES_FILTER && styles.active)}
         onClick={() => onChange(ALL_LECTURES_FILTER)}
       >
-        전체 ({lectures.length})
+        전체
       </button>
       {options.map((option) => (
         <button
@@ -32,7 +33,7 @@ export function LectureFilterTabs({ lectures, value, onChange }: LectureFilterTa
           className={clsx(styles.tab, value === option.key && styles.active)}
           onClick={() => onChange(option.key)}
         >
-          {option.label} ({lectures.filter(option.matches).length})
+          {option.label}
         </button>
       ))}
     </div>
