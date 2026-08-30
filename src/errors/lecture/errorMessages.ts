@@ -76,6 +76,13 @@ export function feedbackErrorMessage(error: unknown): string {
   return FEEDBACK_ERROR_MESSAGES[code] ?? FEEDBACK_FALLBACK;
 }
 
+/** 부원 과제 제출(4.4) 실패 문구. 조회 실패와 대체 문구가 달라야 무엇이 안 됐는지 구분된다. */
+const SUBMISSION_SAVE_FALLBACK = "과제를 제출하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+
+export function submissionSaveErrorMessage(error: unknown): string {
+  return messageFor(error, SUBMISSION_SAVE_FALLBACK);
+}
+
 /** 제출 현황(8.6) 코드. 강의 표를 그대로 쓰되 대체 문구만 이 화면에 맞춘다. */
 const SUBMISSIONS_FALLBACK = "제출 현황을 불러오지 못했습니다.";
 

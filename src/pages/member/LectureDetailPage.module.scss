@@ -155,19 +155,30 @@ $card-shadow:
   list-style: none;
 }
 
+/* <a>(제출 요약)·<button>(강의 자료, 매번 새 서명 주소를 받아야 해 클릭 시 동작이 필요하다)
+   둘 다에 쓰인다 — 버튼 기본 테두리·배경·폰트를 지워 링크와 똑같이 보이게 한다. */
 .materialLink {
   display: flex;
+  width: 100%;
   align-items: center;
   justify-content: space-between;
+  border: 0;
   border-radius: 0.875rem;
   padding: 0.8125rem;
   background-color: $color-background;
   color: $color-text-primary;
+  font: inherit;
   font-size: 0.875rem;
   text-decoration: none;
+  cursor: pointer;
 
   &:hover {
     background-color: $color-placeholder-bg;
+  }
+
+  &:disabled {
+    color: $color-text-secondary;
+    cursor: default;
   }
 }
 
@@ -272,19 +283,8 @@ $card-shadow:
   }
 }
 
-.qnaCard {
-  border: 1px solid $color-placeholder-bg;
-  border-radius: 1rem;
-  padding: 1.5625rem;
-  background-color: $color-background;
-  box-shadow: $card-shadow;
-}
-
-.qnaEmpty {
-  margin-top: 1rem;
-}
-
-.qnaList {
+/** 제출물에 달린 피드백. 어드민이 남긴다(8.9). */
+.feedbackList {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -293,72 +293,35 @@ $card-shadow:
   list-style: none;
 }
 
-.qnaItem {
-  display: flex;
-  gap: 0.5rem;
+.feedbackItem {
   border: 1px solid $color-placeholder-bg;
   border-radius: 0.875rem;
   padding: 1.0625rem;
 }
 
-.qnaAvatar {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 9999px;
-  background-image: linear-gradient(135deg, #2b7fff 0%, #4f39f6 100%);
-
-  svg {
-    width: 1rem;
-    height: 1rem;
-    color: $color-background;
-  }
-}
-
-.qnaBody {
-  flex: 1;
-  min-width: 0;
-}
-
-.qnaAuthor {
+.feedbackAuthor {
   margin: 0;
   color: $color-heading;
   font-size: 0.875rem;
   font-weight: 700;
 }
 
-.qnaContent {
+.feedbackContent {
   margin: 0.25rem 0 0;
   color: $color-text-primary;
   font-size: 0.875rem;
 }
 
-.qnaAnswer {
-  margin-top: 0.75rem;
-  border-left: 2px solid $color-accent;
-  padding-left: 1.125rem;
-}
-
-.qnaAnswerLabel {
-  margin: 0;
-  color: $color-accent;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.qnaAnswerText {
-  margin: 0.25rem 0 0;
-  color: $color-text-primary;
-  font-size: 0.875rem;
-}
-
-.qnaDate {
+.feedbackDate {
   margin: 0.5rem 0 0;
   color: $color-text-secondary;
   font-size: 0.75rem;
+}
+
+.uploadError {
+  margin-top: 0.5rem;
+  color: $color-danger;
+  font-size: 0.8125rem;
 }
 
 .visuallyHidden {

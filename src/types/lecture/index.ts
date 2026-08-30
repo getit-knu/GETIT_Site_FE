@@ -202,3 +202,109 @@ export interface NavigateParams {
   feedbackDone?: boolean;
   groupId?: number;
 }
+
+// ── 부원용 (명세서 4.x) ──────────────────────────────────────────────
+// 관리자용(위)과 스키마 출처가 달라(BE `LectureController`/`TrackMemberController`가 각자
+// 다른 DTO를 쓴다) `Member` 접두어로 구분한다. 모양이 같아 보여도 재사용하지 않는다 — 스키마가
+// 나중에 갈릴 수 있다.
+
+/** `GET /api/member/tracks`(#150·#193) 응답 한 줄. 소분류 없거나 발행 강의가 0개인 트랙도 포함한다. */
+export type MemberSubCategory = Required<components["schemas"]["TrackResultSubCategory"]>;
+
+export interface MemberTrack {
+  id: number;
+  name: string;
+  subCategories: MemberSubCategory[];
+}
+
+export interface MemberLectureListParams {
+  trackId?: number;
+  subCategoryId?: number;
+  page?: number;
+}
+
+/**
+ * 4.1 목록 카드 한 줄.
+ *
+ * `subCategoryName`(소분류 없는 트랙 직속 강의)·`durationMinutes`·`deadline`(과제 없는 강의)은
+ * BE `LectureService.getLectures()` 확인 — 전부 `null`일 수 있다.
+ */
+export interface MemberLectureCard {
+  id: number;
+  week: number;
+  title: string;
+  subCategoryName: string | null;
+  trackName: string;
+  durationMinutes: number | null;
+  deadline: string | null;
+  completed: boolean;
+}
+
+/** 4.1 응답. `tabs`는 소분류 기준이라 필터 UI엔 안 쓴다(`GET /api/member/tracks`로 대신함) — 타입에서 뺀다. */
+export type MemberLectureBoard = Page<MemberLectureCard>;
+
+export type MemberAuthor = Omit<Required<components["schemas"]["LectureResultAuthor"]>, "profileImageUrl"> & {
+  profileImageUrl: string | null;
+};
+
+export type MemberMaterial = Required<components["schemas"]["LectureResultMaterial"]>;
+
+export type MemberAssignmentInfo = Required<components["schemas"]["LectureResultAssignmentInfo"]>;
+
+export type MemberFeedbackItem = Required<components["schemas"]["LectureResultFeedbackItem"]>;
+
+export type MemberSubmissionStatus = NonNullable<components["schemas"]["LectureResultMySubmission"]["status"]>;
+
+/** `file`·`linkUrl`은 제출 방식에 따라 서로 배타적이다(관리자 `SubmissionDetail`과 같은 규칙). */
+export interface MemberMySubmission {
+  id: number;
+  fileUrl: string | null;
+  fileName: string | null;
+  linkUrl: string | null;
+  comment: string;
+  submittedAt: string;
+  status: MemberSubmissionStatus;
+  feedbacks: MemberFeedbackItem[];
+}
+
+/** 4.2 응답. */
+export interface MemberLectureDetail {
+  id: number;
+  week: number;
+  title: string;
+  description: string;
+  trackName: string;
+  subCategoryName: string | null;
+  durationMinutes: number | null;
+  youtubeUrl: string;
+  materialUrl: string;
+  author: MemberAuthor;
+  publishedAt: string;
+  materials: MemberMaterial[];
+  /** 이 강의에 과제가 없으면 `null`. */
+  assignment: MemberAssignmentInfo | null;
+  /** 본인이 아직 제출 안 했으면 `null`. */
+  mySubmission: MemberMySubmission | null;
+}
+
+/** 4.3 응답. 비공개 저장소라 요청마다 짧게 사는 주소를 새로 받는다. */
+export type MemberDownloadUrl = Required<components["schemas"]["LectureResultDownloadUrl"]>;
+
+/** 4.4 제출·재제출 요청. `fileId`·`linkUrl` 중 최소 하나는 채워야 한다(화면에서 검증). */
+export interface SubmissionPayload {
+  fileId: number | null;
+  linkUrl: string | null;
+  comment: string;
+}
+
+/** 4.4 응답. 어드민의 `SubmissionDetail`(8.7, 위)과 이름이 겹쳐 `Member` 접두어로 구분한다. */
+export interface MemberSubmissionDetail {
+  id: number;
+  assignmentId: number;
+  fileUrl: string | null;
+  fileName: string | null;
+  linkUrl: string | null;
+  comment: string;
+  submittedAt: string;
+  status: MemberSubmissionStatus;
+}

@@ -21,6 +21,7 @@ function project(over: Partial<AdminProject> = {}): AdminProject {
     techStacks: ["Python", "React"],
     codeUrl: "https://github.com/getit-knu/ai-portfolio",
     demoUrl: "https://ai-portfolio.getit-knu.dev",
+    fileId: 501,
     thumbnailUrl: "",
     isFeatured: true,
     order: 1,
