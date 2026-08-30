@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { lectureErrorMessage, lectureSaveErrorMessage } from "../../errors/lecture/errorMessages";
 import { useLectureDetail, useSaveLecture } from "../../hooks/lecture/useLectures";
+import { toIso, toLocalInput } from "../../libs/datetimeLocalInput";
 import type { LectureDetail, LectureFile, LecturePayload, SubmissionType, Track } from "../../types/lecture";
 import { Button } from "../ui/Button/Button";
 import { Input } from "../ui/Input/Input";
@@ -72,7 +73,7 @@ function toDraft(detail: LectureDetail): Draft {
     hasAssignment: detail.assignment !== null,
     assignmentTitle: detail.assignment?.title ?? "",
     assignmentDescription: detail.assignment?.description ?? "",
-    assignmentDeadline: detail.assignment?.deadline ?? "",
+    assignmentDeadline: detail.assignment ? toLocalInput(detail.assignment.deadline) : "",
     allowedTypes: detail.assignment?.allowedTypes ?? ["FILE"],
     linkPlaceholder: detail.assignment?.linkPlaceholder ?? "",
   };
@@ -106,6 +107,8 @@ function invalidReason(draft: Draft): string | null {
     if (draft.assignmentTitle.trim() === "") return "과제 제목을 입력해 주세요.";
     if (draft.assignmentDescription.trim() === "") return "과제 설명을 입력해 주세요.";
     if (draft.assignmentDeadline === "") return "과제 마감 기한을 입력해 주세요.";
+    // 형태가 어긋난 값(주소를 손으로 고친 경우 등)은 `toIso`가 빈 문자열을 돌려준다.
+    if (toIso(draft.assignmentDeadline) === "") return "과제 마감 기한 형식이 올바르지 않습니다.";
     if (draft.allowedTypes.length === 0) return "과제 제출 방식을 하나 이상 선택해 주세요.";
   }
   return null;
@@ -128,7 +131,7 @@ function toPayload(draft: Draft): LecturePayload {
       ? {
           title: draft.assignmentTitle.trim(),
           description: draft.assignmentDescription,
-          deadline: draft.assignmentDeadline,
+          deadline: toIso(draft.assignmentDeadline),
           allowedTypes: draft.allowedTypes,
           linkPlaceholder: draft.allowedTypes.includes("LINK") ? draft.linkPlaceholder.trim() || null : null,
         }
