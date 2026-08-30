@@ -1,8 +1,13 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { getMe } from "../../apis/auth/authApi";
 
 import { PublicLayout } from "./PublicLayout";
+
+vi.mock("../../apis/auth/authApi");
 
 function renderAt(path: string) {
   const router = createMemoryRouter(
@@ -15,11 +20,21 @@ function renderAt(path: string) {
     ],
     { initialEntries: [path] },
   );
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
-  return render(<RouterProvider router={router} />);
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  );
 }
 
 describe("PublicLayout", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(getMe).mockRejectedValue({ code: "UNAUTHORIZED", message: "인증이 필요합니다." });
+  });
+
   it("Nav · 본문 · Footer를 함께 렌더링한다", () => {
     renderAt("/");
 
