@@ -9,6 +9,13 @@
  * 색과 간격은 각 컴포넌트의 `.module.scss` 와 디자인 토큰이 담당한다.
  */
 
+/*
+ * Pretendard(SIL OFL 1.1, 무료 상업 이용 가능) — npm 패키지로 self-host한다(외부 CDN 의존 없음).
+ * dynamic-subset 버전을 써서 실제 쓰이는 유니코드 범위의 조각만 브라우저가 내려받는다 — 전체
+ * variable 폰트 하나를 통째로 받는 것보다 실제 전송량이 훨씬 작다.
+ */
+@import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
+
 *,
 *::before,
 *::after {
@@ -41,7 +48,7 @@ html.home-scroll-snap {
 
 body {
   margin: 0;
-  font-family: system-ui, "Segoe UI", Roboto, "Apple SD Gothic Neo", sans-serif;
+  font-family: "Pretendard Variable", system-ui, "Segoe UI", Roboto, "Apple SD Gothic Neo", sans-serif;
   font-size: 16px;
   line-height: 1.5;
   text-rendering: optimizeLegibility;
