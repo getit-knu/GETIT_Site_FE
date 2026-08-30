@@ -26,6 +26,8 @@ const SITE_ERROR_MESSAGES: Record<string, string> = {
   TRACK_NOT_FOUND: "대분류를 찾을 수 없습니다. 목록을 새로고침해 주세요.",
   SUBCATEGORY_NOT_FOUND: "소분류를 찾을 수 없습니다. 목록을 새로고침해 주세요.",
   CATEGORY_IN_USE: "연결된 강의가 있어 삭제할 수 없습니다.",
+  // 기능 토글
+  FEATURE_NOT_FOUND: "기능을 찾을 수 없습니다. 새로고침 후 다시 시도해 주세요.",
   // 공통
   VALIDATION_FAILED: "입력값을 확인해 주세요.",
   FORBIDDEN: "사이트 설정을 바꿀 권한이 없습니다.",

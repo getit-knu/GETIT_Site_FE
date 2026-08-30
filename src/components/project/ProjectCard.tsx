@@ -1,13 +1,13 @@
 import type { MouseEvent } from "react";
 
-import type { Project } from "../../types/project";
+import type { PublicProject } from "../../types/project";
 import { Badge } from "../ui/Badge/Badge";
 import { Card } from "../ui/Card/Card";
 
 import styles from "./ProjectCard.module.scss";
 
 interface ProjectCardProps {
-  project: Project;
+  project: PublicProject;
   onClick?: () => void;
 }
 
@@ -23,17 +23,21 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
 
   return (
     <Card className={styles.card} onClick={onClick}>
-      <div className={styles.thumbnail} style={{ backgroundImage: project.gradient }} aria-hidden="true" />
+      <div
+        className={styles.thumbnail}
+        style={project.thumbnailUrl ? { backgroundImage: `url(${project.thumbnailUrl})` } : undefined}
+        aria-hidden="true"
+      />
 
       <div className={styles.content}>
         <p className={styles.meta}>
-          {project.team} <span aria-hidden="true">·</span> {project.semester}
+          {project.teamName} <span aria-hidden="true">·</span> {project.semesterLabel}
         </p>
         <h3 className={styles.title}>{project.title}</h3>
         <p className={styles.description}>{project.description}</p>
 
         <ul className={styles.techStack}>
-          {project.techStack.map((tech) => (
+          {project.techStacks.map((tech) => (
             <li key={tech}>
               <Badge variant="accent">{tech}</Badge>
             </li>
