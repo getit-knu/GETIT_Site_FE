@@ -77,8 +77,7 @@ export const queryKeys = {
 
   site: {
     all: ["site"] as const,
-    // 모집 일정. 아직 실제 엔드포인트가 없다.
-    settings: () => [...queryKeys.site.all, "settings"] as const,
+    // 모집 일정은 여기 없다 — 모집 관리와 같은 `queryKeys.recruitment.schedule()`을 쓴다.
     // 진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류 · FAQ · 기능 토글은 각자 실제(또는 개별) 엔드포인트라 키를 나눈다.
     generation: () => [...queryKeys.site.all, "generation"] as const,
     staffs: () => [...queryKeys.site.all, "staffs"] as const,
