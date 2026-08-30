@@ -2,9 +2,17 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 
-import { refreshAccessToken } from "../apis/auth/authApi";
+import { getMe, refreshAccessToken } from "../apis/auth/authApi";
 import { queryKeys } from "../apis/queryKeys";
 import { setAccessToken } from "../libs/accessToken";
+import type { Role } from "../types/auth";
+
+/** 역할별 로그인 후 도착지. 아직 승인 전인 GUEST는 갈 곳이 없어 홈에 남는다. */
+function destinationFor(role: Role): string {
+  if (role === "ADMIN") return "/admin";
+  if (role === "MEMBER") return "/member";
+  return "/";
+}
 
 /**
  * 구글 로그인 후 BE 가 되돌려 보내는 지점.
@@ -34,12 +42,12 @@ export default function OAuthCallbackPage() {
         const { accessToken } = await refreshAccessToken();
         setAccessToken(accessToken);
 
-        // 토큰이 생겼으니 세션을 다시 받는다.
-        await queryClient.invalidateQueries({ queryKey: queryKeys.auth.all });
+        // 토큰이 생겼으니 세션을 다시 받는다 — 역할에 따라 갈 곳이 갈리므로 직접 기다린다.
+        const me = await queryClient.fetchQuery({ queryKey: queryKeys.auth.me(), queryFn: getMe });
 
         // TODO: 신규 사용자는 프로필 입력 화면으로 보낸다. 그 화면이 생기기 전까지는
-        // 홈에 상태로만 넘겨 둔다. 여기서 분기를 잃으면 BE 가 보낸 정보가 버려진다.
-        navigate("/", { replace: true, state: { isNewUser } });
+        // 도착지에 상태로만 넘겨 둔다. 여기서 분기를 잃으면 BE 가 보낸 정보가 버려진다.
+        navigate(destinationFor(me.role), { replace: true, state: { isNewUser } });
       } catch {
         setFailed(true);
       }

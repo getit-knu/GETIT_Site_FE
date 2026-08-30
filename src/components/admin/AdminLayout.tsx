@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { Outlet, useLocation, useNavigate } from "react-router";
+import { Outlet, useLocation } from "react-router";
 
-import { logout } from "../../apis/auth/authApi";
+import { useLogout } from "../../hooks/auth/useLogout";
 import { useSession } from "../../hooks/auth/useSession";
-import { clearAccessToken } from "../../libs/accessToken";
 
 import styles from "./AdminLayout.module.scss";
 import { findActiveMenu } from "./adminMenu";
@@ -24,28 +22,10 @@ import { Topbar } from "./Topbar";
 export function AdminLayout() {
   const { pathname } = useLocation();
   const { user } = useSession();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const handleLogout = useLogout();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const title = findActiveMenu(pathname)?.title ?? "운영진 관리 페이지";
-
-  async function handleLogout() {
-    try {
-      await logout();
-    } catch {
-      // 서버에 알리지 못해도 로그아웃은 진행한다. 여기서 멈추면 사용자는 버튼을 눌렀는데
-      // 아무 일도 일어나지 않는다.
-      //
-      // finally 로 쓰면 정리는 되지만 예외가 그대로 밖으로 나가고,
-      // 호출부가 `void` 로 버려 unhandled rejection 이 된다.
-    }
-
-    // 토큰을 들고 있는 채로 화면만 돌려보내면 사용자는 나갔다고 믿는데 요청은 계속 인증된다.
-    clearAccessToken();
-    queryClient.clear();
-    void navigate("/", { replace: true });
-  }
 
   return (
     <div className={styles.layout}>

@@ -96,6 +96,22 @@
   font-weight: 600;
 }
 
+.logoutButton {
+  border: none;
+  background: none;
+  padding: 0;
+  color: $color-text-primary;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+
+  @media (width <= $breakpoint-mobile) {
+    padding: 0.75rem 2rem;
+    text-align: center;
+  }
+}
+
 .cta {
   border-radius: 9999px;
   padding: 0.625rem 1.5rem;
