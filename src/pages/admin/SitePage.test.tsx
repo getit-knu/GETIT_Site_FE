@@ -4,14 +4,16 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as api from "../../apis/site/siteApi";
-import type { Generation, SiteSettings } from "../../types/site";
+import type { Generation, SiteSettings, SiteTrack } from "../../types/site";
 
 import SitePage from "./SitePage";
 
 vi.mock("../../apis/site/siteApi");
 
 const GENERATION: Generation = { id: 9, generationNo: 9, year: 2026, isActive: true };
-const TRACKS = [{ id: 1, name: "SW", subCategories: [{ id: 1, name: "웹기초" }] }];
+const TRACKS: SiteTrack[] = [
+  { id: 1, name: "SW", order: 1, subCategories: [{ id: 1, name: "웹기초", order: 1, lectureCount: 0 }] },
+];
 const FAQS = [{ id: 1, question: "활동 시간은?", answer: "화요일 저녁 7시" }];
 
 function settings(over: Partial<SiteSettings> = {}): SiteSettings {
@@ -23,7 +25,6 @@ function settings(over: Partial<SiteSettings> = {}): SiteSettings {
       documentEndAt: "2026-09-10T23:59:00+09:00",
       interviewStartAt: "2026-09-15T00:00:00+09:00",
     },
-    tracks: TRACKS,
     faqs: FAQS,
     ...over,
   };
@@ -40,7 +41,9 @@ function renderPage() {
 
 const generationSaveButton = () => screen.getByRole("button", { name: "진행 기수 저장" });
 const restSaveButton = () => screen.getByRole("button", { name: "저장하기" });
+const tracksSaveButton = () => screen.getByRole("button", { name: "강의 분류 저장" });
 const lastRestPayload = () => vi.mocked(api.saveSiteSettings).mock.lastCall?.[0];
+const lastTracksPayload = () => vi.mocked(api.saveTracks).mock.lastCall?.[0];
 
 describe("SitePage", () => {
   beforeEach(() => {
@@ -49,6 +52,8 @@ describe("SitePage", () => {
     vi.mocked(api.saveGeneration).mockResolvedValue(GENERATION);
     vi.mocked(api.getSiteSettings).mockResolvedValue(settings());
     vi.mocked(api.saveSiteSettings).mockResolvedValue(settings());
+    vi.mocked(api.getTracks).mockResolvedValue(TRACKS);
+    vi.mocked(api.saveTracks).mockResolvedValue(undefined);
     vi.mocked(api.getCurriculums).mockResolvedValue([]);
     vi.mocked(api.getEvents).mockResolvedValue([]);
     vi.mocked(api.getStaffs).mockResolvedValue([]);
@@ -80,13 +85,15 @@ describe("SitePage", () => {
 
   it("기수가 비면 기수 저장만 막는다", async () => {
     renderPage();
+    await screen.findByLabelText("대분류 이름 SW");
 
     await userEvent.clear(await screen.findByLabelText("기수"));
 
     expect(screen.getByText("기수는 1 이상의 정수여야 합니다.")).toBeInTheDocument();
     expect(generationSaveButton()).toBeDisabled();
-    // 일정 · 강의 분류 저장은 기수와 무관하다.
+    // 일정 · FAQ · 강의 분류 저장은 기수와 무관하다.
     expect(restSaveButton()).not.toBeDisabled();
+    expect(tracksSaveButton()).not.toBeDisabled();
   });
 
   it("기수 저장에 실패하면 이유를 보여주고 입력을 지우지 않는다", async () => {
@@ -102,14 +109,24 @@ describe("SitePage", () => {
     expect(screen.getByLabelText("기수")).toHaveValue(12);
   });
 
-  it("손대지 않은 강의 분류 · FAQ 는 받은 그대로 나간다", async () => {
+  it("손대지 않은 FAQ 는 받은 그대로 나간다", async () => {
     renderPage();
     await screen.findByLabelText("기수");
 
     await userEvent.click(restSaveButton());
 
     await waitFor(() => expect(api.saveSiteSettings).toHaveBeenCalled());
-    expect(lastRestPayload()).toMatchObject({ tracks: TRACKS, faqs: FAQS });
+    expect(lastRestPayload()).toMatchObject({ faqs: FAQS });
+  });
+
+  it("손대지 않은 강의 분류는 받은 그대로 나간다", async () => {
+    renderPage();
+    await screen.findByLabelText("대분류 이름 SW");
+
+    await userEvent.click(tracksSaveButton());
+
+    await waitFor(() => expect(api.saveTracks).toHaveBeenCalled());
+    expect(lastTracksPayload()).toEqual([{ id: 1, name: "SW", subCategories: [{ id: 1, name: "웹기초" }] }]);
   });
 
   it("고친 일정을 KST 로 읽어 ISO 로 보낸다", async () => {
@@ -156,21 +173,22 @@ describe("SitePage", () => {
     renderPage();
 
     await userEvent.type(await screen.findByLabelText("대분류 이름 SW"), "!");
-    await userEvent.click(restSaveButton());
+    await userEvent.click(tracksSaveButton());
 
-    await waitFor(() => expect(api.saveSiteSettings).toHaveBeenCalled());
-    expect(lastRestPayload()?.tracks[0].name).toBe("SW!");
+    await waitFor(() => expect(api.saveTracks).toHaveBeenCalled());
+    expect(lastTracksPayload()?.[0].name).toBe("SW!");
     // 저장은 한 번이다.
-    expect(api.saveSiteSettings).toHaveBeenCalledTimes(1);
+    expect(api.saveTracks).toHaveBeenCalledTimes(1);
   });
 
-  it("어느 섹션이든 막히면 저장을 막는다", async () => {
+  it("강의 분류 이름이 비면 강의 분류 저장만 막는다", async () => {
     renderPage();
 
-    // 강의 분류 쪽 이유
     await userEvent.clear(await screen.findByLabelText("대분류 이름 SW"));
     expect(screen.getByText("이름이 비어 있는 대분류가 있습니다.")).toBeInTheDocument();
-    expect(restSaveButton()).toBeDisabled();
+    expect(tracksSaveButton()).toBeDisabled();
+    // 일정 · FAQ 저장은 강의 분류와 무관하다.
+    expect(restSaveButton()).not.toBeDisabled();
   });
 
   it("활성 기수가 없으면 오류 화면 대신 빈 기수 등록 폼을 보여준다", async () => {

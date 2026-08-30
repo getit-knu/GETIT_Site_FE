@@ -780,6 +780,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/setting/home/save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 홈 화면 일괄 저장
+         * @description 명세서 10.20
+         */
+        post: operations["save"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/setting/faqs": {
         parameters: {
             query?: never;
@@ -1084,6 +1104,26 @@ export interface paths {
          * @description 명세서 2.7
          */
         get: operations["getMajors"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/home": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 홈 통합 조회
+         * @description 명세서 2.1
+         */
+        get: operations["getHome"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1716,18 +1756,27 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        Submit: {
+        SubmissionRequestSubmit: {
             /** Format: int64 */
             fileId?: number;
             linkUrl?: string;
             comment?: string;
         };
-        ApiResponseDetail: {
+        ApiResponseSubmissionResultDetail: {
             success?: boolean;
-            data?: components["schemas"]["Detail"];
+            data?: components["schemas"]["SubmissionResultDetail"];
             error?: components["schemas"]["ErrorResponse"];
         };
-        Detail: {
+        ErrorResponse: {
+            code?: string;
+            message?: string;
+            fieldErrors?: components["schemas"]["ErrorResponseFieldError"][];
+        };
+        ErrorResponseFieldError: {
+            field?: string;
+            reason?: string;
+        };
+        SubmissionResultDetail: {
             /** Format: int64 */
             id?: number;
             /** Format: int64 */
@@ -1740,15 +1789,6 @@ export interface components {
             submittedAt?: string;
             /** @enum {string} */
             status?: "SUBMITTED" | "LATE";
-        };
-        ErrorResponse: {
-            code?: string;
-            message?: string;
-            fieldErrors?: components["schemas"]["FieldError"][];
-        };
-        FieldError: {
-            field?: string;
-            reason?: string;
         };
         ApplicationAnswerRequest: {
             /** Format: int64 */
@@ -1821,17 +1861,17 @@ export interface components {
             /** @enum {string} */
             status?: "ACTIVE" | "WITHDRAWN";
         };
-        TrackUpdate: {
+        CategoryRequestTrackUpdate: {
             name: string;
             /** Format: int32 */
             order?: number;
         };
-        ApiResponseTrackResult: {
+        ApiResponseCategoryResponseTrackResult: {
             success?: boolean;
-            data?: components["schemas"]["TrackResult"];
+            data?: components["schemas"]["CategoryResponseTrackResult"];
             error?: components["schemas"]["ErrorResponse"];
         };
-        TrackResult: {
+        CategoryResponseTrackResult: {
             /** Format: int64 */
             id?: number;
             name?: string;
@@ -1840,17 +1880,17 @@ export interface components {
             /** Format: int64 */
             lectureCount?: number;
         };
-        SubCategoryUpdate: {
+        CategoryRequestSubCategoryUpdate: {
             name: string;
             /** Format: int32 */
             order?: number;
         };
-        ApiResponseSubCategoryResult: {
+        ApiResponseCategoryResponseSubCategoryResult: {
             success?: boolean;
-            data?: components["schemas"]["SubCategoryResult"];
+            data?: components["schemas"]["CategoryResponseSubCategoryResult"];
             error?: components["schemas"]["ErrorResponse"];
         };
-        SubCategoryResult: {
+        CategoryResponseSubCategoryResult: {
             /** Format: int64 */
             id?: number;
             name?: string;
@@ -2150,27 +2190,41 @@ export interface components {
             /** @enum {string} */
             status?: "DRAFT" | "SUBMITTED" | "DOC_PASS" | "DOC_FAIL" | "FINAL_PASS" | "FINAL_FAIL";
         };
-        Write: {
+        AdminAnswerRequestWrite: {
             content: string;
         };
-        ApiResponseUpdateResult: {
-            success?: boolean;
-            data?: components["schemas"]["UpdateResult"];
-            error?: components["schemas"]["ErrorResponse"];
-        };
-        UpdateResult: {
+        AdminAnswerResultUpdateResult: {
             /** Format: int64 */
             id?: number;
             content?: string;
             /** Format: date-time */
             updatedAt?: string;
         };
-        ApiResponseItem: {
+        ApiResponseAdminAnswerResultUpdateResult: {
             success?: boolean;
-            data?: components["schemas"]["Item"];
+            data?: components["schemas"]["AdminAnswerResultUpdateResult"];
             error?: components["schemas"]["ErrorResponse"];
         };
-        Item: {
+        ProjectRequestWrite: {
+            title: string;
+            teamName: string;
+            semester: string;
+            description?: string;
+            techStacks?: string[];
+            codeUrl?: string;
+            demoUrl?: string;
+            /** Format: int64 */
+            fileId?: number;
+            isFeatured: boolean;
+            /** Format: int32 */
+            order?: number;
+        };
+        ApiResponseProjectResultItem: {
+            success?: boolean;
+            data?: components["schemas"]["ProjectResultItem"];
+            error?: components["schemas"]["ErrorResponse"];
+        };
+        ProjectResultItem: {
             /** Format: int64 */
             id?: number;
             title?: string;
@@ -2185,7 +2239,7 @@ export interface components {
             /** Format: int32 */
             order?: number;
         };
-        AssignmentPart: {
+        LectureRequestAssignmentPart: {
             title: string;
             description: string;
             /** Format: date-time */
@@ -2193,7 +2247,7 @@ export interface components {
             allowedTypes: ("FILE" | "LINK")[];
             linkPlaceholder?: string;
         };
-        Update: {
+        LectureRequestUpdate: {
             /** Format: int64 */
             generationId?: number;
             /** Format: int64 */
@@ -2210,15 +2264,15 @@ export interface components {
             durationMinutes?: number;
             fileIds?: number[];
             isPublished?: boolean;
-            assignment?: components["schemas"]["AssignmentPart"];
+            assignment?: components["schemas"]["LectureRequestAssignmentPart"];
             publishedOrDefault?: boolean;
         };
-        ApiResponseDetailResult: {
+        ApiResponseLectureAdminResultDetailResult: {
             success?: boolean;
-            data?: components["schemas"]["DetailResult"];
+            data?: components["schemas"]["LectureAdminResultDetailResult"];
             error?: components["schemas"]["ErrorResponse"];
         };
-        AssignmentResult: {
+        LectureAdminResultAssignmentResult: {
             /** Format: int64 */
             id?: number;
             title?: string;
@@ -2228,7 +2282,7 @@ export interface components {
             allowedTypes?: ("FILE" | "LINK")[];
             linkPlaceholder?: string;
         };
-        DetailResult: {
+        LectureAdminResultDetailResult: {
             /** Format: int64 */
             id?: number;
             /** Format: int64 */
@@ -2246,10 +2300,10 @@ export interface components {
             /** Format: int32 */
             durationMinutes?: number;
             isPublished?: boolean;
-            files?: components["schemas"]["FileItem"][];
-            assignment?: components["schemas"]["AssignmentResult"];
+            files?: components["schemas"]["LectureAdminResultFileItem"][];
+            assignment?: components["schemas"]["LectureAdminResultAssignmentResult"];
         };
-        FileItem: {
+        LectureAdminResultFileItem: {
             /** Format: int64 */
             fileId?: number;
             displayName?: string;
@@ -2274,15 +2328,30 @@ export interface components {
             /** Format: int32 */
             memberCount?: number;
         };
-        Create: {
+        FeedbackRequestWrite: {
             content: string;
         };
-        ApiResponseCreateResult: {
+        ApiResponseFeedbackResultUpdateResult: {
             success?: boolean;
-            data?: components["schemas"]["CreateResult"];
+            data?: components["schemas"]["FeedbackResultUpdateResult"];
             error?: components["schemas"]["ErrorResponse"];
         };
-        CreateResult: {
+        FeedbackResultUpdateResult: {
+            /** Format: int64 */
+            id?: number;
+            content?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        MemberQuestionRequestCreate: {
+            content: string;
+        };
+        ApiResponseMemberQuestionResultCreateResult: {
+            success?: boolean;
+            data?: components["schemas"]["MemberQuestionResultCreateResult"];
+            error?: components["schemas"]["ErrorResponse"];
+        };
+        MemberQuestionResultCreateResult: {
             /** Format: int64 */
             id?: number;
             content?: string;
@@ -2375,13 +2444,153 @@ export interface components {
             skippedCount?: number;
             skipped?: components["schemas"]["PromotionSkipResult"][];
         };
-        TrackCreate: {
+        ApiResponseFeedbackResultCreateResult: {
+            success?: boolean;
+            data?: components["schemas"]["FeedbackResultCreateResult"];
+            error?: components["schemas"]["ErrorResponse"];
+        };
+        FeedbackResultCreateResult: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int64 */
+            submissionId?: number;
+            adminName?: string;
+            content?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        CategoryRequestTrackCreate: {
             name: string;
         };
-        SubCategoryCreate: {
+        CategoryRequestSubCategoryCreate: {
             /** Format: int64 */
             trackId: number;
             name: string;
+        };
+        HomeSaveRequest: {
+            generation: components["schemas"]["HomeSaveRequestGenerationInfo"];
+            schedule: components["schemas"]["HomeSaveRequestScheduleInfo"];
+            tracks: components["schemas"]["HomeSaveRequestTrackInfo"][];
+            curriculums: components["schemas"]["HomeSaveRequestCurriculumInfo"][];
+            events: components["schemas"]["HomeSaveRequestEventInfo"][];
+            faqs: components["schemas"]["HomeSaveRequestFaqInfo"][];
+        };
+        HomeSaveRequestCurriculumInfo: {
+            /** Format: int64 */
+            id?: number;
+            title: string;
+            subtitle: string;
+        };
+        HomeSaveRequestEventInfo: {
+            /** Format: int64 */
+            id?: number;
+            title: string;
+            place: string;
+            /** Format: date */
+            startDate: string;
+            /** Format: date */
+            endDate: string;
+            /** @enum {string} */
+            type: "COMPETITION" | "WORKSHOP" | "EVENT";
+            isVisible: boolean;
+        };
+        HomeSaveRequestFaqInfo: {
+            /** Format: int64 */
+            id?: number;
+            question: string;
+            answer: string;
+            isVisible: boolean;
+        };
+        HomeSaveRequestGenerationInfo: {
+            /** Format: int32 */
+            generationNo: number;
+            /** Format: int32 */
+            year: number;
+        };
+        HomeSaveRequestScheduleInfo: {
+            /** Format: date-time */
+            totalStartAt: string;
+            /** Format: date-time */
+            totalEndAt: string;
+            /** Format: date-time */
+            documentStartAt: string;
+            /** Format: date-time */
+            documentEndAt: string;
+            /** Format: date-time */
+            interviewStartAt: string;
+        };
+        HomeSaveRequestSubCategoryInfo: {
+            /** Format: int64 */
+            id?: number;
+            name: string;
+        };
+        HomeSaveRequestTrackInfo: {
+            /** Format: int64 */
+            id?: number;
+            name: string;
+            subCategories: components["schemas"]["HomeSaveRequestSubCategoryInfo"][];
+        };
+        ApiResponseHomeSaveResult: {
+            success?: boolean;
+            data?: components["schemas"]["HomeSaveResult"];
+            error?: components["schemas"]["ErrorResponse"];
+        };
+        HomeSaveResult: {
+            /** Format: date-time */
+            savedAt?: string;
+            /** Format: int32 */
+            generationNo?: number;
+        };
+        AdminAnswerResultCreateResult: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int64 */
+            questionId?: number;
+            adminName?: string;
+            content?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** @enum {string} */
+            questionStatus?: "PENDING" | "ANSWERED";
+        };
+        ApiResponseAdminAnswerResultCreateResult: {
+            success?: boolean;
+            data?: components["schemas"]["AdminAnswerResultCreateResult"];
+            error?: components["schemas"]["ErrorResponse"];
+        };
+        LectureRequestCreate: {
+            /** Format: int64 */
+            generationId?: number;
+            /** Format: int64 */
+            trackId: number;
+            /** Format: int64 */
+            subCategoryId?: number;
+            /** Format: int32 */
+            week: number;
+            title: string;
+            description?: string;
+            youtubeUrl?: string;
+            materialUrl?: string;
+            /** Format: int32 */
+            durationMinutes?: number;
+            fileIds?: number[];
+            isPublished?: boolean;
+            assignment?: components["schemas"]["LectureRequestAssignmentPart"];
+            publishedOrDefault?: boolean;
+        };
+        ApiResponseLectureAdminResultCreateResult: {
+            success?: boolean;
+            data?: components["schemas"]["LectureAdminResultCreateResult"];
+            error?: components["schemas"]["ErrorResponse"];
+        };
+        LectureAdminResultCreateResult: {
+            /** Format: int64 */
+            id?: number;
+            title?: string;
+            /** Format: int32 */
+            week?: number;
+            /** Format: date-time */
+            createdAt?: string;
         };
         GroupCreateRequest: {
             /** Format: int64 */
@@ -2459,9 +2668,9 @@ export interface components {
             dDay?: number;
             message?: string;
             applyEnabled?: boolean;
-            schedule?: components["schemas"]["ScheduleWindow"];
+            schedule?: components["schemas"]["RecruitmentStatusResultScheduleWindow"];
         };
-        ScheduleWindow: {
+        RecruitmentStatusResultScheduleWindow: {
             /** Format: date-time */
             totalStartAt?: string;
             /** Format: date-time */
@@ -2489,7 +2698,7 @@ export interface components {
         };
         ProjectShowcaseResult: {
             semesters?: string[];
-            content?: components["schemas"]["Item"][];
+            content?: components["schemas"]["ProjectShowcaseResultItem"][];
             /** Format: int32 */
             page?: number;
             /** Format: int32 */
@@ -2500,6 +2709,19 @@ export interface components {
             totalPages?: number;
             first?: boolean;
             last?: boolean;
+        };
+        ProjectShowcaseResultItem: {
+            /** Format: int64 */
+            id?: number;
+            title?: string;
+            teamName?: string;
+            semester?: string;
+            semesterLabel?: string;
+            description?: string;
+            techStacks?: string[];
+            codeUrl?: string;
+            demoUrl?: string;
+            thumbnailUrl?: string;
         };
         ApiResponseListMajorResult: {
             success?: boolean;
@@ -2512,6 +2734,62 @@ export interface components {
             /** Format: int64 */
             collegeId?: number;
             name?: string;
+        };
+        ApiResponseHomeResult: {
+            success?: boolean;
+            data?: components["schemas"]["HomeResult"];
+            error?: components["schemas"]["ErrorResponse"];
+        };
+        HomeResult: {
+            generation?: components["schemas"]["HomeResultGenerationInfo"];
+            recruitment?: components["schemas"]["HomeResultRecruitmentInfo"];
+            curriculums?: components["schemas"]["HomeResultCurriculumInfo"][];
+            featuredProjects?: components["schemas"]["HomeResultFeaturedProjectInfo"][];
+            faqs?: components["schemas"]["HomeResultFaqInfo"][];
+            features?: components["schemas"]["HomeResultFeaturesInfo"];
+        };
+        HomeResultCurriculumInfo: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int32 */
+            order?: number;
+            title?: string;
+            subtitle?: string;
+        };
+        HomeResultFaqInfo: {
+            /** Format: int64 */
+            id?: number;
+            question?: string;
+            answer?: string;
+        };
+        HomeResultFeaturedProjectInfo: {
+            /** Format: int64 */
+            id?: number;
+            title?: string;
+            description?: string;
+            thumbnailUrl?: string;
+        };
+        HomeResultFeaturesInfo: {
+            stockGame?: boolean;
+            mockInvestment?: boolean;
+        };
+        HomeResultGenerationInfo: {
+            /** Format: int32 */
+            generationNo?: number;
+            /** Format: int32 */
+            year?: number;
+        };
+        HomeResultRecruitmentInfo: {
+            /** @enum {string} */
+            phase?: "BEFORE_OPEN" | "DOCUMENT_OPEN" | "DOCUMENT_REVIEW" | "INTERVIEW" | "FINAL_ANNOUNCED" | "CLOSED";
+            /** Format: int64 */
+            dDay?: number;
+            message?: string;
+            applyEnabled?: boolean;
+            /** Format: date-time */
+            totalStartAt?: string;
+            /** Format: date-time */
+            totalEndAt?: string;
         };
         ApiResponseListFaqPublicResult: {
             success?: boolean;
@@ -2536,7 +2814,19 @@ export interface components {
             year?: number;
             /** Format: int32 */
             month?: number;
-            events?: components["schemas"]["Item"][];
+            events?: components["schemas"]["EventCalendarResultItem"][];
+        };
+        EventCalendarResultItem: {
+            /** Format: int64 */
+            id?: number;
+            title?: string;
+            /** Format: date */
+            startDate?: string;
+            /** Format: date */
+            endDate?: string;
+            /** @enum {string} */
+            type?: "COMPETITION" | "WORKSHOP" | "EVENT";
+            place?: string;
         };
         ApiResponseListCollegeResult: {
             success?: boolean;
@@ -2548,19 +2838,19 @@ export interface components {
             id?: number;
             name?: string;
         };
-        ApiResponseResponse: {
+        ApiResponseMeSummaryResultResponse: {
             success?: boolean;
-            data?: components["schemas"]["Response"];
+            data?: components["schemas"]["MeSummaryResultResponse"];
             error?: components["schemas"]["ErrorResponse"];
         };
-        LectureBrief: {
+        MeSummaryResultLectureBrief: {
             /** Format: int64 */
             lectureId?: number;
             /** Format: int32 */
             week?: number;
             title?: string;
         };
-        Profile: {
+        MeSummaryResultProfile: {
             name?: string;
             email?: string;
             college?: string;
@@ -2570,13 +2860,13 @@ export interface components {
             studentYear?: number;
             profileImageUrl?: string;
         };
-        Response: {
-            profile?: components["schemas"]["Profile"];
-            stats?: components["schemas"]["Stats"];
-            notSubmittedLectures?: components["schemas"]["LectureBrief"][];
-            lateSubmittedLectures?: components["schemas"]["LectureBrief"][];
+        MeSummaryResultResponse: {
+            profile?: components["schemas"]["MeSummaryResultProfile"];
+            stats?: components["schemas"]["MeSummaryResultStats"];
+            notSubmittedLectures?: components["schemas"]["MeSummaryResultLectureBrief"][];
+            lateSubmittedLectures?: components["schemas"]["MeSummaryResultLectureBrief"][];
         };
-        Stats: {
+        MeSummaryResultStats: {
             /** Format: int64 */
             enrolledLectureCount?: number;
             /** Format: int64 */
@@ -2586,12 +2876,12 @@ export interface components {
             /** Format: int64 */
             lateSubmittedCount?: number;
         };
-        ApiResponseListResult: {
+        ApiResponseLectureResultListResult: {
             success?: boolean;
-            data?: components["schemas"]["ListResult"];
+            data?: components["schemas"]["LectureResultListResult"];
             error?: components["schemas"]["ErrorResponse"];
         };
-        Content: {
+        LectureResultContent: {
             /** Format: int64 */
             id?: number;
             /** Format: int32 */
@@ -2605,9 +2895,9 @@ export interface components {
             deadline?: string;
             completed?: boolean;
         };
-        ListResult: {
-            tabs?: components["schemas"]["Tab"][];
-            content?: components["schemas"]["Content"][];
+        LectureResultListResult: {
+            tabs?: components["schemas"]["LectureResultTab"][];
+            content?: components["schemas"]["LectureResultContent"][];
             /** Format: int32 */
             page?: number;
             /** Format: int32 */
@@ -2619,14 +2909,19 @@ export interface components {
             first?: boolean;
             last?: boolean;
         };
-        Tab: {
+        LectureResultTab: {
             /** Format: int64 */
             subCategoryId?: number;
             name?: string;
             /** Format: int64 */
             count?: number;
         };
-        AnswerItem: {
+        ApiResponseListMemberQuestionResultListItem: {
+            success?: boolean;
+            data?: components["schemas"]["MemberQuestionResultListItem"][];
+            error?: components["schemas"]["ErrorResponse"];
+        };
+        MemberQuestionResultAnswerItem: {
             /** Format: int64 */
             id?: number;
             adminName?: string;
@@ -2634,12 +2929,7 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
-        ApiResponseListListItem: {
-            success?: boolean;
-            data?: components["schemas"]["ListItem"][];
-            error?: components["schemas"]["ErrorResponse"];
-        };
-        ListItem: {
+        MemberQuestionResultListItem: {
             /** Format: int64 */
             id?: number;
             authorName?: string;
@@ -2648,19 +2938,85 @@ export interface components {
             createdAt?: string;
             /** @enum {string} */
             status?: "PENDING" | "ANSWERED";
-            answers?: components["schemas"]["AnswerItem"][];
+            answers?: components["schemas"]["MemberQuestionResultAnswerItem"][];
         };
-        ApiResponseDownloadUrl: {
+        ApiResponseLectureResultDownloadUrl: {
             success?: boolean;
-            data?: components["schemas"]["DownloadUrl"];
+            data?: components["schemas"]["LectureResultDownloadUrl"];
             error?: components["schemas"]["ErrorResponse"];
         };
-        DownloadUrl: {
+        LectureResultDownloadUrl: {
             downloadUrl?: string;
             fileName?: string;
             contentType?: string;
             /** Format: int32 */
             expiresIn?: number;
+        };
+        ApiResponseLectureResultDetailResult: {
+            success?: boolean;
+            data?: components["schemas"]["LectureResultDetailResult"];
+            error?: components["schemas"]["ErrorResponse"];
+        };
+        LectureResultAssignmentInfo: {
+            /** Format: int64 */
+            id?: number;
+            title?: string;
+            description?: string;
+            /** Format: date-time */
+            deadline?: string;
+        };
+        LectureResultAuthor: {
+            name?: string;
+            profileImageUrl?: string;
+        };
+        LectureResultDetailResult: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int32 */
+            week?: number;
+            title?: string;
+            description?: string;
+            trackName?: string;
+            subCategoryName?: string;
+            /** Format: int32 */
+            durationMinutes?: number;
+            youtubeUrl?: string;
+            materialUrl?: string;
+            author?: components["schemas"]["LectureResultAuthor"];
+            /** Format: date-time */
+            publishedAt?: string;
+            materials?: components["schemas"]["LectureResultMaterial"][];
+            assignment?: components["schemas"]["LectureResultAssignmentInfo"];
+            mySubmission?: components["schemas"]["LectureResultMySubmission"];
+        };
+        LectureResultFeedbackItem: {
+            /** Format: int64 */
+            id?: number;
+            adminName?: string;
+            content?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        LectureResultMaterial: {
+            /** Format: int64 */
+            fileId?: number;
+            displayName?: string;
+            /** Format: int64 */
+            size?: number;
+            contentType?: string;
+        };
+        LectureResultMySubmission: {
+            /** Format: int64 */
+            id?: number;
+            fileUrl?: string;
+            fileName?: string;
+            linkUrl?: string;
+            comment?: string;
+            /** Format: date-time */
+            submittedAt?: string;
+            /** @enum {string} */
+            status?: "SUBMITTED" | "LATE";
+            feedbacks?: components["schemas"]["LectureResultFeedbackItem"][];
         };
         ApiResponseDownloadUrlResponse: {
             success?: boolean;
@@ -2795,12 +3151,55 @@ export interface components {
             first?: boolean;
             last?: boolean;
         };
-        LectureSummary: {
+        ApiResponseSubmissionDetailResultDetail: {
+            success?: boolean;
+            data?: components["schemas"]["SubmissionDetailResultDetail"];
+            error?: components["schemas"]["ErrorResponse"];
+        };
+        SubmissionDetailResultDetail: {
+            /** Format: int64 */
+            id?: number;
+            lecture?: components["schemas"]["SubmissionDetailResultLectureSummary"];
+            user?: components["schemas"]["SubmissionDetailResultUserSummary"];
+            file?: components["schemas"]["SubmissionDetailResultFileSummary"];
+            linkUrl?: string;
+            comment?: string;
+            /** Format: date-time */
+            submittedAt?: string;
+            /** @enum {string} */
+            status?: "SUBMITTED" | "LATE";
+            feedbacks?: components["schemas"]["SubmissionDetailResultFeedbackItem"][];
+            navigation?: components["schemas"]["SubmissionDetailResultNavigation"];
+        };
+        SubmissionDetailResultFeedbackItem: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int64 */
+            adminId?: number;
+            adminName?: string;
+            content?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        SubmissionDetailResultFileSummary: {
+            /** Format: int64 */
+            fileId?: number;
+            fileName?: string;
+            url?: string;
+            previewUrl?: string;
+            contentType?: string;
+            /** Format: int64 */
+            size?: number;
+            previewable?: boolean;
+        };
+        SubmissionDetailResultLectureSummary: {
             /** Format: int64 */
             id?: number;
             title?: string;
         };
-        Navigation: {
+        SubmissionDetailResultNavigation: {
             /** Format: int64 */
             current?: number;
             /** Format: int64 */
@@ -2810,12 +3209,18 @@ export interface components {
             /** Format: int64 */
             nextSubmissionId?: number;
         };
-        ApiResponseListTrackNode: {
+        SubmissionDetailResultUserSummary: {
+            /** Format: int64 */
+            id?: number;
+            name?: string;
+            major?: string;
+        };
+        ApiResponseListCategoryTreeResultTrackNode: {
             success?: boolean;
-            data?: components["schemas"]["TrackNode"][];
+            data?: components["schemas"]["CategoryTreeResultTrackNode"][];
             error?: components["schemas"]["ErrorResponse"];
         };
-        SubCategoryNode: {
+        CategoryTreeResultSubCategoryNode: {
             /** Format: int64 */
             id?: number;
             name?: string;
@@ -2824,13 +3229,13 @@ export interface components {
             /** Format: int64 */
             lectureCount?: number;
         };
-        TrackNode: {
+        CategoryTreeResultTrackNode: {
             /** Format: int64 */
             id?: number;
             name?: string;
             /** Format: int32 */
             order?: number;
-            subCategories?: components["schemas"]["SubCategoryNode"][];
+            subCategories?: components["schemas"]["CategoryTreeResultSubCategoryNode"][];
         };
         ApiResponseListStaffResult: {
             success?: boolean;
@@ -2927,12 +3332,7 @@ export interface components {
             data?: components["schemas"]["AdjacentApplicantResult"];
             error?: components["schemas"]["ErrorResponse"];
         };
-        ApiResponsePageResponseListRow: {
-            success?: boolean;
-            data?: components["schemas"]["PageResponseListRow"];
-            error?: components["schemas"]["ErrorResponse"];
-        };
-        ListRow: {
+        AdminQuestionResultListRow: {
             /** Format: int32 */
             no?: number;
             /** Format: int64 */
@@ -2947,8 +3347,13 @@ export interface components {
             statusLabel?: string;
             lectureTitle?: string;
         };
-        PageResponseListRow: {
-            content?: components["schemas"]["ListRow"][];
+        ApiResponsePageResponseAdminQuestionResultListRow: {
+            success?: boolean;
+            data?: components["schemas"]["PageResponseAdminQuestionResultListRow"];
+            error?: components["schemas"]["ErrorResponse"];
+        };
+        PageResponseAdminQuestionResultListRow: {
+            content?: components["schemas"]["AdminQuestionResultListRow"][];
             /** Format: int32 */
             page?: number;
             /** Format: int32 */
@@ -2960,13 +3365,56 @@ export interface components {
             first?: boolean;
             last?: boolean;
         };
-        ApiResponsePageResponseItem: {
+        AdminQuestionResultAnswerView: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int64 */
+            adminId?: number;
+            adminName?: string;
+            content?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        AdminQuestionResultAuthor: {
+            /** Format: int64 */
+            id?: number;
+            name?: string;
+            college?: string;
+            major?: string;
+            /** @enum {string} */
+            role?: "GUEST" | "MEMBER" | "ADMIN";
+        };
+        AdminQuestionResultDetail: {
+            /** Format: int64 */
+            id?: number;
+            author?: components["schemas"]["AdminQuestionResultAuthor"];
+            /** Format: date-time */
+            createdAt?: string;
+            content?: string;
+            /** @enum {string} */
+            status?: "PENDING" | "ANSWERED";
+            lecture?: components["schemas"]["AdminQuestionResultLectureBrief"];
+            answer?: components["schemas"]["AdminQuestionResultAnswerView"];
+        };
+        AdminQuestionResultLectureBrief: {
+            /** Format: int64 */
+            id?: number;
+            title?: string;
+        };
+        ApiResponseAdminQuestionResultDetail: {
             success?: boolean;
-            data?: components["schemas"]["PageResponseItem"];
+            data?: components["schemas"]["AdminQuestionResultDetail"];
             error?: components["schemas"]["ErrorResponse"];
         };
-        PageResponseItem: {
-            content?: components["schemas"]["Item"][];
+        ApiResponsePageResponseProjectResultItem: {
+            success?: boolean;
+            data?: components["schemas"]["PageResponseProjectResultItem"];
+            error?: components["schemas"]["ErrorResponse"];
+        };
+        PageResponseProjectResultItem: {
+            content?: components["schemas"]["ProjectResultItem"][];
             /** Format: int32 */
             page?: number;
             /** Format: int32 */
@@ -2978,12 +3426,49 @@ export interface components {
             first?: boolean;
             last?: boolean;
         };
-        ApiResponseOverview: {
+        ApiResponseLectureAdminResultListResult: {
             success?: boolean;
-            data?: components["schemas"]["Overview"];
+            data?: components["schemas"]["LectureAdminResultListResult"];
             error?: components["schemas"]["ErrorResponse"];
         };
-        Counts: {
+        CategorySummary: {
+            /** Format: int64 */
+            id?: number;
+            name?: string;
+            subCategories?: components["schemas"]["CategorySummarySubCategoryBrief"][];
+        };
+        CategorySummarySubCategoryBrief: {
+            /** Format: int64 */
+            id?: number;
+            name?: string;
+        };
+        LectureAdminResultLectureCard: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int32 */
+            week?: number;
+            title?: string;
+            description?: string;
+            /** Format: date-time */
+            deadline?: string;
+            /** Format: int64 */
+            submittedCount?: number;
+            /** Format: int64 */
+            totalCount?: number;
+            /** Format: int64 */
+            feedbackDoneCount?: number;
+            isPublished?: boolean;
+        };
+        LectureAdminResultListResult: {
+            tracks?: components["schemas"]["CategorySummary"][];
+            lectures?: components["schemas"]["LectureAdminResultLectureCard"][];
+        };
+        ApiResponseSubmissionOverviewResultOverview: {
+            success?: boolean;
+            data?: components["schemas"]["SubmissionOverviewResultOverview"];
+            error?: components["schemas"]["ErrorResponse"];
+        };
+        SubmissionOverviewResultCounts: {
             /** Format: int64 */
             submitted?: number;
             /** Format: int64 */
@@ -2991,10 +3476,17 @@ export interface components {
             /** Format: int64 */
             total?: number;
         };
-        Overview: {
-            lecture?: components["schemas"]["LectureSummary"];
-            counts?: components["schemas"]["Counts"];
-            content?: components["schemas"]["Row"][];
+        SubmissionOverviewResultLectureSummary: {
+            /** Format: int64 */
+            id?: number;
+            title?: string;
+            /** Format: date-time */
+            deadline?: string;
+        };
+        SubmissionOverviewResultOverview: {
+            lecture?: components["schemas"]["SubmissionOverviewResultLectureSummary"];
+            counts?: components["schemas"]["SubmissionOverviewResultCounts"];
+            content?: components["schemas"]["SubmissionOverviewResultRow"][];
             /** Format: int32 */
             page?: number;
             /** Format: int32 */
@@ -3006,7 +3498,7 @@ export interface components {
             first?: boolean;
             last?: boolean;
         };
-        Row: {
+        SubmissionOverviewResultRow: {
             /** Format: int64 */
             userId?: number;
             userName?: string;
@@ -3020,9 +3512,9 @@ export interface components {
             submittedAt?: string;
             feedbackDone?: boolean;
         };
-        ApiResponseNavigation: {
+        ApiResponseSubmissionDetailResultNavigation: {
             success?: boolean;
-            data?: components["schemas"]["Navigation"];
+            data?: components["schemas"]["SubmissionDetailResultNavigation"];
             error?: components["schemas"]["ErrorResponse"];
         };
         ApiResponseGroupBoardResult: {
@@ -3093,9 +3585,9 @@ export interface components {
         SubmissionStatusResult: {
             /** Format: int64 */
             totalMemberCount?: number;
-            weeks?: components["schemas"]["WeekStat"][];
+            weeks?: components["schemas"]["SubmissionStatusResultWeekStat"][];
         };
-        WeekStat: {
+        SubmissionStatusResultWeekStat: {
             /** Format: int64 */
             lectureId?: number;
             /** Format: int32 */
@@ -3160,7 +3652,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Submit"];
+                "application/json": components["schemas"]["SubmissionRequestSubmit"];
             };
         };
         responses: {
@@ -3170,7 +3662,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseDetail"];
+                    "application/json": components["schemas"]["ApiResponseSubmissionResultDetail"];
                 };
             };
         };
@@ -3256,7 +3748,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TrackUpdate"];
+                "application/json": components["schemas"]["CategoryRequestTrackUpdate"];
             };
         };
         responses: {
@@ -3266,7 +3758,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseTrackResult"];
+                    "application/json": components["schemas"]["ApiResponseCategoryResponseTrackResult"];
                 };
             };
         };
@@ -3304,7 +3796,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SubCategoryUpdate"];
+                "application/json": components["schemas"]["CategoryRequestSubCategoryUpdate"];
             };
         };
         responses: {
@@ -3314,7 +3806,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseSubCategoryResult"];
+                    "application/json": components["schemas"]["ApiResponseCategoryResponseSubCategoryResult"];
                 };
             };
         };
@@ -3836,7 +4328,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Write"];
+                "application/json": components["schemas"]["AdminAnswerRequestWrite"];
             };
         };
         responses: {
@@ -3846,7 +4338,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseUpdateResult"];
+                    "application/json": components["schemas"]["ApiResponseAdminAnswerResultUpdateResult"];
                 };
             };
         };
@@ -3862,7 +4354,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Write"];
+                "application/json": components["schemas"]["AdminAnswerRequestWrite"];
             };
         };
         responses: {
@@ -3872,7 +4364,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseCreateResult"];
+                    "application/json": components["schemas"]["ApiResponseAdminAnswerResultCreateResult"];
                 };
             };
         };
@@ -3888,7 +4380,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Write"];
+                "application/json": components["schemas"]["ProjectRequestWrite"];
             };
         };
         responses: {
@@ -3898,7 +4390,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseItem"];
+                    "application/json": components["schemas"]["ApiResponseProjectResultItem"];
                 };
             };
         };
@@ -3940,7 +4432,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseDetailResult"];
+                    "application/json": components["schemas"]["ApiResponseLectureAdminResultDetailResult"];
                 };
             };
         };
@@ -3956,7 +4448,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Update"];
+                "application/json": components["schemas"]["LectureRequestUpdate"];
             };
         };
         responses: {
@@ -3966,7 +4458,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseDetailResult"];
+                    "application/json": components["schemas"]["ApiResponseLectureAdminResultDetailResult"];
                 };
             };
         };
@@ -4048,7 +4540,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Write"];
+                "application/json": components["schemas"]["FeedbackRequestWrite"];
             };
         };
         responses: {
@@ -4058,7 +4550,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseUpdateResult"];
+                    "application/json": components["schemas"]["ApiResponseFeedbackResultUpdateResult"];
                 };
             };
         };
@@ -4080,7 +4572,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseListListItem"];
+                    "application/json": components["schemas"]["ApiResponseListMemberQuestionResultListItem"];
                 };
             };
         };
@@ -4096,7 +4588,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Create"];
+                "application/json": components["schemas"]["MemberQuestionRequestCreate"];
             };
         };
         responses: {
@@ -4106,7 +4598,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseCreateResult"];
+                    "application/json": components["schemas"]["ApiResponseMemberQuestionResultCreateResult"];
                 };
             };
         };
@@ -4122,7 +4614,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Submit"];
+                "application/json": components["schemas"]["SubmissionRequestSubmit"];
             };
         };
         responses: {
@@ -4132,7 +4624,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseDetail"];
+                    "application/json": components["schemas"]["ApiResponseSubmissionResultDetail"];
                 };
             };
         };
@@ -4291,7 +4783,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Write"];
+                "application/json": components["schemas"]["FeedbackRequestWrite"];
             };
         };
         responses: {
@@ -4301,7 +4793,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseCreateResult"];
+                    "application/json": components["schemas"]["ApiResponseFeedbackResultCreateResult"];
                 };
             };
         };
@@ -4321,7 +4813,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseListTrackNode"];
+                    "application/json": components["schemas"]["ApiResponseListCategoryTreeResultTrackNode"];
                 };
             };
         };
@@ -4335,7 +4827,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TrackCreate"];
+                "application/json": components["schemas"]["CategoryRequestTrackCreate"];
             };
         };
         responses: {
@@ -4345,7 +4837,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseTrackResult"];
+                    "application/json": components["schemas"]["ApiResponseCategoryResponseTrackResult"];
                 };
             };
         };
@@ -4359,7 +4851,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SubCategoryCreate"];
+                "application/json": components["schemas"]["CategoryRequestSubCategoryCreate"];
             };
         };
         responses: {
@@ -4369,7 +4861,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseSubCategoryResult"];
+                    "application/json": components["schemas"]["ApiResponseCategoryResponseSubCategoryResult"];
                 };
             };
         };
@@ -4414,6 +4906,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResponseStaffResult"];
+                };
+            };
+        };
+    };
+    save: {
+        parameters: {
+            query?: {
+                force?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HomeSaveRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseHomeSaveResult"];
                 };
             };
         };
@@ -4656,7 +5174,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponsePageResponseItem"];
+                    "application/json": components["schemas"]["ApiResponsePageResponseProjectResultItem"];
                 };
             };
         };
@@ -4670,7 +5188,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Write"];
+                "application/json": components["schemas"]["ProjectRequestWrite"];
             };
         };
         responses: {
@@ -4680,7 +5198,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseItem"];
+                    "application/json": components["schemas"]["ApiResponseProjectResultItem"];
                 };
             };
         };
@@ -4704,7 +5222,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseListResult"];
+                    "application/json": components["schemas"]["ApiResponseLectureAdminResultListResult"];
                 };
             };
         };
@@ -4718,7 +5236,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Create"];
+                "application/json": components["schemas"]["LectureRequestCreate"];
             };
         };
         responses: {
@@ -4728,7 +5246,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseCreateResult"];
+                    "application/json": components["schemas"]["ApiResponseLectureAdminResultCreateResult"];
                 };
             };
         };
@@ -4916,6 +5434,26 @@ export interface operations {
             };
         };
     };
+    getHome: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseHomeResult"];
+                };
+            };
+        };
+    };
     getFaqs_1: {
         parameters: {
             query?: never;
@@ -4994,7 +5532,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseResponse"];
+                    "application/json": components["schemas"]["ApiResponseMeSummaryResultResponse"];
                 };
             };
         };
@@ -5018,7 +5556,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseListResult"];
+                    "application/json": components["schemas"]["ApiResponseLectureResultListResult"];
                 };
             };
         };
@@ -5041,7 +5579,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseDownloadUrl"];
+                    "application/json": components["schemas"]["ApiResponseLectureResultDownloadUrl"];
                 };
             };
         };
@@ -5063,7 +5601,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseDetailResult"];
+                    "application/json": components["schemas"]["ApiResponseLectureResultDetailResult"];
                 };
             };
         };
@@ -5238,7 +5776,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseDetail"];
+                    "application/json": components["schemas"]["ApiResponseSubmissionDetailResultDetail"];
                 };
             };
         };
@@ -5377,7 +5915,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponsePageResponseListRow"];
+                    "application/json": components["schemas"]["ApiResponsePageResponseAdminQuestionResultListRow"];
                 };
             };
         };
@@ -5399,7 +5937,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseDetail"];
+                    "application/json": components["schemas"]["ApiResponseAdminQuestionResultDetail"];
                 };
             };
         };
@@ -5426,7 +5964,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseOverview"];
+                    "application/json": components["schemas"]["ApiResponseSubmissionOverviewResultOverview"];
                 };
             };
         };
@@ -5453,7 +5991,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponseNavigation"];
+                    "application/json": components["schemas"]["ApiResponseSubmissionDetailResultNavigation"];
                 };
             };
         };

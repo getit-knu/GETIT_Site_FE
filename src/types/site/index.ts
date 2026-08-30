@@ -12,7 +12,11 @@ import type { components } from "../../apis/generated";
  * **공개 운영진 조회(`PublicStaff` 이하)는 다르다** — 이미 스키마가 있어 `generated.ts`
  * 에서 그대로 재노출한다.
  *
- * 모집 일정 · 강의 분류 · FAQ는 아직 BE 연동 전이라(각각 #190·#195·미배정) 목 데이터로 남는다.
+ * 모집 일정 · FAQ는 아직 BE 연동 전이라(각각 #190·미배정) 목 데이터로 남는다.
+ *
+ * **강의 분류(트랙 · 소분류)는 다르다** — `#195`에서 실제 `Setting.Category` 도메인으로
+ * 교체했다. 스키마 이름 충돌 버그(`getit-knu/GETIT_Site_BE#137`)가 `#138`로 고쳐진 뒤라
+ * `generated.ts`에서 그대로 재노출한다.
  */
 
 /** 진행 기수. 활성 기수는 하나뿐이다 — `PUT` 으로 새 기수를 활성화하면 기존 기수는 내려간다. */
@@ -44,16 +48,29 @@ export interface SiteSchedule {
   interviewStartAt: string;
 }
 
-/** 강의 분류. `#195`에서 실제 BE `Setting.Category` 로 교체한다. 아직 목이다. */
-export interface SiteSubCategory {
-  id: number | null;
+/** 강의 분류 소분류. `lectureCount`는 삭제 전 안내용(서버도 `CATEGORY_IN_USE`로 별도 막는다). */
+export type SiteSubCategory = Required<components["schemas"]["CategoryTreeResultSubCategoryNode"]>;
+
+/** 10.3 응답. 대분류 하나 + 그 아래 소분류 목록. */
+export interface SiteTrack {
+  id: number;
+  name: string;
+  order: number;
+  subCategories: SiteSubCategory[];
+}
+
+/**
+ * 10.4 · 10.5 요청 본문. 생성·수정 둘 다 이름뿐이다 — `order`는 생성 스키마엔 아예 없고
+ * (새 대분류는 항상 끝에 붙는다), 수정 스키마엔 있지만 이 화면엔 순서 변경 UI가 없어 안 쓴다.
+ */
+export interface TrackPayload {
   name: string;
 }
 
-export interface SiteTrack {
-  id: number | null;
+/** 10.7 요청 본문. 수정(10.8)은 `trackId` 없이 `name`만 보낸다. */
+export interface SubCategoryPayload {
+  trackId: number;
   name: string;
-  subCategories: SiteSubCategory[];
 }
 
 /**
@@ -116,14 +133,13 @@ export interface Faq {
 }
 
 /**
- * 아직 실제 엔드포인트가 없는 섹션들의 묶음(모집 일정 · 강의 분류 · FAQ).
+ * 아직 실제 엔드포인트가 없는 섹션들의 묶음(모집 일정 · FAQ).
  *
- * **진행 기수 · 운영진 · 행사 · 커리큘럼은 여기 없다** — 각자 실제 CRUD 엔드포인트로
- * 개별 반영된다(#194).
+ * **진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류는 여기 없다** — 각자 실제 CRUD
+ * 엔드포인트로 개별 반영된다(#194 · #195).
  */
 export interface SiteSettings {
   schedule: SiteSchedule;
-  tracks: SiteTrack[];
   faqs: Faq[];
 }
 

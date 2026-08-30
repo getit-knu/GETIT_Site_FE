@@ -20,6 +20,10 @@ const SITE_ERROR_MESSAGES: Record<string, string> = {
   INVALID_EVENT_PERIOD: "종료일이 시작일보다 빠릅니다.",
   // 커리큘럼
   CURRICULUM_NOT_FOUND: "커리큘럼을 찾을 수 없습니다. 목록을 새로고침해 주세요.",
+  // 강의 분류
+  TRACK_NOT_FOUND: "대분류를 찾을 수 없습니다. 목록을 새로고침해 주세요.",
+  SUBCATEGORY_NOT_FOUND: "소분류를 찾을 수 없습니다. 목록을 새로고침해 주세요.",
+  CATEGORY_IN_USE: "연결된 강의가 있어 삭제할 수 없습니다.",
   // 공통
   VALIDATION_FAILED: "입력값을 확인해 주세요.",
   FORBIDDEN: "사이트 설정을 바꿀 권한이 없습니다.",
