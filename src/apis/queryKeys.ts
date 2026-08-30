@@ -142,5 +142,6 @@ export const queryKeys = {
     recruitmentStatus: () => [...queryKeys.public.all, "recruitment-status"] as const,
     faqs: () => [...queryKeys.public.all, "faqs"] as const,
     projects: (params: PublicProjectListParams) => [...queryKeys.public.all, "projects", params] as const,
+    home: () => [...queryKeys.public.all, "home"] as const,
   },
 } as const;

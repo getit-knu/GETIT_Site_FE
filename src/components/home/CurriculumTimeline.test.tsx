@@ -1,24 +1,63 @@
-import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { getHome } from "../../apis/public/publicApi";
+import type { HomeResult } from "../../types/home";
 
 import { CurriculumTimeline } from "./CurriculumTimeline";
 
+vi.mock("../../apis/public/publicApi");
+
+function home(over: Partial<HomeResult> = {}): HomeResult {
+  return {
+    curriculums: [
+      { id: 1, order: 1, title: "GETIT Chat", subtitle: "" },
+      { id: 2, order: 2, title: "SW 교육", subtitle: "실무 중심 커리큘럼" },
+    ],
+    featuredProjects: [],
+    features: { stockGame: false, mockInvestment: false },
+    ...over,
+  };
+}
+
+function renderTimeline() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <CurriculumTimeline />
+    </QueryClientProvider>,
+  );
+}
+
 describe("CurriculumTimeline", () => {
-  it("제목과 1학기 · 2학기 커리큘럼을 보여준다", () => {
-    render(<CurriculumTimeline />);
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(getHome).mockResolvedValue(home());
+  });
 
-    expect(screen.getByRole("heading", { name: "커리큘럼" })).toBeInTheDocument();
+  it("제목과 커리큘럼 항목을 order 순으로 보여준다", async () => {
+    renderTimeline();
 
-    // 배지(h3)는 항목 목록과 다른 자식 div(semesterBadgeRow)에 있어, 그 부모(semester)까지
-    // 올라가야 이 학기의 항목 전체를 스코프 안에 잡을 수 있다.
-    const semester1 = within(screen.getByRole("heading", { name: "1학기" }).closest("div")!.parentElement!);
-    for (const item of ["GETIT Chat", "SW 교육", "창업 빌드업", "세미나", "창업 관련 행사", "창업 해커톤"]) {
-      expect(semester1.getByText(item)).toBeInTheDocument();
-    }
+    expect(await screen.findByRole("heading", { name: "커리큘럼" })).toBeInTheDocument();
+    expect(screen.getByText("GETIT Chat")).toBeInTheDocument();
+    expect(screen.getByText("SW 교육")).toBeInTheDocument();
+    expect(screen.getByText("실무 중심 커리큘럼")).toBeInTheDocument();
+  });
 
-    const semester2 = within(screen.getByRole("heading", { name: "2학기" }).closest("div")!.parentElement!);
-    for (const item of ["GETIT Chat", "창업 빌드업", "세미나", "아이디어톤", "MVP 제작", "유저유치행사"]) {
-      expect(semester2.getByText(item)).toBeInTheDocument();
-    }
+  it("subtitle이 비어 있으면 그 줄을 그리지 않는다", async () => {
+    renderTimeline();
+
+    await screen.findByText("GETIT Chat");
+    // 첫 항목은 subtitle이 빈 문자열이라 별도 문단이 없어야 한다.
+    expect(screen.queryByText("", { selector: "p" })).not.toBeInTheDocument();
+  });
+
+  it("커리큘럼이 없으면 아무것도 그리지 않는다", async () => {
+    vi.mocked(getHome).mockResolvedValue(home({ curriculums: [] }));
+    const { container } = renderTimeline();
+
+    await vi.waitFor(() => expect(getHome).toHaveBeenCalled());
+    expect(container).toBeEmptyDOMElement();
   });
 });

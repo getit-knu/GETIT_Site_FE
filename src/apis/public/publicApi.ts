@@ -1,4 +1,4 @@
-import type { PublicFaq } from "../../types/home";
+import type { HomeResult, PublicFaq } from "../../types/home";
 import type { College, Major } from "../../types/college";
 import type { PublicProjectBoard, PublicProjectListParams } from "../../types/project";
 import type { RecruitmentStatus } from "../../types/recruitment";
@@ -6,10 +6,16 @@ import type { StaffDirectory } from "../../types/site";
 import { client } from "../client";
 
 /**
- * 공개 데이터 API. 명세서 2.3 · 2.4 · 2.5 · 2.6 · 2.7 · 2.8.
+ * 공개 데이터 API. 명세서 2.1 · 2.3 · 2.4 · 2.5 · 2.6 · 2.7 · 2.8.
  *
  * 전부 로그인이 필요 없다 — `RequireRole` 밖(공개 라우트)에서도 호출된다.
  */
+
+/** `GET /api/public/home` — 2.1. */
+export async function getHome(): Promise<HomeResult> {
+  const { data } = await client.get<HomeResult>("/api/public/home");
+  return data;
+}
 
 /** `GET /api/public/staffs` */
 export async function getStaffs(): Promise<StaffDirectory> {
