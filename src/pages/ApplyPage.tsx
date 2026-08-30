@@ -1,14 +1,22 @@
 import { useId, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
+import { getForm } from "../apis/application/myApplicationApi";
 import { getColleges, getMajors } from "../apis/public/publicApi";
 import { queryKeys } from "../apis/queryKeys";
+import type { AnswerState } from "../components/apply/answerState";
+import { emptyAnswer } from "../components/apply/answerState";
+import { QuestionField } from "../components/apply/QuestionField";
 import { Input } from "../components/ui/Input/Input";
-import { TextArea } from "../components/ui/TextArea/TextArea";
+import { ErrorState } from "../components/ui/states/States";
+import { applicationFormErrorMessage } from "../errors/application/errorMessages";
+import type { ApplicationFormQuestion, ApplicationFormResult, BasicInfo } from "../types/application";
 
 import styles from "./ApplyPage.module.scss";
 
-interface ApplyFormState {
+const NOT_OPEN_MESSAGE = "지금은 지원서 접수 기간이 아닙니다.";
+
+interface BasicInfoState {
   name: string;
   email: string;
   phone: string;
@@ -16,56 +24,61 @@ interface ApplyFormState {
   collegeId: number;
   /** 0 = 미선택. 단과 대학이 바뀌면 같이 초기화된다. */
   majorId: number;
+  grade: string;
   studentId: string;
-  motivation: string;
-  experience: string;
-  projectIdea: string;
-  message: string;
 }
 
-const INITIAL_FORM: ApplyFormState = {
-  name: "",
-  email: "",
-  phone: "",
-  collegeId: 0,
-  majorId: 0,
-  studentId: "",
-  motivation: "",
-  experience: "",
-  projectIdea: "",
-  message: "",
-};
+function toBasicInfoState(prefill: BasicInfo): BasicInfoState {
+  return {
+    name: prefill.name,
+    email: prefill.email,
+    phone: prefill.phoneNumber ?? "",
+    collegeId: prefill.collegeId ?? 0,
+    majorId: prefill.majorId ?? 0,
+    grade: prefill.grade !== null ? String(prefill.grade) : "",
+    studentId: prefill.studentNumber ?? "",
+  };
+}
 
-const MOTIVATION_MAX_LENGTH = 300;
+type Answers = Record<number, AnswerState>;
 
-/**
- * 지원서 작성. Figma 와이어프레임(`6:5942`) 기준.
- *
- * 폼 상태는 로컬에서만 관리한다. 양식 조회 · 임시저장 · 제출 · 로그인 가드는
- * 후속 이슈(API 연동)에서 붙인다 — 지금은 sticky footer 버튼을 눌러도 아무 일도
- * 일어나지 않는다. 다른 화면에서 아직 없는 목적지를 다루는 것과 같은 방식이다.
- */
-export default function ApplyPage() {
-  const [form, setForm] = useState<ApplyFormState>(INITIAL_FORM);
+function initialAnswers(questions: ApplicationFormQuestion[]): Answers {
+  return Object.fromEntries(questions.map((question) => [question.id, emptyAnswer(question)]));
+}
+
+interface ApplyFormProps {
+  form: ApplicationFormResult;
+}
+
+/** 조회한 뒤에만 마운트한다. 그래야 `useState` 초기값으로 프리필된 정보를 넣을 수 있다. */
+function ApplyForm({ form }: ApplyFormProps) {
+  const [basicInfo, setBasicInfo] = useState<BasicInfoState>(() => toBasicInfoState(form.basicInfoPrefill));
+  const [answers, setAnswers] = useState<Answers>(() => initialAnswers(form.questions));
   const collegeSelectId = useId();
   const majorSelectId = useId();
 
-  function update<K extends keyof ApplyFormState>(key: K) {
-    return (value: string) => setForm((prev) => ({ ...prev, [key]: value }));
+  function update<K extends keyof BasicInfoState>(key: K) {
+    return (value: string) => setBasicInfo((prev) => ({ ...prev, [key]: value }));
   }
 
   function handleCollegeChange(collegeId: number) {
     // 단과 대학이 바뀌면 이전 대학의 전공이 그대로 남아있으면 안 된다.
-    setForm((prev) => ({ ...prev, collegeId, majorId: 0 }));
+    setBasicInfo((prev) => ({ ...prev, collegeId, majorId: 0 }));
   }
 
   function handleMajorChange(majorId: number) {
-    setForm((prev) => ({ ...prev, majorId }));
+    setBasicInfo((prev) => ({ ...prev, majorId }));
+  }
+
+  function updateAnswer(questionId: number, next: AnswerState) {
+    setAnswers((prev) => ({ ...prev, [questionId]: next }));
   }
 
   const { data: colleges = [] } = useQuery({ queryKey: queryKeys.public.colleges(), queryFn: getColleges });
   const { data: majors = [] } = useQuery({ queryKey: queryKeys.public.majors(), queryFn: getMajors });
-  const majorOptions = majors.filter((major) => major.collegeId === form.collegeId);
+  const majorOptions = majors.filter((major) => major.collegeId === basicInfo.collegeId);
+
+  const questions = [...form.questions].sort((a, b) => a.order - b.order);
 
   return (
     <div className={styles.page}>
@@ -100,15 +113,20 @@ export default function ApplyPage() {
               <section className={styles.section}>
                 <h3 className={styles.sectionTitle}>기본 정보</h3>
                 <div className={styles.fieldGrid}>
-                  <Input label="이름 *" value={form.name} onChange={update("name")} placeholder="홍길동" />
+                  <Input label="이름 *" value={basicInfo.name} onChange={update("name")} placeholder="홍길동" />
                   <Input
                     label="이메일 *"
                     type="email"
-                    value={form.email}
+                    value={basicInfo.email}
                     onChange={update("email")}
                     placeholder="example@email.com"
                   />
-                  <Input label="전화번호 *" value={form.phone} onChange={update("phone")} placeholder="010-1234-5678" />
+                  <Input
+                    label="전화번호 *"
+                    value={basicInfo.phone}
+                    onChange={update("phone")}
+                    placeholder="010-1234-5678"
+                  />
                   <div className={styles.selectField}>
                     <label htmlFor={collegeSelectId} className={styles.selectLabel}>
                       단과 대학 *
@@ -116,7 +134,7 @@ export default function ApplyPage() {
                     <select
                       id={collegeSelectId}
                       className={styles.select}
-                      value={form.collegeId}
+                      value={basicInfo.collegeId}
                       onChange={(event) => handleCollegeChange(Number(event.target.value))}
                     >
                       <option value={0}>단과 대학을 선택해주세요</option>
@@ -134,12 +152,12 @@ export default function ApplyPage() {
                     <select
                       id={majorSelectId}
                       className={styles.select}
-                      value={form.majorId}
-                      disabled={form.collegeId === 0}
+                      value={basicInfo.majorId}
+                      disabled={basicInfo.collegeId === 0}
                       onChange={(event) => handleMajorChange(Number(event.target.value))}
                     >
                       <option value={0}>
-                        {form.collegeId === 0 ? "단과 대학을 먼저 선택해주세요" : "전공을 선택해주세요"}
+                        {basicInfo.collegeId === 0 ? "단과 대학을 먼저 선택해주세요" : "전공을 선택해주세요"}
                       </option>
                       {majorOptions.map((major) => (
                         <option key={major.id} value={major.id}>
@@ -149,8 +167,15 @@ export default function ApplyPage() {
                     </select>
                   </div>
                   <Input
+                    label="학년 *"
+                    type="number"
+                    value={basicInfo.grade}
+                    onChange={update("grade")}
+                    placeholder="1"
+                  />
+                  <Input
                     label="학번(10자) *"
-                    value={form.studentId}
+                    value={basicInfo.studentId}
                     onChange={update("studentId")}
                     placeholder="2021123456"
                     maxLength={10}
@@ -159,36 +184,16 @@ export default function ApplyPage() {
               </section>
 
               <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>지원 동기 및 경험</h3>
+                <h3 className={styles.sectionTitle}>지원 문항</h3>
                 <div className={styles.fieldStack}>
-                  <TextArea
-                    label="GETIT에 지원하게 된 동기는 무엇인가요? *"
-                    value={form.motivation}
-                    onChange={update("motivation")}
-                    placeholder="지원 동기를 자유롭게 작성해주세요."
-                    maxLength={MOTIVATION_MAX_LENGTH}
-                  />
-                  <TextArea
-                    label="프로그래밍 경험이 있다면 간단히 설명해주세요"
-                    value={form.experience}
-                    onChange={update("experience")}
-                    placeholder="언어, 프로젝트 경험 등을 작성해주세요. (선택사항)"
-                    maxLength={MOTIVATION_MAX_LENGTH}
-                  />
-                  <TextArea
-                    label="GETIT에서 어떤 프로젝트를 하고 싶으신가요? *"
-                    value={form.projectIdea}
-                    onChange={update("projectIdea")}
-                    placeholder="관심 있는 프로젝트나 아이디어를 자유롭게 작성해주세요."
-                    maxLength={MOTIVATION_MAX_LENGTH}
-                  />
-                  <TextArea
-                    label="궁금한 점이나 하고 싶은 말이 있다면 자유롭게 작성해주세요"
-                    value={form.message}
-                    onChange={update("message")}
-                    placeholder="질문이나 하고 싶은 말을 자유롭게 작성해주세요. (선택사항)"
-                    maxLength={MOTIVATION_MAX_LENGTH}
-                  />
+                  {questions.map((question) => (
+                    <QuestionField
+                      key={question.id}
+                      question={question}
+                      answer={answers[question.id]}
+                      onChange={(next) => updateAnswer(question.id, next)}
+                    />
+                  ))}
                 </div>
               </section>
             </form>
@@ -208,4 +213,40 @@ export default function ApplyPage() {
       </div>
     </div>
   );
+}
+
+/**
+ * 지원서 작성. Figma 와이어프레임(`6:5942`) 기준.
+ *
+ * `GET /api/applications/form`으로 문항(#188)을 받아 동적으로 그린다. 폼 상태는 여전히
+ * 로컬에서만 관리한다 — 임시저장 · 제출은 후속 이슈(#189)에서 붙인다. 지금은 sticky
+ * footer 버튼을 눌러도 아무 일도 일어나지 않는다.
+ */
+export default function ApplyPage() {
+  const { data, isPending, isError, error, refetch } = useQuery({
+    queryKey: queryKeys.myApplication.form(),
+    queryFn: getForm,
+  });
+
+  if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
+  if (isError) {
+    return <ErrorState message={applicationFormErrorMessage(error)} onRetry={() => void refetch()} />;
+  }
+
+  if (data.phase !== "DOCUMENT_OPEN") {
+    return (
+      <div className={styles.page}>
+        <div className={styles.hero}>
+          <div className={styles.inner}>
+            <div className={styles.heading}>
+              <h1 className={styles.title}>GETIT 지원하기</h1>
+              <p className={styles.subtitle}>{NOT_OPEN_MESSAGE}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return <ApplyForm form={data} />;
 }

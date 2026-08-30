@@ -43,6 +43,12 @@ export const queryKeys = {
     detail: (id: number, params: ApplicantListParams) => [...queryKeys.applications.details(), id, params] as const,
   },
 
+  /** 로그인한 지원자 본인의 지원서. 어드민 `applications`와는 다른 도메인이다. */
+  myApplication: {
+    all: ["myApplication"] as const,
+    form: () => [...queryKeys.myApplication.all, "form"] as const,
+  },
+
   /**
    * 대시보드는 카드 5개가 각자 조회한다. 한 곳이 실패해도 나머지는 보여야 하므로
    * 키를 카드 단위로 나눈다.
