@@ -4,25 +4,29 @@ import { NavLink } from "react-router";
 
 import { useLogout } from "../../hooks/auth/useLogout";
 import { useSession } from "../../hooks/auth/useSession";
-import type { Role } from "../../types/auth";
+import type { Me } from "../../types/auth";
 
 import styles from "./Nav.module.scss";
 
 const NAV_LINKS_ID = "nav-links";
 
-/** 로그인한 역할별로 자기 영역으로 가는 링크. 아직 승인 전인 GUEST는 갈 곳이 없어 `null`. */
-function areaLinkFor(role: Role): { to: string; label: string } | null {
-  if (role === "ADMIN") return { to: "/admin", label: "관리자 페이지" };
-  if (role === "MEMBER") return { to: "/member", label: "부원 페이지" };
-  return null;
+/**
+ * 우측 끝 CTA 버튼. 로그인 전(또는 아직 승인 전인 GUEST)엔 "지원하기"고, 로그인한
+ * 부원·운영진에게는 지원하기가 의미 없어 자기 영역으로 가는 버튼으로 바뀐다(#238).
+ */
+function ctaFor(user: Me | undefined): { to: string; label: string } {
+  if (user?.role === "ADMIN") return { to: "/admin", label: "관리자" };
+  if (user?.role === "MEMBER") return { to: "/member", label: "부원" };
+  return { to: "/apply", label: "지원하기" };
 }
 
 /**
  * 공개 사이트 상단 네비게이션.
  *
- * **로그인 상태를 반영한다(#204).** 로그인 전엔 "로그인" 링크, 로그인 후엔 역할별
- * 진입 링크(GUEST는 없음)와 "로그아웃"을 보여준다 — `AdminLayout`·`MemberLayout`은
- * 원래도 `useSession()`을 썼지만 이 공개 Nav는 처음부터 로그인 여부를 아예 안 봤다.
+ * **로그인 상태를 반영한다(#204).** 로그인 전엔 "로그인" 링크, 로그인 후엔 "로그아웃"을
+ * 보여준다 — `AdminLayout`·`MemberLayout`은 원래도 `useSession()`을 썼지만 이 공개
+ * Nav는 처음부터 로그인 여부를 아예 안 봤다. 역할별 진입은 별도 텍스트 링크 대신
+ * CTA 버튼 하나로 통합한다(`ctaFor`) — 중복 링크를 피하기 위함이다.
  *
  * 좁은 화면에서는 로고·햄버거 버튼만 한 줄로 보이고, 메뉴는 버튼을 눌러야 펼쳐지는
  * 드롭다운으로 뺀다(#154) — 이전엔 메뉴를 로고 아래로 그냥 세로로 쌓았었다(#61).
@@ -33,7 +37,7 @@ export function Nav() {
   const handleLogout = useLogout();
   const closeMenu = () => setMenuOpen(false);
 
-  const areaLink = user !== undefined ? areaLinkFor(user.role) : null;
+  const cta = ctaFor(user);
 
   return (
     <header className={styles.nav}>
@@ -85,27 +89,16 @@ export function Nav() {
             운영진
           </NavLink>
           {isAuthenticated ? (
-            <>
-              {areaLink !== null && (
-                <NavLink
-                  to={areaLink.to}
-                  className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
-                  onClick={closeMenu}
-                >
-                  {areaLink.label}
-                </NavLink>
-              )}
-              <button
-                type="button"
-                className={styles.logoutButton}
-                onClick={() => {
-                  closeMenu();
-                  void handleLogout();
-                }}
-              >
-                로그아웃
-              </button>
-            </>
+            <button
+              type="button"
+              className={styles.logoutButton}
+              onClick={() => {
+                closeMenu();
+                void handleLogout();
+              }}
+            >
+              로그아웃
+            </button>
           ) : (
             <NavLink
               to="/login"
@@ -115,8 +108,8 @@ export function Nav() {
               로그인
             </NavLink>
           )}
-          <NavLink to="/apply" className={styles.cta} onClick={closeMenu}>
-            지원하기
+          <NavLink to={cta.to} className={styles.cta} onClick={closeMenu}>
+            {cta.label}
           </NavLink>
         </div>
       </nav>
