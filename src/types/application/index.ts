@@ -24,33 +24,42 @@ export const APPLICATION_STATUSES = ["DRAFT", "SUBMITTED", "DOC_PASS", "DOC_FAIL
 
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
-/** 7.1 목록 행. */
+/**
+ * 7.1 목록 행. `college`는 지원자가 고르지 않았거나 마스터 데이터에서 못 찾으면 `null`
+ * (BE 확인함). `studentNumber`는 제출 시 필수 검증 대상이 아니라(#189 확인) `null`일 수
+ * 있다. `grade`는 기본 정보 필수 검증 대상이라 제출된 지원서엔 항상 있다.
+ *
+ * **총점 · 평가 완료 여부 컬럼은 없다** — `ApplicantSummary`에 그 값이 아예 없다(BE 확인함).
+ * 평가는 상세(`EvaluationSummary`)에서만 볼 수 있다.
+ */
 export interface Applicant {
   id: number;
-  applicantName: string;
-  college: string;
-  major: string;
+  name: string;
+  studentNumber: string | null;
+  college: string | null;
   grade: number;
-  /** **평가 전이면 `null`.** 0 점과 구분해야 한다. */
-  totalScore: number | null;
-  evaluated: boolean;
   status: ApplicationStatus;
-  /** 합·불이 정해지기 전이면 `null`. */
-  passed: boolean | null;
   submittedAt: string;
 }
 
+/**
+ * 7.1 조회 조건. **`evaluated`·`keyword`는 실제 API에 없다**(BE `getApplicants(generationId, status, pageable)`
+ * 확인함) — 이름 검색·평가 여부 필터는 지원하지 않는다.
+ */
 export interface ApplicantListParams {
+  generationId?: number;
   status?: ApplicationStatus;
-  /** 평가 완료 여부. 지정하지 않으면 전체. */
-  evaluated?: boolean;
-  /** 이름 · 이메일 검색. */
-  keyword?: string;
   page?: number;
   size?: number;
 }
 
-/** 지원서 문항과 답변. (7.2) */
+/**
+ * 지원서 문항과 답변. (7.2)
+ *
+ * **실제 BE 응답(`ApplicationAnswerResult`)엔 `questionId`·`answerText`·`selectedOptions`만
+ * 온다.** 문항 텍스트·타입·옵션 라벨은 `GET /admin/recruitment/questions`를 따로 불러
+ * `questionId`로 조인한 값이다(API 함수 레이어에서 합쳐서 내려준다).
+ */
 export interface ApplicationAnswer {
   questionId: number;
   order: number;
@@ -59,62 +68,82 @@ export interface ApplicationAnswer {
   /** **비워 둔 문항은 `null`.** 화면에 "답변 없음" 을 보여준다. */
   answerText: string | null;
   selectedOptions: string[] | null;
-  /**
-   * `CHOICE`/`CHECKBOX` 문항의 선택지 라벨. `selectedOptions` 는 id 만 담고 있어
-   * 화면에 보여줄 텍스트를 알 수 없다 — 지금은 목에서 같이 내려준다.
-   *
-   * **실제 BE 응답(`ApplicationAnswerResult`)엔 이 필드가 없다.** `questionId`·`answerText`·
-   * `selectedOptions` 만 오고, 문항 텍스트·타입·옵션 라벨은 `GET /admin/recruitment/questions`
-   * 를 따로 불러 조인해야 한다 — 연동 시점(#107)에 이 타입 자체를 다시 손봐야 한다.
-   */
+  /** `CHOICE`/`CHECKBOX` 문항의 선택지 라벨. `selectedOptions`는 id만 담고 있어 조인해야 한다. */
   options: QuestionOption[] | null;
 }
 
-/** 평가 기준 한 줄. `score` 는 아직 매기지 않았으면 `null`. */
-export interface EvaluationScore {
-  criterionId: number;
-  name: string;
-  guideline: string;
-  maxScore: number;
-  score: number | null;
-}
-
-export interface Evaluation {
-  evaluated: boolean;
-  totalScore: number | null;
-  scores: EvaluationScore[];
+/** 평가 기준 하나에 대한, 평가자 한 명의 점수. */
+export interface EvaluatorScore {
+  evaluatorId: number;
+  evaluatorName: string;
+  score: number;
 }
 
 /**
- * 순차 탐색 위치. **응답에 함께 온다.**
- * `1 / 2` 표시와 이전·다음 버튼을 이 하나로 처리한다.
+ * 평가 기준 한 줄의 종합 결과. **여러 운영진이 각자 채점한다**(BE #151 확인함 —
+ * `EvaluationScore`가 `(applicationId, criterionId, evaluatorId)` 단위로 따로 저장됨).
  */
-export interface ApplicationNavigation {
-  current: number;
-  total: number;
-  prevId: number | null;
+export interface CriterionScore {
+  criterionId: number;
+  criterionName: string;
+  maxScore: number;
+  /** 아무도 이 기준을 채점하지 않았으면 `null`. */
+  averageScore: number | null;
+  /** 로그인한 본인이 아직 이 기준을 안 매겼으면 `null`. */
+  myScore: number | null;
+  evaluatorScores: EvaluatorScore[];
+}
+
+/**
+ * `GET/PUT /api/admin/recruitment/applications/{id}/scores` 응답 (7.3).
+ *
+ * `totalScore`는 **모든 기준을 다 매긴 평가자들의 총점 평균**이다 — 일부만 매긴 평가자는
+ * 포함하지 않는다(BE 확인함). 완주한 평가자가 없으면 `null`.
+ */
+export interface EvaluationSummary {
+  applicationId: number;
+  criteria: CriterionScore[];
+  totalScore: number | null;
+  evaluatorCount: number;
+  /** 본인이 아직 다 안 매겼으면 `null`. */
+  myTotalScore: number | null;
+}
+
+/** 평가 저장 요청 (7.3). 로그인한 운영진 본인의 점수로 저장된다 — `evaluatorId`는 안 보낸다. */
+export interface EvaluationPayload {
+  scores: { criterionId: number; score: number }[];
+}
+
+/** 지원서 상세 (7.2). 평가 점수·순차 탐색은 각자 별도 엔드포인트라 여기 없다. */
+export interface ApplicationDetail {
+  id: number;
+  status: ApplicationStatus;
+  basicInfo: BasicInfo;
+  answers: ApplicationAnswer[];
+  submittedAt: string;
+}
+
+/** 순차 탐색 (7.5). **개수·현재 위치는 안 온다** — 이전·다음 id만 있다(BE 확인함). */
+export interface AdjacentApplicants {
+  previousId: number | null;
   nextId: number | null;
 }
 
-/** 지원서 상세 (7.2). */
-export interface ApplicationDetail {
-  id: number;
-  applicantName: string;
-  email: string;
-  phoneNumber: string;
-  college: string;
-  major: string;
-  grade: number;
+/** 서류/최종 합불 일괄 처리 요청 (7.4 확장). */
+export interface BulkDecisionPayload {
+  applicationIds: number[];
   status: ApplicationStatus;
-  submittedAt: string;
-  answers: ApplicationAnswer[];
-  evaluation: Evaluation;
-  navigation: ApplicationNavigation;
 }
 
-/** 평가 저장 (7.3). */
-export interface EvaluationPayload {
-  scores: { criterionId: number; score: number }[];
+export interface BulkDecisionResult {
+  updatedCount: number;
+  status: ApplicationStatus;
+}
+
+/** 서류/최종 합불 단건 처리 결과 (7.4). */
+export interface DocumentDecisionResult {
+  applicationId: number;
+  status: ApplicationStatus;
 }
 
 /**

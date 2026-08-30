@@ -40,8 +40,11 @@ export const queryKeys = {
     lists: () => [...queryKeys.applications.all, "list"] as const,
     list: (params: ApplicantListParams) => [...queryKeys.applications.lists(), params] as const,
     details: () => [...queryKeys.applications.all, "detail"] as const,
-    // 필터가 바뀌면 navigation 도 달라진다. 키에 함께 넣어 캐시가 섞이지 않게 한다.
-    detail: (id: number, params: ApplicantListParams) => [...queryKeys.applications.details(), id, params] as const,
+    detail: (id: number) => [...queryKeys.applications.details(), id] as const,
+    // 필터가 바뀌면 이전·다음도 달라진다. 키에 함께 넣어 캐시가 섞이지 않게 한다.
+    adjacent: (id: number, params: ApplicantListParams) =>
+      [...queryKeys.applications.all, "adjacent", id, params] as const,
+    scores: (id: number) => [...queryKeys.applications.all, "scores", id] as const,
   },
 
   /** 로그인한 지원자 본인의 지원서. 어드민 `applications`와는 다른 도메인이다. */

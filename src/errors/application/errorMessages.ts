@@ -24,6 +24,12 @@ const APPLICATION_ERROR_MESSAGES: Record<string, string> = {
   // 결과 조회(3.5)만의 문맥이다 — 이 엔드포인트에서 RESOURCE_NOT_FOUND는 항상
   // "제출한 지원서가 없다"는 뜻이다(BE `ApplicationService.getResult` 참고).
   RESOURCE_NOT_FOUND: "제출한 지원서가 없습니다.",
+  // 평가 점수 저장(7.3)·합불 처리(7.4, BE `ApplicationEvaluationService` 확인함).
+  APPLICATION_NOT_SCORABLE: "제출된 지원서만 채점할 수 있습니다.",
+  CRITERION_NOT_FOUND: "평가 기준을 찾을 수 없습니다. 새로고침 후 다시 시도해 주세요.",
+  SCORE_EXCEEDS_MAX: "점수가 배점을 초과했습니다.",
+  APPLICATION_NOT_SUBMITTED: "지금 상태에서는 합불을 처리할 수 없습니다.",
+  INVALID_DECISION_STATUS: "합불 처리 대상 상태가 올바르지 않습니다.",
 };
 
 function messageFor(error: unknown, fallback: string): string {
@@ -55,3 +61,14 @@ export const applicationSubmitErrorMessage = (error: unknown) =>
 /** 결과 조회(3.5) 실패. */
 export const applicationResultErrorMessage = (error: unknown) =>
   messageFor(error, "지원서 결과를 불러오지 못했습니다.");
+
+/** 평가 점수 조회(7.3) 실패. */
+export const evaluationErrorMessage = (error: unknown) => messageFor(error, "평가 점수를 불러오지 못했습니다.");
+
+/** 평가 점수 저장(7.3) 실패. 조회 실패와 문구가 달라야 무엇이 안 됐는지 구분된다. */
+export const evaluationSaveErrorMessage = (error: unknown) =>
+  messageFor(error, "평가 점수를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+
+/** 합불 처리(7.4, 단건·일괄 공용) 실패. */
+export const decisionErrorMessage = (error: unknown) =>
+  messageFor(error, "합불 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.");

@@ -1,13 +1,26 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
-import { applicationErrorMessage } from "../../errors/application/errorMessages";
-import { useApplicationDetail, useSaveEvaluation } from "../../hooks/application/useApplicationDetail";
+import { getColleges, getMajors } from "../../apis/public/publicApi";
+import { queryKeys } from "../../apis/queryKeys";
+import {
+  applicationErrorMessage,
+  evaluationErrorMessage,
+  evaluationSaveErrorMessage,
+} from "../../errors/application/errorMessages";
+import {
+  useAdjacentApplicants,
+  useApplicationDetail,
+  useEvaluationSummary,
+  useSaveEvaluation,
+} from "../../hooks/application/useApplicationDetail";
 import { formatDateTime } from "../../libs/formatDate";
-import type { ApplicantListParams, ApplicationAnswer, ApplicationDetail } from "../../types/application";
+import type { ApplicantListParams, ApplicationAnswer, EvaluationSummary } from "../../types/application";
 import { Button } from "../ui/Button/Button";
 import { PaginatedModal } from "../ui/PaginatedModal/PaginatedModal";
 import { ErrorState } from "../ui/states/States";
 
+import { DecisionButtons } from "./DecisionButtons";
 import styles from "./ApplicationDetailModal.module.scss";
 
 /**
@@ -34,22 +47,20 @@ function answerDisplay(answer: ApplicationAnswer): { text: string; empty: boolea
 /** 입력 중에는 빈 칸을 허용해야 지우고 다시 칠 수 있다. */
 type Draft = Record<number, string>;
 
-function toDraft(detail: ApplicationDetail): Draft {
-  return Object.fromEntries(
-    detail.evaluation.scores.map((s) => [s.criterionId, s.score === null ? "" : String(s.score)]),
-  );
+function toDraft(summary: EvaluationSummary): Draft {
+  return Object.fromEntries(summary.criteria.map((c) => [c.criterionId, c.myScore === null ? "" : String(c.myScore)]));
 }
 
 /** 배점을 넘거나 숫자가 아니면 저장할 수 없다. */
-function invalidReason(draft: Draft, detail: ApplicationDetail): string | null {
-  for (const criterion of detail.evaluation.scores) {
+function invalidReason(draft: Draft, summary: EvaluationSummary): string | null {
+  for (const criterion of summary.criteria) {
     const raw = draft[criterion.criterionId] ?? "";
     if (raw === "") return "모든 기준에 점수를 입력해 주세요.";
 
     const score = Number(raw);
     if (!Number.isInteger(score)) return "점수는 정수로 입력해 주세요.";
     if (score < 0 || score > criterion.maxScore) {
-      return `${criterion.name}은(는) 0 ~ ${criterion.maxScore}점 사이여야 합니다.`;
+      return `${criterion.criterionName}은(는) 0 ~ ${criterion.maxScore}점 사이여야 합니다.`;
     }
   }
   return null;
@@ -59,32 +70,39 @@ function totalOf(draft: Draft): number {
   return Object.values(draft).reduce((sum, raw) => sum + (Number(raw) || 0), 0);
 }
 
-interface EvaluationFormProps {
-  detail: ApplicationDetail;
-  onSaved: () => void;
+interface EvaluationSectionProps {
+  applicationId: number;
 }
 
 /**
- * 평가 입력. **상세가 도착한 뒤에만 마운트한다.**
- * 그래야 `useState` 초기값으로 기존 점수를 넣을 수 있다.
+ * 서류 평가. **여러 운영진이 각자 채점한다**(BE #151) — 기준마다 다른 평가자들의 점수도
+ * 함께 보여주고, 입력칸엔 로그인한 본인의 점수만 매긴다.
  */
-function EvaluationForm({ detail, onSaved }: EvaluationFormProps) {
-  const [draft, setDraft] = useState<Draft>(() => toDraft(detail));
-  const { mutate, isPending, error } = useSaveEvaluation(detail.id);
+function EvaluationSection({ applicationId }: EvaluationSectionProps) {
+  const { data, isPending, isError, error, refetch } = useEvaluationSummary(applicationId);
+  const { mutate, isPending: saving, error: saveError } = useSaveEvaluation(applicationId);
+  const [draft, setDraft] = useState<Draft | null>(null);
 
-  const maxTotal = detail.evaluation.scores.reduce((sum, s) => sum + s.maxScore, 0);
-  const reason = invalidReason(draft, detail);
+  if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
+  if (isError) return <ErrorState message={evaluationErrorMessage(error)} onRetry={() => void refetch()} />;
+
+  // 별도 const 로 다시 잡아 둔다 — `data` 를 그대로 쓰면 아래 중첩 함수 안에서는
+  // TS 가 위 가드로 좁혀진 타입(undefined 아님)을 유지해 주지 않는다.
+  const summary = data;
+  const currentDraft = draft ?? toDraft(summary);
+  const reason = invalidReason(currentDraft, summary);
+  const maxTotal = summary.criteria.reduce((sum, c) => sum + c.maxScore, 0);
 
   function handleSave() {
     if (reason !== null) return;
     mutate(
       {
-        scores: detail.evaluation.scores.map((s) => ({
-          criterionId: s.criterionId,
-          score: Number(draft[s.criterionId]),
+        scores: summary.criteria.map((c) => ({
+          criterionId: c.criterionId,
+          score: Number(currentDraft[c.criterionId]),
         })),
       },
-      { onSuccess: onSaved },
+      { onSuccess: () => setDraft(null) },
     );
   }
 
@@ -93,11 +111,16 @@ function EvaluationForm({ detail, onSaved }: EvaluationFormProps) {
       <section className={styles.section}>
         <h3 className={styles.sectionTitle}>서류 평가</h3>
         <ul className={styles.criteria}>
-          {detail.evaluation.scores.map((criterion) => (
+          {summary.criteria.map((criterion) => (
             <li key={criterion.criterionId} className={styles.criterion}>
               <div className={styles.criterionHead}>
-                <span className={styles.criterionName}>{criterion.name}</span>
-                <span className={styles.guideline}>{criterion.guideline}</span>
+                <span className={styles.criterionName}>{criterion.criterionName}</span>
+                {criterion.evaluatorScores.length > 0 && (
+                  <span className={styles.guideline}>
+                    {criterion.evaluatorScores.map((s) => `${s.evaluatorName} ${s.score}점`).join(" · ")}
+                    {criterion.averageScore !== null && ` (평균 ${criterion.averageScore.toFixed(1)}점)`}
+                  </span>
+                )}
               </div>
               <div className={styles.scoreInput}>
                 <input
@@ -105,10 +128,10 @@ function EvaluationForm({ detail, onSaved }: EvaluationFormProps) {
                   min={0}
                   max={criterion.maxScore}
                   step={1}
-                  value={draft[criterion.criterionId] ?? ""}
-                  aria-label={`${criterion.name} 점수`}
-                  disabled={isPending}
-                  onChange={(e) => setDraft((prev) => ({ ...prev, [criterion.criterionId]: e.target.value }))}
+                  value={currentDraft[criterion.criterionId] ?? ""}
+                  aria-label={`${criterion.criterionName} 내 점수`}
+                  disabled={saving}
+                  onChange={(e) => setDraft({ ...currentDraft, [criterion.criterionId]: e.target.value })}
                 />
                 <span className={styles.maxScore}>/ {criterion.maxScore}점</span>
               </div>
@@ -117,18 +140,20 @@ function EvaluationForm({ detail, onSaved }: EvaluationFormProps) {
         </ul>
 
         <p className={styles.total}>
-          합계 <strong>{totalOf(draft)}</strong> / {maxTotal}점
+          내 합계 <strong>{totalOf(currentDraft)}</strong> / {maxTotal}점
+          {summary.totalScore !== null &&
+            ` · 운영진 평균 ${summary.totalScore.toFixed(1)}점(${summary.evaluatorCount}명 완료)`}
         </p>
 
         {/* 저장을 막는 이유를 미리 보여준다. 눌러 보고 알게 하지 않는다. */}
         {reason !== null && <p className={styles.reason}>{reason}</p>}
 
-        {error !== null && <p className={styles.reason}>{applicationErrorMessage(error)}</p>}
+        {saveError !== null && <p className={styles.reason}>{evaluationSaveErrorMessage(saveError)}</p>}
       </section>
 
       <div className={styles.saveRow}>
-        <Button onClick={handleSave} disabled={isPending || reason !== null}>
-          {detail.evaluation.evaluated ? "평가 수정" : "평가 저장"}
+        <Button onClick={handleSave} disabled={saving || reason !== null}>
+          {summary.myTotalScore !== null ? "평가 수정" : "평가 저장"}
         </Button>
       </div>
     </>
@@ -150,18 +175,31 @@ export function ApplicationDetailModal({
   onNavigate,
   onClose,
 }: ApplicationDetailModalProps) {
-  const { data, isPending, isError, error, refetch } = useApplicationDetail(applicationId, listParams);
+  const { data, isPending, isError, error, refetch } = useApplicationDetail(applicationId);
+  const { data: adjacent } = useAdjacentApplicants(applicationId, listParams);
+  // 학과 이름 조인. 상세 응답엔 collegeId·majorId(숫자)만 온다(BE 확인함).
+  const { data: colleges = [] } = useQuery({ queryKey: queryKeys.public.colleges(), queryFn: getColleges });
+  const { data: majors = [] } = useQuery({ queryKey: queryKeys.public.majors(), queryFn: getMajors });
 
-  const nav = data?.navigation;
+  const collegeId = data?.basicInfo.collegeId ?? null;
+  const majorId = data?.basicInfo.majorId ?? null;
+  const collegeName = collegeId !== null ? (colleges.find((c) => c.id === collegeId)?.name ?? "-") : "-";
+  const majorName = majorId !== null ? (majors.find((m) => m.id === majorId)?.name ?? "-") : "-";
+
+  // 아래서 새 const 로 옮겨 잡는다 — `adjacent?.previousId`를 화살표 함수 안에서 그대로
+  // 다시 읽으면 TS 가 좁혀진 타입(null 아님)을 유지해 주지 않는다.
+  const previousId = adjacent?.previousId ?? null;
+  const nextId = adjacent?.nextId ?? null;
 
   return (
     <PaginatedModal
-      title={data ? `${data.applicantName} 지원서` : "지원서"}
+      title={data ? `${data.basicInfo.name} 지원서` : "지원서"}
       onClose={onClose}
-      current={nav?.current ?? 0}
-      total={nav?.total ?? 0}
-      onPrev={nav?.prevId != null ? () => onNavigate(nav.prevId!) : null}
-      onNext={nav?.nextId != null ? () => onNavigate(nav.nextId!) : null}
+      onPrev={previousId !== null ? () => onNavigate(previousId) : null}
+      onNext={nextId !== null ? () => onNavigate(nextId) : null}
+      actions={
+        data && <DecisionButtons id={data.id} name={data.basicInfo.name} status={data.status} onDecided={onClose} />
+      }
     >
       {isPending && <p className={styles.loading}>불러오는 중…</p>}
 
@@ -173,12 +211,12 @@ export function ApplicationDetailModal({
             <div>
               <dt>소속</dt>
               <dd>
-                {data.college} {data.major} {data.grade}학년
+                {collegeName} {majorName} {data.basicInfo.grade ?? "-"}학년
               </dd>
             </div>
             <div>
               <dt>연락처</dt>
-              <dd>{data.email}</dd>
+              <dd>{data.basicInfo.email}</dd>
             </div>
             <div>
               <dt>제출일</dt>
@@ -202,13 +240,8 @@ export function ApplicationDetailModal({
             </ol>
           </section>
 
-          {/*
-            지원자가 바뀌면 조회가 다시 시작돼 data 가 잠시 사라지고, 이 폼도 언마운트되면서
-            입력값이 초기화된다. key 는 그 동작에 기대지 않으려는 보험이다 —
-            나중에 깜빡임을 줄이려고 placeholderData 를 붙이면 언마운트가 사라져
-            앞 사람 점수가 그대로 남는다.
-          */}
-          <EvaluationForm key={data.id} detail={data} onSaved={onClose} />
+          {/* key로 지원자 전환 시 EvaluationSection의 draft를 초기화한다(EvaluationForm과 같은 이유). */}
+          <EvaluationSection key={data.id} applicationId={data.id} />
         </>
       )}
     </PaginatedModal>
