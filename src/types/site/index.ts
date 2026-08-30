@@ -12,11 +12,9 @@ import type { components } from "../../apis/generated";
  * 모집 일정은 아직 BE 연동 전이라(#190은 `/admin/recruitment/schedule`용이고 이 화면
  * 몫은 별도 미배정) 목 데이터로 남는다.
  *
- * **FAQ · 기능 토글은 실제로는 이제 BE 엔드포인트가 있다**(`GET/POST/PUT/DELETE
- * /api/admin/setting/faqs`, `GET /api/public/faqs`, `GET/PUT /api/admin/setting/features`
- * — 2026-08-30 재확인, 예전엔 없었다). 다만 실제 스키마(`FaqResult`)엔 지금 손타입에
- * 없는 `order`·`isVisible`이 있어 화면까지 같이 손봐야 하는 별도 작업이라 이번엔
- * 타입만 살펴보고 손대지 않았다 — 새 백로그 후보로 기록.
+ * **FAQ는 실제 연동됨(#212).** **기능 토글은 아직 목이다** — BE에 실제로
+ * `GET`/`PUT /api/admin/setting/features` 엔드포인트가 있는 것을 확인했지만(2026-08-30,
+ * 예전엔 없었다), 이번 작업 범위 밖이라 손대지 않았다 — 다음 백로그 후보.
  */
 
 /** 진행 기수. 활성 기수는 하나뿐이다 — `PUT` 으로 새 기수를 활성화하면 기존 기수는 내려간다. */
@@ -92,27 +90,26 @@ export type SiteEvent = Required<components["schemas"]["EventResult"]>;
 export type SiteEventPayload = components["schemas"]["EventRequest"];
 
 /**
- * FAQ. 목으로 남긴다.
- *
- * **실제로는 BE에 `FaqResult`(`order`·`isVisible` 포함) 스키마와 CRUD 엔드포인트가
- * 있다(2026-08-30 재확인)** — 이 인터페이스가 그 필드들을 안 반영하고 있으니, 실제
- * 연동할 땐 새로 맞춰야 한다(파일 상단 docblock 참고).
+ * FAQ (10.18 · 10.19). `Curriculum`과 달리 기수 스코프가 없다(BE 확인함 — 요청·응답에
+ * generationId 없음) — 기수가 바뀌어도 유지되는 상시 문답이라 그렇다.
  */
-export interface Faq {
-  id: number | null;
-  question: string;
-  answer: string;
-}
+export type Faq = Required<components["schemas"]["FaqResult"]>;
 
 /**
- * 아직 실제 엔드포인트가 없는 섹션들의 묶음(모집 일정 · FAQ).
+ * `POST`/`PUT /api/admin/setting/faqs` 요청 본문. `order`는 커리큘럼과 같은 방식(BE
+ * 소스로 확인함) — 생성 시 생략하면 맨 뒤에 붙고, 수정 시 생략하면 순서를 유지한다.
+ * 값을 보내면 그 자리에 끼워 넣고 나머지를 밀거나 당긴다.
+ */
+export type FaqPayload = components["schemas"]["FaqRequest"];
+
+/**
+ * 아직 실제 엔드포인트가 없는 섹션의 묶음(모집 일정).
  *
- * **진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류는 여기 없다** — 각자 실제 CRUD
- * 엔드포인트로 개별 반영된다(#194 · #195).
+ * **진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류 · FAQ는 여기 없다** — 각자 실제
+ * CRUD 엔드포인트로 개별 반영된다(#194 · #195 · #212).
  */
 export interface SiteSettings {
   schedule: SiteSchedule;
-  faqs: Faq[];
 }
 
 export type SiteSavePayload = SiteSettings;

@@ -1,16 +1,21 @@
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { FAQ_ITEMS } from "../../mocks/home/faq";
+import { getFaqs } from "../../apis/public/publicApi";
+import { queryKeys } from "../../apis/queryKeys";
 
 import styles from "./FAQSection.module.scss";
 
-/** 실제 답변 콘텐츠가 아직 없어 임시 문구를 보여준다(mocks/home/faq.ts). 콘텐츠가 정해지면 교체한다. */
+/** 자주 묻는 질문(2.5, #212). 비공개 처리한 FAQ는 서버가 걸러서 안 준다. */
 export function FAQSection() {
-  const [openId, setOpenId] = useState<string | null>(null);
+  const { data } = useQuery({ queryKey: queryKeys.public.faqs(), queryFn: getFaqs });
+  const [openId, setOpenId] = useState<number | null>(null);
 
-  function toggle(id: string) {
+  function toggle(id: number) {
     setOpenId((current) => (current === id ? null : id));
   }
+
+  if (data === undefined || data.length === 0) return null;
 
   return (
     <section className={styles.section}>
@@ -21,7 +26,7 @@ export function FAQSection() {
         </div>
 
         <ul className={styles.list}>
-          {FAQ_ITEMS.map((item) => {
+          {data.map((item) => {
             const isOpen = openId === item.id;
 
             return (
@@ -30,7 +35,7 @@ export function FAQSection() {
                   type="button"
                   className={styles.question}
                   aria-expanded={isOpen}
-                  aria-controls={`${item.id}-answer`}
+                  aria-controls={`faq-${item.id}-answer`}
                   onClick={() => toggle(item.id)}
                 >
                   <span>{item.question}</span>
@@ -59,7 +64,7 @@ export function FAQSection() {
                 </button>
 
                 {isOpen && (
-                  <p id={`${item.id}-answer`} className={styles.answer}>
+                  <p id={`faq-${item.id}-answer`} className={styles.answer}>
                     {item.answer}
                   </p>
                 )}

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import * as api from "../../apis/site/siteApi";
 import { queryKeys } from "../../apis/queryKeys";
-import type { CurriculumPayload, SiteEventPayload } from "../../types/site";
+import type { CurriculumPayload, FaqPayload, SiteEventPayload } from "../../types/site";
 
 export function useCurriculums() {
   return useQuery({ queryKey: queryKeys.site.curriculums(), queryFn: api.getCurriculums });
@@ -55,6 +55,33 @@ export function useDeleteEvent() {
     mutationFn: (id: number) => api.deleteEvent(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.site.events() });
+    },
+  });
+}
+
+export function useFaqs() {
+  return useQuery({ queryKey: queryKeys.site.faqs(), queryFn: api.getFaqs });
+}
+
+export function useSaveFaq() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number | null; payload: FaqPayload }) =>
+      id === null ? api.createFaq(payload) : api.updateFaq(id, payload),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.site.faqs() });
+    },
+  });
+}
+
+export function useDeleteFaq() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => api.deleteFaq(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.site.faqs() });
     },
   });
 }

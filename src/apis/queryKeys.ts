@@ -76,14 +76,15 @@ export const queryKeys = {
 
   site: {
     all: ["site"] as const,
-    // 모집 일정 · FAQ. 아직 실제 엔드포인트가 없어 한 덩어리로 오간다.
+    // 모집 일정. 아직 실제 엔드포인트가 없다.
     settings: () => [...queryKeys.site.all, "settings"] as const,
-    // 진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류 · 기능 토글은 각자 실제(또는 개별) 엔드포인트라 키를 나눈다.
+    // 진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류 · FAQ · 기능 토글은 각자 실제(또는 개별) 엔드포인트라 키를 나눈다.
     generation: () => [...queryKeys.site.all, "generation"] as const,
     staffs: () => [...queryKeys.site.all, "staffs"] as const,
     curriculums: () => [...queryKeys.site.all, "curriculums"] as const,
     events: () => [...queryKeys.site.all, "events"] as const,
     tracks: () => [...queryKeys.site.all, "tracks"] as const,
+    faqs: () => [...queryKeys.site.all, "faqs"] as const,
     features: () => [...queryKeys.site.all, "features"] as const,
   },
 
@@ -132,5 +133,6 @@ export const queryKeys = {
     colleges: () => [...queryKeys.public.all, "colleges"] as const,
     majors: () => [...queryKeys.public.all, "majors"] as const,
     recruitmentStatus: () => [...queryKeys.public.all, "recruitment-status"] as const,
+    faqs: () => [...queryKeys.public.all, "faqs"] as const,
   },
 } as const;

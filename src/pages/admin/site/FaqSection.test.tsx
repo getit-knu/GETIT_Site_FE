@@ -1,70 +1,95 @@
-import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useState } from "react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import * as api from "../../../apis/site/siteApi";
 import type { Faq } from "../../../types/site";
 
-import type { Draft } from "./faqDraft";
-import { fromDrafts, toDrafts } from "./faqDraft";
 import { FaqSection } from "./FaqSection";
 
-const FAQS: Faq[] = [{ id: 1, question: "활동 시간은?", answer: "화요일 저녁 7시" }];
+vi.mock("../../../apis/site/siteApi");
 
-/** 실제 화면처럼 상태를 들고 있는 껍데기. 여러 번 고치는 흐름을 봐야 한다. */
-function Harness({ faqs = FAQS }: { faqs?: Faq[] }) {
-  const [f, setF] = useState<Draft<Faq>[]>(() => toDrafts(faqs));
+const FAQS: Faq[] = [{ id: 1, question: "활동 시간은?", answer: "화요일 저녁 7시", order: 1, isVisible: true }];
 
-  return (
-    <>
-      <FaqSection faqs={f} onChange={setF} />
-      <output>{JSON.stringify(fromDrafts(f))}</output>
-    </>
+function renderSection() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={queryClient}>
+      <FaqSection />
+    </QueryClientProvider>,
   );
 }
 
-const result = (): Faq[] => JSON.parse(screen.getByRole("status").textContent ?? "[]") as Faq[];
-
 describe("FaqSection", () => {
-  it("목록을 보여준다", () => {
-    render(<Harness />);
-    expect(screen.getByLabelText("FAQ 질문 활동 시간은?")).toHaveValue("활동 시간은?");
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(api.getFaqs).mockResolvedValue(FAQS);
+    vi.mocked(api.deleteFaq).mockResolvedValue();
   });
 
-  it("빈 목록은 안내를 보여준다", () => {
-    render(<Harness faqs={[]} />);
-    expect(screen.getByText("등록된 FAQ 가 없습니다.")).toBeInTheDocument();
+  it("목록을 보여준다", async () => {
+    renderSection();
+    expect(await screen.findByText("활동 시간은?")).toBeInTheDocument();
   });
 
-  it("답변을 고친다", async () => {
-    render(<Harness />);
-
-    await userEvent.type(screen.getByLabelText('"활동 시간은?" 답변'), " 입니다");
-
-    expect(result()[0].answer).toBe("화요일 저녁 7시 입니다");
+  it("비공개 FAQ를 표시한다", async () => {
+    vi.mocked(api.getFaqs).mockResolvedValue([{ ...FAQS[0], isVisible: false }]);
+    renderSection();
+    expect(await screen.findByText("(비공개)")).toBeInTheDocument();
   });
 
-  it("새 행을 추가한다", async () => {
-    render(<Harness />);
+  it("빈 목록은 안내를 보여준다", async () => {
+    vi.mocked(api.getFaqs).mockResolvedValue([]);
+    renderSection();
+    expect(await screen.findByText("등록된 FAQ가 없습니다.")).toBeInTheDocument();
+  });
+
+  it("질문이나 답변이 비어 있으면 저장을 막는다", async () => {
+    renderSection();
+    await screen.findByText("활동 시간은?");
 
     await userEvent.click(screen.getByRole("button", { name: "+ FAQ 추가" }));
 
-    expect(result()).toHaveLength(2);
-    expect(result()[1].id).toBeNull();
+    expect(screen.getByText("질문을 입력해 주세요.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "추가" })).toBeDisabled();
   });
 
-  it("누른 행만 지운다", async () => {
-    render(
-      <Harness
-        faqs={[
-          { id: 1, question: "첫째", answer: "" },
-          { id: 2, question: "둘째", answer: "" },
-        ]}
-      />,
-    );
+  it("추가는 다음 순서를 실어 보낸다", async () => {
+    vi.mocked(api.createFaq).mockResolvedValue({
+      id: 2,
+      question: "새 질문",
+      answer: "새 답변",
+      order: 2,
+      isVisible: true,
+    });
+    renderSection();
+    await screen.findByText("활동 시간은?");
 
-    await userEvent.click(screen.getAllByRole("button", { name: "삭제" })[0]);
+    await userEvent.click(screen.getByRole("button", { name: "+ FAQ 추가" }));
+    await userEvent.type(screen.getByLabelText("질문 *"), "새 질문");
+    await userEvent.type(screen.getByLabelText("답변 *"), "새 답변");
+    await userEvent.click(screen.getByRole("button", { name: "추가" }));
 
-    expect(result().map((row) => row.question)).toEqual(["둘째"]);
+    await waitFor(() => expect(api.createFaq).toHaveBeenCalled());
+    expect(vi.mocked(api.createFaq).mock.lastCall?.[0]).toMatchObject({ question: "새 질문", order: 2 });
+  });
+
+  it("삭제는 확인을 묻고, 확인하면 지운다", async () => {
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+    renderSection();
+    await screen.findByText("활동 시간은?");
+
+    await userEvent.click(screen.getByRole("button", { name: "삭제" }));
+
+    expect(api.deleteFaq).toHaveBeenCalledWith(1);
+    vi.unstubAllGlobals();
+  });
+
+  it("조회에 실패하면 오류와 재시도를 보여준다", async () => {
+    vi.mocked(api.getFaqs).mockRejectedValue({ code: "FORBIDDEN", message: "?" });
+    renderSection();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("권한이 없습니다");
   });
 });
