@@ -1,10 +1,8 @@
-import { useState } from "react";
-
 import { ApplicantsTab } from "../../components/application/ApplicantsTab";
 import { CriteriaSection } from "../../components/recruitment/CriteriaSection";
 import { QuestionsSection } from "../../components/recruitment/QuestionsSection";
 import { ScheduleSection } from "../../components/recruitment/ScheduleSection";
-import { useSchedule } from "../../hooks/recruitment/useRecruitment";
+import { useSettingsLocked } from "../../hooks/recruitment/useRecruitment";
 import { useTableParams } from "../../hooks/ui/useTableParams";
 
 import styles from "./ApplicationsPage.module.scss";
@@ -15,22 +13,6 @@ const TAB_LABEL: Record<(typeof TABS)[number], string> = {
   applicants: "지원자 목록",
   settings: "지원 시스템 설정",
 };
-
-/**
- * 모집이 시작되면 설정을 잠근다.
- *
- * 서버도 `409 RECRUITMENT_ALREADY_STARTED` 로 막지만(명세서 6절), 눌러 보고 알게 하면
- * 무엇을 잘못했는지 찾기 어렵다. 시작 시각이 지났으면 입력칸부터 비활성으로 둔다.
- */
-function useSettingsLocked() {
-  const { data } = useSchedule();
-  // 현재 시각은 렌더 중에 읽으면 안 된다(두 렌더가 달라진다). 마운트 때 한 번만 잡는다.
-  // 화면을 열어 둔 채 모집 시작 시각을 넘기는 경우는 새로고침하면 반영된다.
-  const [openedAt] = useState(() => Date.now());
-
-  if (!data) return false;
-  return new Date(data.totalStartAt).getTime() <= openedAt;
-}
 
 /** 와이어프레임 p7 · p6. */
 export default function ApplicationsPage() {
