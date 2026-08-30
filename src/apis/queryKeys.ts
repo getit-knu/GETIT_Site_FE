@@ -1,7 +1,7 @@
 import type { ApplicantListParams } from "../types/application";
 import type { LectureListParams, SubmissionListParams } from "../types/lecture";
 import type { QuestionListParams } from "../types/qna";
-import type { AdminProjectListParams } from "../types/project";
+import type { AdminProjectListParams, PublicProjectListParams } from "../types/project";
 import type { UserListParams } from "../types/user";
 
 /**
@@ -141,5 +141,6 @@ export const queryKeys = {
     majors: () => [...queryKeys.public.all, "majors"] as const,
     recruitmentStatus: () => [...queryKeys.public.all, "recruitment-status"] as const,
     faqs: () => [...queryKeys.public.all, "faqs"] as const,
+    projects: (params: PublicProjectListParams) => [...queryKeys.public.all, "projects", params] as const,
   },
 } as const;

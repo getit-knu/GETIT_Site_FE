@@ -1,4 +1,4 @@
-import type { Project } from "../../types/project";
+import type { PublicProject } from "../../types/project";
 import { Badge } from "../ui/Badge/Badge";
 import { Modal, ModalBody } from "../ui/Modal/Modal";
 import { useModalTitleId } from "../ui/Modal/modalTitleContext";
@@ -6,7 +6,7 @@ import { useModalTitleId } from "../ui/Modal/modalTitleContext";
 import styles from "./ProjectDetailModal.module.scss";
 
 interface DetailHeaderProps {
-  project: Project;
+  project: PublicProject;
   onClose: () => void;
 }
 
@@ -25,7 +25,7 @@ function DetailHeader({ project, onClose }: DetailHeaderProps) {
           {project.title}
         </h2>
         <p className={styles.meta}>
-          {project.team} <span aria-hidden="true">·</span> {project.semester}
+          {project.teamName} <span aria-hidden="true">·</span> {project.semesterLabel}
         </p>
       </div>
       <button type="button" className={styles.closeButton} onClick={onClose} aria-label="닫기">
@@ -36,7 +36,7 @@ function DetailHeader({ project, onClose }: DetailHeaderProps) {
 }
 
 interface ProjectDetailModalProps {
-  project: Project | null;
+  project: PublicProject | null;
   onClose: () => void;
 }
 
@@ -49,10 +49,14 @@ export function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps
           <div className={styles.content}>
             <DetailHeader project={project} onClose={onClose} />
 
-            <div className={styles.hero} style={{ backgroundImage: project.gradient }} aria-hidden="true" />
+            <div
+              className={styles.hero}
+              style={project.thumbnailUrl ? { backgroundImage: `url(${project.thumbnailUrl})` } : undefined}
+              aria-hidden="true"
+            />
 
             <ul className={styles.techStack}>
-              {project.techStack.map((tech) => (
+              {project.techStacks.map((tech) => (
                 <li key={tech}>
                   <Badge variant="accent">{tech}</Badge>
                 </li>

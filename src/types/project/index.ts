@@ -2,21 +2,31 @@ import type { components } from "../../apis/generated";
 import type { Page } from "../qna";
 
 /**
- * 프로젝트 쇼케이스 공개 화면 목 데이터 타입. 실제로는 `GET /api/public/projects`가
- * 있다(#219에서 연동 예정) — 그 전까지 정적/목업 콘텐츠에 쓴다.
+ * 프로젝트 쇼케이스 공개 화면(#219). `GET /api/public/projects` — 명세서 2.4.
+ *
+ * `semester`는 필터 쿼리에 실어 보내는 원본 값(`2026-FALL`), `semesterLabel`은
+ * 서버가 사람이 읽기 좋게 만들어 준 표시용 값(`2026 Fall`)이다 — 화면은 표시엔
+ * `semesterLabel`, 필터엔 `semester`를 쓴다.
+ *
+ * `thumbnailUrl`은 썸네일을 등록하지 않은 프로젝트에서 실제로 `null`이 온다(BE
+ * 소스로 확인함, springdoc이 이 nullable을 못 잡음) — 손으로 되돌린다.
  */
-export type ProjectSemester = "2025 Fall" | "2025 Spring" | "2024 Fall";
+export type PublicProject = Omit<Required<components["schemas"]["ProjectShowcaseResultItem"]>, "thumbnailUrl"> & {
+  thumbnailUrl: string | null;
+};
 
-export interface Project {
-  id: string;
-  team: string;
-  semester: ProjectSemester;
-  title: string;
-  description: string;
-  gradient: string;
-  techStack: string[];
-  codeUrl: string;
-  demoUrl: string;
+/**
+ * `GET /api/public/projects` 응답. `semesters`는 전체 프로젝트 기준 중복 없는 학기
+ * 목록(현재 페이지에 없는 학기도 포함) — 필터 탭을 만드는 용도다.
+ */
+export interface PublicProjectBoard extends Page<PublicProject> {
+  semesters: string[];
+}
+
+export interface PublicProjectListParams {
+  semester?: string;
+  page?: number;
+  size?: number;
 }
 
 /**
