@@ -1,47 +1,48 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as api from "../../apis/application/applicationsApi";
+import * as publicApi from "../../apis/public/publicApi";
 import type { Applicant, ApplicationDetail } from "../../types/application";
 
 import { ApplicantsTab } from "./ApplicantsTab";
 
 vi.mock("../../apis/application/applicationsApi");
+vi.mock("../../apis/public/publicApi");
 
 function applicant(over: Partial<Applicant> = {}): Applicant {
   return {
     id: 42,
-    applicantName: "김지원",
+    name: "김지원",
+    studentNumber: "202012345",
     college: "경영대학",
-    major: "경영학과",
     grade: 2,
-    totalScore: null,
-    evaluated: false,
     status: "SUBMITTED",
-    passed: null,
     submittedAt: "2026-09-08T12:03:44.000Z",
     ...over,
   };
 }
 
 /** 모달을 여는 경로만 확인한다. 상세 내용은 ApplicationDetailModal 테스트가 본다. */
-function detail(): ApplicationDetail {
+function detail(over: Partial<ApplicationDetail> = {}): ApplicationDetail {
   return {
     id: 42,
-    applicantName: "김지원",
-    email: "kim@gmail.com",
-    phoneNumber: "010-1234-5678",
-    college: "경영대학",
-    major: "경영학과",
-    grade: 2,
     status: "SUBMITTED",
-    submittedAt: "2026-09-08T12:03:44.000Z",
+    basicInfo: {
+      name: "김지원",
+      email: "kim@gmail.com",
+      phoneNumber: "010-1234-5678",
+      collegeId: 1,
+      majorId: 1,
+      grade: 2,
+      studentNumber: "202012345",
+    },
     answers: [],
-    evaluation: { evaluated: false, totalScore: null, scores: [] },
-    navigation: { current: 1, total: 1, prevId: null, nextId: null },
+    submittedAt: "2026-09-08T12:03:44.000Z",
+    ...over,
   };
 }
 
@@ -75,12 +76,20 @@ describe("ApplicantsTab", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(api.getApplicants).mockResolvedValue(page([applicant()]));
-    vi.mocked(api.updateStatus).mockResolvedValue();
-  });
-
-  afterEach(() => {
-    // 가짜 타이머가 남으면 뒤 테스트가 전부 멈춘다.
-    vi.useRealTimers();
+    vi.mocked(api.decideApplication).mockResolvedValue({ applicationId: 42, status: "DOC_PASS" });
+    vi.mocked(api.decideApplicationsBulk).mockResolvedValue({ updatedCount: 0, status: "DOC_PASS" });
+    // 행을 눌러 모달을 여는 테스트에서만 필요하지만, 매번 새로 정의하지 않게 기본값을 깔아 둔다.
+    vi.mocked(api.getApplicationDetail).mockResolvedValue(detail());
+    vi.mocked(api.getAdjacentApplicants).mockResolvedValue({ previousId: null, nextId: null });
+    vi.mocked(api.getEvaluationSummary).mockResolvedValue({
+      applicationId: 42,
+      criteria: [],
+      totalScore: null,
+      evaluatorCount: 0,
+      myTotalScore: null,
+    });
+    vi.mocked(publicApi.getColleges).mockResolvedValue([]);
+    vi.mocked(publicApi.getMajors).mockResolvedValue([]);
   });
 
   it("목록을 표로 그린다", async () => {
@@ -88,35 +97,16 @@ describe("ApplicantsTab", () => {
 
     const table = await screen.findByRole("table", { name: "지원자 목록" });
     expect(within(table).getByText("김지원")).toBeInTheDocument();
-    expect(within(table).getByText("경영대학 경영학과")).toBeInTheDocument();
+    expect(within(table).getByText("202012345")).toBeInTheDocument();
+    expect(within(table).getByText("경영대학")).toBeInTheDocument();
   });
 
-  it("평가 전 지원자는 점수 자리를 비운다", async () => {
-    // 0 점으로 보이면 평가했는데 0 점을 준 것으로 읽힌다.
+  it("학번·소속이 없으면 대시로 보여준다", async () => {
+    vi.mocked(api.getApplicants).mockResolvedValue(page([applicant({ studentNumber: null, college: null })]));
     renderPage();
 
     const table = await screen.findByRole("table");
-    expect(within(table).getByText("—")).toBeInTheDocument();
-    expect(within(table).queryByText("0")).not.toBeInTheDocument();
-  });
-
-  it("평가한 지원자는 총점을 보여준다", async () => {
-    vi.mocked(api.getApplicants).mockResolvedValue(
-      page([applicant({ totalScore: 87, evaluated: true, status: "DOC_PASS", passed: true })]),
-    );
-    renderPage();
-
-    expect(await screen.findByText("87")).toBeInTheDocument();
-  });
-
-  it("총점이 0 이면 0 을 그대로 보여준다", async () => {
-    // null 과 0 을 같이 취급하면 안 된다.
-    vi.mocked(api.getApplicants).mockResolvedValue(page([applicant({ totalScore: 0, evaluated: true })]));
-    renderPage();
-
-    const table = await screen.findByRole("table");
-    expect(within(table).getByText("0")).toBeInTheDocument();
-    expect(within(table).queryByText("—")).not.toBeInTheDocument();
+    expect(within(table).getAllByText("—")).toHaveLength(2);
   });
 
   it("상태 탭이 URL 과 조회 조건에 함께 반영된다", async () => {
@@ -129,68 +119,84 @@ describe("ApplicantsTab", () => {
     expect(api.getApplicants).toHaveBeenLastCalledWith(expect.objectContaining({ status: "DOC_PASS" }));
   });
 
-  it("평가 여부로 거른다", async () => {
+  it("제출 상태는 서류 합·불 버튼을, 서류 합격 상태는 최종 합·불 버튼을 보여준다", async () => {
+    vi.mocked(api.getApplicants).mockResolvedValue(page([applicant({ status: "DOC_PASS" })]));
     renderPage();
-    await screen.findByRole("table");
 
-    await userEvent.selectOptions(screen.getByRole("combobox", { name: "평가 여부" }), "todo");
-
-    expect(api.getApplicants).toHaveBeenLastCalledWith(expect.objectContaining({ evaluated: false }));
+    expect(await screen.findByRole("button", { name: "김지원 최종 합격 처리" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "김지원 최종 불합격 처리" })).toBeInTheDocument();
   });
 
-  it("평가 전체를 고르면 조건에서 뺀다", async () => {
-    // false 와 '전체'를 같이 취급하면 미평가만 보이게 된다.
+  it("이미 결정이 끝난 상태(서류 불합격)는 버튼 대신 대시를 보여준다", async () => {
+    vi.mocked(api.getApplicants).mockResolvedValue(page([applicant({ status: "DOC_FAIL" })]));
     renderPage();
+
     await screen.findByRole("table");
-
-    const select = screen.getByRole("combobox", { name: "평가 여부" });
-    await userEvent.selectOptions(select, "done");
-    await userEvent.selectOptions(select, "all");
-
-    expect(api.getApplicants).toHaveBeenLastCalledWith(expect.objectContaining({ evaluated: undefined }));
-  });
-
-  it("검색은 타이핑이 멈춘 뒤에 한 번만 조회한다", async () => {
-    renderPage();
-    await screen.findByRole("table");
-    const before = vi.mocked(api.getApplicants).mock.calls.length;
-
-    await userEvent.type(screen.getByRole("textbox", { name: "지원자 이름 검색" }), "김지원");
-
-    // 글자마다 조회하면 여기서 이미 늘어나 있다.
-    expect(vi.mocked(api.getApplicants).mock.calls.length).toBe(before);
-
-    await waitFor(() =>
-      expect(api.getApplicants).toHaveBeenLastCalledWith(expect.objectContaining({ keyword: "김지원" })),
-    );
-    // 중간 글자로는 조회하지 않았다.
-    expect(vi.mocked(api.getApplicants).mock.calls.length).toBe(before + 1);
+    expect(screen.queryByRole("button", { name: /처리/ })).not.toBeInTheDocument();
   });
 
   it("합격 처리를 서버에 보낸다", async () => {
     renderPage();
 
-    await userEvent.click(await screen.findByRole("button", { name: "김지원 합격 처리" }));
+    await userEvent.click(await screen.findByRole("button", { name: "김지원 서류 합격 처리" }));
 
-    expect(api.updateStatus).toHaveBeenCalledWith(42, true);
+    expect(api.decideApplication).toHaveBeenCalledWith(42, true);
   });
 
   it("불합격 처리를 서버에 보낸다", async () => {
     renderPage();
 
-    await userEvent.click(await screen.findByRole("button", { name: "김지원 불합격 처리" }));
+    await userEvent.click(await screen.findByRole("button", { name: "김지원 서류 불합격 처리" }));
 
-    expect(api.updateStatus).toHaveBeenCalledWith(42, false);
+    expect(api.decideApplication).toHaveBeenCalledWith(42, false);
   });
 
-  it("이미 정해진 합·불을 눌린 상태로 표시한다", async () => {
-    vi.mocked(api.getApplicants).mockResolvedValue(
-      page([applicant({ evaluated: true, status: "DOC_PASS", passed: true, totalScore: 87 })]),
-    );
+  it("합격·불합격 버튼을 눌러도 모달은 열리지 않는다", async () => {
+    // 행 클릭과 셀 안 버튼 클릭이 서로 방해하면 안 된다.
     renderPage();
 
-    expect(await screen.findByRole("button", { name: "김지원 합격 처리" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: "김지원 불합격 처리" })).toHaveAttribute("aria-pressed", "false");
+    await userEvent.click(await screen.findByRole("button", { name: "김지원 서류 합격 처리" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("체크박스로 여러 명을 선택하면 일괄 처리 버튼이 나온다", async () => {
+    vi.mocked(api.getApplicants).mockResolvedValue(
+      page([applicant({ id: 1, name: "A" }), applicant({ id: 2, name: "B" })]),
+    );
+    // 일괄 처리는 상태 필터를 하나로 좁혔을 때만 켠다.
+    renderPage("/admin/applications?status=SUBMITTED");
+    await screen.findByRole("table");
+
+    await userEvent.click(screen.getByRole("checkbox", { name: "A 선택" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "B 선택" }));
+
+    expect(screen.getByText("2명 선택됨")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "일괄 서류 합격" }));
+
+    expect(api.decideApplicationsBulk).toHaveBeenCalledWith({ applicationIds: [1, 2], status: "DOC_PASS" });
+  });
+
+  it("상태 필터가 '전체'거나 '서류 불합격'이면 일괄 처리 버튼을 보여주지 않는다", async () => {
+    vi.mocked(api.getApplicants).mockResolvedValue(page([applicant({ status: "DOC_FAIL" })]));
+    renderPage("/admin/applications?status=DOC_FAIL");
+    await screen.findByRole("table");
+
+    await userEvent.click(screen.getByRole("checkbox", { name: "김지원 선택" }));
+
+    expect(screen.queryByText(/선택됨/)).not.toBeInTheDocument();
+  });
+
+  it("전체 선택 체크박스로 이 페이지 전부를 고른다", async () => {
+    vi.mocked(api.getApplicants).mockResolvedValue(
+      page([applicant({ id: 1, name: "A" }), applicant({ id: 2, name: "B" })]),
+    );
+    renderPage("/admin/applications?status=SUBMITTED");
+    await screen.findByRole("table");
+
+    await userEvent.click(screen.getByRole("checkbox", { name: "이 페이지 전체 선택" }));
+
+    expect(screen.getByText("2명 선택됨")).toBeInTheDocument();
   });
 
   it("엑셀 다운로드가 실패하면 이유를 보여준다", async () => {
@@ -220,65 +226,6 @@ describe("ApplicantsTab", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("지원자 목록을 불러오지 못했습니다.");
   });
 
-  it("평가 여부가 URL 에 남는다", async () => {
-    // useState 로 들면 새로고침·링크 공유에서 조건이 사라진다.
-    const router = renderPage();
-    await screen.findByRole("table");
-
-    await userEvent.selectOptions(screen.getByRole("combobox", { name: "평가 여부" }), "todo");
-
-    expect(router.state.location.search).toContain("evaluated=todo");
-  });
-
-  it("URL 의 평가 여부를 읽어 조회에 쓴다", async () => {
-    renderPage("/admin/applications?evaluated=done");
-
-    await screen.findByRole("table");
-    expect(api.getApplicants).toHaveBeenCalledWith(expect.objectContaining({ evaluated: true }));
-  });
-
-  it("검색어가 URL 에 남는다", async () => {
-    const router = renderPage();
-    await screen.findByRole("table");
-
-    await userEvent.type(screen.getByRole("textbox", { name: "지원자 이름 검색" }), "김지원");
-
-    await waitFor(() => expect(router.state.location.search).toContain("keyword=%EA%B9%80%EC%A7%80%EC%9B%90"));
-  });
-
-  it("URL 의 검색어를 입력칸에 채워 시작한다", async () => {
-    renderPage("/admin/applications?keyword=김지원");
-
-    expect(await screen.findByRole("textbox", { name: "지원자 이름 검색" })).toHaveValue("김지원");
-    expect(api.getApplicants).toHaveBeenCalledWith(expect.objectContaining({ keyword: "김지원" }));
-  });
-
-  it("허용 목록에 없는 평가 여부는 조회 조건에 싣지 않는다", async () => {
-    renderPage("/admin/applications?evaluated=DROP");
-
-    await screen.findByRole("table");
-    expect(api.getApplicants).toHaveBeenCalledWith(expect.objectContaining({ evaluated: undefined }));
-  });
-
-  it("조건을 바꾸면 첫 페이지로 돌아간다", async () => {
-    const router = renderPage("/admin/applications?page=2");
-    await screen.findByRole("table");
-
-    await userEvent.selectOptions(screen.getByRole("combobox", { name: "평가 여부" }), "done");
-
-    expect(router.state.location.search).not.toContain("page=");
-  });
-
-  it("기본값은 주소에 남기지 않는다", async () => {
-    // 공유한 링크가 지저분해진다.
-    const router = renderPage("/admin/applications?evaluated=done");
-    await screen.findByRole("table");
-
-    await userEvent.selectOptions(screen.getByRole("combobox", { name: "평가 여부" }), "all");
-
-    expect(router.state.location.search).not.toContain("evaluated");
-  });
-
   it("오류 문구를 BE 코드에서 가져온다", async () => {
     vi.mocked(api.getApplicants).mockRejectedValue({ code: "FORBIDDEN", message: "서버 원문" });
     renderPage();
@@ -297,7 +244,6 @@ describe("ApplicantsTab", () => {
 
   it("행을 누르면 상세 모달이 열리고 주소에 남는다", async () => {
     // 열고 닫는 경로가 끊겨도 모달 자체 테스트로는 알 수 없다.
-    vi.mocked(api.getApplicationDetail).mockResolvedValue(detail());
     const router = renderPage();
 
     await userEvent.click((await screen.findByText("김지원")).closest("tr")!);
@@ -307,23 +253,14 @@ describe("ApplicantsTab", () => {
     expect(router.state.location.search).toContain("id=42");
   });
 
-  it("합격·불합격 버튼을 눌러도 모달은 열리지 않는다", async () => {
-    // 행 클릭과 셀 안 버튼 클릭이 서로 방해하면 안 된다.
-    renderPage();
-
-    await userEvent.click(await screen.findByRole("button", { name: "김지원 합격 처리" }));
-
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  });
-
-  it("상세 조회에 목록 필터를 그대로 넘긴다", async () => {
+  it("순차 탐색에 목록 필터를 그대로 넘긴다", async () => {
     // 순차 탐색이 목록과 같은 순서를 따라야 한다(명세서 7.5).
-    vi.mocked(api.getApplicationDetail).mockResolvedValue(detail());
+    vi.mocked(api.getApplicants).mockResolvedValue(page([applicant({ status: "DOC_PASS" })]));
     renderPage("/admin/applications?status=DOC_PASS");
 
     await userEvent.click((await screen.findByText("김지원")).closest("tr")!);
 
-    await waitFor(() => expect(api.getApplicationDetail).toHaveBeenCalled());
-    expect(vi.mocked(api.getApplicationDetail).mock.lastCall?.[1]).toMatchObject({ status: "DOC_PASS" });
+    await screen.findByRole("dialog");
+    expect(api.getAdjacentApplicants).toHaveBeenCalledWith(42, { status: "DOC_PASS" });
   });
 });
