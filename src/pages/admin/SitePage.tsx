@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "../../components/ui/Button/Button";
 import { Input } from "../../components/ui/Input/Input";
 import { ErrorState } from "../../components/ui/states/States";
-import { siteErrorMessage, siteSaveErrorMessage } from "../../errors/site/errorMessages";
+import { isSiteErrorCode, siteErrorMessage, siteSaveErrorMessage } from "../../errors/site/errorMessages";
 import {
   useGeneration,
   useSaveGeneration,
@@ -54,10 +54,16 @@ function SiteSectionNav() {
   );
 }
 
-/** 조회한 뒤에만 마운트한다. 그래야 `useState` 초기값으로 기존 값을 넣을 수 있다. */
-function GenerationSection({ generation }: { generation: Generation }) {
-  const [generationNo, setGenerationNo] = useState(String(generation.generationNo));
-  const [year, setYear] = useState(String(generation.year));
+/**
+ * 조회한 뒤에만 마운트한다. 그래야 `useState` 초기값으로 기존 값을 넣을 수 있다.
+ *
+ * `generation`이 `null`이면 아직 활성 기수가 하나도 없는 상태다(배포 직후 등) — BE의
+ * `PUT`은 없는 `generationNo`를 그대로 새로 만들어서 활성화하는 upsert라, 빈 폼으로
+ * 시작해도 저장만 누르면 첫 기수가 만들어진다.
+ */
+function GenerationSection({ generation }: { generation: Generation | null }) {
+  const [generationNo, setGenerationNo] = useState(generation !== null ? String(generation.generationNo) : "");
+  const [year, setYear] = useState(generation !== null ? String(generation.year) : "");
   const save = useSaveGeneration();
 
   const no = Number(generationNo);
@@ -83,7 +89,11 @@ function GenerationSection({ generation }: { generation: Generation }) {
       </div>
 
       {/* 새 기수를 활성화하면 기존 활성 기수가 내려간다. 되돌릴 수 없다. */}
-      <p className={styles.hint}>저장하면 이 기수가 활성 기수가 되고, 기존 활성 기수는 비활성화됩니다.</p>
+      <p className={styles.hint}>
+        {generation === null
+          ? "아직 진행 중인 기수가 없습니다. 저장하면 이 기수가 새로 만들어지고 활성화됩니다."
+          : "저장하면 이 기수가 활성 기수가 되고, 기존 활성 기수는 비활성화됩니다."}
+      </p>
 
       <div className={styles.footer}>
         {reason !== null && <p className={styles.reason}>{reason}</p>}
@@ -178,28 +188,36 @@ export default function SitePage() {
   const generationQuery = useGeneration();
   const settingsQuery = useSiteSettings();
 
+  // 활성 기수가 아직 없는 것도 정상 상태다(배포 직후 등) — 페이지 전체를 막지 않는다.
+  const generationMissing = isSiteErrorCode(generationQuery.error, "ACTIVE_GENERATION_NOT_FOUND");
+
   const isPending = generationQuery.isPending || settingsQuery.isPending;
-  const errorQuery = generationQuery.isError ? generationQuery : settingsQuery.isError ? settingsQuery : null;
+  const errorQuery =
+    generationQuery.isError && !generationMissing ? generationQuery : settingsQuery.isError ? settingsQuery : null;
 
   if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
   if (errorQuery) {
     return <ErrorState message={siteErrorMessage(errorQuery.error)} onRetry={() => void errorQuery.refetch()} />;
   }
 
-  const generation = generationQuery.data as Generation;
+  const generation = generationMissing ? null : (generationQuery.data as Generation);
 
   return (
     <div className={styles.page}>
       <SiteSectionNav />
       <GenerationSection generation={generation} />
       <RestSectionsForm settings={settingsQuery.data as SiteSettings} />
-      <CurriculumsSection generationId={generation.id} />
-      <EventsSection generationId={generation.id} />
 
       {/*
-        아래 두 섹션은 위 폼들과 무관하다. 개별 엔드포인트로 즉시 반영된다.
+        커리큘럼 · 행사 · 운영진은 활성 기수에 딸린 데이터라 기수부터 있어야 의미가 있다.
       */}
-      <StaffsSection generationNo={generation.generationNo} />
+      {generation !== null && (
+        <>
+          <CurriculumsSection generationId={generation.id} />
+          <EventsSection generationId={generation.id} />
+          <StaffsSection generationNo={generation.generationNo} />
+        </>
+      )}
       <FeaturesSection />
     </div>
   );
