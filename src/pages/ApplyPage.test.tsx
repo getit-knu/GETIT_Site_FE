@@ -1,12 +1,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { getForm } from "../apis/application/myApplicationApi";
 import { getColleges, getMajors } from "../apis/public/publicApi";
+import type { ApplicationFormResult } from "../types/application";
 import type { College, Major } from "../types/college";
 
 import ApplyPage from "./ApplyPage";
 
+vi.mock("../apis/application/myApplicationApi");
 vi.mock("../apis/public/publicApi");
 
 const COLLEGES: College[] = [
@@ -18,6 +22,59 @@ const MAJORS: Major[] = [
   { id: 1, collegeId: 1, name: "경영학과" },
   { id: 2, collegeId: 2, name: "기계공학과" },
 ];
+
+function form(over: Partial<ApplicationFormResult> = {}): ApplicationFormResult {
+  return {
+    generationNo: 9,
+    phase: "DOCUMENT_OPEN",
+    deadline: "2026-09-30T23:59:00+09:00",
+    basicInfoPrefill: {
+      name: "홍길동",
+      email: "hong@getit.com",
+      phoneNumber: null,
+      collegeId: null,
+      majorId: null,
+      grade: null,
+      studentNumber: null,
+    },
+    questions: [
+      {
+        id: 1,
+        order: 1,
+        type: "TEXT",
+        content: "지원 동기는 무엇인가요?",
+        placeholder: "자유롭게 작성해주세요.",
+        required: true,
+        maxLength: 300,
+        options: null,
+      },
+      {
+        id: 2,
+        order: 2,
+        type: "CHOICE",
+        content: "선호하는 트랙은?",
+        placeholder: null,
+        required: true,
+        maxLength: null,
+        options: [
+          { id: "opt-1", label: "SW" },
+          { id: "opt-2", label: "창업" },
+        ],
+      },
+      {
+        id: 3,
+        order: 3,
+        type: "CHECKBOX",
+        content: "개인정보 수집에 동의하시나요?",
+        placeholder: null,
+        required: true,
+        maxLength: null,
+        options: [{ id: "opt-1", label: "동의합니다" }],
+      },
+    ],
+    ...over,
+  };
+}
 
 function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -43,42 +100,76 @@ async function renderReadyPage() {
 
 describe("ApplyPage", () => {
   beforeEach(() => {
+    vi.mocked(getForm).mockResolvedValue(form());
     vi.mocked(getColleges).mockResolvedValue(COLLEGES);
     vi.mocked(getMajors).mockResolvedValue(MAJORS);
   });
 
-  it("헤더와 두 섹션의 필드를 모두 렌더링한다", async () => {
+  it("헤더와 기본 정보 필드를 프리필된 값으로 렌더링한다", async () => {
     await renderReadyPage();
 
     expect(screen.getByRole("heading", { name: "GETIT 지원하기" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "지원서 작성" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "기본 정보" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "지원 동기 및 경험" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "지원 문항" })).toBeInTheDocument();
 
-    for (const label of ["이름 *", "이메일 *", "전화번호 *", "단과 대학 *", "전공 *", "학번(10자) *"]) {
+    expect(screen.getByLabelText("이름 *")).toHaveValue("홍길동");
+    expect(screen.getByLabelText("이메일 *")).toHaveValue("hong@getit.com");
+
+    for (const label of ["전화번호 *", "단과 대학 *", "전공 *", "학년 *", "학번(10자) *"]) {
       expect(screen.getByLabelText(label)).toBeInTheDocument();
     }
-    expect(screen.getByLabelText("GETIT에 지원하게 된 동기는 무엇인가요? *")).toBeInTheDocument();
-    expect(screen.getByLabelText("프로그래밍 경험이 있다면 간단히 설명해주세요")).toBeInTheDocument();
-    expect(screen.getByLabelText("GETIT에서 어떤 프로젝트를 하고 싶으신가요? *")).toBeInTheDocument();
-    expect(screen.getByLabelText("궁금한 점이나 하고 싶은 말이 있다면 자유롭게 작성해주세요")).toBeInTheDocument();
-
-    // 실제 데이터로 드롭다운이 채워지는지도 함께 확인한다.
-    fireEvent.change(screen.getByLabelText("단과 대학 *"), { target: { value: "1" } });
-    expect(await screen.findByRole("option", { name: "경영학과" })).toBeInTheDocument();
   });
 
-  it("입력한 값이 필드에 그대로 반영된다", () => {
-    renderPage();
+  it("문항을 BE가 준 순서·타입대로 렌더링한다", async () => {
+    await renderReadyPage();
 
-    const nameInput = screen.getByLabelText("이름 *");
-    fireEvent.change(nameInput, { target: { value: "홍길동" } });
-
-    expect(nameInput).toHaveValue("홍길동");
+    expect(screen.getByLabelText("지원 동기는 무엇인가요? *")).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "선호하는 트랙은? *" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "SW" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "창업" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "동의합니다" })).toBeInTheDocument();
   });
 
-  it("sticky footer에 임시 저장 · 제출하기 버튼이 있다", () => {
-    renderPage();
+  it("TEXT 문항에 입력한 값이 그대로 반영된다", async () => {
+    await renderReadyPage();
+
+    const motivation = screen.getByLabelText("지원 동기는 무엇인가요? *");
+    fireEvent.change(motivation, { target: { value: "성장하고 싶어서 지원합니다." } });
+
+    expect(motivation).toHaveValue("성장하고 싶어서 지원합니다.");
+  });
+
+  it("CHOICE 문항은 하나만 고를 수 있다", async () => {
+    await renderReadyPage();
+
+    const sw = screen.getByRole("radio", { name: "SW" });
+    const startup = screen.getByRole("radio", { name: "창업" });
+
+    await userEvent.click(sw);
+    expect(sw).toBeChecked();
+    expect(startup).not.toBeChecked();
+
+    await userEvent.click(startup);
+    expect(sw).not.toBeChecked();
+    expect(startup).toBeChecked();
+  });
+
+  it("CHECKBOX 문항은 체크를 켜고 끌 수 있다", async () => {
+    await renderReadyPage();
+
+    const consent = screen.getByRole("checkbox", { name: "동의합니다" });
+    expect(consent).not.toBeChecked();
+
+    await userEvent.click(consent);
+    expect(consent).toBeChecked();
+
+    await userEvent.click(consent);
+    expect(consent).not.toBeChecked();
+  });
+
+  it("sticky footer에 임시 저장 · 제출하기 버튼이 있다", async () => {
+    await renderReadyPage();
 
     expect(screen.getByRole("button", { name: "임시 저장" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "제출하기" })).toBeInTheDocument();
@@ -97,8 +188,8 @@ describe("ApplyPage", () => {
     expect(screen.queryByRole("option", { name: "기계공학과" })).not.toBeInTheDocument();
   });
 
-  it("학번은 10자까지만 입력할 수 있다", () => {
-    renderPage();
+  it("학번은 10자까지만 입력할 수 있다", async () => {
+    await renderReadyPage();
 
     expect(screen.getByLabelText("학번(10자) *")).toHaveAttribute("maxlength", "10");
   });
@@ -117,5 +208,41 @@ describe("ApplyPage", () => {
     fireEvent.change(collegeSelect, { target: { value: "2" } });
 
     expect(majorSelect).toHaveValue("0");
+  });
+
+  it("이미 채워진 기본 정보는 프리필 그대로 보여준다", async () => {
+    vi.mocked(getForm).mockResolvedValue(
+      form({
+        basicInfoPrefill: {
+          name: "김부원",
+          email: "kim@getit.com",
+          phoneNumber: "010-1234-5678",
+          collegeId: 2,
+          majorId: 2,
+          grade: 3,
+          studentNumber: "2021123456",
+        },
+      }),
+    );
+    renderPage();
+
+    expect(await screen.findByLabelText("전화번호 *")).toHaveValue("010-1234-5678");
+    expect(screen.getByLabelText("학년 *")).toHaveValue(3);
+    expect(screen.getByLabelText("학번(10자) *")).toHaveValue("2021123456");
+  });
+
+  it("모집 기간이 아니면 안내만 보여주고 폼은 렌더링하지 않는다", async () => {
+    vi.mocked(getForm).mockResolvedValue(form({ phase: "BEFORE_OPEN" }));
+    renderPage();
+
+    expect(await screen.findByText("지금은 지원서 접수 기간이 아닙니다.")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "지원서 작성" })).not.toBeInTheDocument();
+  });
+
+  it("조회에 실패하면 오류와 재시도를 보여준다", async () => {
+    vi.mocked(getForm).mockRejectedValue({ code: "UNAUTHORIZED", message: "?" });
+    renderPage();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("로그인이 필요합니다");
   });
 });

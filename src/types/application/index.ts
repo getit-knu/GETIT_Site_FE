@@ -1,10 +1,14 @@
-import type { QuestionOption } from "../recruitment";
+import type { components } from "../../apis/generated";
+import type { QuestionOption, QuestionType } from "../recruitment";
 import type { Page } from "../qna";
 
 /**
  * 지원자 관리 타입. API 명세서 7.1 · 7.4 · 7.6.
  *
  * BE 에 admin application 컨트롤러가 아직 없다. 스키마가 생기면 `generated.ts` 에서 가져온다.
+ *
+ * **지원서 양식 조회(3.1, `ApplicationFormResult` 이하)는 다르다** — 이미 스키마가 있어
+ * `generated.ts` 에서 재노출한다(#188).
  */
 export type { Page };
 
@@ -109,4 +113,52 @@ export interface ApplicationDetail {
 /** 평가 저장 (7.3). */
 export interface EvaluationPayload {
   scores: { criterionId: number; score: number }[];
+}
+
+/**
+ * 3.1 지원서 문항. 어드민 `RecruitmentQuestion`과 필드가 거의 같지만 `placeholder`가
+ * 더 있다. `maxLength`는 `TEXT`만, `options`는 `CHOICE`/`CHECKBOX`만 쓴다
+ * (`CHECKBOX`는 항상 옵션 1개짜리 동의 문항 — `QuestionRow.tsx`에서 확인한 것과 같은 규약).
+ */
+export interface ApplicationFormQuestion {
+  id: number;
+  order: number;
+  type: QuestionType;
+  content: string;
+  /** `TEXT`만 쓴다. */
+  placeholder: string | null;
+  required: boolean;
+  /** `TEXT`만 쓴다. */
+  maxLength: number | null;
+  /** `CHOICE`, `CHECKBOX`만 쓴다. */
+  options: QuestionOption[] | null;
+}
+
+/**
+ * 지원서 기본 정보 프리필.
+ *
+ * `name`·`email`은 구글 로그인 시 항상 채워지지만, 나머지는 아직 프로필을 다 안 채운
+ * 신규 지원자면 없을 수 있다고 보고 `Me`(로그인 세션)의 nullable 패턴을 그대로 따랐다 —
+ * springdoc이 null 가능성을 반영 안 해서(생성된 스키마는 전부 optional) 실제 응답으로
+ * 확인 전까지는 추정이다.
+ */
+export interface BasicInfo {
+  name: string;
+  email: string;
+  phoneNumber: string | null;
+  collegeId: number | null;
+  majorId: number | null;
+  grade: number | null;
+  studentNumber: string | null;
+}
+
+export type ApplicationPhase = NonNullable<components["schemas"]["ApplicationFormResult"]["phase"]>;
+
+/** `GET /api/applications/form` 응답 (3.1). */
+export interface ApplicationFormResult {
+  generationNo: number;
+  phase: ApplicationPhase;
+  deadline: string;
+  basicInfoPrefill: BasicInfo;
+  questions: ApplicationFormQuestion[];
 }

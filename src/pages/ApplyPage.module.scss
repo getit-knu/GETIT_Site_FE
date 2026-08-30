@@ -6,6 +6,12 @@
   background-color: $color-background;
 }
 
+.loading {
+  padding: 7rem 1rem;
+  color: $color-text-secondary;
+  text-align: center;
+}
+
 .hero {
   padding: 7rem 1rem 6rem;
   background-image: linear-gradient(129deg, #eff6ff 0%, #eef2ff 100%);

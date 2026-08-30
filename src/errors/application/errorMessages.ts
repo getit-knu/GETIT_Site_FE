@@ -25,3 +25,6 @@ export const applicationErrorMessage = (error: unknown) => messageFor(error, "�
 
 /** 다운로드는 실패 이유가 다르다. 목록 조회 문구를 쓰면 엉뚱하게 읽힌다. */
 export const applicationExportErrorMessage = (error: unknown) => messageFor(error, "엑셀 다운로드에 실패했습니다.");
+
+/** 지원서 양식 조회(본인 지원서)는 어드민 목록 조회와 문구가 다르다. */
+export const applicationFormErrorMessage = (error: unknown) => messageFor(error, "지원서 양식을 불러오지 못했습니다.");
