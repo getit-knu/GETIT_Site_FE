@@ -40,13 +40,12 @@ describe("MemberLayout", () => {
     expect(screen.getByText("부원 본문")).toBeInTheDocument();
   });
 
-  it("강좌 목록 · 내정보는 실제 링크이고, 운영진은 아직 화면이 없어 클릭할 수 없는 텍스트다", () => {
+  it("강좌 목록 · 내정보로 가는 링크를 보여준다", () => {
     renderAt("/member");
 
     const nav = within(screen.getByRole("navigation", { name: "부원 메뉴" }));
     expect(nav.getByRole("link", { name: "강좌 목록", current: "page" })).toHaveAttribute("href", "/member");
     expect(nav.getByRole("link", { name: "내정보" })).toHaveAttribute("href", "/member/me");
-    expect(nav.getByText("운영진")).toBeInTheDocument();
     expect(nav.queryAllByRole("link")).toHaveLength(3); // GETIT 로고 + 강좌 목록 + 내정보
   });
 
