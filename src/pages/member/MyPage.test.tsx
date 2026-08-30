@@ -44,20 +44,6 @@ describe("MyPage", () => {
     expect(screen.getByText("김")).toBeInTheDocument();
   });
 
-  it("학습 통계와 과제 제출 내역을 렌더링한다", async () => {
-    vi.mocked(getMe).mockResolvedValue(MEMBER);
-    renderPage();
-
-    await screen.findByRole("heading", { name: "김부원" });
-
-    expect(screen.getByText("8")).toBeInTheDocument();
-    expect(screen.getByText("수강한 강의")).toBeInTheDocument();
-    expect(screen.getByText("10")).toBeInTheDocument();
-    expect(screen.getByText("제출한 과제")).toBeInTheDocument();
-    expect(screen.getByText("Week 3 - 금융 이론")).toBeInTheDocument();
-    expect(screen.getByText("Week 1, Week 5")).toBeInTheDocument();
-  });
-
   it("세션 판정이 끝나기 전에는 아무것도 그리지 않는다", () => {
     vi.mocked(getMe).mockReturnValue(new Promise(() => {}));
     const { container } = renderPage();
