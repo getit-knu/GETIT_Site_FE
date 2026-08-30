@@ -1,12 +1,12 @@
 import { client } from "../client";
 import * as mock from "../../mocks/site/settings";
-import * as staffMock from "../../mocks/site/staffs";
 import type {
   Curriculum,
   CurriculumPayload,
   Faq,
   FaqPayload,
   FeatureToggle,
+  FeatureTogglePayload,
   Generation,
   GenerationPayload,
   SiteEvent,
@@ -22,8 +22,8 @@ import type {
 /**
  * 사이트 설정 API.
  *
- * 진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류 · FAQ는 실제 `client` 호출이다.
- * 모집 일정 · 기능 토글은 아직 실제 엔드포인트가 없어 `mock.*`/`staffMock.*` 를 그대로 쓴다.
+ * 진행 기수 · 운영진 · 행사 · 커리큘럼 · 강의 분류 · FAQ · 기능 토글은 실제 `client` 호출이다.
+ * 모집 일정만 아직 실제 엔드포인트가 없어 `mock.*` 를 그대로 쓴다.
  */
 
 /** `GET /api/admin/setting/generation` */
@@ -209,9 +209,15 @@ export async function deleteFaq(id: number): Promise<void> {
   await client.delete(`/api/admin/setting/faqs/${id}`);
 }
 
-/** `GET /api/admin/setting/features` — 아직 실제 엔드포인트가 없다. */
-export const getFeatures = (): Promise<FeatureToggle[]> => staffMock.fetchFeatures();
+/** `GET /api/admin/setting/features` — 10.23. */
+export async function getFeatures(): Promise<FeatureToggle[]> {
+  const { data } = await client.get<FeatureToggle[]>("/api/admin/setting/features");
+  return data;
+}
 
-/** `PUT /api/admin/setting/features/{key}` — 아직 실제 엔드포인트가 없다. */
-export const toggleFeature = (key: string, enabled: boolean): Promise<FeatureToggle> =>
-  staffMock.toggleFeature(key, enabled);
+/** `PUT /api/admin/setting/features/{key}` — 10.24. */
+export async function toggleFeature(key: FeatureToggle["key"], enabled: boolean): Promise<FeatureToggle> {
+  const payload: FeatureTogglePayload = { enabled };
+  const { data } = await client.put<FeatureToggle>(`/api/admin/setting/features/${key}`, payload);
+  return data;
+}

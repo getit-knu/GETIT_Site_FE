@@ -12,9 +12,7 @@ import type { components } from "../../apis/generated";
  * 모집 일정은 아직 BE 연동 전이라(#190은 `/admin/recruitment/schedule`용이고 이 화면
  * 몫은 별도 미배정) 목 데이터로 남는다.
  *
- * **FAQ는 실제 연동됨(#212).** **기능 토글은 아직 목이다** — BE에 실제로
- * `GET`/`PUT /api/admin/setting/features` 엔드포인트가 있는 것을 확인했지만(2026-08-30,
- * 예전엔 없었다), 이번 작업 범위 밖이라 손대지 않았다 — 다음 백로그 후보.
+ * **FAQ(#212)·기능 토글(#221)은 실제 연동됨.**
  */
 
 /** 진행 기수. 활성 기수는 하나뿐이다 — `PUT` 으로 새 기수를 활성화하면 기존 기수는 내려간다. */
@@ -175,17 +173,20 @@ export interface StaffDirectory {
 }
 
 /**
- * 기능 토글.
+ * 기능 토글(#221). `GET`/`PUT /api/admin/setting/features(/{key})`.
  *
  * **`key` 는 BE 가 정한다.** 화면은 받은 목록을 그대로 그린다 — FE 에 키 목록을 두면
- * BE 가 기능을 추가해도 화면에 나오지 않는다. 목으로 남긴다 — 실제로는 BE에
- * `GET`/`PUT /api/admin/setting/features`가 있다(2026-08-30 재확인, `key`는
- * `"STOCK_GAME" | "MOCK_INVESTMENT"`로 좁혀져 있음). 파일 상단 docblock 참고.
+ * BE 가 기능을 추가해도 화면에 나오지 않는다(다만 스키마 자체는 현재
+ * `"STOCK_GAME" | "MOCK_INVESTMENT"`로 좁혀져 있음).
+ *
+ * `updatedAt`·`updatedBy`는 한 번도 토글한 적 없는 기능이면 실제로 `null`이 온다
+ * (BE 소스 확인함, `FeatureToggleAdminService`가 갱신 전엔 시드값 그대로 둠) — 손으로
+ * 되돌린다.
  */
-export interface FeatureToggle {
-  key: string;
-  label: string;
-  enabled: boolean;
-  updatedAt: string;
-  updatedBy: string;
-}
+export type FeatureToggle = Omit<Required<components["schemas"]["FeatureResult"]>, "updatedAt" | "updatedBy"> & {
+  updatedAt: string | null;
+  updatedBy: string | null;
+};
+
+/** `PUT /api/admin/setting/features/{key}` 요청 본문. */
+export type FeatureTogglePayload = components["schemas"]["FeatureToggleRequest"];
