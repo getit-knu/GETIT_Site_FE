@@ -3,9 +3,10 @@ import { describe, expect, it } from "vitest";
 import { ADMIN_MENU, findActiveMenu } from "./adminMenu";
 
 describe("ADMIN_MENU", () => {
-  it("사이드바 메뉴는 8개다", () => {
-    // 와이어프레임이 페이지마다 6개 또는 8개로 다르게 그려져 있어 8개로 통일했다.
-    expect(ADMIN_MENU).toHaveLength(8);
+  it("사이드바 메뉴는 9개다", () => {
+    // 와이어프레임이 페이지마다 6개 또는 8개로 다르게 그려져 있어 8개로 통일했었는데,
+    // 와이어프레임에 없던 프로젝트 관리(#222)가 새로 추가되며 9개가 됐다.
+    expect(ADMIN_MENU).toHaveLength(9);
   });
 
   it("경로가 중복되지 않는다", () => {

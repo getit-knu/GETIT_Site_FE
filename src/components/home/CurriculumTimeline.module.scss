@@ -114,33 +114,6 @@
   flex-direction: column;
 }
 
-.semester + .semester {
-  margin-top: 6.5rem;
-}
-
-.semesterBadgeRow {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 3.5rem;
-}
-
-.semesterBadge {
-  background-color: $color-accent;
-  color: $color-background;
-  font-size: 1.375rem;
-  font-weight: 700;
-  padding: 1rem 2.25rem;
-  border-radius: 9999px;
-  box-shadow:
-    0 10px 7.5px rgb(0 0 0 / 10%),
-    0 4px 3px rgb(0 0 0 / 10%);
-
-  @media (width <= $breakpoint-mobile) {
-    font-size: 0.9375rem;
-    padding: 0.625rem 1.375rem;
-  }
-}
-
 .timelineList {
   position: relative;
   display: flex;
@@ -240,11 +213,22 @@
 }
 
 .chipLabel {
+  margin: 0;
   color: $color-text-primary;
   font-size: 1.1875rem;
   font-weight: 500;
 
   @media (width <= $breakpoint-mobile) {
     font-size: 0.9375rem;
+  }
+}
+
+.chipSubtitle {
+  margin: 0.125rem 0 0;
+  color: $color-text-secondary;
+  font-size: 0.9375rem;
+
+  @media (width <= $breakpoint-mobile) {
+    font-size: 0.8125rem;
   }
 }

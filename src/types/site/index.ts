@@ -12,9 +12,7 @@ import type { components } from "../../apis/generated";
  * 모집 일정은 아직 BE 연동 전이라(#190은 `/admin/recruitment/schedule`용이고 이 화면
  * 몫은 별도 미배정) 목 데이터로 남는다.
  *
- * **FAQ는 실제 연동됨(#212).** **기능 토글은 아직 목이다** — BE에 실제로
- * `GET`/`PUT /api/admin/setting/features` 엔드포인트가 있는 것을 확인했지만(2026-08-30,
- * 예전엔 없었다), 이번 작업 범위 밖이라 손대지 않았다 — 다음 백로그 후보.
+ * **FAQ(#212)·기능 토글(#221)은 실제 연동됨.**
  */
 
 /** 진행 기수. 활성 기수는 하나뿐이다 — `PUT` 으로 새 기수를 활성화하면 기존 기수는 내려간다. */
@@ -78,8 +76,9 @@ export type CurriculumPayload = components["schemas"]["CurriculumRequest"];
 /**
  * 행사 종류.
  *
- * **`types/dashboard` 에도 `EventType` 이 있고 값이 다르다**(대시보드는 `WORKSHOP` 이 없다).
- * 한 파일에서 둘을 함께 쓰면 이름이 부딪히므로 도메인 접두어를 붙인다.
+ * **`types/dashboard` 에도 `EventType` 이 있다**(값은 지금 같지만, 이름이 부딪히므로
+ * 도메인 접두어를 붙인다 — 두 도메인이 같은 스키마를 공유하는 건 아니라 값이 각자
+ * 바뀔 수 있다).
  */
 export type SiteEventType = NonNullable<components["schemas"]["EventResult"]["type"]>;
 
@@ -88,6 +87,19 @@ export type SiteEvent = Required<components["schemas"]["EventResult"]>;
 
 /** `POST`/`PUT /api/admin/setting/events` 요청 본문. */
 export type SiteEventPayload = components["schemas"]["EventRequest"];
+
+/**
+ * `GET /api/public/events?year=&month=` 응답(#220). Home "GETIT 활동 일정" 캘린더가 쓴다.
+ * `isVisible`이 꺼진 행사는 서버가 걸러서 안 준다 — 이 목록엔 그런 필드 자체가 없다.
+ */
+export type PublicEvent = Required<components["schemas"]["EventCalendarResultItem"]>;
+
+/** `Required<>`는 배열 원소 내부까지 못 채우므로 `PublicEvent`로 직접 합성한다. */
+export interface PublicEventCalendar {
+  year: number;
+  month: number;
+  events: PublicEvent[];
+}
 
 /**
  * FAQ (10.18 · 10.19). `Curriculum`과 달리 기수 스코프가 없다(BE 확인함 — 요청·응답에
@@ -161,17 +173,20 @@ export interface StaffDirectory {
 }
 
 /**
- * 기능 토글.
+ * 기능 토글(#221). `GET`/`PUT /api/admin/setting/features(/{key})`.
  *
  * **`key` 는 BE 가 정한다.** 화면은 받은 목록을 그대로 그린다 — FE 에 키 목록을 두면
- * BE 가 기능을 추가해도 화면에 나오지 않는다. 목으로 남긴다 — 실제로는 BE에
- * `GET`/`PUT /api/admin/setting/features`가 있다(2026-08-30 재확인, `key`는
- * `"STOCK_GAME" | "MOCK_INVESTMENT"`로 좁혀져 있음). 파일 상단 docblock 참고.
+ * BE 가 기능을 추가해도 화면에 나오지 않는다(다만 스키마 자체는 현재
+ * `"STOCK_GAME" | "MOCK_INVESTMENT"`로 좁혀져 있음).
+ *
+ * `updatedAt`·`updatedBy`는 한 번도 토글한 적 없는 기능이면 실제로 `null`이 온다
+ * (BE 소스 확인함, `FeatureToggleAdminService`가 갱신 전엔 시드값 그대로 둠) — 손으로
+ * 되돌린다.
  */
-export interface FeatureToggle {
-  key: string;
-  label: string;
-  enabled: boolean;
-  updatedAt: string;
-  updatedBy: string;
-}
+export type FeatureToggle = Omit<Required<components["schemas"]["FeatureResult"]>, "updatedAt" | "updatedBy"> & {
+  updatedAt: string | null;
+  updatedBy: string | null;
+};
+
+/** `PUT /api/admin/setting/features/{key}` 요청 본문. */
+export type FeatureTogglePayload = components["schemas"]["FeatureToggleRequest"];

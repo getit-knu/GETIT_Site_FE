@@ -78,6 +78,7 @@ const areaRoutes: RouteObject[] = [
           { index: true, lazy: page(() => import("./pages/admin/AdminHomePage")) },
           { path: "applications", lazy: page(() => import("./pages/admin/ApplicationsPage")) },
           { path: "lectures", lazy: page(() => import("./pages/admin/LecturesPage")) },
+          { path: "projects", lazy: page(() => import("./pages/admin/ProjectsPage")) },
           { path: "users", lazy: page(() => import("./pages/admin/UsersPage")) },
           { path: "site", lazy: page(() => import("./pages/admin/SitePage")) },
           { path: "questions", lazy: page(() => import("./pages/admin/QuestionsPage")) },

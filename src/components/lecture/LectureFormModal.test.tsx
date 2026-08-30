@@ -37,11 +37,13 @@ function detail(over: Partial<LectureDetail> = {}): LectureDetail {
     durationMinutes: 120,
     isPublished: true,
     files: [{ fileId: 501, displayName: "강의 자료.pdf", url: "https://cdn/1", size: 2048 }],
+    // 실제 BE는 오프셋 붙은 ISO 8601(`date-time`)을 준다 — 초·오프셋 없는 값으로 목을
+    // 만들면 화면의 KST 변환 누락 버그가 감춰진다.
     assignment: {
       id: 201,
       title: "소개 페이지 만들기",
       description: "설명",
-      deadline: "2026-06-19T23:59",
+      deadline: "2026-06-19T23:59:00+09:00",
       allowedTypes: ["FILE"],
       linkPlaceholder: null,
     },
@@ -87,6 +89,18 @@ describe("LectureFormModal", () => {
     expect(screen.getByRole("heading", { name: "강의 수정" })).toBeInTheDocument();
     expect(weekBox()).toHaveValue(3);
     expect(screen.getByDisplayValue("소개 페이지 만들기")).toBeInTheDocument();
+  });
+
+  it("서버가 준 오프셋 붙은 과제 마감을 KST datetime-local 값으로 채우고, 안 고쳐도 오프셋 붙여 되돌린다", async () => {
+    // 오프셋을 그대로 넣으면 <input type="datetime-local">은 형식 불일치로 빈 칸을 보여준다.
+    renderModal(101);
+
+    expect(await screen.findByLabelText("마감 기한 *")).toHaveValue("2026-06-19T23:59");
+
+    await userEvent.click(submit());
+
+    const payload = vi.mocked(api.updateLecture).mock.lastCall?.[1];
+    expect(new Date(payload!.assignment!.deadline).toISOString()).toBe("2026-06-19T14:59:00.000Z");
   });
 
   it("제목이 비면 저장할 수 없다", () => {

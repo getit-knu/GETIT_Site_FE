@@ -1,10 +1,11 @@
+import { toIso, toLocalInput } from "../../../libs/datetimeLocalInput";
 import type { SiteSchedule } from "../../../types/site";
 
 /**
  * 모집 일정 폼 상태.
  *
  * `<input type="datetime-local">` 은 `2026-09-01T00:00` 형태만 받는다. 서버는 오프셋이
- * 붙은 ISO 8601 을 주고받으므로 화면에 들일 때와 낼 때 형태를 바꿔 준다.
+ * 붙은 ISO 8601 을 주고받으므로 화면에 들일 때와 낼 때 형태를 바꿔 준다(`libs/datetimeLocalInput`).
  */
 export type ScheduleDraft = Record<keyof SiteSchedule, string>;
 
@@ -15,40 +16,6 @@ export const SCHEDULE_FIELDS: { key: keyof SiteSchedule; label: string }[] = [
   { key: "documentEndAt", label: "서류 접수 마감" },
   { key: "interviewStartAt", label: "면접 시작" },
 ];
-
-const KST_OFFSET_MINUTES = 9 * 60;
-
-/**
- * ISO → `datetime-local` 값.
- *
- * 문자열을 그대로 자르면 서버가 준 오프셋을 무시하게 된다(`+09:00` 이 아닐 수도 있다).
- * 시각으로 바꾼 뒤 한국 시간으로 다시 그린다 — 화면 표기는 KST 로 고정한다.
- */
-export function toLocalInput(iso: string): string {
-  const at = new Date(iso);
-  if (Number.isNaN(at.getTime())) return "";
-
-  const kst = new Date(at.getTime() + KST_OFFSET_MINUTES * 60_000);
-  return kst.toISOString().slice(0, 16);
-}
-
-/**
- * `datetime-local` 값의 형태. `2026-09-01T00:00`.
- *
- * `Date` 파싱만 믿으면 안 된다 — V8 은 `"아무거나:00Z"` 를 2000-01-01 로 읽어 준다.
- * 주소나 저장된 값이 깨져 들어왔을 때 엉뚱한 날짜가 조용히 저장된다.
- */
-const LOCAL_INPUT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
-
-/** `datetime-local` 값 → ISO. 입력은 KST 로 읽는다. */
-export function toIso(local: string): string {
-  if (!LOCAL_INPUT.test(local)) return "";
-
-  const asUtc = new Date(`${local}:00Z`);
-  if (Number.isNaN(asUtc.getTime())) return "";
-
-  return new Date(asUtc.getTime() - KST_OFFSET_MINUTES * 60_000).toISOString();
-}
 
 export function toDraft(schedule: SiteSchedule): ScheduleDraft {
   return {

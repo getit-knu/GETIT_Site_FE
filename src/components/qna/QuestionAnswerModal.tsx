@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { answerSaveErrorMessage, questionErrorMessage } from "../../errors/qna/errorMessages";
 import { useQuestion, useSaveAnswer } from "../../hooks/qna/useQuestions";
 import { formatDateTime } from "../../libs/formatDate";
 import type { QuestionDetail } from "../../types/qna";
@@ -21,7 +22,7 @@ const MAX_LENGTH = 1000;
  */
 function AnswerForm({ question, onClose }: { question: QuestionDetail; onClose: () => void }) {
   const [content, setContent] = useState(question.answer?.content ?? "");
-  const { mutate, isPending: isSaving } = useSaveAnswer(question.id);
+  const { mutate, isPending: isSaving, error: saveError } = useSaveAnswer(question.id);
 
   const isEdit = question.answer !== null;
   const trimmed = content.trim();
@@ -66,6 +67,8 @@ function AnswerForm({ question, onClose }: { question: QuestionDetail; onClose: 
           maxLength={MAX_LENGTH}
           disabled={isSaving}
         />
+
+        {saveError !== null && <p className={styles.reason}>{answerSaveErrorMessage(saveError)}</p>}
       </ModalBody>
 
       <ModalFooter>
@@ -91,7 +94,7 @@ interface QuestionAnswerModalProps {
  * 이미 답변한 질문이면 기존 답변을 채워 수정 모드로 연다.
  */
 export function QuestionAnswerModal({ questionId, onClose }: QuestionAnswerModalProps) {
-  const { data: question, isPending, isError, refetch } = useQuestion(questionId);
+  const { data: question, isPending, isError, error, refetch } = useQuestion(questionId);
 
   // 상세가 오기 전에는 답변이 있는지 알 수 없다. 그때 `답변 작성` 으로 단정하면
   // 이미 답변한 질문을 열었을 때 제목이 `작성` → `수정` 으로 바뀌어 깜빡인다.
@@ -110,7 +113,7 @@ export function QuestionAnswerModal({ questionId, onClose }: QuestionAnswerModal
 
       {isError && (
         <ModalBody>
-          <ErrorState message="질문을 불러오지 못했습니다." onRetry={() => void refetch()} />
+          <ErrorState message={questionErrorMessage(error)} onRetry={() => void refetch()} />
         </ModalBody>
       )}
 

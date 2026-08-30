@@ -1,6 +1,7 @@
 import type { ApplicantListParams } from "../types/application";
 import type { LectureListParams, SubmissionListParams } from "../types/lecture";
 import type { QuestionListParams } from "../types/qna";
+import type { AdminProjectListParams, PublicProjectListParams } from "../types/project";
 import type { UserListParams } from "../types/user";
 
 /**
@@ -88,6 +89,12 @@ export const queryKeys = {
     features: () => [...queryKeys.site.all, "features"] as const,
   },
 
+  /** 어드민 프로젝트 관리(#222). 필터(학기)·페이지마다 캐시가 갈라진다. */
+  projects: {
+    all: ["projects"] as const,
+    board: (params: AdminProjectListParams) => [...queryKeys.projects.all, "board", params] as const,
+  },
+
   users: {
     all: ["users"] as const,
     lists: () => [...queryKeys.users.all, "list"] as const,
@@ -134,5 +141,8 @@ export const queryKeys = {
     majors: () => [...queryKeys.public.all, "majors"] as const,
     recruitmentStatus: () => [...queryKeys.public.all, "recruitment-status"] as const,
     faqs: () => [...queryKeys.public.all, "faqs"] as const,
+    projects: (params: PublicProjectListParams) => [...queryKeys.public.all, "projects", params] as const,
+    home: () => [...queryKeys.public.all, "home"] as const,
+    events: (year: number, month: number) => [...queryKeys.public.all, "events", year, month] as const,
   },
 } as const;
