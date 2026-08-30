@@ -58,6 +58,14 @@ describe("FeaturesSection", () => {
     expect(await screen.findByText(/2026\. 07\. 01\..*김운영/)).toBeInTheDocument();
   });
 
+  it("한 번도 토글한 적 없으면 변경 이력이 없다고 알린다", async () => {
+    // 시드 데이터 그대로면 updatedAt · updatedBy 가 null 로 온다(BE 확인함).
+    vi.mocked(api.getFeatures).mockResolvedValue([{ ...FEATURES[0], updatedAt: null, updatedBy: null }]);
+    renderSection();
+
+    expect(await screen.findByText("변경 이력 없음")).toBeInTheDocument();
+  });
+
   it("켜면 그 키만 서버에 보낸다", async () => {
     vi.mocked(api.toggleFeature).mockResolvedValue({ ...FEATURES[0], enabled: true });
     renderSection();

@@ -89,7 +89,7 @@ export function useToggleFeature() {
   const key = queryKeys.site.features();
 
   return useMutation({
-    mutationFn: ({ featureKey, enabled }: { featureKey: string; enabled: boolean }) =>
+    mutationFn: ({ featureKey, enabled }: { featureKey: FeatureToggle["key"]; enabled: boolean }) =>
       api.toggleFeature(featureKey, enabled),
 
     onMutate: async ({ featureKey, enabled }) => {

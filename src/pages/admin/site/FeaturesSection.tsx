@@ -39,7 +39,9 @@ export function FeaturesSection() {
                 {feature.label}
               </label>
               <span className={styles.muted}>
-                {formatDateTime(feature.updatedAt)} · {feature.updatedBy}
+                {feature.updatedAt === null
+                  ? "변경 이력 없음"
+                  : `${formatDateTime(feature.updatedAt)} · ${feature.updatedBy}`}
               </span>
             </li>
           ))}
