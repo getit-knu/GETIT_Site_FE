@@ -72,6 +72,18 @@ export function MemberLayout() {
               강좌 목록
             </NavLink>
             <NavLink
+              to="/member/dashboard"
+              className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
+              onClick={closeMenu}
+            >
+              <svg className={styles.icon} viewBox="0 0 18 18" fill="none" aria-hidden="true" focusable="false">
+                <rect x="2.25" y="2.25" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.3" />
+                <rect x="9.75" y="2.25" width="6" height="9.75" rx="1" stroke="currentColor" strokeWidth="1.3" />
+                <rect x="2.25" y="10.5" width="6" height="5.25" rx="1" stroke="currentColor" strokeWidth="1.3" />
+              </svg>
+              대시보드
+            </NavLink>
+            <NavLink
               to="/member/me"
               className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
               onClick={closeMenu}
