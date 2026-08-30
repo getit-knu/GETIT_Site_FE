@@ -2,11 +2,11 @@ import type { HomeResult, PublicFaq } from "../../types/home";
 import type { College, Major } from "../../types/college";
 import type { PublicProjectBoard, PublicProjectListParams } from "../../types/project";
 import type { RecruitmentStatus } from "../../types/recruitment";
-import type { StaffDirectory } from "../../types/site";
+import type { PublicEventCalendar, StaffDirectory } from "../../types/site";
 import { client } from "../client";
 
 /**
- * 공개 데이터 API. 명세서 2.1 · 2.3 · 2.4 · 2.5 · 2.6 · 2.7 · 2.8.
+ * 공개 데이터 API. 명세서 2.1 · 2.2 · 2.3 · 2.4 · 2.5 · 2.6 · 2.7 · 2.8.
  *
  * 전부 로그인이 필요 없다 — `RequireRole` 밖(공개 라우트)에서도 호출된다.
  */
@@ -50,5 +50,11 @@ export async function getFaqs(): Promise<PublicFaq[]> {
 /** `GET /api/public/projects?semester=&page=&size=` — 2.4. */
 export async function getProjects(params: PublicProjectListParams): Promise<PublicProjectBoard> {
   const { data } = await client.get<PublicProjectBoard>("/api/public/projects", { params });
+  return data;
+}
+
+/** `GET /api/public/events?year=&month=` — 2.2. `isVisible`이 꺼진 행사는 서버가 걸러서 안 준다. */
+export async function getEvents(year: number, month: number): Promise<PublicEventCalendar> {
+  const { data } = await client.get<PublicEventCalendar>("/api/public/events", { params: { year, month } });
   return data;
 }
