@@ -30,3 +30,8 @@ export function recruitmentErrorMessage(error: unknown): string {
 
   return RECRUITMENT_ERROR_MESSAGES[code] ?? FALLBACK;
 }
+
+/** 특정 에러 코드인지. `SCHEDULE_NOT_FOUND`처럼 에러가 아니라 정상 상태를 뜻하는 코드를 가려낼 때 쓴다. */
+export function isRecruitmentErrorCode(error: unknown, code: string): boolean {
+  return typeof error === "object" && error !== null && "code" in error && (error as ApiErrorPayload).code === code;
+}
