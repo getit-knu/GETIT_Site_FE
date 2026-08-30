@@ -3,6 +3,7 @@ import { Badge } from "../../components/ui/Badge/Badge";
 import { DataTable, type Column } from "../../components/ui/DataTable/DataTable";
 import { Pagination } from "../../components/ui/Pagination/Pagination";
 import { EmptyState, ErrorState, TableSkeleton } from "../../components/ui/states/States";
+import { questionErrorMessage } from "../../errors/qna/errorMessages";
 import { useQuestions } from "../../hooks/qna/useQuestions";
 import { useModalParams } from "../../hooks/ui/useModalParams";
 import { useTableParams } from "../../hooks/ui/useTableParams";
@@ -27,7 +28,7 @@ export default function QuestionsPage() {
   const { modal, id, openModal, closeModal } = useModalParams();
 
   const params = { status, page, size: PAGE_SIZE };
-  const { data, isPending, isError, refetch } = useQuestions(params);
+  const { data, isPending, isError, error, refetch } = useQuestions(params);
 
   const columns: Column<QuestionListItem>[] = [
     { header: "번호", render: (q) => q.no, width: "4rem", align: "center" },
@@ -87,7 +88,7 @@ export default function QuestionsPage() {
 
       {isPending && <TableSkeleton columns={columns.length} rows={PAGE_SIZE} />}
 
-      {isError && <ErrorState message="질문 목록을 불러오지 못했습니다." onRetry={() => void refetch()} />}
+      {isError && <ErrorState message={questionErrorMessage(error)} onRetry={() => void refetch()} />}
 
       {/*
         비어 있는 이유가 두 가지다. 조건에 맞는 질문이 아예 없는 경우와,

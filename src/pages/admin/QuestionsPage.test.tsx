@@ -130,8 +130,25 @@ describe("QuestionsPage", () => {
     expect(router.state.location.search).not.toContain("page=");
   });
 
-  it("조회에 실패하면 오류와 재시도를 보여준다", async () => {
-    vi.mocked(getQuestions).mockRejectedValue({ code: "UNKNOWN_ERROR", message: "실패" });
+  it("표에 있는 코드는 정해진 문구를 보여준다", async () => {
+    vi.mocked(getQuestions).mockRejectedValue({ code: "FORBIDDEN", message: "?" });
+
+    renderPage();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("권한이 없습니다");
+  });
+
+  it("표에 없는 코드는 서버가 준 문구를 보여준다", async () => {
+    // BE 가 코드를 추가해도 화면이 대체 문구만 되뇌면 무엇이 잘못됐는지 알 수 없다.
+    vi.mocked(getQuestions).mockRejectedValue({ code: "SOME_UNMAPPED_CODE", message: "실패" });
+
+    renderPage();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("실패");
+  });
+
+  it("서버 문구도 없으면 조회 실패 대체 문구를 쓴다", async () => {
+    vi.mocked(getQuestions).mockRejectedValue({ code: "SOME_UNMAPPED_CODE", message: "  " });
 
     renderPage();
 
@@ -243,5 +260,28 @@ describe("QuestionsPage", () => {
     renderPage("/admin/questions?modal=answer&id=7001");
 
     expect(await screen.findByRole("button", { name: "답변 작성 완료!" })).toBeDisabled();
+  });
+
+  it("이미 답변이 등록됐으면 저장 실패 이유를 보여준다", async () => {
+    // 두 운영진이 동시에 같은 질문을 열어 하나가 먼저 답변을 작성한 경우다.
+    vi.mocked(getQuestion).mockResolvedValue(detail());
+    vi.mocked(saveAnswer).mockRejectedValue({ code: "ALREADY_ANSWERED", message: "?" });
+
+    renderPage("/admin/questions?modal=answer&id=7001");
+
+    await userEvent.type(await screen.findByRole("textbox"), "확인했습니다.");
+    await userEvent.click(screen.getByRole("button", { name: "답변 작성 완료!" }));
+
+    expect(
+      await screen.findByText("이미 답변이 등록된 질문입니다. 새로고침 후 다시 시도해 주세요."),
+    ).toBeInTheDocument();
+  });
+
+  it("상세 조회에 실패하면 오류와 재시도를 보여준다", async () => {
+    vi.mocked(getQuestion).mockRejectedValue({ code: "QUESTION_NOT_FOUND", message: "?" });
+
+    renderPage("/admin/questions?modal=answer&id=7001");
+
+    expect(await screen.findByText("질문을 찾을 수 없습니다. 목록을 새로고침해 주세요.")).toBeInTheDocument();
   });
 });
