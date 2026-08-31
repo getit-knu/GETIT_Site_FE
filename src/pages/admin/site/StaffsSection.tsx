@@ -65,6 +65,11 @@ function invalidUrlReason(label: string, value: string): string | null {
 function invalidReason(draft: Draft): string | null {
   if (draft.name.trim() === "") return "이름을 입력해 주세요.";
   if (draft.staffRole.trim() === "") return "직책을 입력해 주세요.";
+  /*
+    구역은 검사하지 않는다 — `Select` 라 항상 값이 있고 "선택 안 함" 옵션도 없다.
+    `*` 는 공개 카드에 나가는 값이라는 표시일 뿐이다.
+  */
+  if (draft.department.trim() === "") return "학과 · 학번을 입력해 주세요.";
   return invalidUrlReason("GitHub 링크", draft.githubUrl) ?? invalidUrlReason("Instagram 링크", draft.instagramUrl);
 }
 
@@ -105,16 +110,13 @@ function StaffForm({ draft: initial, generationNo, onClose }: FormProps) {
       <div className={styles.formGrid}>
         <Input label="이름 *" value={draft.name} onChange={(name) => set({ name })} />
         <Input label="직책 *" value={draft.staffRole} onChange={(staffRole) => set({ staffRole })} />
-        <div className={styles.field}>
-          <span className={styles.label}>구역</span>
-          <Select
-            ariaLabel="구역"
-            value={draft.section}
-            options={SECTIONS}
-            onChange={(section: StaffSection) => set({ section })}
-          />
-        </div>
-        <Input label="학과 · 학번" value={draft.department} onChange={(department) => set({ department })} />
+        <Select
+          label="구역 *"
+          value={draft.section}
+          options={SECTIONS}
+          onChange={(section: StaffSection) => set({ section })}
+        />
+        <Input label="학과 · 학번 *" value={draft.department} onChange={(department) => set({ department })} />
         <Input
           label="GitHub 링크"
           placeholder="https://github.com/..."
