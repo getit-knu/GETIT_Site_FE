@@ -29,8 +29,9 @@ export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
  * (BE 확인함). `studentNumber`는 제출 시 필수 검증 대상이 아니라(#189 확인) `null`일 수
  * 있다. `grade`는 기본 정보 필수 검증 대상이라 제출된 지원서엔 항상 있다.
  *
- * **총점 · 평가 완료 여부 컬럼은 없다** — `ApplicantSummary`에 그 값이 아예 없다(BE 확인함).
- * 평가는 상세(`EvaluationSummary`)에서만 볼 수 있다.
+ * `totalScore`·`evaluatorCount`는 **아직 서버가 주지 않는다**(`getit-knu/GETIT_Site_BE#188` —
+ * `ApplicantSummary`에 점수 필드 자체가 없다). 값이 실려 오기 시작하면 화면이 그대로
+ * 그린다. 아무도 평가하지 않은 지원자는 그 뒤에도 `null`이다.
  */
 export interface Applicant {
   id: number;
@@ -40,7 +41,27 @@ export interface Applicant {
   grade: number;
   status: ApplicationStatus;
   submittedAt: string;
+  /** 모든 기준을 매긴 평가자들의 총점 평균(7.3 `EvaluationSummary.totalScore`와 같은 계산). */
+  totalScore?: number | null;
+  /** 평가를 끝낸 운영진 수. 한 명만 매긴 점수와 여럿이 매긴 점수를 같이 볼 수 없다. */
+  evaluatorCount?: number | null;
 }
+
+/**
+ * 지원자 전체 기준 점수 요약.
+ *
+ * **이 값은 FE가 계산할 수 없다.** 목록이 페이징돼 있어 현재 페이지로만 평균을 내면
+ * 페이지를 넘길 때마다 기준값이 달라진다. 서버가 주지 않으면 아무것도 보여주지 않는다 —
+ * 틀린 기준을 보여주느니 없는 편이 낫다.
+ */
+export interface ApplicantScoreSummary {
+  /** 평가 완료자가 없으면 `null`. */
+  averageTotalScore: number | null;
+  evaluatedCount: number;
+}
+
+/** 7.1 응답. `summary`는 BE#188 전까지 오지 않는다. */
+export type ApplicantBoard = Page<Applicant> & { summary?: ApplicantScoreSummary };
 
 /**
  * 7.1 조회 조건. **`evaluated`·`keyword`는 실제 API에 없다**(BE `getApplicants(generationId, status, pageable)`

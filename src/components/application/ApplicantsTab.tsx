@@ -47,6 +47,26 @@ const BULK_TARGET: Partial<Record<ApplicationStatus, { pass: ApplicationStatus; 
 };
 
 /** 와이어프레임 p7. `/admin/applications` 의 지원자 목록 탭. */
+/**
+ * 지원자 한 명의 평가 점수.
+ *
+ * 서버가 점수를 주기 전(BE#188)에는 `undefined` 라 아무 값도 못 보여준다 — 그때와
+ * "아무도 평가하지 않았다"(`null`)를 구분해서, 없는 정보를 있는 것처럼 그리지 않는다.
+ *
+ * 평가자 수를 함께 보여준다. 한 명만 매긴 90점과 다섯 명이 매긴 90점은 다르게 읽어야 한다.
+ */
+function Score({ applicant }: { applicant: Applicant }) {
+  if (applicant.totalScore === undefined) return <span className={styles.none}>—</span>;
+  if (applicant.totalScore === null) return <span className={styles.none}>미평가</span>;
+
+  return (
+    <span>
+      {applicant.totalScore.toFixed(1)}점
+      {applicant.evaluatorCount != null && <span className={styles.none}> ({applicant.evaluatorCount}명)</span>}
+    </span>
+  );
+}
+
 export function ApplicantsTab() {
   const { status, page, update } = useApplicantFilters();
   const params = { status, page, size: PAGE_SIZE };
@@ -104,6 +124,8 @@ export function ApplicantsTab() {
     );
   }
 
+  const summary = data?.summary;
+
   const columns: Column<Applicant>[] = [
     {
       header: "",
@@ -127,6 +149,12 @@ export function ApplicantsTab() {
       width: "7rem",
       align: "center",
       render: (a) => <Badge variant={a.status === "DOC_FAIL" ? "neutral" : "accent"}>{STATUS_LABEL[a.status]}</Badge>,
+    },
+    {
+      header: "평가 점수",
+      width: "8rem",
+      align: "center",
+      render: (a) => <Score applicant={a} />,
     },
     { header: "제출일", render: (a) => formatDateTime(a.submittedAt), width: "10rem" },
     {
@@ -180,6 +208,18 @@ export function ApplicantsTab() {
           </Button>
         </div>
       </div>
+
+      {/*
+        비교 기준은 서버가 준 것만 쓴다. 현재 페이지로 평균을 내면 페이지를 넘길 때마다
+        기준이 달라져, 같은 점수가 높아 보였다 낮아 보였다 한다 (BE#188).
+      */}
+      {summary !== undefined && (
+        <p className={styles.scoreSummary}>
+          {summary.averageTotalScore === null
+            ? "아직 평가를 마친 지원자가 없습니다."
+            : `지원자 전체 평균 ${summary.averageTotalScore.toFixed(1)}점 (평가 완료 ${summary.evaluatedCount}명)`}
+        </p>
+      )}
 
       {exportError && <ErrorState message={exportError} onRetry={() => void handleExport()} />}
       {decideBulk.error !== null && <ErrorState message={applicationErrorMessage(decideBulk.error)} />}
