@@ -18,6 +18,7 @@ function staff(over: Partial<Staff> & { id: number; name: string }): Staff {
     department: "컴퓨터공학과 21",
     introduction: "",
     profileImageUrl: null,
+    fileId: null,
     githubUrl: null,
     instagramUrl: null,
     order: 1,
