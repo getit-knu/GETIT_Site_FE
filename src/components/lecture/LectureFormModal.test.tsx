@@ -161,7 +161,7 @@ describe("LectureFormModal", () => {
     await userEvent.type(weekBox(), "1");
     await userEvent.click(screen.getByLabelText("과제 있음"));
     await userEvent.type(screen.getByLabelText("과제 제목 *"), "과제");
-    await userEvent.type(screen.getByLabelText("과제 설명 (Markdown)"), "설명");
+    await userEvent.type(screen.getByLabelText("과제 설명 (Markdown) *"), "설명");
     await userEvent.type(screen.getByLabelText("마감 기한 *"), "2026-06-19T23:59");
     // 기본값(파일)을 끄면 아무 방식도 안 남는다.
     await userEvent.click(screen.getByLabelText("파일"));
@@ -177,7 +177,7 @@ describe("LectureFormModal", () => {
     await userEvent.type(weekBox(), "1");
     await userEvent.click(screen.getByLabelText("과제 있음"));
     await userEvent.type(screen.getByLabelText("과제 제목 *"), "과제");
-    await userEvent.type(screen.getByLabelText("과제 설명 (Markdown)"), "설명");
+    await userEvent.type(screen.getByLabelText("과제 설명 (Markdown) *"), "설명");
     await userEvent.type(screen.getByLabelText("마감 기한 *"), "2026-06-19T23:59");
 
     expect(screen.queryByLabelText("링크 안내 문구")).not.toBeInTheDocument();

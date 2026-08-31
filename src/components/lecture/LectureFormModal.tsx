@@ -228,7 +228,7 @@ function LectureForm({ lectureId, tracks, initial, files, onClose }: FormProps) 
               onChange={(assignmentTitle) => set({ assignmentTitle })}
             />
             <TextArea
-              label="과제 설명 (Markdown)"
+              label="과제 설명 (Markdown) *"
               rows={3}
               value={draft.assignmentDescription}
               onChange={(assignmentDescription) => set({ assignmentDescription })}
