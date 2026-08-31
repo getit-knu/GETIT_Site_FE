@@ -12,7 +12,7 @@ vi.mock("../../../apis/file/filesApi", async (importOriginal) => {
   return { ...actual, uploadFile: vi.fn() };
 });
 
-const picker = () => screen.getByLabelText("프로필 사진 올리기");
+const picker = () => screen.getByLabelText("프로필 사진");
 
 function image(name: string, bytes = 1024): File {
   const f = new File(["x"], name, { type: "image/png" });
@@ -24,7 +24,11 @@ describe("StaffPhotoField", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(filesApi.uploadFile).mockResolvedValue({ fileId: 77, fileName: "얼굴.png", size: 1024 });
-    vi.stubGlobal("URL", { ...URL, createObjectURL: vi.fn().mockReturnValue("blob:preview") });
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: vi.fn().mockReturnValue("blob:preview"),
+      revokeObjectURL: vi.fn(),
+    });
   });
 
   it("사진이 없어도 저장할 수 있다고 알린다", () => {
@@ -66,7 +70,10 @@ describe("StaffPhotoField", () => {
   it("허용하지 않는 형식은 올리지 않고 이유를 보여준다", async () => {
     render(<StaffPhotoField currentUrl={null} onFileIdChange={vi.fn()} />);
 
-    await userEvent.upload(picker(), new File(["x"], "이력서.pdf", { type: "application/pdf" }));
+    await userEvent.upload(picker(), new File(["x"], "이력서.pdf", { type: "application/pdf" }), {
+      // 브라우저는 `accept` 로 이미 걸러 주지만, 여기서 검증하려는 건 우리 쪽 사전 검사다.
+      applyAccept: false,
+    });
 
     expect(await screen.findByText(/png, jpg, jpeg, webp 형식만/)).toBeInTheDocument();
     expect(filesApi.uploadFile).not.toHaveBeenCalled();
@@ -91,5 +98,47 @@ describe("StaffPhotoField", () => {
 
     await waitFor(() => expect(screen.queryByRole("img")).not.toBeInTheDocument());
     expect(onFileIdChange).not.toHaveBeenCalled();
+  });
+
+  it("실패 이유를 alert 로 알린다", async () => {
+    // 업로드는 시간이 걸려 화면을 보고 있지 않을 수 있다. 나타나기만 해선 안 읽힌다.
+    vi.mocked(filesApi.uploadFile).mockRejectedValue({ code: "FILE_SIZE_MISMATCH", message: "size mismatch" });
+    render(<StaffPhotoField currentUrl={null} onFileIdChange={vi.fn()} />);
+
+    await userEvent.upload(picker(), image("얼굴.png"));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("신고한 크기와 실제 파일이 달라 처리할 수 없습니다.");
+  });
+
+  it("브라우저 파일 선택 창에서도 허용 형식만 고르게 한다", () => {
+    render(<StaffPhotoField currentUrl={null} onFileIdChange={vi.fn()} />);
+
+    expect(picker()).toHaveAttribute("accept", ".png,.jpg,.jpeg,.webp");
+  });
+
+  it("사진을 다시 고르면 앞서 만든 blob URL 을 해제한다", async () => {
+    // 해제하지 않으면 고른 이미지가 문서 수명 내내 메모리에 남는다.
+    vi.mocked(URL.createObjectURL).mockReturnValueOnce("blob:첫번째").mockReturnValueOnce("blob:두번째");
+    render(<StaffPhotoField currentUrl={null} onFileIdChange={vi.fn()} />);
+
+    await userEvent.upload(picker(), image("얼굴.png"));
+    await waitFor(() => expect(screen.getByRole("img")).toHaveAttribute("src", "blob:첫번째"));
+    await userEvent.upload(picker(), image("새얼굴.png"));
+
+    await waitFor(() => expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:첫번째"));
+    expect(URL.revokeObjectURL).not.toHaveBeenCalledWith("blob:두번째");
+  });
+
+  it("화면을 떠나면 남아 있는 blob URL 을 해제한다", async () => {
+    vi.mocked(URL.createObjectURL).mockReturnValueOnce("blob:마지막");
+    const { unmount } = render(<StaffPhotoField currentUrl={null} onFileIdChange={vi.fn()} />);
+
+    await userEvent.upload(picker(), image("얼굴.png"));
+    await waitFor(() => expect(screen.getByRole("img")).toBeInTheDocument());
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+
+    unmount();
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:마지막");
   });
 });

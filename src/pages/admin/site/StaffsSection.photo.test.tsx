@@ -64,7 +64,11 @@ describe("StaffsSection 프로필 사진", () => {
     vi.resetAllMocks();
     vi.mocked(api.getStaffs).mockResolvedValue([staff({ id: 3, name: "이재민" })]);
     vi.mocked(filesApi.uploadFile).mockResolvedValue({ fileId: 77, fileName: "얼굴.png", size: 1024 });
-    vi.stubGlobal("URL", { ...URL, createObjectURL: vi.fn().mockReturnValue("blob:preview") });
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: vi.fn().mockReturnValue("blob:preview"),
+      revokeObjectURL: vi.fn(),
+    });
   });
 
   it("사진을 올려 추가하면 그 fileId 를 실어 보낸다", async () => {
@@ -74,7 +78,7 @@ describe("StaffsSection 프로필 사진", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "+ SW 운영진 추가" }));
     await fillRequired("새 운영진");
-    await userEvent.upload(screen.getByLabelText("프로필 사진 올리기"), image("얼굴.png"));
+    await userEvent.upload(screen.getByLabelText("프로필 사진"), image("얼굴.png"));
     await waitFor(() => expect(filesApi.uploadFile).toHaveBeenCalled());
     await userEvent.click(screen.getByRole("button", { name: "추가" }));
 
@@ -158,7 +162,7 @@ describe("StaffsSection 프로필 사진", () => {
     await screen.findByText("이재민");
 
     await userEvent.click(screen.getByRole("button", { name: "수정" }));
-    await userEvent.upload(screen.getByLabelText("프로필 사진 올리기"), image("얼굴.png"));
+    await userEvent.upload(screen.getByLabelText("프로필 사진"), image("얼굴.png"));
 
     await waitFor(() => expect(screen.getByRole("button", { name: "저장" })).toBeEnabled());
     await userEvent.click(screen.getByRole("button", { name: "저장" }));
