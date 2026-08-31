@@ -109,6 +109,20 @@ describe("AdminProjectFormModal", () => {
     });
   });
 
+  it("URL을 비우면 빈 문자열이 아니라 아예 보내지 않는다", async () => {
+    // 빈 문자열("")은 BE @HttpUrl 형식 검증(http/https만 허용)에 걸려 400이 난다 — null은 통과.
+    renderModal(null);
+    await userEvent.type(titleBox(), "새 프로젝트");
+    await userEvent.type(screen.getByLabelText("팀 이름 *"), "새 팀");
+    await userEvent.click(submit());
+
+    await waitFor(() => expect(api.createProject).toHaveBeenCalled());
+    const payload = vi.mocked(api.createProject).mock.lastCall?.[0];
+    // `JSON.stringify`는 undefined 값을 가진 키를 통째로 빼므로, 실제 요청 본문엔 안 실린다.
+    expect(payload?.codeUrl).toBeUndefined();
+    expect(payload?.demoUrl).toBeUndefined();
+  });
+
   it("기술 스택은 쉼표로 나눠 배열로 보낸다", async () => {
     renderModal(null);
     await userEvent.type(titleBox(), "새 프로젝트");

@@ -50,6 +50,20 @@ describe("ProjectSubmitForm", () => {
     expect(screen.queryByText("Home 화면에 소개")).not.toBeInTheDocument();
   });
 
+  it("URL을 비우고 등록하면 빈 문자열이 아니라 아예 안 보낸다", async () => {
+    // 빈 문자열("")은 BE @HttpUrl 형식 검증(http/https만 허용)에 걸려 400이 난다 — null은 통과.
+    vi.mocked(submitProject).mockResolvedValue(RESULT);
+    renderForm();
+
+    await userEvent.type(screen.getByLabelText("제목 *"), "AI 포트폴리오");
+    await userEvent.click(screen.getByRole("button", { name: "프로젝트 등록" }));
+
+    await waitFor(() => expect(submitProject).toHaveBeenCalled());
+    const payload = vi.mocked(submitProject).mock.lastCall?.[0];
+    expect(payload?.codeUrl).toBeUndefined();
+    expect(payload?.demoUrl).toBeUndefined();
+  });
+
   it("올바른 URL이 아니면 등록을 막는다", async () => {
     renderForm();
 
@@ -69,7 +83,7 @@ describe("ProjectSubmitForm", () => {
     await userEvent.click(screen.getByRole("button", { name: "프로젝트 등록" }));
 
     await waitFor(() => expect(submitProject).toHaveBeenCalled());
-    expect(vi.mocked(submitProject).mock.calls[0][0]).toMatchObject({
+    expect(vi.mocked(submitProject).mock.lastCall?.[0]).toMatchObject({
       title: "AI 포트폴리오",
       semester: expect.stringMatching(/^\d{4}-SPRING$/),
       codeUrl: "https://github.com/team/repo",

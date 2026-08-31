@@ -100,6 +100,42 @@ describe("UsersPage", () => {
     expect(api.updateUser).toHaveBeenCalledWith(21, { groupId: null });
   });
 
+  it("기수를 바꾸고 포커스를 벗어나면 서버에 보낸다", async () => {
+    // 권한만 올린 계정은 기수가 안 붙어 강좌·대시보드가 403이 나던 문제(0831 QA) — 여기서
+    // 직접 기수를 넣을 수 있어야 한다.
+    vi.mocked(api.getUsers).mockResolvedValue(page([user({ generationNo: null })]));
+    renderPage();
+
+    const input = await screen.findByLabelText("김부원 기수");
+    await userEvent.clear(input);
+    await userEvent.type(input, "9");
+    await userEvent.tab();
+
+    expect(api.updateUser).toHaveBeenCalledWith(21, { generationNo: 9 });
+  });
+
+  it("기수를 바꾸지 않고 벗어나면 요청을 보내지 않는다", async () => {
+    renderPage();
+
+    const input = await screen.findByLabelText("김부원 기수");
+    await userEvent.click(input);
+    await userEvent.tab();
+
+    expect(api.updateUser).not.toHaveBeenCalled();
+  });
+
+  it("빈 값이나 0 이하로 벗어나면 원래 기수로 되돌린다", async () => {
+    renderPage();
+
+    const input = await screen.findByLabelText("김부원 기수");
+    await userEvent.clear(input);
+    await userEvent.type(input, "0");
+    await userEvent.tab();
+
+    expect(api.updateUser).not.toHaveBeenCalled();
+    expect(input).toHaveValue(9);
+  });
+
   it("확인을 취소하면 삭제하지 않는다", async () => {
     vi.stubGlobal("confirm", vi.fn().mockReturnValue(false));
     renderPage();
