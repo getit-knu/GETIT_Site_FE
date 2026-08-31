@@ -25,6 +25,8 @@ function project(over: Partial<AdminProject> = {}): AdminProject {
     thumbnailUrl: "",
     isFeatured: true,
     order: 1,
+    status: "APPROVED",
+    statusLabel: "공개",
     ...over,
   };
 }

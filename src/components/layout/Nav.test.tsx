@@ -31,7 +31,7 @@ function meWithRole(role: Role): Me {
 /** 링크를 눌러 실제로 이동해도 라우트가 있어야 Nav가 언마운트되지 않는다. */
 function renderNav() {
   const router = createMemoryRouter(
-    ["/", "/projects", "/leaders", "/login", "/member", "/admin", "/apply"].map((path) => ({
+    ["/", "/projects", "/leaders", "/login", "/member", "/admin", "/apply", "/me"].map((path) => ({
       path,
       element: <Nav />,
     })),
@@ -88,13 +88,14 @@ describe("Nav", () => {
     expect(screen.getByRole("button", { name: "메뉴 열기" })).toHaveAttribute("aria-expanded", "false");
   });
 
-  it("로그인 전에는 로그인 링크와 지원하기 CTA가 보이고 로그아웃은 없다", async () => {
+  it("로그인 전에는 로그인 링크와 지원하기 CTA가 보이고 로그아웃 · 내 정보는 없다", async () => {
     vi.mocked(getMe).mockRejectedValue({ code: "UNAUTHORIZED", message: "인증이 필요합니다." });
     renderNav();
 
     expect(await screen.findByRole("link", { name: "로그인" })).toHaveAttribute("href", "/login");
     expect(screen.getByRole("link", { name: "지원하기" })).toHaveAttribute("href", "/apply");
     expect(screen.queryByRole("button", { name: "로그아웃" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "내 정보" })).not.toBeInTheDocument();
   });
 
   it("ADMIN으로 로그인하면 CTA가 관리자 진입 버튼으로 바뀌고 로그인 링크는 없다", async () => {
@@ -103,6 +104,7 @@ describe("Nav", () => {
 
     expect(await screen.findByRole("link", { name: "관리자" })).toHaveAttribute("href", "/admin");
     expect(screen.getByRole("button", { name: "로그아웃" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "내 정보" })).toHaveAttribute("href", "/me");
     expect(screen.queryByRole("link", { name: "로그인" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "지원하기" })).not.toBeInTheDocument();
   });

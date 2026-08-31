@@ -1,4 +1,4 @@
-@use "../../styles/abstracts/variables" as *;
+@use "../styles/abstracts/variables" as *;
 
 $card-shadow:
   0 1px 3px rgb(0 0 0 / 10%),
@@ -103,4 +103,30 @@ $card-shadow:
     flex-shrink: 0;
     color: $color-text-secondary;
   }
+}
+
+.editGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-top: 1.5rem;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.formFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.reason {
+  margin: 0;
+  margin-right: auto;
+  color: #dc2626;
+  font-size: 0.8125rem;
 }
