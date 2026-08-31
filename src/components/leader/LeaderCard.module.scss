@@ -32,9 +32,17 @@
 }
 
 .snsIcon {
-  width: 1rem;
-  height: 1rem;
+  display: inline-flex;
   color: $color-text-secondary;
+
+  &:hover {
+    color: $color-accent;
+  }
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
 }
 
 .role {

@@ -108,34 +108,51 @@ export type StaffSection = NonNullable<components["schemas"]["StaffRequest"]["se
 /**
  * 운영진 프로필. 개별 엔드포인트로 즉시 반영된다.
  *
- * `userId`(실제 계정 연결 — 없으면 표시 전용 프로필)·`profileImageUrl`은 생성된
- * 스키마에 `| null`이 안 잡혀 있다(springdoc 함정) — 손으로 되돌린다.
+ * `userId`(실제 계정 연결 — 없으면 표시 전용 프로필)·`profileImageUrl`·`githubUrl`·
+ * `instagramUrl`은 생성된 스키마에 `| null`이 안 잡혀 있다(springdoc 함정) — 손으로
+ * 되돌린다. SNS 링크 둘 다 계정이 없는 운영진도 있어 실제로 `null`이 온다(BE 확인함).
  */
-export type Staff = Omit<Required<components["schemas"]["StaffResult"]>, "userId" | "profileImageUrl"> & {
+export type Staff = Omit<
+  Required<components["schemas"]["StaffResult"]>,
+  "userId" | "profileImageUrl" | "githubUrl" | "instagramUrl"
+> & {
   userId: number | null;
   profileImageUrl: string | null;
+  githubUrl: string | null;
+  instagramUrl: string | null;
 };
 
 /**
  * `POST`/`PUT /api/admin/setting/staffs` 요청 본문. `order` 는 서버가 매기므로 보내지 않는다.
  *
- * `userId`(실제 계정 연결)·`fileId`(새로 올린 프로필 사진)는 스키마엔 optional이지만
- * "연결 안 함"을 명시적으로 보내야 해서 `null`을 허용하도록 손으로 되돌린다.
+ * `userId`(실제 계정 연결)·`fileId`(새로 올린 프로필 사진)·`githubUrl`·`instagramUrl`(SNS
+ * 링크)는 스키마엔 optional이지만 "값 없음"을 명시적으로 보내야 해서 `null`을 허용하도록
+ * 손으로 되돌린다. BE `@HttpUrl` 검증(http/https만 허용, null은 통과)은 값이 있을 때만 적용.
  */
-export type StaffPayload = Omit<Required<components["schemas"]["StaffRequest"]>, "userId" | "fileId"> & {
+export type StaffPayload = Omit<
+  Required<components["schemas"]["StaffRequest"]>,
+  "userId" | "fileId" | "githubUrl" | "instagramUrl"
+> & {
   userId: number | null;
   fileId: number | null;
+  githubUrl: string | null;
+  instagramUrl: string | null;
 };
 
 /**
  * `GET /api/public/staffs` 응답. 운영진 소개 페이지(`LeadersPage`) 전용 — 로그인이
  * 필요 없고, 어드민 `Staff`에 있는 `userId`/`generationNo` 같은 관리용 필드가 없다.
  *
- * `profileImageUrl`은 생성된 스키마에 `| null`이 안 잡혀 있다(springdoc이 Java 필드의
- * null 가능성을 그대로 못 옮김) — 사진 없는 운영진은 실제로 `null`이라 손으로 되돌린다.
+ * `profileImageUrl`·`githubUrl`·`instagramUrl`은 생성된 스키마에 `| null`이 안 잡혀
+ * 있다(springdoc이 Java 필드의 null 가능성을 그대로 못 옮김) — 손으로 되돌린다.
  */
-export type PublicStaff = Omit<Required<components["schemas"]["PublicStaffResult"]>, "profileImageUrl"> & {
+export type PublicStaff = Omit<
+  Required<components["schemas"]["PublicStaffResult"]>,
+  "profileImageUrl" | "githubUrl" | "instagramUrl"
+> & {
   profileImageUrl: string | null;
+  githubUrl: string | null;
+  instagramUrl: string | null;
 };
 
 export interface StaffSectionGroup {
