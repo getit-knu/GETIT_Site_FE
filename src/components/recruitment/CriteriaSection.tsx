@@ -41,7 +41,7 @@ function invalidReason(rows: Row[]): string | null {
  * 그러면 기준을 하나 늘리려고 다른 것을 줄이는 순간 90 이 되어 막히고, 먼저 늘려도
  * 110 이 되어 막힌다 — 어느 순서로도 편집할 수 없다. 명세서 본문도 일괄 저장을 권장한다.
  */
-export function CriteriaSection({ locked }: { locked: boolean }) {
+export function CriteriaSection() {
   const { data, isPending, isError, error, refetch } = useCriteria();
   const save = useSaveCriteria();
   const [rows, setRows] = useState<Row[] | null>(null);
@@ -93,14 +93,14 @@ export function CriteriaSection({ locked }: { locked: boolean }) {
           <EditableListRow
             key={row.id ?? `new-${i}`}
             removeLabel={`${row.name || `${i + 1}번 기준`} 삭제`}
-            disabled={locked || save.isPending}
+            disabled={save.isPending}
             onRemove={() => setRows(draft.filter((_, at) => at !== i))}
           >
             <input
               className={styles.name}
               value={row.name}
               aria-label={`${i + 1}번 기준 이름`}
-              disabled={locked || save.isPending}
+              disabled={save.isPending}
               onChange={(e) => update(i, { name: e.target.value })}
             />
             <input
@@ -108,7 +108,7 @@ export function CriteriaSection({ locked }: { locked: boolean }) {
               value={row.guideline}
               placeholder="가이드라인"
               aria-label={`${i + 1}번 기준 가이드라인`}
-              disabled={locked || save.isPending}
+              disabled={save.isPending}
               onChange={(e) => update(i, { guideline: e.target.value })}
             />
             <span className={styles.scoreBox}>
@@ -118,7 +118,7 @@ export function CriteriaSection({ locked }: { locked: boolean }) {
                 step={1}
                 value={row.maxScore}
                 aria-label={`${i + 1}번 기준 배점`}
-                disabled={locked || save.isPending}
+                disabled={save.isPending}
                 onChange={(e) => update(i, { maxScore: e.target.value })}
               />
               <span>점</span>
@@ -130,18 +130,18 @@ export function CriteriaSection({ locked }: { locked: boolean }) {
       <div className={styles.actions}>
         <Button
           variant="secondary"
-          disabled={locked || save.isPending}
+          disabled={save.isPending}
           onClick={() => setRows([...draft, { name: "", guideline: "", maxScore: "0" }])}
         >
           + 기준 추가
         </Button>
-        <Button disabled={locked || save.isPending || reason !== null} onClick={handleSave}>
+        <Button disabled={save.isPending || reason !== null} onClick={handleSave}>
           저장
         </Button>
       </div>
 
       {/* 저장을 막는 이유를 미리 보여준다. 눌러 보고 알게 하지 않는다. */}
-      {!locked && reason !== null && <p className={styles.reason}>{reason}</p>}
+      {reason !== null && <p className={styles.reason}>{reason}</p>}
 
       {save.error !== null && <p className={styles.reason}>{recruitmentErrorMessage(save.error)}</p>}
     </section>

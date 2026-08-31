@@ -85,17 +85,17 @@ describe("ApplicationsPage", () => {
 
     await screen.findByText(/모집 일정/);
     expect(screen.getByLabelText("전체 시작")).toBeEnabled();
-    expect(screen.queryByText("모집이 시작되어 설정을 수정할 수 없습니다.")).not.toBeInTheDocument();
   });
 
-  it("모집이 시작되면 설정을 잠근다", async () => {
-    // 서버도 409 로 막지만 눌러 보고 알게 하면 무엇이 문제인지 찾기 어렵다.
+  it("모집이 이미 시작됐어도 설정을 계속 고칠 수 있다", async () => {
+    // BE는 시간 기준 잠금을 두지 않는다(RecruitmentScheduleService.updateSchedule 확인함) —
+    // 화면에서 임의로 막으면 시작 뒤 마감을 늘리는 등 정상적인 관리 작업도 못 하게 된다.
     vi.mocked(api.getSchedule).mockResolvedValue(schedule("2020-01-01T00:00"));
 
     renderPage("/admin/applications?tab=settings");
 
-    expect(await screen.findByText("모집이 시작되어 설정을 수정할 수 없습니다.")).toBeInTheDocument();
-    expect(screen.getByLabelText("전체 시작")).toBeDisabled();
-    expect(screen.getByRole("button", { name: "+ 문항 추가" })).toBeDisabled();
+    await screen.findByText(/모집 일정/);
+    expect(screen.getByLabelText("전체 시작")).toBeEnabled();
+    expect(screen.getByRole("button", { name: "+ 문항 추가" })).toBeEnabled();
   });
 });

@@ -27,7 +27,7 @@ const FILTERS: { value: TypeFilter; label: string }[] = [
 ];
 
 /** 문항은 하나씩 저장한다. 평가 기준과 달리 서로 얽힌 제약이 없다. */
-export function QuestionsSection({ locked }: { locked: boolean }) {
+export function QuestionsSection() {
   const { data, isPending, isError, error, refetch } = useQuestions();
   const [filter, setFilter] = useState<TypeFilter>("all");
   const create = useCreateQuestion();
@@ -35,7 +35,7 @@ export function QuestionsSection({ locked }: { locked: boolean }) {
   const remove = useDeleteQuestion();
   const reorder = useReorderQuestions();
 
-  const busy = locked || create.isPending || update.isPending || remove.isPending || reorder.isPending;
+  const busy = create.isPending || update.isPending || remove.isPending || reorder.isPending;
 
   if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
   if (isError) {

@@ -78,14 +78,19 @@ function invalidReason(draft: Draft): string | null {
   return null;
 }
 
+/** 빈 문자열은 BE `@HttpUrl`(선택값, `null`은 통과하지만 `""`는 형식 위반으로 400)에 걸린다. */
+function urlOrUndefined(value: string): string | undefined {
+  return value.trim() === "" ? undefined : value.trim();
+}
+
 function toPayload(draft: Draft): ProjectSubmitPayload {
   return {
     title: draft.title.trim(),
     semester: `${draft.year}-${draft.season}`,
     description: draft.description,
     techStacks: techStacks(draft),
-    codeUrl: draft.codeUrl.trim(),
-    demoUrl: draft.demoUrl.trim(),
+    codeUrl: urlOrUndefined(draft.codeUrl),
+    demoUrl: urlOrUndefined(draft.demoUrl),
     fileId: draft.fileId ?? undefined,
   };
 }

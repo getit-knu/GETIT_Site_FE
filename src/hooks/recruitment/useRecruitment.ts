@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
 
 import { queryKeys } from "../../apis/queryKeys";
 import * as api from "../../apis/recruitment/recruitmentApi";
@@ -11,25 +10,6 @@ const keys = queryKeys.recruitment;
 export const useSchedule = () => useQuery({ queryKey: keys.schedule(), queryFn: api.getSchedule });
 export const useQuestions = () => useQuery({ queryKey: keys.questions(), queryFn: api.getQuestions });
 export const useCriteria = () => useQuery({ queryKey: keys.criteria(), queryFn: api.getCriteria });
-
-/**
- * 모집이 시작되면 지원 시스템 설정을 잠근다.
- *
- * 서버도 `409 RECRUITMENT_ALREADY_STARTED` 로 막지만(명세서 6절), 눌러 보고 알게 하면
- * 무엇을 잘못했는지 찾기 어렵다. 시작 시각이 지났으면 입력칸부터 비활성으로 둔다.
- *
- * 모집 관리(`ApplicationsPage`)·사이트 관리(`SitePage`)가 같은 모집 일정
- * (`GET /api/admin/recruitment/schedule`)을 함께 쓰므로 여기 하나만 둔다.
- */
-export function useSettingsLocked() {
-  const { data } = useSchedule();
-  // 현재 시각은 렌더 중에 읽으면 안 된다(두 렌더가 달라진다). 마운트 때 한 번만 잡는다.
-  // 화면을 열어 둔 채 모집 시작 시각을 넘기는 경우는 새로고침하면 반영된다.
-  const [openedAt] = useState(() => Date.now());
-
-  if (!data) return false;
-  return new Date(data.totalStartAt).getTime() <= openedAt;
-}
 
 function useInvalidating<TArgs>(fn: (args: TArgs) => Promise<unknown>, key: readonly unknown[]) {
   const queryClient = useQueryClient();

@@ -114,10 +114,10 @@ export function MemberLayout() {
                   strokeLinecap="round"
                 />
               </svg>
-              내정보
+              내 정보
             </NavLink>
             <button type="button" className={styles.logoutButton} onClick={() => void handleLogout()}>
-              Logout
+              로그아웃
             </button>
           </div>
         </nav>

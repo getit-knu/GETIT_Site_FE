@@ -40,22 +40,22 @@ describe("MemberLayout", () => {
     expect(screen.getByText("부원 본문")).toBeInTheDocument();
   });
 
-  it("강좌 목록 · 대시보드 · 내 그룹 · 내정보로 가는 링크를 보여준다", () => {
+  it("강좌 목록 · 대시보드 · 내 그룹 · 내 정보로 가는 링크를 보여준다", () => {
     renderAt("/member");
 
     const nav = within(screen.getByRole("navigation", { name: "부원 메뉴" }));
     expect(nav.getByRole("link", { name: "강좌 목록", current: "page" })).toHaveAttribute("href", "/member");
     expect(nav.getByRole("link", { name: "대시보드" })).toHaveAttribute("href", "/member/dashboard");
     expect(nav.getByRole("link", { name: "내 그룹" })).toHaveAttribute("href", "/member/group");
-    expect(nav.getByRole("link", { name: "내정보" })).toHaveAttribute("href", "/me");
-    expect(nav.queryAllByRole("link")).toHaveLength(5); // GETIT 로고 + 강좌 목록 + 대시보드 + 내 그룹 + 내정보
+    expect(nav.getByRole("link", { name: "내 정보" })).toHaveAttribute("href", "/me");
+    expect(nav.queryAllByRole("link")).toHaveLength(5); // GETIT 로고 + 강좌 목록 + 대시보드 + 내 그룹 + 내 정보
   });
 
   it("로그아웃하면 서버에 알리고 홈으로 보낸다", async () => {
     vi.mocked(logout).mockResolvedValue();
     renderAt("/member");
 
-    await userEvent.click(screen.getByRole("button", { name: "Logout" }));
+    await userEvent.click(screen.getByRole("button", { name: "로그아웃" }));
 
     expect(logout).toHaveBeenCalledOnce();
     expect(await screen.findByText("홈")).toBeInTheDocument();
@@ -65,7 +65,7 @@ describe("MemberLayout", () => {
     vi.mocked(logout).mockRejectedValue(new Error("network"));
     renderAt("/member");
 
-    await userEvent.click(screen.getByRole("button", { name: "Logout" }));
+    await userEvent.click(screen.getByRole("button", { name: "로그아웃" }));
 
     expect(await screen.findByText("홈")).toBeInTheDocument();
   });

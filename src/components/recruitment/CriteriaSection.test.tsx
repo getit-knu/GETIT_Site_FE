@@ -22,11 +22,11 @@ function board(over: Partial<CriteriaBoard> = {}): CriteriaBoard {
   };
 }
 
-function renderSection(locked = false) {
+function renderSection() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <CriteriaSection locked={locked} />
+      <CriteriaSection />
     </QueryClientProvider>,
   );
 }
@@ -113,16 +113,6 @@ describe("CriteriaSection", () => {
 
     expect(screen.getByText("총점 60 / 100점")).toBeInTheDocument();
     expect(saveButton()).toBeDisabled();
-  });
-
-  it("모집이 시작되면 아무것도 고칠 수 없다", async () => {
-    renderSection(true);
-
-    expect(await screen.findByRole("textbox", { name: "1번 기준 이름" })).toBeDisabled();
-    expect(await score(1)).toBeDisabled();
-    expect(screen.getByRole("button", { name: "전공 적합성 삭제" })).toBeDisabled();
-    expect(saveButton()).toBeDisabled();
-    expect(screen.getByRole("button", { name: "+ 기준 추가" })).toBeDisabled();
   });
 
   it("서버가 합계를 거절하면 그 문구를 그대로 보여준다", async () => {
