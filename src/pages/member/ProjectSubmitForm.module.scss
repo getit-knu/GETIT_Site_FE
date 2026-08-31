@@ -1,0 +1,56 @@
+@use "../../styles/abstracts/variables" as *;
+@use "../../styles/abstracts/form-field";
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+// `Select`(components/ui/Select)는 어드민 테마 전용(`--admin-*`)이라 여기선 못 쓴다 —
+// 공개/부원 화면은 각자 네이티브 select를 토큰으로 직접 스타일링한다(`ApplyForm`과 같은 이유).
+.field {
+  @include form-field.field-wrapper;
+}
+
+.label {
+  @include form-field.field-label;
+}
+
+.select {
+  padding: 0.625rem 0.75rem;
+  border: 1px solid $color-border;
+  border-radius: 0.5rem;
+  background-color: $color-surface;
+  color: $color-text-primary;
+  font-size: 0.875rem;
+
+  &:focus-visible {
+    outline: 2px solid $color-accent;
+    outline-offset: 1px;
+  }
+}
+
+.formFooter {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.reason {
+  margin: 0;
+  color: $color-danger;
+  font-size: 0.8125rem;
+}
+
+.success {
+  margin: 0;
+  color: $color-accent;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}

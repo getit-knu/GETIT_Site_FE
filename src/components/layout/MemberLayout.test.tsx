@@ -40,14 +40,15 @@ describe("MemberLayout", () => {
     expect(screen.getByText("부원 본문")).toBeInTheDocument();
   });
 
-  it("강좌 목록 · 대시보드 · 내정보로 가는 링크를 보여준다", () => {
+  it("강좌 목록 · 대시보드 · 내 그룹 · 내정보로 가는 링크를 보여준다", () => {
     renderAt("/member");
 
     const nav = within(screen.getByRole("navigation", { name: "부원 메뉴" }));
     expect(nav.getByRole("link", { name: "강좌 목록", current: "page" })).toHaveAttribute("href", "/member");
     expect(nav.getByRole("link", { name: "대시보드" })).toHaveAttribute("href", "/member/dashboard");
+    expect(nav.getByRole("link", { name: "내 그룹" })).toHaveAttribute("href", "/member/group");
     expect(nav.getByRole("link", { name: "내정보" })).toHaveAttribute("href", "/me");
-    expect(nav.queryAllByRole("link")).toHaveLength(4); // GETIT 로고 + 강좌 목록 + 대시보드 + 내정보
+    expect(nav.queryAllByRole("link")).toHaveLength(5); // GETIT 로고 + 강좌 목록 + 대시보드 + 내 그룹 + 내정보
   });
 
   it("로그아웃하면 서버에 알리고 홈으로 보낸다", async () => {

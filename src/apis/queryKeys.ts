@@ -108,6 +108,8 @@ export const queryKeys = {
   groups: {
     all: ["groups"] as const,
     board: () => [...queryKeys.groups.all, "board"] as const,
+    /** 부원 자기 조 조회(BE#148). 어드민 전체 조 목록(`board`)과 다른 엔드포인트다. */
+    mine: () => [...queryKeys.groups.all, "mine"] as const,
   },
 
   /** 지원 시스템 설정. 세 영역이 각자 조회한다. */

@@ -75,6 +75,7 @@ const areaRoutes: RouteObject[] = [
           { index: true, lazy: page(() => import("./pages/member/LectureListPage")) },
           { path: "lectures/:id", lazy: page(() => import("./pages/member/LectureDetailPage")) },
           { path: "dashboard", lazy: page(() => import("./pages/member/DashboardPage")) },
+          { path: "group", lazy: page(() => import("./pages/member/GroupPage")) },
         ],
       },
     ],

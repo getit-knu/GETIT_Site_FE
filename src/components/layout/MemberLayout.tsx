@@ -84,6 +84,23 @@ export function MemberLayout() {
               대시보드
             </NavLink>
             <NavLink
+              to="/member/group"
+              className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
+              onClick={closeMenu}
+            >
+              <svg className={styles.icon} viewBox="0 0 18 18" fill="none" aria-hidden="true" focusable="false">
+                <circle cx="6" cy="6" r="2" stroke="currentColor" strokeWidth="1.3" />
+                <circle cx="12" cy="6" r="2" stroke="currentColor" strokeWidth="1.3" />
+                <path
+                  d="M2 15c0-2.3 1.8-4 4-4s4 1.7 4 4M8 15c0-2.3 1.8-4 4-4s4 1.7 4 4"
+                  stroke="currentColor"
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                />
+              </svg>
+              내 그룹
+            </NavLink>
+            <NavLink
               to="/me"
               className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
               onClick={closeMenu}
