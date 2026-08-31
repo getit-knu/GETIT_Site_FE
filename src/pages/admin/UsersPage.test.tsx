@@ -43,6 +43,22 @@ function page(content: AdminUser[], over = {}) {
   };
 }
 
+/**
+ * 이름으로 행을, 머리글로 열을 찾아 그 칸을 돌려준다.
+ *
+ * `closest("tr")` 같은 DOM 탐색은 래퍼 한 겹만 끼어도 조용히 틀린다. 표 전체를 검사하면
+ * 반대로 엉뚱한 행에 값이 있어도 통과하니, 행과 열을 모두 특정한다.
+ */
+function cellOf(userName: string, header: string): HTMLElement {
+  const rows = within(screen.getByRole("table", { name: "사용자 목록" })).getAllByRole("row");
+  const headers = within(rows.find((r) => within(r).queryAllByRole("columnheader").length > 0)!).getAllByRole(
+    "columnheader",
+  );
+  const column = headers.findIndex((h) => h.textContent === header);
+  const row = rows.find((r) => within(r).queryByRole("cell", { name: userName }))!;
+  return within(row).getAllByRole("cell")[column];
+}
+
 function renderPage(entry = "/admin/users") {
   const router = createMemoryRouter([{ path: "/admin/users", element: <UsersPage /> }], {
     initialEntries: [entry],
@@ -295,14 +311,23 @@ describe("UsersPage", () => {
 
     expect(await screen.findByRole("table", { name: "사용자 목록" })).toBeInTheDocument();
   });
-  it("연락처를 보여준다", async () => {
-    vi.mocked(api.getUsers).mockResolvedValue(page([user({ phoneNumber: "010-1234-5678" })]));
+  it("연락처를 그 사용자 행에 보여준다", async () => {
+    // 한 명만 두면 값이 엉뚱한 행에 그려져도 통과한다. 값이 없는 사용자를 함께 둔다.
+    vi.mocked(api.getUsers).mockResolvedValue(
+      page([
+        user({ id: 21, name: "김부원", phoneNumber: "010-1234-5678" }),
+        user({ id: 22, name: "이부원", email: "member2@example.com" }),
+      ]),
+    );
     renderPage();
 
-    expect(await screen.findByText("010-1234-5678")).toBeInTheDocument();
+    await screen.findByText("김부원");
+    // 부분 일치라 정규식으로 칸 전체를 맞춘다. "-" 는 전화번호 안에도 들어 있다.
+    expect(cellOf("김부원", "연락처")).toHaveTextContent(/^010-1234-5678$/);
+    expect(cellOf("이부원", "연락처")).toHaveTextContent(/^-$/);
   });
 
-  it("서버가 연락처를 주지 않으면 빈 칸으로 둔다", async () => {
+  it("연락처가 없으면 '-' 로 표시한다", async () => {
     /*
       BE#182 전까지 `UserSummary` 에 `phoneNumber` 가 없어 `undefined` 로 온다.
       그대로 그리면 표에 "undefined" 가 뜬다.
@@ -311,8 +336,6 @@ describe("UsersPage", () => {
     renderPage();
 
     await screen.findByText("김부원");
-    const row = screen.getByText("김부원").closest("tr") as HTMLElement;
-    expect(within(row).getByText("-")).toBeInTheDocument();
-    expect(within(row).queryByText("undefined")).not.toBeInTheDocument();
+    expect(cellOf("김부원", "연락처")).toHaveTextContent(/^-$/);
   });
 });
