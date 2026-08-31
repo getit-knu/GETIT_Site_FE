@@ -60,3 +60,21 @@ export interface AdminProjectListParams {
   page?: number;
   size?: number;
 }
+
+/**
+ * `POST /api/member/projects` 요청 본문(BE#148). 부원이 자기 조 명의로 프로젝트를
+ * 등록한다 — `teamName`은 서버가 호출자의 조에서 채우고 `isFeatured`도 서버가 강제로
+ * `false`로 두므로(다른 조 사칭·임의 소개 방지) 이 요청엔 아예 없다. `order`도 없다
+ * (승인 전 항목이라 정렬 대상이 아님).
+ */
+export type ProjectSubmitPayload = components["schemas"]["ProjectSubmitRequest"];
+
+/**
+ * `POST /api/member/projects` 응답. 등록 직후 결과 확인용 — 승인 대기 상태(`PENDING`)로
+ * 시작해 어드민이 승인해야 공개 목록·홈 쇼케이스에 나타난다(`AdminProject.status` 참고).
+ *
+ * **BE가 스스로 인정한 공백**: 부원이 자기가 이미 낸 프로젝트 목록(승인 상태 포함)을
+ * 다시 조회하는 엔드포인트(`GET /api/member/projects` 같은 것)가 아직 없다 — 그래서
+ * 이 타입은 등록 직후 응답에만 쓰고, "내가 낸 프로젝트 목록" 화면은 이번 스코프에 없다.
+ */
+export type MemberProject = Required<components["schemas"]["MemberProjectResult"]>;

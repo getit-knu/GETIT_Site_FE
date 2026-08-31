@@ -1,0 +1,102 @@
+@use "../../styles/abstracts/variables" as *;
+@use "../../styles/abstracts/container";
+
+$card-shadow:
+  0 1px 3px rgb(0 0 0 / 10%),
+  0 1px 2px -1px rgb(0 0 0 / 10%);
+
+.page {
+  padding: 2rem 0 4rem;
+  background-color: $color-background;
+}
+
+.inner {
+  @include container.content-width;
+
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.title {
+  margin: 0;
+  color: $color-heading;
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+.loading {
+  padding: 2rem 0;
+  color: $color-text-secondary;
+  font-size: 0.9375rem;
+  text-align: center;
+}
+
+.groupCard,
+.submitSection {
+  border-radius: 1rem;
+  padding: 2rem;
+  background-color: $color-background;
+  box-shadow: $card-shadow;
+}
+
+.groupHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.groupName {
+  margin: 0;
+  color: $color-heading;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.count {
+  color: $color-text-secondary;
+  font-size: 0.875rem;
+}
+
+.members {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.member {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-radius: 0.625rem;
+  padding: 0.75rem;
+  background-color: $color-placeholder-bg;
+}
+
+.memberName {
+  color: $color-heading;
+  font-weight: 600;
+}
+
+.memberMeta {
+  color: $color-text-secondary;
+  font-size: 0.875rem;
+}
+
+.sectionTitle {
+  margin: 0 0 0.5rem;
+  color: $color-heading;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.hint {
+  margin: 0 0 1.25rem;
+  color: $color-text-secondary;
+  font-size: 0.875rem;
+}
