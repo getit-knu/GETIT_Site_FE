@@ -1,16 +1,33 @@
+import clsx from "clsx";
+
 import { AdminProjectFormModal } from "../../components/project/AdminProjectFormModal";
 import { Button } from "../../components/ui/Button/Button";
 import { Pagination } from "../../components/ui/Pagination/Pagination";
 import { EmptyState, ErrorState } from "../../components/ui/states/States";
 import { projectErrorMessage, projectSaveErrorMessage } from "../../errors/project/errorMessages";
-import { useDeleteProject, useProjectBoard } from "../../hooks/project/useProjects";
+import {
+  useApproveProject,
+  useDeleteProject,
+  useProjectBoard,
+  useRejectProject,
+} from "../../hooks/project/useProjects";
 import { useModalParams } from "../../hooks/ui/useModalParams";
 import { useTableParams } from "../../hooks/ui/useTableParams";
-import type { AdminProject } from "../../types/project";
+import type { AdminProject, AdminProjectStatus } from "../../types/project";
 
 import styles from "./ProjectsPage.module.scss";
 
 const PAGE_SIZE = 12;
+
+/**
+ * 상태 배지 색. **문구는 서버가 준 `statusLabel` 을 그대로 쓴다** — 여기에 한글을 박아 두면
+ * 서버가 표기를 바꿔도 화면만 옛말을 남긴다.
+ */
+const STATUS_STYLE: Record<AdminProjectStatus, string> = {
+  PENDING: styles.pending,
+  APPROVED: styles.approved,
+  REJECTED: styles.rejected,
+};
 
 /**
  * 어드민 프로젝트 관리(#222). 대응하는 와이어프레임이 없어 신설한 화면 —
@@ -25,6 +42,8 @@ export default function AdminProjectsPage() {
   const { data, isPending, isError, error, refetch } = useProjectBoard({ page, size: PAGE_SIZE });
   const { modal, id: modalId, openModal, closeModal } = useModalParams();
   const remove = useDeleteProject();
+  const approve = useApproveProject();
+  const reject = useRejectProject();
 
   function handleDelete(project: AdminProject) {
     const message = project.isFeatured
@@ -32,6 +51,16 @@ export default function AdminProjectsPage() {
       : `"${project.title}"을(를) 삭제할까요?`;
     if (!window.confirm(message)) return;
     remove.mutate(project.id);
+  }
+
+  function handleReject(project: AdminProject) {
+    // 공개 중인 것을 내리는 것이라 되돌리려면 다시 승인해야 한다.
+    const message =
+      project.status === "APPROVED"
+        ? `"${project.title}"을(를) 반려할까요? 공개 사이트에서 내려갑니다.`
+        : `"${project.title}"을(를) 반려할까요?`;
+    if (!window.confirm(message)) return;
+    reject.mutate(project.id);
   }
 
   const editing =
@@ -61,6 +90,7 @@ export default function AdminProjectsPage() {
                 <div className={styles.body}>
                   <div className={styles.head}>
                     <strong>{project.title}</strong>
+                    <span className={clsx(styles.badge, STATUS_STYLE[project.status])}>{project.statusLabel}</span>
                     {project.isFeatured && <span className={styles.badge}>Home 소개</span>}
                   </div>
                   <span className={styles.muted}>
@@ -78,6 +108,17 @@ export default function AdminProjectsPage() {
                   )}
                 </div>
                 <div className={styles.actions}>
+                  {/* 이미 공개 중이면 다시 승인할 것이 없고, 반려된 것은 다시 승인할 수 있다. */}
+                  {project.status !== "APPROVED" && (
+                    <button type="button" disabled={approve.isPending} onClick={() => approve.mutate(project.id)}>
+                      승인
+                    </button>
+                  )}
+                  {project.status !== "REJECTED" && (
+                    <button type="button" disabled={reject.isPending} onClick={() => handleReject(project)}>
+                      반려
+                    </button>
+                  )}
                   <button type="button" onClick={() => openModal("project", project.id)}>
                     수정
                   </button>
@@ -94,6 +135,8 @@ export default function AdminProjectsPage() {
       )}
 
       {remove.error !== null && <p className={styles.reason}>{projectSaveErrorMessage(remove.error)}</p>}
+      {approve.error !== null && <p className={styles.reason}>{projectSaveErrorMessage(approve.error)}</p>}
+      {reject.error !== null && <p className={styles.reason}>{projectSaveErrorMessage(reject.error)}</p>}
 
       {modal === "project" && <AdminProjectFormModal project={editing} onClose={closeModal} />}
     </div>

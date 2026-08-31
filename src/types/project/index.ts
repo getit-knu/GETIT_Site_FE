@@ -52,6 +52,17 @@ export type AdminProjectPayload = Omit<components["schemas"]["ProjectRequestWrit
   fileId: number | null;
 };
 
+/**
+ * 프로젝트 승인 상태(#148).
+ *
+ * 부원이 낸 프로젝트는 `PENDING` 으로 들어오고 어드민이 승인해야 공개 쇼케이스에 나간다.
+ * 어드민이 직접 등록한 것은 처음부터 `APPROVED` 다(BE `Project.create`).
+ *
+ * **공개 노출은 서버가 거른다** — `GET /api/public/projects` 는 `APPROVED` 만 조회한다
+ * (BE `ProjectQueryServiceImpl`). 화면이 따로 걸러낼 필요가 없다.
+ */
+export type AdminProjectStatus = NonNullable<components["schemas"]["ProjectResultItem"]["status"]>;
+
 /** `GET /api/admin/projects` 응답. `Required<>`는 배열 원소 내부까지 못 채우므로 직접 합성한다. */
 export type AdminProjectBoard = Page<AdminProject>;
 

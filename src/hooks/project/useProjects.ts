@@ -1,7 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { queryKeys } from "../../apis/queryKeys";
-import { createProject, deleteProject, getProjects, updateProject } from "../../apis/project/projectsApi";
+import {
+  approveProject,
+  createProject,
+  deleteProject,
+  getProjects,
+  rejectProject,
+  updateProject,
+} from "../../apis/project/projectsApi";
 import type { AdminProjectListParams, AdminProjectPayload } from "../../types/project";
 
 export function useProjectBoard(params: AdminProjectListParams) {
@@ -31,3 +38,8 @@ export const useSaveProject = () =>
   );
 
 export const useDeleteProject = () => useProjectMutation((id: number) => deleteProject(id));
+
+/** 승인 · 반려(#148). 둘 다 목록을 다시 받아 상태 배지와 버튼이 함께 바뀐다. */
+export const useApproveProject = () => useProjectMutation((id: number) => approveProject(id));
+
+export const useRejectProject = () => useProjectMutation((id: number) => rejectProject(id));

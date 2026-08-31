@@ -64,6 +64,22 @@
   white-space: nowrap;
 }
 
+// 상태 배지 틴트. 시맨틱 틴트는 팔레트 정렬 대상이 아니다(`Badge.module.scss` 와 같은 규칙).
+.pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.approved {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.rejected {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
 .muted {
   color: var(--admin-text-muted);
   font-size: 0.8125rem;
