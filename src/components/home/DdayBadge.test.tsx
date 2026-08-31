@@ -109,6 +109,19 @@ describe("DdayBadge", () => {
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 
+  it("지원할 수 없는 동안에는 CTA 가 눌리지 않는다는 것을 보조기기에도 알린다", async () => {
+    /*
+      링크가 아니어서 눈으로는 비활성인 게 보이지만, 표식이 없으면 스크린리더에는 그냥
+      "지원 예정" 이라는 글자로만 읽혀 누를 수 있는 것처럼 들린다.
+    */
+    vi.mocked(getRecruitmentStatus).mockResolvedValue(status({ applyEnabled: false, dDay: 2 }));
+    renderBadge();
+
+    const cta = await screen.findByText("지원 예정");
+    expect(cta).toHaveAttribute("aria-disabled", "true");
+    expect(cta).toHaveAttribute("title", "아직 지원할 수 없습니다");
+  });
+
   it("dDay가 0이면 D-DAY로 보여준다", async () => {
     vi.mocked(getRecruitmentStatus).mockResolvedValue(status({ dDay: 0 }));
     renderBadge();

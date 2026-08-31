@@ -56,7 +56,14 @@ export function DdayBadge() {
     return (
       <div className={styles.badge}>
         {label}
-        <span className={styles.pendingCta}>지원 예정</span>
+        {/*
+          버튼처럼 보이지만 링크가 아니다. aria-disabled 없이는 스크린리더에 그냥 텍스트로
+          읽혀 "지금은 누를 수 없다" 가 전달되지 않는다. 접수 시작 전과 일시 중지를 모두
+          타는 분기라 문구는 둘 다 참인 것으로 쓴다.
+        */}
+        <span className={styles.pendingCta} aria-disabled="true" title="아직 지원할 수 없습니다">
+          지원 예정
+        </span>
       </div>
     );
   }
