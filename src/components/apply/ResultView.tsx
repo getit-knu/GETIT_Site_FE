@@ -1,5 +1,6 @@
 import { applicationResultErrorMessage } from "../../errors/application/errorMessages";
 import { useApplicationResult } from "../../hooks/application/useMyApplication";
+import { formatDateTime } from "../../libs/formatDate";
 import { ErrorState } from "../ui/states/States";
 import styles from "../../pages/ApplyPage.module.scss";
 
@@ -27,8 +28,12 @@ export function ResultView() {
             </div>
 
             <div className={styles.form}>
-              <p className={styles.resultInfo}>서류 발표: {new Date(data.documentAnnouncedAt).toLocaleString()}</p>
-              <p className={styles.resultInfo}>최종 발표: {new Date(data.finalAnnouncedAt).toLocaleString()}</p>
+              {/*
+                `toLocaleString()`은 브라우저 로캘·시간대를 그대로 따라가 사람마다 다르게
+                보였다(초까지 나오고 표기도 제각각) — 프로젝트 공용 포맷터로 고정한다.
+              */}
+              <p className={styles.resultInfo}>서류 발표: {formatDateTime(data.documentAnnouncedAt)}</p>
+              <p className={styles.resultInfo}>최종 발표: {formatDateTime(data.finalAnnouncedAt)}</p>
 
               {data.nextStep !== null && (
                 <div className={styles.nextStep}>

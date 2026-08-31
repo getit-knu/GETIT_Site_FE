@@ -30,11 +30,11 @@ function schedule(over: Partial<RecruitmentSchedule> = {}): RecruitmentSchedule 
   };
 }
 
-function renderSection(locked = false) {
+function renderSection() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <ScheduleSection locked={locked} />
+      <ScheduleSection />
     </QueryClientProvider>,
   );
 }
@@ -181,13 +181,13 @@ describe("ScheduleSection", () => {
     expect(screen.queryByLabelText("전체 시작")).not.toBeInTheDocument();
   });
 
-  it("잠긴 상태면 입력칸·저장 버튼이 막히고 그 이유를 알려준다", async () => {
-    // 그냥 disabled로만 보이면 왜 안 눌리는지 알 방법이 없다 — 이유를 직접 보여줘야 한다.
-    renderSection(true);
+  it("모집이 이미 시작됐어도 일정을 계속 수정할 수 있다", async () => {
+    // BE는 시간 기준 잠금을 두지 않는다(RecruitmentScheduleService.updateSchedule 확인함) —
+    // 화면에서 임의로 막으면 시작 뒤 마감을 늘리는 등 정상적인 관리 작업도 못 하게 된다.
+    renderSection();
     await screen.findByRole("button", { name: "저장" });
 
-    expect(screen.getByLabelText("전체 시작")).toBeDisabled();
-    expect(saveButton()).toBeDisabled();
-    expect(screen.getByText(/모집이 이미 시작돼 일정을 수정할 수 없습니다/)).toBeInTheDocument();
+    expect(screen.getByLabelText("전체 시작")).toBeEnabled();
+    expect(saveButton()).toBeEnabled();
   });
 });

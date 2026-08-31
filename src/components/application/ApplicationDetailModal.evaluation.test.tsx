@@ -228,4 +228,14 @@ describe("ApplicationDetailModal - 서류 평가", () => {
     await screen.findByText("이준호 지원서", { exact: false });
     expect(await scoreBox("전공 적합성")).toHaveValue(null);
   });
+
+  it("합불이 결정된 뒤엔 점수 입력칸과 저장 버튼이 잠기고 이유를 알려준다", async () => {
+    // BE는 SUBMITTED 상태에서만 채점을 허용한다 — 그 외엔 저장을 눌러야 막힌 걸 알게 됐었다.
+    vi.mocked(api.getApplicationDetail).mockResolvedValue(detail({ status: "DOC_PASS" }));
+    renderModal();
+
+    expect(await scoreBox("전공 적합성")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "평가 저장" })).toBeDisabled();
+    expect(screen.getByText("합불이 이미 결정돼 채점할 수 없습니다.")).toBeInTheDocument();
+  });
 });

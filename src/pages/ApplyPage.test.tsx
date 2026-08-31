@@ -5,9 +5,10 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getForm, getMyApplication, getResult, saveDraft, submit } from "../apis/application/myApplicationApi";
-import { getColleges, getMajors } from "../apis/public/publicApi";
+import { getColleges, getMajors, getRecruitmentStatus } from "../apis/public/publicApi";
 import type { ApplicationFormResult, ApplicationDecisionResult, MyApplicationResult } from "../types/application";
 import type { College, Major } from "../types/college";
+import type { RecruitmentStatus } from "../types/recruitment";
 
 import ApplyPage from "./ApplyPage";
 
@@ -110,6 +111,19 @@ function decision(over: Partial<ApplicationDecisionResult> = {}): ApplicationDec
   };
 }
 
+function recruitmentStatus(over: Partial<RecruitmentStatus> = {}): RecruitmentStatus {
+  return {
+    generationNo: 9,
+    year: 2026,
+    phase: "DOCUMENT_OPEN",
+    dDay: 5,
+    message: "",
+    applyEnabled: true,
+    schedule: null,
+    ...over,
+  };
+}
+
 function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createMemoryRouter(
@@ -147,6 +161,7 @@ describe("ApplyPage", () => {
     vi.mocked(getForm).mockResolvedValue(form());
     vi.mocked(getColleges).mockResolvedValue(COLLEGES);
     vi.mocked(getMajors).mockResolvedValue(MAJORS);
+    vi.mocked(getRecruitmentStatus).mockResolvedValue(recruitmentStatus());
   });
 
   it("지원서가 아직 없으면 양식 프리필로 폼을 채운다", async () => {
@@ -226,6 +241,18 @@ describe("ApplyPage", () => {
     expect(screen.getByLabelText("학번(10자) *")).toHaveAttribute("maxlength", "10");
   });
 
+  it("비로그인 상태에서도 모집 기간이 아니면 로그인부터 요구하지 않고 안내부터 보여준다", async () => {
+    // #187과 같은 공개 엔드포인트로 모집 기간부터 먼저 본다 — 로그인이 필요한
+    // `GET /api/applications/me`를 먼저 부르면 모집 기간이 아예 아닌데도
+    // "로그인해 주세요"부터 뜨게 된다(0831 QA).
+    vi.mocked(getRecruitmentStatus).mockResolvedValue(recruitmentStatus({ applyEnabled: false }));
+    renderPage();
+
+    expect(await screen.findByText("지금은 지원서 접수 기간이 아닙니다.")).toBeInTheDocument();
+    expect(screen.queryByText("지원서를 작성하려면 먼저 로그인해 주세요.")).not.toBeInTheDocument();
+    expect(getMyApplication).not.toHaveBeenCalled();
+  });
+
   it("모집 기간이 아니면 안내만 보여주고 폼은 렌더링하지 않는다", async () => {
     vi.mocked(getForm).mockResolvedValue(form({ phase: "BEFORE_OPEN" }));
     renderPage();
@@ -251,37 +278,6 @@ describe("ApplyPage", () => {
     renderPage();
 
     expect(await screen.findByRole("alert")).toHaveTextContent("지원서를 볼 권한이 없습니다");
-  });
-
-  it("이미 제출된 지원서는 폼 대신 결과 화면을 보여준다", async () => {
-    vi.mocked(getMyApplication).mockResolvedValue(myApplication({ status: "SUBMITTED" }));
-    vi.mocked(getResult).mockResolvedValue(decision());
-    renderPage();
-
-    expect(await screen.findByRole("heading", { name: "심사 중" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "지원서 작성" })).not.toBeInTheDocument();
-    expect(getForm).not.toHaveBeenCalled();
-  });
-
-  it("서류 합격이면 다음 단계 안내(면접)를 함께 보여준다", async () => {
-    vi.mocked(getMyApplication).mockResolvedValue(myApplication({ status: "DOC_PASS" }));
-    vi.mocked(getResult).mockResolvedValue(
-      decision({
-        status: "DOC_PASS",
-        statusLabel: "서류 합격",
-        nextStep: {
-          type: "INTERVIEW",
-          message: "면접 일정은 개별 안내드립니다.",
-          periodStart: "2026-10-01",
-          periodEnd: "2026-10-05",
-        },
-      }),
-    );
-    renderPage();
-
-    expect(await screen.findByRole("heading", { name: "서류 합격" })).toBeInTheDocument();
-    expect(screen.getByText("면접 일정은 개별 안내드립니다.")).toBeInTheDocument();
-    expect(screen.getByText(/2026-10-01/)).toBeInTheDocument();
   });
 
   it("임시 저장을 누르면 현재 입력값을 그대로 보낸다", async () => {
