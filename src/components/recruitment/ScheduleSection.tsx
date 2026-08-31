@@ -144,6 +144,16 @@ export function ScheduleSection({ locked, id }: ScheduleSectionProps) {
         ))}
       </div>
 
+      {/*
+        전체 시작이 지나면 잠긴다(`useSettingsLocked`) — 입력칸이 그냥 disabled로만
+        보이면 왜 안 눌리는지 알 방법이 없어서, 잠긴 이유를 직접 알려준다.
+      */}
+      {locked && (
+        <p className={styles.reason}>
+          모집이 이미 시작돼 일정을 수정할 수 없습니다{data && `(전체 시작: ${formatDateTime(data.totalStartAt)})`}.
+        </p>
+      )}
+
       {/* 면접 종료는 요청에 없다. 서버가 전체 종료로 맞춘다(명세서 6.2). */}
       <p className={styles.lockNotice}>
         면접 종료는 전체 종료{totalEndPreview && `(${totalEndPreview})`}와 같게 설정됩니다.
