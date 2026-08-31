@@ -53,7 +53,7 @@ export type AdminProjectPayload = Omit<components["schemas"]["ProjectRequestWrit
 };
 
 /**
- * 프로젝트 승인 상태(#148).
+ * 프로젝트 승인 상태(BE#148).
  *
  * 부원이 낸 프로젝트는 `PENDING` 으로 들어오고 어드민이 승인해야 공개 쇼케이스에 나간다.
  * 어드민이 직접 등록한 것은 처음부터 `APPROVED` 다(BE `Project.create`).

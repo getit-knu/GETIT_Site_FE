@@ -90,8 +90,10 @@ export default function AdminProjectsPage() {
                 <div className={styles.body}>
                   <div className={styles.head}>
                     <strong>{project.title}</strong>
-                    <span className={clsx(styles.badge, STATUS_STYLE[project.status])}>{project.statusLabel}</span>
-                    {project.isFeatured && <span className={styles.badge}>Home 소개</span>}
+                    <div className={styles.badges}>
+                      <span className={clsx(styles.badge, STATUS_STYLE[project.status])}>{project.statusLabel}</span>
+                      {project.isFeatured && <span className={styles.badge}>Home 소개</span>}
+                    </div>
                   </div>
                   <span className={styles.muted}>
                     {project.teamName} · {project.semester}
