@@ -8,7 +8,6 @@ import type { ApiErrorPayload } from "../../apis/client";
  */
 const APPLICATION_ERROR_MESSAGES: Record<string, string> = {
   APPLICATION_NOT_FOUND: "지원서를 찾을 수 없습니다. 목록을 새로고침해 주세요.",
-  RECRUITMENT_ALREADY_STARTED: "모집이 시작되어 수정할 수 없습니다.",
   FORBIDDEN: "지원서를 볼 권한이 없습니다.",
   UNAUTHORIZED: "로그인이 필요합니다.",
   MALFORMED_RESPONSE: "서버 응답을 읽지 못했습니다. 잠시 후 다시 시도해 주세요.",

@@ -70,7 +70,6 @@ function invalidReason(draft: ScheduleDraft): string | null {
 }
 
 interface ScheduleSectionProps {
-  locked: boolean;
   /** 사이트 관리(`SitePage`)의 섹션 네비게이션 앵커용. 모집 관리에선 안 쓴다. */
   id?: string;
 }
@@ -80,7 +79,7 @@ interface ScheduleSectionProps {
  * 섹션 네비게이션 앵커가 화면이 채워지기 전에도 존재한다(`CurriculumsSection` 등과 같은
  * 이유). `id`가 없는 곳(`ApplicationsPage`)은 앵커가 필요 없어 그대로 둔다.
  */
-export function ScheduleSection({ locked, id }: ScheduleSectionProps) {
+export function ScheduleSection({ id }: ScheduleSectionProps) {
   const { data, isPending, isError, error, refetch } = useSchedule();
   const save = useSaveSchedule();
   const [edited, setEdited] = useState<ScheduleDraft | null>(null);
@@ -137,22 +136,12 @@ export function ScheduleSection({ locked, id }: ScheduleSectionProps) {
               id={key}
               type="datetime-local"
               value={draft[key]}
-              disabled={locked || save.isPending}
+              disabled={save.isPending}
               onChange={(e) => setEdited({ ...draft, [key]: e.target.value })}
             />
           </div>
         ))}
       </div>
-
-      {/*
-        전체 시작이 지나면 잠긴다(`useSettingsLocked`) — 입력칸이 그냥 disabled로만
-        보이면 왜 안 눌리는지 알 방법이 없어서, 잠긴 이유를 직접 알려준다.
-      */}
-      {locked && (
-        <p className={styles.reason}>
-          모집이 이미 시작돼 일정을 수정할 수 없습니다{data && `(전체 시작: ${formatDateTime(data.totalStartAt)})`}.
-        </p>
-      )}
 
       {/* 면접 종료는 요청에 없다. 서버가 전체 종료로 맞춘다(명세서 6.2). */}
       <p className={styles.lockNotice}>
@@ -161,14 +150,14 @@ export function ScheduleSection({ locked, id }: ScheduleSectionProps) {
 
       <div className={styles.actions}>
         <Button
-          disabled={locked || save.isPending || reason !== null}
+          disabled={save.isPending || reason !== null}
           onClick={() => save.mutate(toPayload(draft), { onSuccess: () => setEdited(null) })}
         >
           저장
         </Button>
       </div>
 
-      {!locked && reason !== null && <p className={styles.reason}>{reason}</p>}
+      {reason !== null && <p className={styles.reason}>{reason}</p>}
       {save.error !== null && <p className={styles.reason}>{recruitmentErrorMessage(save.error)}</p>}
     </section>
   );
