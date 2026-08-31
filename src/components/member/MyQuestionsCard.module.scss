@@ -71,13 +71,13 @@
   font-size: 0.75rem;
 }
 
-// 시맨틱 틴트는 팔레트 정렬 대상이 아니다(`Badge.module.scss` 와 같은 규칙).
+// 상태 색은 전역 토큰에서만 가져온다. 카드 배경(#f8f8f8) 대비 6.71:1 · 6.68:1 로 AA 충족.
 .answered {
-  color: #166534;
+  color: $color-success-text;
   font-weight: 600;
 }
 
 .waiting {
-  color: #92400e;
+  color: $color-warning-text;
   font-weight: 600;
 }

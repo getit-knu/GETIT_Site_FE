@@ -5,7 +5,7 @@ import { queryKeys } from "../../apis/queryKeys";
 
 export function useMyQuestions(page = 0, size = 5) {
   return useQuery({
-    queryKey: queryKeys.member.myQuestions(page),
+    queryKey: queryKeys.member.myQuestions(page, size),
     queryFn: () => getMyQuestions({ page, size }),
   });
 }
