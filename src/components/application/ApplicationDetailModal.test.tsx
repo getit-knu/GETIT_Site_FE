@@ -119,6 +119,25 @@ describe("ApplicationDetailModal", () => {
     expect(await screen.findByText("경영대학 경영학과 2학년")).toBeInTheDocument();
   });
 
+  it("연락처엔 전화번호를, 이메일은 따로 보여준다", async () => {
+    // 예전엔 "연락처" 라벨 아래 전화번호 대신 이메일이 나왔다(0831 QA).
+    renderModal();
+
+    await screen.findByText("경영대학 경영학과 2학년");
+    expect(screen.getByText("010-1234-5678")).toBeInTheDocument();
+    expect(screen.getByText("kim@gmail.com")).toBeInTheDocument();
+  });
+
+  it("전화번호가 없으면 대시로 보여준다", async () => {
+    vi.mocked(api.getApplicationDetail).mockResolvedValue(
+      detail({ basicInfo: { ...detail().basicInfo, phoneNumber: null } }),
+    );
+    renderModal();
+
+    await screen.findByText("경영대학 경영학과 2학년");
+    expect(screen.getByText("-")).toBeInTheDocument();
+  });
+
   it("지원서 내용을 문항별로 보여준다", async () => {
     renderModal();
 

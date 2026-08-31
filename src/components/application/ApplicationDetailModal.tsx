@@ -15,7 +15,12 @@ import {
   useSaveEvaluation,
 } from "../../hooks/application/useApplicationDetail";
 import { formatDateTime } from "../../libs/formatDate";
-import type { ApplicantListParams, ApplicationAnswer, EvaluationSummary } from "../../types/application";
+import type {
+  ApplicantListParams,
+  ApplicationAnswer,
+  ApplicationStatus,
+  EvaluationSummary,
+} from "../../types/application";
 import { Button } from "../ui/Button/Button";
 import { PaginatedModal } from "../ui/PaginatedModal/PaginatedModal";
 import { ErrorState } from "../ui/states/States";
@@ -72,16 +77,22 @@ function totalOf(draft: Draft): number {
 
 interface EvaluationSectionProps {
   applicationId: number;
+  status: ApplicationStatus;
 }
 
 /**
  * 서류 평가. **여러 운영진이 각자 채점한다**(BE #151) — 기준마다 다른 평가자들의 점수도
  * 함께 보여주고, 입력칸엔 로그인한 본인의 점수만 매긴다.
+ *
+ * **`SUBMITTED` 상태일 때만 채점할 수 있다**(BE `ApplicationEvaluationService` 확인함,
+ * 그 외 상태는 `APPLICATION_NOT_SCORABLE`로 막힘) — 서류 합불이 이미 결정된 뒤에도
+ * 입력칸이 계속 열려 있으면 눌러서 저장을 시도하고서야 막힌 걸 알게 된다(0831 QA).
  */
-function EvaluationSection({ applicationId }: EvaluationSectionProps) {
+function EvaluationSection({ applicationId, status }: EvaluationSectionProps) {
   const { data, isPending, isError, error, refetch } = useEvaluationSummary(applicationId);
   const { mutate, isPending: saving, error: saveError } = useSaveEvaluation(applicationId);
   const [draft, setDraft] = useState<Draft | null>(null);
+  const locked = status !== "SUBMITTED";
 
   if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
   if (isError) return <ErrorState message={evaluationErrorMessage(error)} onRetry={() => void refetch()} />;
@@ -130,7 +141,7 @@ function EvaluationSection({ applicationId }: EvaluationSectionProps) {
                   step={1}
                   value={currentDraft[criterion.criterionId] ?? ""}
                   aria-label={`${criterion.criterionName} 내 점수`}
-                  disabled={saving}
+                  disabled={saving || locked}
                   onChange={(e) => setDraft({ ...currentDraft, [criterion.criterionId]: e.target.value })}
                 />
                 <span className={styles.maxScore}>/ {criterion.maxScore}점</span>
@@ -146,13 +157,14 @@ function EvaluationSection({ applicationId }: EvaluationSectionProps) {
         </p>
 
         {/* 저장을 막는 이유를 미리 보여준다. 눌러 보고 알게 하지 않는다. */}
-        {reason !== null && <p className={styles.reason}>{reason}</p>}
+        {locked && <p className={styles.reason}>합불이 이미 결정돼 채점할 수 없습니다.</p>}
+        {!locked && reason !== null && <p className={styles.reason}>{reason}</p>}
 
         {saveError !== null && <p className={styles.reason}>{evaluationSaveErrorMessage(saveError)}</p>}
       </section>
 
       <div className={styles.saveRow}>
-        <Button onClick={handleSave} disabled={saving || reason !== null}>
+        <Button onClick={handleSave} disabled={saving || locked || reason !== null}>
           {summary.myTotalScore !== null ? "평가 수정" : "평가 저장"}
         </Button>
       </div>
@@ -216,6 +228,10 @@ export function ApplicationDetailModal({
             </div>
             <div>
               <dt>연락처</dt>
+              <dd>{data.basicInfo.phoneNumber ?? "-"}</dd>
+            </div>
+            <div>
+              <dt>이메일</dt>
               <dd>{data.basicInfo.email}</dd>
             </div>
             <div>
@@ -241,7 +257,7 @@ export function ApplicationDetailModal({
           </section>
 
           {/* key로 지원자 전환 시 EvaluationSection의 draft를 초기화한다(EvaluationForm과 같은 이유). */}
-          <EvaluationSection key={data.id} applicationId={data.id} />
+          <EvaluationSection key={data.id} applicationId={data.id} status={data.status} />
         </>
       )}
     </PaginatedModal>
