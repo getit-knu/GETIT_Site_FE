@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -294,5 +294,25 @@ describe("UsersPage", () => {
     renderPage("/admin/users?tab=DROP");
 
     expect(await screen.findByRole("table", { name: "사용자 목록" })).toBeInTheDocument();
+  });
+  it("연락처를 보여준다", async () => {
+    vi.mocked(api.getUsers).mockResolvedValue(page([user({ phoneNumber: "010-1234-5678" })]));
+    renderPage();
+
+    expect(await screen.findByText("010-1234-5678")).toBeInTheDocument();
+  });
+
+  it("서버가 연락처를 주지 않으면 빈 칸으로 둔다", async () => {
+    /*
+      BE#182 전까지 `UserSummary` 에 `phoneNumber` 가 없어 `undefined` 로 온다.
+      그대로 그리면 표에 "undefined" 가 뜬다.
+    */
+    vi.mocked(api.getUsers).mockResolvedValue(page([user()]));
+    renderPage();
+
+    await screen.findByText("김부원");
+    const row = screen.getByText("김부원").closest("tr") as HTMLElement;
+    expect(within(row).getByText("-")).toBeInTheDocument();
+    expect(within(row).queryByText("undefined")).not.toBeInTheDocument();
   });
 });
