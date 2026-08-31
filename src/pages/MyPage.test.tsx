@@ -59,27 +59,29 @@ describe("MyPage", () => {
     vi.mocked(getMe).mockResolvedValue(MEMBER);
     renderPage();
 
-    expect(await screen.findByText("경영대학 경영학과")).toBeInTheDocument();
+    expect(await screen.findByLabelText("소속")).toHaveTextContent(/^경영대학 경영학과$/);
   });
 
   it("소속이 한쪽만 있으면 있는 것만 보여준다", async () => {
     vi.mocked(getMe).mockResolvedValue({ ...MEMBER, college: null });
     renderPage();
 
-    expect(await screen.findByText("경영학과")).toBeInTheDocument();
+    expect(await screen.findByLabelText("소속")).toHaveTextContent(/^경영학과$/);
   });
 
-  it("소속이 아예 없으면 빈 칸으로 둔다", async () => {
+  it("소속이 아예 없으면 - 로 보여준다", async () => {
     /*
       승격 때 지원서의 단과대·학과가 넘어오지 않아 지금은 이 경우가 흔하다
       (getit-knu/GETIT_Site_BE#184). 화면이 깨지지 않아야 한다.
+
+      "- 가 화면에 있다" 로는 부족하다. 이 fixture 는 전화번호도 비어 있어 그쪽도 - 라,
+      엉뚱한 칸이 - 여도 통과해 버린다. 값에 aria-labelledby 로 레이블이 걸려 있으니
+      항목을 지목해 확인한다.
     */
     vi.mocked(getMe).mockResolvedValue({ ...MEMBER, college: null, major: null });
     renderPage();
 
-    await screen.findByRole("heading", { name: "김부원" });
-    const label = screen.getByText("소속");
-    expect(label.parentElement).toHaveTextContent("-");
+    expect(await screen.findByLabelText("소속")).toHaveTextContent(/^-$/);
   });
 
   it("학과가 없어도 학번은 그대로 보여준다", async () => {

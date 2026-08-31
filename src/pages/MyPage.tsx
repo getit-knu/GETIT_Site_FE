@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useId, useState } from "react";
+import type { ReactNode } from "react";
 
 import { Button } from "../components/ui/Button/Button";
 import { Input } from "../components/ui/Input/Input";
@@ -107,6 +108,37 @@ function EditForm({ user, onClose }: EditFormProps) {
   );
 }
 
+interface InfoItemProps {
+  label: string;
+  /** 값 앞에 붙는 장식 아이콘. `aria-hidden` 이라 접근성 트리에는 들어가지 않는다. */
+  icon: ReactNode;
+  value: string;
+}
+
+/**
+ * 정보 한 칸(레이블 + 값).
+ *
+ * 레이블과 값이 그저 위아래로 놓여 있으면 접근성 트리에서 둘이 이어지지 않아, 스크린리더로는
+ * "소속" 과 "-" 가 따로 떨어져 읽힌다. 정의 목록으로 묶고 값에 `aria-labelledby` 로 레이블을
+ * 걸어 "소속: -" 로 이어지게 한다. 덕분에 테스트도 DOM 구조를 타고 오르지 않고
+ * `getByLabelText("소속")` 으로 **그 항목** 을 곧장 특정할 수 있다.
+ */
+function InfoItem({ label, icon, value }: InfoItemProps) {
+  const labelId = useId();
+
+  return (
+    <div>
+      <dt className={styles.label} id={labelId}>
+        {label}
+      </dt>
+      <dd className={styles.infoValue} aria-labelledby={labelId}>
+        {icon}
+        <span>{value}</span>
+      </dd>
+    </div>
+  );
+}
+
 /** 내 정보. GUEST · MEMBER · ADMIN 전 role 공통(#240) — 학습 통계 등은 #239로 분리됨. */
 export default function MyPage() {
   const { user } = useSession();
@@ -141,10 +173,10 @@ export default function MyPage() {
               </div>
             </div>
 
-            <div className={styles.infoGrid}>
-              <div>
-                <p className={styles.label}>이메일</p>
-                <div className={styles.infoValue}>
+            <dl className={styles.infoGrid}>
+              <InfoItem
+                label="이메일"
+                icon={
                   <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
                     <rect x="2.5" y="4.5" width="15" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
                     <path
@@ -155,12 +187,12 @@ export default function MyPage() {
                       strokeLinejoin="round"
                     />
                   </svg>
-                  <span>{user.email}</span>
-                </div>
-              </div>
-              <div>
-                <p className={styles.label}>전화번호</p>
-                <div className={styles.infoValue}>
+                }
+                value={user.email}
+              />
+              <InfoItem
+                label="전화번호"
+                icon={
                   <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
                     <path
                       d="M4.5 3.5h2.75L8.5 7l-1.75 1.25a8 8 0 0 0 5 5L13 11.75l3.5 1.25v2.75c0 .83-.67 1.5-1.5 1.5C8.6 17.25 2.75 11.4 2.75 5c0-.83.67-1.5 1.5-1.5Z"
@@ -169,12 +201,12 @@ export default function MyPage() {
                       strokeLinejoin="round"
                     />
                   </svg>
-                  <span>{user.phoneNumber ?? "-"}</span>
-                </div>
-              </div>
-              <div>
-                <p className={styles.label}>소속</p>
-                <div className={styles.infoValue}>
+                }
+                value={user.phoneNumber ?? "-"}
+              />
+              <InfoItem
+                label="소속"
+                icon={
                   <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
                     <circle cx="10" cy="6.5" r="3" stroke="currentColor" strokeWidth="1.3" />
                     <path
@@ -184,10 +216,10 @@ export default function MyPage() {
                       strokeLinecap="round"
                     />
                   </svg>
-                  <span>{affiliationOf(user)}</span>
-                </div>
-              </div>
-            </div>
+                }
+                value={affiliationOf(user)}
+              />
+            </dl>
 
             <div className={styles.formFooter}>
               <Button variant="secondary" onClick={() => setEditing(true)}>
