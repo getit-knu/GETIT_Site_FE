@@ -51,11 +51,17 @@ function page(content: AdminUser[], over = {}) {
  */
 function cellOf(userName: string, header: string): HTMLElement {
   const rows = within(screen.getByRole("table", { name: "사용자 목록" })).getAllByRole("row");
-  const headers = within(rows.find((r) => within(r).queryAllByRole("columnheader").length > 0)!).getAllByRole(
-    "columnheader",
-  );
-  const column = headers.findIndex((h) => h.textContent === header);
-  const row = rows.find((r) => within(r).queryByRole("cell", { name: userName }))!;
+  const headerRow = rows.find((r) => within(r).queryAllByRole("columnheader").length > 0);
+  if (!headerRow) throw new Error("표에 머리글 행이 없다.");
+
+  // 머리글은 접근성 이름으로 찾는다. textContent 비교는 공백이나 마크업 한 겹에 조용히 빗나간다.
+  const headers = within(headerRow).getAllByRole("columnheader");
+  const [target] = within(headerRow).queryAllByRole("columnheader", { name: header });
+  if (!target) throw new Error(`"${header}" 머리글이 없다. 있는 머리글: ${headers.map((h) => h.textContent)}`);
+  const column = headers.indexOf(target);
+
+  const row = rows.find((r) => within(r).queryByRole("cell", { name: userName }));
+  if (!row) throw new Error(`"${userName}" 행이 없다.`);
   return within(row).getAllByRole("cell")[column];
 }
 
