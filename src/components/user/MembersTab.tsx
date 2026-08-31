@@ -48,19 +48,21 @@ export function MembersTab() {
   const [exportError, setExportError] = useState<string | null>(null);
   const [promoted, setPromoted] = useState<PromotionResult | null>(null);
 
+  /** 파일 응답이라 실패도 Blob 으로 온다 — 화면 문구는 BE `ErrorCode` 에서 가져온다. */
   async function handleExport() {
     setExportError(null);
     try {
       await exportUsers();
     } catch (caught) {
-      // 파일 응답이라 실패도 Blob 으로 온다. 문구는 BE ErrorCode 에서 가져온다.
       setExportError(userExportErrorMessage(caught));
     }
   }
 
+  /**
+   * 여러 명의 권한을 한 번에 올린다. 한 명 삭제보다 되돌리기 어렵다.
+   * 대상 수를 미리 알 수 없으므로 무엇이 일어나는지라도 분명히 말한다.
+   */
   function handlePromote() {
-    // 여러 명의 권한을 한 번에 올린다. 한 명 삭제보다 되돌리기 어렵다.
-    // 대상 수를 미리 알 수 없으므로 무엇이 일어나는지라도 분명히 말한다.
     const message = "서류 합격자를 모두 부원으로 올릴까요? 되돌리려면 한 명씩 권한을 되돌려야 합니다.";
     if (!window.confirm(message)) return;
 
@@ -68,8 +70,8 @@ export function MembersTab() {
     promote.mutate(undefined, { onSuccess: (result) => setPromoted(result) });
   }
 
+  /** 되돌릴 수 없다. 확인 문구에 이름을 넣어 다른 행을 지우는 실수를 줄인다. */
   function handleDelete(user: AdminUser) {
-    // 되돌릴 수 없다. 문구에 이름을 넣어 다른 행을 지우는 실수를 줄인다.
     if (!window.confirm(`${user.name}(${user.email}) 님을 삭제할까요? 되돌릴 수 없습니다.`)) return;
     removeUser.mutate(user.id);
   }
