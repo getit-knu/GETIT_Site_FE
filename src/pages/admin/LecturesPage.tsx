@@ -65,15 +65,6 @@ export default function LecturesPage() {
     removeLecture.mutate(lecture.id);
   }
 
-  /*
-    강의 카드의 '과제 피드백' 은 아직 열 수 없다. 8.7 은 submissionId 를 받는데
-    카드가 아는 것은 강의뿐이라 제출물 하나를 지목할 수 없다.
-
-    실제 진입점은 제출 현황 표의 행이고, 그 행에 버튼을 붙이는 것은 별도 이슈다.
-    피드백 모달 자체는 주소(`?modal=feedback&id={submissionId}`)로 열린다.
-  */
-  const notImplemented = (name: string) => () => window.alert(`${name} 화면은 준비 중입니다.`);
-
   if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
   // 문구는 BE ErrorCode 에서 가져온다. FE 가 코드를 새로 짓지 않는다.
   if (isError) return <ErrorState message={lectureErrorMessage(error)} onRetry={() => void refetch()} />;
@@ -146,7 +137,9 @@ export default function LecturesPage() {
             <LectureCard
               key={lecture.id}
               lecture={lecture}
-              onFeedback={notImplemented("과제 피드백")}
+              // 카드는 강의만 알아서 제출물 하나를 지목할 수 없다 — 피드백의 실제
+              // 진입점은 제출 현황 표의 행이다(`SubmissionStatusModal`).
+              onFeedback={(id) => openModal("submissions", id)}
               onSubmissions={(id) => openModal("submissions", id)}
               onEdit={(id) => openModal("lecture", id)}
               onDelete={handleDelete}
@@ -170,7 +163,11 @@ export default function LecturesPage() {
 
       {/* `?modal=submissions` 만 있고 id 가 없는 주소로는 어느 강의인지 알 수 없다. */}
       {modal === "submissions" && modalId !== null && (
-        <SubmissionStatusModal lectureId={modalId} onClose={closeModal} />
+        <SubmissionStatusModal
+          lectureId={modalId}
+          onFeedback={(submissionId) => openModal("feedback", submissionId)}
+          onClose={closeModal}
+        />
       )}
     </div>
   );

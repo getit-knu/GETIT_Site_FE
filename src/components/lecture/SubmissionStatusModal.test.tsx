@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -62,12 +62,13 @@ function board(over: Partial<SubmissionBoard> = {}): SubmissionBoard {
 }
 
 const onClose = vi.fn();
+const onFeedback = vi.fn();
 
 function renderModal() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <SubmissionStatusModal lectureId={101} onClose={onClose} />
+      <SubmissionStatusModal lectureId={101} onFeedback={onFeedback} onClose={onClose} />
     </QueryClientProvider>,
   );
 }
@@ -206,6 +207,29 @@ describe("SubmissionStatusModal", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "첫 페이지로" }));
     expect(lastParams()?.page).toBe(0);
+  });
+
+  it("제출물이 있으면 피드백 버튼을 보여주고, 누르면 그 제출물 id를 알린다", async () => {
+    // 실제 진입점은 이 표의 행이다 — 강의 카드는 제출물 하나를 지목할 수 없다.
+    renderModal();
+
+    const jaeminRow = await rowOf("이재민");
+    await userEvent.click(within(jaeminRow).getByRole("button", { name: "완료" }));
+
+    expect(onFeedback).toHaveBeenCalledWith(3005);
+  });
+
+  it("아직 안 단 사람은 완료 대신 작성으로 보여준다", async () => {
+    renderModal();
+
+    expect(within(await rowOf("정하늘")).getByRole("button", { name: "작성" })).toBeInTheDocument();
+  });
+
+  it("미제출자는 피드백 버튼 대신 대시를 보여준다", async () => {
+    // 제출물이 없어 피드백을 달 대상 자체가 없다.
+    renderModal();
+
+    expect(within(await rowOf("김지원")).queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("조 목록을 못 받아도 현황은 보여준다", async () => {
