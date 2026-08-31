@@ -14,6 +14,26 @@ function initialOf(name: string): string {
   return name.trim().slice(0, 1) || "?";
 }
 
+/** 값이 있는 것만 이어 붙인다. 아무것도 없으면 `null`. */
+function joined(...parts: (string | null)[]): string | null {
+  const filled = parts.filter((part): part is string => part !== null && part.trim() !== "");
+  return filled.length === 0 ? null : filled.join(" ");
+}
+
+/**
+ * 소속(단과대 · 학과).
+ *
+ * **단과대를 그동안 화면에서 버리고 있었다** — `Me.college` 를 받아 놓고 학과만 그렸다.
+ * 어드민 사용자 표는 둘을 함께 보여주고 있어 같은 사람의 소속이 화면마다 달라 보였다.
+ *
+ * 한쪽만 채워질 수 있어(승격 경로에 따라 다르다) 있는 것만 이어 붙인다. 둘 다 비는
+ * 경우가 지금은 흔한데, 그건 지원서의 단과대·학과가 승격 때 넘어오지 않아서다
+ * (`getit-knu/GETIT_Site_BE#184` — College · Major 마스터 데이터가 아직 없다).
+ */
+function affiliationOf(user: Me): string {
+  return joined(user.college, user.major) ?? "-";
+}
+
 interface Draft {
   name: string;
   phoneNumber: string;
@@ -95,6 +115,8 @@ export default function MyPage() {
   // RequireRole 이 이 라우트까지 오는 걸 이미 보장해서, 여기 도달했으면 로그인 상태다.
   if (!user) return null;
 
+  const subtitle = joined(user.major, user.studentYear === null ? null : `${user.studentYear}학번`);
+
   return (
     <div className={styles.page}>
       <div className={styles.inner}>
@@ -114,11 +136,8 @@ export default function MyPage() {
               )}
               <div>
                 <h2 className={styles.name}>{user.name}</h2>
-                {user.major && user.studentYear && (
-                  <p className={styles.subtitle}>
-                    {user.major} {user.studentYear}학번
-                  </p>
-                )}
+                {/* 학과가 비었다고 학번까지 감추지 않는다. 있는 것만 보여준다. */}
+                {subtitle !== null && <p className={styles.subtitle}>{subtitle}</p>}
               </div>
             </div>
 
@@ -154,7 +173,7 @@ export default function MyPage() {
                 </div>
               </div>
               <div>
-                <p className={styles.label}>학과</p>
+                <p className={styles.label}>소속</p>
                 <div className={styles.infoValue}>
                   <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
                     <circle cx="10" cy="6.5" r="3" stroke="currentColor" strokeWidth="1.3" />
@@ -165,7 +184,7 @@ export default function MyPage() {
                       strokeLinecap="round"
                     />
                   </svg>
-                  <span>{user.major ?? "-"}</span>
+                  <span>{affiliationOf(user)}</span>
                 </div>
               </div>
             </div>
