@@ -27,11 +27,11 @@ const QUESTIONS: RecruitmentQuestion[] = [
   { id: 3, order: 3, type: "TEXT", content: "포부", required: false, maxLength: 300, options: null },
 ];
 
-function renderSection(locked = false) {
+function renderSection() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <QuestionsSection locked={locked} />
+      <QuestionsSection />
     </QueryClientProvider>,
   );
 }
@@ -208,12 +208,5 @@ describe("QuestionsSection", () => {
     await userEvent.selectOptions(filter(), "CHOICE");
 
     expect(screen.getByText("이 유형의 문항이 없습니다.")).toBeInTheDocument();
-  });
-
-  it("모집이 시작되면 아무것도 고칠 수 없다", async () => {
-    renderSection(true);
-
-    expect(await screen.findByLabelText("1번 문항 유형")).toBeDisabled();
-    expect(screen.getByRole("button", { name: "+ 문항 추가" })).toBeDisabled();
   });
 });

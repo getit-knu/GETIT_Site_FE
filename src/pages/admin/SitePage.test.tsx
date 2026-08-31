@@ -73,7 +73,7 @@ describe("SitePage", () => {
 
     expect(await screen.findByLabelText("기수")).toHaveValue(9);
     expect(screen.getByLabelText("연도")).toHaveValue(2026);
-    expect(screen.getByLabelText("전체 시작")).toHaveValue("2026-09-01T00:00");
+    expect(await screen.findByLabelText("전체 시작")).toHaveValue("2026-09-01T00:00");
   });
 
   it("고친 기수를 실제 기수와 별개로 즉시 저장한다", async () => {
@@ -128,12 +128,13 @@ describe("SitePage", () => {
     await waitFor(() => expect(recruitmentApi.saveSchedule).toHaveBeenCalled());
   });
 
-  it("모집이 시작됐으면 모집 관리와 똑같이 일정 입력을 잠근다", async () => {
+  it("모집이 이미 시작됐어도 모집 관리와 똑같이 일정을 계속 수정할 수 있다", async () => {
+    // BE는 시간 기준 잠금을 두지 않는다(RecruitmentScheduleService.updateSchedule 확인함).
     vi.mocked(recruitmentApi.getSchedule).mockResolvedValue(schedule({ totalStartAt: "2020-01-01T00:00:00+09:00" }));
     renderPage();
 
-    expect(await screen.findByLabelText("전체 시작")).toBeDisabled();
-    expect(scheduleSaveButton()).toBeDisabled();
+    expect(await screen.findByLabelText("전체 시작")).toBeEnabled();
+    expect(scheduleSaveButton()).toBeEnabled();
   });
 
   it("손대지 않은 강의 분류는 받은 그대로 나간다", async () => {
@@ -185,6 +186,7 @@ describe("SitePage", () => {
     expect(screen.getByText(/아직 진행 중인 기수가 없습니다/)).toBeInTheDocument();
     // 페이지 전체가 오류로 막히지 않는다 — 나머지 폼도 그대로 뜬다.
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    await screen.findByLabelText("전체 시작");
     expect(scheduleSaveButton()).toBeInTheDocument();
   });
 

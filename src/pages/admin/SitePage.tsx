@@ -5,7 +5,6 @@ import { Button } from "../../components/ui/Button/Button";
 import { Input } from "../../components/ui/Input/Input";
 import { ErrorState } from "../../components/ui/states/States";
 import { isSiteErrorCode, siteErrorMessage, siteSaveErrorMessage } from "../../errors/site/errorMessages";
-import { useSettingsLocked } from "../../hooks/recruitment/useRecruitment";
 import { useGeneration, useSaveGeneration, useSaveTracks, useTracks } from "../../hooks/site/useSiteSettings";
 import type { Generation } from "../../types/site";
 
@@ -168,11 +167,10 @@ function TracksFormSection() {
  * 즉시 반영된다(#194 · #195 · #212).** 모집 일정은 사이트 관리 전용 데이터가 아니라
  * 모집 관리(`ApplicationsPage`)와 같은 `GET/PUT /api/admin/recruitment/schedule`을
  * 공유한다 — 두 화면에 따로 있던 "모집 일정"이 서로 안 맞던 문제를 여기서 같은
- * `ScheduleSection` 컴포넌트로 통일해 없앴다. 모집이 시작되면 그쪽과 똑같이 잠긴다.
+ * `ScheduleSection` 컴포넌트로 통일해 없앴다.
  */
 export default function SitePage() {
   const generationQuery = useGeneration();
-  const locked = useSettingsLocked();
 
   // 활성 기수가 아직 없는 것도 정상 상태다(배포 직후 등) — 페이지 전체를 막지 않는다.
   const generationMissing = isSiteErrorCode(generationQuery.error, "ACTIVE_GENERATION_NOT_FOUND");
@@ -189,7 +187,7 @@ export default function SitePage() {
     <div className={styles.page}>
       <SiteSectionNav />
       <GenerationSection generation={generation} />
-      <ScheduleSection id="schedule" locked={locked} />
+      <ScheduleSection id="schedule" />
       <FaqSection />
       <TracksFormSection />
 

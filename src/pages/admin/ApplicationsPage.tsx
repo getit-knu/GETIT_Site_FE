@@ -2,7 +2,6 @@ import { ApplicantsTab } from "../../components/application/ApplicantsTab";
 import { CriteriaSection } from "../../components/recruitment/CriteriaSection";
 import { QuestionsSection } from "../../components/recruitment/QuestionsSection";
 import { ScheduleSection } from "../../components/recruitment/ScheduleSection";
-import { useSettingsLocked } from "../../hooks/recruitment/useRecruitment";
 import { useTableParams } from "../../hooks/ui/useTableParams";
 
 import styles from "./ApplicationsPage.module.scss";
@@ -18,7 +17,6 @@ const TAB_LABEL: Record<(typeof TABS)[number], string> = {
 export default function ApplicationsPage() {
   const { filter: tab, setFilter: setTab } = useTableParams("tab", TABS);
   const active = tab ?? "applicants";
-  const locked = useSettingsLocked();
 
   return (
     <div className={styles.page}>
@@ -41,14 +39,9 @@ export default function ApplicationsPage() {
         <ApplicantsTab />
       ) : (
         <div className={styles.settings}>
-          {locked && (
-            <p className={styles.lockNotice} role="status">
-              모집이 시작되어 설정을 수정할 수 없습니다.
-            </p>
-          )}
-          <ScheduleSection locked={locked} />
-          <QuestionsSection locked={locked} />
-          <CriteriaSection locked={locked} />
+          <ScheduleSection />
+          <QuestionsSection />
+          <CriteriaSection />
         </div>
       )}
     </div>
