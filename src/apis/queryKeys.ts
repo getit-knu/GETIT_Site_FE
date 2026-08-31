@@ -130,6 +130,8 @@ export const queryKeys = {
   member: {
     all: ["member"] as const,
     summary: () => [...queryKeys.member.all, "summary"] as const,
+    /** 강의를 가로지르는 본인 질문 목록(#279). */
+    myQuestions: (page: number) => [...queryKeys.member.all, "myQuestions", page] as const,
   },
 
   /** 부원 강의 조회(4.x, #193). 어드민 `lectures`와는 스키마·엔드포인트가 다른 별개 도메인이다. */

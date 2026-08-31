@@ -3,6 +3,7 @@ import clsx from "clsx";
 import { memberErrorMessage } from "../../errors/member/errorMessages";
 import { useMySummary } from "../../hooks/member/useMemberSummary";
 import type { LectureBrief } from "../../types/member";
+import { MyQuestionsCard } from "../../components/member/MyQuestionsCard";
 import { ErrorState } from "../../components/ui/states/States";
 
 import styles from "./DashboardPage.module.scss";
@@ -90,6 +91,8 @@ export default function DashboardPage() {
           <LectureHistoryGroup label="미제출" tone="danger" lectures={data.notSubmittedLectures} />
           <LectureHistoryGroup label="지각 제출" tone="warning" lectures={data.lateSubmittedLectures} />
         </div>
+
+        <MyQuestionsCard />
       </div>
     </div>
   );
