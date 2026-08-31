@@ -1,8 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { getMe } from "../../apis/auth/authApi";
+import { getMe, updateMe } from "../../apis/auth/authApi";
 import { queryKeys } from "../../apis/queryKeys";
-import type { Me, Role } from "../../types/auth";
+import type { Me, MeUpdatePayload, Role } from "../../types/auth";
 
 interface Session {
   user: Me | undefined;
@@ -47,4 +47,16 @@ export function useSession(): Session {
 /** 사용자가 주어진 권한 중 하나라도 가지고 있는지. */
 export function hasRole(user: Me | undefined, allowed: readonly Role[]): boolean {
   return user !== undefined && allowed.includes(user.role);
+}
+
+/** 본인 프로필 수정(#147). 세 role 모두 쓴다 — role별로 다른 훅을 두지 않는다. */
+export function useUpdateMe() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: MeUpdatePayload) => updateMe(payload),
+    onSuccess: (me) => {
+      queryClient.setQueryData(queryKeys.auth.me(), me);
+    },
+  });
 }

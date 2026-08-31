@@ -84,7 +84,7 @@ export function MemberLayout() {
               대시보드
             </NavLink>
             <NavLink
-              to="/member/me"
+              to="/me"
               className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
               onClick={closeMenu}
             >

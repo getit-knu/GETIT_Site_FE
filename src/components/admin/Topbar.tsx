@@ -1,3 +1,5 @@
+import { Link } from "react-router";
+
 import type { Me } from "../../types/auth";
 
 import styles from "./Topbar.module.scss";
@@ -32,8 +34,9 @@ export function Topbar({ title, user, onMenuClick }: TopbarProps) {
       </div>
 
       <div className={styles.right}>
+        {/* 이전엔 진입 링크 자체가 없었다(#240) — 계정 블록을 내 정보 화면으로 가는 링크로 쓴다. */}
         {user && (
-          <div className={styles.account}>
+          <Link to="/me" className={styles.account}>
             <div className={styles.identity}>
               <span className={styles.name}>{user.name}</span>
               <span className={styles.role}>{ROLE_LABEL[user.role]}</span>
@@ -45,7 +48,7 @@ export function Topbar({ title, user, onMenuClick }: TopbarProps) {
                 {initialOf(user.name)}
               </span>
             )}
-          </div>
+          </Link>
         )}
       </div>
     </header>

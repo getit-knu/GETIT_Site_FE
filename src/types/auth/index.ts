@@ -39,3 +39,16 @@ export interface TokenResponse {
   /** 만료까지 남은 초. */
   accessTokenExpiresIn: number;
 }
+
+/**
+ * `PUT /api/auth/me` 요청 본문(#147). 편집 가능 필드는 이름·전화번호·프로필 사진뿐 —
+ * 학과·학번·기수·권한·상태는 자기 수정 대상이 아니다(BE 확인함).
+ *
+ * `profileFileId`를 생략하면(`null`) 기존 사진을 그대로 둔다 — "지운다"는 뜻이 아니다.
+ * Google 동기화 사진을 실수로 지우지 않으려는 설계(BE 주석 확인함).
+ */
+export interface MeUpdatePayload {
+  name: string;
+  phoneNumber: string | null;
+  profileFileId: number | null;
+}

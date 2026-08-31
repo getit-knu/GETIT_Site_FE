@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import { createBrowserRouter, Outlet, ScrollRestoration, type RouteObject } from "react-router";
 
 import { RequireRole } from "./components/auth/RequireRole";
+import { ROLES } from "./types/auth";
 
 /**
  * 페이지를 지연 로딩한다.
@@ -47,6 +48,20 @@ const areaRoutes: RouteObject[] = [
   { path: "/oauth/callback", lazy: page(() => import("./pages/OAuthCallbackPage")) },
   { path: "/403", lazy: page(() => import("./pages/ForbiddenPage")) },
 
+  // 내 정보(#240). GUEST·MEMBER·ADMIN 전부 접근 가능해야 해서 `/member`·`/admin`
+  // 밖에 둔다 — 로그인만 돼 있으면 role 무관하게 통과(`RequireRole allowed={ROLES}`).
+  // 공개 Nav·MemberLayout·AdminLayout Topbar가 각자 이 경로로 진입 링크를 건다.
+  {
+    path: "/me",
+    element: <RequireRole allowed={ROLES} />,
+    children: [
+      {
+        lazy: layout(() => import("./components/layout/PublicLayout"), "PublicLayout"),
+        children: [{ index: true, lazy: page(() => import("./pages/MyPage")) }],
+      },
+    ],
+  },
+
   // ── 부원 ────────────────────────────────────────────────
   // 운영진도 부원 화면을 볼 수 있어야 한다. RequireRole 이 MemberLayout 을 감싸는
   // 순서는 어드민과 같은 이유(권한 없는 사용자에게 셸이 스치지 않도록)다.
@@ -60,7 +75,6 @@ const areaRoutes: RouteObject[] = [
           { index: true, lazy: page(() => import("./pages/member/LectureListPage")) },
           { path: "lectures/:id", lazy: page(() => import("./pages/member/LectureDetailPage")) },
           { path: "dashboard", lazy: page(() => import("./pages/member/DashboardPage")) },
-          { path: "me", lazy: page(() => import("./pages/member/MyPage")) },
         ],
       },
     ],

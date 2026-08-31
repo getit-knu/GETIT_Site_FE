@@ -46,7 +46,7 @@ describe("MemberLayout", () => {
     const nav = within(screen.getByRole("navigation", { name: "부원 메뉴" }));
     expect(nav.getByRole("link", { name: "강좌 목록", current: "page" })).toHaveAttribute("href", "/member");
     expect(nav.getByRole("link", { name: "대시보드" })).toHaveAttribute("href", "/member/dashboard");
-    expect(nav.getByRole("link", { name: "내정보" })).toHaveAttribute("href", "/member/me");
+    expect(nav.getByRole("link", { name: "내정보" })).toHaveAttribute("href", "/me");
     expect(nav.queryAllByRole("link")).toHaveLength(4); // GETIT 로고 + 강좌 목록 + 대시보드 + 내정보
   });
 
