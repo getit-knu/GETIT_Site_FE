@@ -18,6 +18,8 @@ function staff(over: Partial<Staff> & { id: number; name: string }): Staff {
     department: "컴퓨터공학과 21",
     introduction: "",
     profileImageUrl: null,
+    githubUrl: null,
+    instagramUrl: null,
     order: 1,
     generationNo: 9,
     ...over,
@@ -170,7 +172,42 @@ describe("StaffsSection", () => {
       name: "새 운영진",
       section: "SW",
       generationNo: 9,
+      githubUrl: null,
+      instagramUrl: null,
     });
+  });
+
+  it("GitHub · Instagram 링크를 입력하면 그대로 보낸다", async () => {
+    vi.mocked(api.createStaff).mockResolvedValue(staff({ id: 9, name: "새 운영진" }));
+    renderSection();
+    await screen.findByText("이재민");
+
+    await userEvent.click(screen.getByRole("button", { name: "+ SW 운영진 추가" }));
+    await userEvent.type(screen.getByLabelText("이름 *"), "새 운영진");
+    await userEvent.type(screen.getByLabelText("직책 *"), "SW 운영진");
+    await userEvent.type(screen.getByLabelText("GitHub 링크"), "https://github.com/new");
+    await userEvent.type(screen.getByLabelText("Instagram 링크"), "https://instagram.com/new");
+    await userEvent.click(screen.getByRole("button", { name: "추가" }));
+
+    await waitFor(() => expect(api.createStaff).toHaveBeenCalled());
+    expect(vi.mocked(api.createStaff).mock.lastCall?.[0]).toMatchObject({
+      githubUrl: "https://github.com/new",
+      instagramUrl: "https://instagram.com/new",
+    });
+  });
+
+  it("http · https로 시작하지 않는 SNS 링크는 저장을 막는다", async () => {
+    // BE `@HttpUrl` 검증(http · https만 허용)을 클라이언트에도 미리 둔다.
+    renderSection();
+    await screen.findByText("이재민");
+
+    await userEvent.click(screen.getByRole("button", { name: "+ SW 운영진 추가" }));
+    await userEvent.type(screen.getByLabelText("이름 *"), "새 운영진");
+    await userEvent.type(screen.getByLabelText("직책 *"), "SW 운영진");
+    await userEvent.type(screen.getByLabelText("GitHub 링크"), "github.com/new");
+
+    expect(screen.getByText(/GitHub 링크은\(는\) http 또는 https로 시작하는 주소여야 합니다\./)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "추가" })).toBeDisabled();
   });
 
   it("수정은 그 사람의 id 로 보낸다", async () => {

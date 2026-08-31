@@ -13,6 +13,8 @@ const STAFFS: PublicStaff[] = [
     department: "컴퓨터공학과 21",
     introduction: "",
     profileImageUrl: null,
+    githubUrl: null,
+    instagramUrl: null,
     order: 1,
   },
   {
@@ -22,6 +24,8 @@ const STAFFS: PublicStaff[] = [
     department: "경영학과 22",
     introduction: "",
     profileImageUrl: null,
+    githubUrl: null,
+    instagramUrl: null,
     order: 2,
   },
 ];

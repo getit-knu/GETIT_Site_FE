@@ -1999,6 +1999,8 @@ export interface components {
             section: "EXECUTIVE" | "SW" | "STARTUP";
             department: string;
             introduction?: string;
+            githubUrl?: string;
+            instagramUrl?: string;
             /** Format: int64 */
             fileId?: number;
             /** Format: int32 */
@@ -2020,6 +2022,8 @@ export interface components {
             section?: "EXECUTIVE" | "SW" | "STARTUP";
             department?: string;
             introduction?: string;
+            githubUrl?: string;
+            instagramUrl?: string;
             profileImageUrl?: string;
             /** Format: int32 */
             order?: number;
@@ -2766,6 +2770,8 @@ export interface components {
             staffRole?: string;
             department?: string;
             introduction?: string;
+            githubUrl?: string;
+            instagramUrl?: string;
             profileImageUrl?: string;
             /** Format: int32 */
             order?: number;
