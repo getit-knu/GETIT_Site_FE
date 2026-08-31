@@ -1,16 +1,17 @@
-import { ACTIVITIES } from "../../mocks/home/activities";
+import { useQuery } from "@tanstack/react-query";
+
+import { getActivityPhotos } from "../../apis/public/publicApi";
+import { queryKeys } from "../../apis/queryKeys";
+import type { PublicActivityPhoto } from "../../types/home";
 
 import styles from "./ActivityPhotos.module.scss";
 
-function CardList({ hidden }: { hidden?: boolean }) {
+function CardList({ photos, hidden }: { photos: PublicActivityPhoto[]; hidden?: boolean }) {
   return (
     <ul className={styles.grid} aria-hidden={hidden}>
-      {ACTIVITIES.map((activity) => (
-        <li key={activity.id} className={styles.card}>
-          <div className={styles.thumbnail} aria-hidden="true">
-            <div className={styles.thumbnailIcon} />
-          </div>
-          <span className={styles.label}>{activity.label}</span>
+      {photos.map((photo) => (
+        <li key={photo.id} className={styles.card}>
+          <img src={photo.imageUrl} alt="GETIT 활동 사진" className={styles.thumbnail} />
         </li>
       ))}
     </ul>
@@ -18,7 +19,8 @@ function CardList({ hidden }: { hidden?: boolean }) {
 }
 
 /**
- * 실제 활동 사진은 아직 없어 Figma의 회색 플레이스홀더를 그대로 쓴다(#172).
+ * 어드민이 등록·노출한 활동 사진만 순서대로 흐른다(BE#146). 등록된 사진이 없으면
+ * 흘려보낼 카드 자체가 없어 섹션을 통째로 숨긴다(`FAQSection`과 같은 방식).
  *
  * 카드 목록을 통째로 한 번 더 복제해 나란히 붙이고, 그 폭의 절반만큼 왼쪽으로
  * 무한 반복 이동시켜 자연스럽게 흘러가는 것처럼 보이게 한다 — 원본과 복제본의
@@ -26,6 +28,10 @@ function CardList({ hidden }: { hidden?: boolean }) {
  * 복제본은 화면에 두 번 읽히지 않도록 `aria-hidden`으로 접근성 트리에서 뺀다.
  */
 export function ActivityPhotos() {
+  const { data } = useQuery({ queryKey: queryKeys.public.activityPhotos(), queryFn: getActivityPhotos });
+
+  if (data === undefined || data.length === 0) return null;
+
   return (
     <section className={styles.section}>
       <div className={styles.heading}>
@@ -35,8 +41,8 @@ export function ActivityPhotos() {
 
       <div className={styles.marquee}>
         <div className={styles.track}>
-          <CardList />
-          <CardList hidden />
+          <CardList photos={data} />
+          <CardList photos={data} hidden />
         </div>
       </div>
     </section>

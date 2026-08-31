@@ -166,3 +166,17 @@ export type FeatureToggle = Omit<Required<components["schemas"]["FeatureResult"]
 
 /** `PUT /api/admin/setting/features/{key}` 요청 본문. */
 export type FeatureTogglePayload = components["schemas"]["FeatureToggleRequest"];
+
+/**
+ * 홈 "GETIT과 함께한 순간들" 마퀴에 쓰이는 활동 사진(BE#146). 어드민 목록은 숨긴
+ * 사진도 포함해 전부 보여준다 — 공개 목록만 노출분으로 걸러진다(`types/home`의
+ * `PublicActivityPhoto`).
+ */
+export type ActivityPhoto = Required<components["schemas"]["ActivityPhotoResult"]>;
+
+/**
+ * `POST`/`PUT /api/admin/setting/activity-photos` 요청 본문. `order`는 FAQ·커리큘럼과
+ * 같은 방식(BE 소스 확인함) — 생성 시 생략하면 맨 뒤에 붙고, 값을 보내면 그 자리에
+ * 끼워 넣는다. `fileId`는 필수다(사진 없이는 등록할 수 없다).
+ */
+export type ActivityPhotoPayload = components["schemas"]["ActivityPhotoRequest"];

@@ -1,4 +1,4 @@
-import type { HomeResult, PublicFaq } from "../../types/home";
+import type { HomeResult, PublicActivityPhoto, PublicFaq } from "../../types/home";
 import type { College, Major } from "../../types/college";
 import type { PublicProjectBoard, PublicProjectListParams } from "../../types/project";
 import type { RecruitmentStatus } from "../../types/recruitment";
@@ -44,6 +44,12 @@ export async function getRecruitmentStatus(): Promise<RecruitmentStatus> {
 /** `GET /api/public/faqs` — 2.5. 비공개 처리한 FAQ는 서버가 걸러서 안 준다. */
 export async function getFaqs(): Promise<PublicFaq[]> {
   const { data } = await client.get<PublicFaq[]>("/api/public/faqs");
+  return data;
+}
+
+/** `GET /api/public/activity-photos` — 노출로 설정된 사진만 순서대로 온다(BE#146). */
+export async function getActivityPhotos(): Promise<PublicActivityPhoto[]> {
+  const { data } = await client.get<PublicActivityPhoto[]>("/api/public/activity-photos");
   return data;
 }
 

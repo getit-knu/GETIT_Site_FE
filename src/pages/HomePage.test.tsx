@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import { getEvents, getFaqs, getHome, getRecruitmentStatus } from "../apis/public/publicApi";
+import { getActivityPhotos, getEvents, getFaqs, getHome, getRecruitmentStatus } from "../apis/public/publicApi";
 
 import HomePage from "./HomePage";
 
@@ -21,6 +21,7 @@ describe("HomePage", () => {
       features: { stockGame: false, mockInvestment: false },
     });
     vi.mocked(getEvents).mockImplementation((year, month) => Promise.resolve({ year, month, events: [] }));
+    vi.mocked(getActivityPhotos).mockResolvedValue([{ id: 1, imageUrl: "https://cdn/photo.jpg", order: 1 }]);
 
     const router = createMemoryRouter([{ path: "/", Component: HomePage }], { initialEntries: ["/"] });
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });

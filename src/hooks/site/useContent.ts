@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import * as api from "../../apis/site/siteApi";
 import { queryKeys } from "../../apis/queryKeys";
-import type { CurriculumPayload, FaqPayload, SiteEventPayload } from "../../types/site";
+import type { ActivityPhotoPayload, CurriculumPayload, FaqPayload, SiteEventPayload } from "../../types/site";
 
 export function useCurriculums() {
   return useQuery({ queryKey: queryKeys.site.curriculums(), queryFn: api.getCurriculums });
@@ -82,6 +82,33 @@ export function useDeleteFaq() {
     mutationFn: (id: number) => api.deleteFaq(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.site.faqs() });
+    },
+  });
+}
+
+export function useActivityPhotos() {
+  return useQuery({ queryKey: queryKeys.site.activityPhotos(), queryFn: api.getActivityPhotos });
+}
+
+export function useSaveActivityPhoto() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number | null; payload: ActivityPhotoPayload }) =>
+      id === null ? api.createActivityPhoto(payload) : api.updateActivityPhoto(id, payload),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.site.activityPhotos() });
+    },
+  });
+}
+
+export function useDeleteActivityPhoto() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => api.deleteActivityPhoto(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.site.activityPhotos() });
     },
   });
 }
