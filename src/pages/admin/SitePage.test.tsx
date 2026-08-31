@@ -65,6 +65,7 @@ describe("SitePage", () => {
     vi.mocked(api.getStaffs).mockResolvedValue([]);
     vi.mocked(api.getFeatures).mockResolvedValue([]);
     vi.mocked(api.getFaqs).mockResolvedValue([]);
+    vi.mocked(api.getActivityPhotos).mockResolvedValue([]);
   });
 
   it("기존 기수와 일정을 채운다", async () => {
@@ -212,12 +213,22 @@ describe("SitePage", () => {
     expect(vi.mocked(api.saveGeneration).mock.lastCall?.[0]).toEqual({ generationNo: 9, year: 2026 });
   });
 
-  it("섹션 8개로 이동하는 네비게이션을 렌더링한다", async () => {
+  it("섹션 9개로 이동하는 네비게이션을 렌더링한다", async () => {
     renderPage();
     await screen.findByLabelText("기수");
 
     const nav = screen.getByRole("navigation", { name: "사이트 관리 섹션 바로가기" });
-    const sectionIds = ["generation", "schedule", "tracks", "faqs", "curriculums", "events", "staffs", "features"];
+    const sectionIds = [
+      "generation",
+      "schedule",
+      "tracks",
+      "faqs",
+      "curriculums",
+      "events",
+      "staffs",
+      "activity-photos",
+      "features",
+    ];
 
     const links = within(nav).getAllByRole("link");
     expect(links).toHaveLength(sectionIds.length);

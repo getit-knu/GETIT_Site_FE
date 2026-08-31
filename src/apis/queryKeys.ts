@@ -89,6 +89,7 @@ export const queryKeys = {
     tracks: () => [...queryKeys.site.all, "tracks"] as const,
     faqs: () => [...queryKeys.site.all, "faqs"] as const,
     features: () => [...queryKeys.site.all, "features"] as const,
+    activityPhotos: () => [...queryKeys.site.all, "activity-photos"] as const,
   },
 
   /** 어드민 프로젝트 관리(#222). 필터(학기)·페이지마다 캐시가 갈라진다. */
@@ -163,5 +164,6 @@ export const queryKeys = {
     projects: (params: PublicProjectListParams) => [...queryKeys.public.all, "projects", params] as const,
     home: () => [...queryKeys.public.all, "home"] as const,
     events: (year: number, month: number) => [...queryKeys.public.all, "events", year, month] as const,
+    activityPhotos: () => [...queryKeys.public.all, "activity-photos"] as const,
   },
 } as const;
