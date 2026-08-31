@@ -27,11 +27,18 @@ const DEFAULT_DURATION = 8000;
  */
 export function Toast({ message, action, onClose, duration = DEFAULT_DURATION }: ToastProps) {
   const actionRef = useRef<HTMLButtonElement>(null);
+  const onCloseRef = useRef(onClose);
 
   useEffect(() => {
-    const timer = setTimeout(onClose, duration);
+    onCloseRef.current = onClose;
+  });
+
+  useEffect(() => {
+    // onClose 를 deps 에 넣으면 부모가 `onClose={() => ...}` 처럼 인라인 함수를 넘길 때
+    // 리렌더마다 타이머가 새로 걸려 duration 이 지나도 닫히지 않는다. 최신 콜백은 ref 로만 읽는다.
+    const timer = setTimeout(() => onCloseRef.current(), duration);
     return () => clearTimeout(timer);
-  }, [duration, onClose]);
+  }, [duration]);
 
   useEffect(() => {
     // 되묻는 토스트는 키보드만 쓰는 사람도 바로 답할 수 있어야 한다.

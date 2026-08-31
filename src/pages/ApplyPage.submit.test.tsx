@@ -202,4 +202,20 @@ describe("ApplyPage 최종 제출", () => {
 
     expect(await screen.findByRole("heading", { name: "심사 중" })).toBeInTheDocument();
   });
+
+  it("되묻는 동안 폼이 다시 미완성이 되면 확인을 눌러도 보내지 않는다", async () => {
+    // 토스트가 떠 있는 사이에도 폼은 고칠 수 있다. 제출 버튼이 막는 조건은 확인 단계에서도 같아야 한다.
+    await renderReadyPage();
+    await fillAll();
+
+    await userEvent.click(screen.getByRole("button", { name: "제출하기" }));
+    await screen.findByRole("button", { name: "제출" });
+    await userEvent.clear(screen.getByLabelText("전화번호 *"));
+    await userEvent.click(screen.getByRole("button", { name: "제출" }));
+
+    expect(submit).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("이름 · 이메일 · 전화번호 · 단과 대학 · 전공 · 학년을 모두 입력해 주세요."),
+    ).toBeInTheDocument();
+  });
 });

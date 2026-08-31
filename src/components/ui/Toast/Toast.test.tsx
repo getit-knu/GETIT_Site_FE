@@ -1,8 +1,22 @@
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { Toast } from "./Toast";
+
+/** 부모가 매 렌더 새 `onClose` 를 넘기는 실제 사용처(`ApplyForm`)와 같은 모양. */
+function Harness({ onClose }: { onClose: () => void }) {
+  const [, setTick] = useState(0);
+  return (
+    <>
+      <button type="button" onClick={() => setTick((tick) => tick + 1)}>
+        부모 리렌더
+      </button>
+      <Toast message="제출할까요?" onClose={() => onClose()} duration={5000} />
+    </>
+  );
+}
 
 describe("Toast", () => {
   afterEach(() => {
@@ -56,6 +70,29 @@ describe("Toast", () => {
     vi.advanceTimersByTime(5000);
 
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("부모가 다시 그려도 duration 이 지나면 닫는다", () => {
+    // 부모가 인라인 함수를 넘기면 리렌더마다 onClose 가 새 함수가 된다. 그때 타이머를
+    // 다시 걸면 리렌더가 잦을수록 토스트가 안 닫힌다.
+    vi.useFakeTimers();
+    const onClose = vi.fn();
+    render(<Harness onClose={onClose} />);
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "부모 리렌더" }));
+    act(() => {
+      vi.advanceTimersByTime(1999);
+    });
+    expect(onClose).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("저절로 닫히기 전에 사라지면 타이머를 걷는다", () => {

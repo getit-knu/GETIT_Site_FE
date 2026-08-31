@@ -85,6 +85,9 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
 
   function handleConfirmSubmit() {
     setConfirming(false);
+    // 되묻는 동안에도 폼은 고칠 수 있다. 그 사이에 다시 채워지지 않은 곳이 생겼으면 보내지 않는다 —
+    // 막는 이유는 아래 feedback 이 그대로 보여준다(값을 고치면 edit() 가 이전 결과를 지운다).
+    if (reason !== null) return;
     submitApplication.mutate(buildPayload());
   }
 
