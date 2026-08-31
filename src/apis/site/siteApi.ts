@@ -1,5 +1,7 @@
 import { client } from "../client";
 import type {
+  ActivityPhoto,
+  ActivityPhotoPayload,
   Curriculum,
   CurriculumPayload,
   Faq,
@@ -214,4 +216,27 @@ export async function toggleFeature(key: FeatureToggle["key"], enabled: boolean)
   const payload: FeatureTogglePayload = { enabled };
   const { data } = await client.put<FeatureToggle>(`/api/admin/setting/features/${key}`, payload);
   return data;
+}
+
+/** `GET /api/admin/setting/activity-photos` — 숨긴 사진도 포함해 순서대로 반환한다(BE#146). */
+export async function getActivityPhotos(): Promise<ActivityPhoto[]> {
+  const { data } = await client.get<ActivityPhoto[]>("/api/admin/setting/activity-photos");
+  return data;
+}
+
+/** `POST /api/admin/setting/activity-photos` — 미리 업로드한 fileId를 연결한다. */
+export async function createActivityPhoto(payload: ActivityPhotoPayload): Promise<ActivityPhoto> {
+  const { data } = await client.post<ActivityPhoto>("/api/admin/setting/activity-photos", payload);
+  return data;
+}
+
+/** `PUT /api/admin/setting/activity-photos/{id}` — 사진 교체·노출 여부·순서를 바꾼다. */
+export async function updateActivityPhoto(id: number, payload: ActivityPhotoPayload): Promise<ActivityPhoto> {
+  const { data } = await client.put<ActivityPhoto>(`/api/admin/setting/activity-photos/${id}`, payload);
+  return data;
+}
+
+/** `DELETE /api/admin/setting/activity-photos/{id}` */
+export async function deleteActivityPhoto(id: number): Promise<void> {
+  await client.delete(`/api/admin/setting/activity-photos/${id}`);
 }

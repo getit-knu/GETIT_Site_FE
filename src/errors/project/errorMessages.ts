@@ -11,6 +11,9 @@ const PROJECT_ERROR_MESSAGES: Record<string, string> = {
   FORBIDDEN: "프로젝트를 관리할 권한이 없습니다.",
   UNAUTHORIZED: "로그인이 필요합니다.",
   MALFORMED_RESPONSE: "서버 응답을 읽지 못했습니다. 잠시 후 다시 시도해 주세요.",
+  // 부원 프로젝트 등록(BE#148)
+  NOT_ASSIGNED_TO_GROUP: "소속된 조가 있어야 프로젝트를 등록할 수 있습니다.",
+  PROJECT_STATUS_UNCHANGED: "이미 그 상태입니다.",
 };
 
 const READ_FALLBACK = "프로젝트 목록을 불러오지 못했습니다.";

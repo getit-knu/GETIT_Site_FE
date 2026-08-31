@@ -89,16 +89,25 @@ export function Nav() {
             운영진
           </NavLink>
           {isAuthenticated ? (
-            <button
-              type="button"
-              className={styles.logoutButton}
-              onClick={() => {
-                closeMenu();
-                void handleLogout();
-              }}
-            >
-              로그아웃
-            </button>
+            <>
+              <NavLink
+                to="/me"
+                className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
+                onClick={closeMenu}
+              >
+                내 정보
+              </NavLink>
+              <button
+                type="button"
+                className={styles.logoutButton}
+                onClick={() => {
+                  closeMenu();
+                  void handleLogout();
+                }}
+              >
+                로그아웃
+              </button>
+            </>
           ) : (
             <NavLink
               to="/login"

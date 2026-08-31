@@ -30,34 +30,51 @@ function toBoolean(value: TriState): boolean | undefined {
   return value === "yes";
 }
 
-const COLUMNS: Column<SubmissionRow>[] = [
-  { header: "이름", render: (row) => row.userName, width: "6rem" },
-  { header: "학과", render: (row) => row.major },
-  {
-    header: "제출",
-    align: "center",
-    width: "6rem",
-    // 지각 제출을 제출과 같이 두면 마감을 지킨 사람과 구분이 사라진다.
-    render: (row) => {
-      if (!row.submitted) return <Badge variant="neutral">미제출</Badge>;
-      return row.status === "LATE" ? <Badge variant="accent">지각</Badge> : <Badge variant="info">제출</Badge>;
+/**
+ * 실제 진입점(명세서 8.7·8.8)은 이 표의 행이다 — 제출물 하나를 지목해야 피드백을 달 수
+ * 있는데, 강의 카드는 강의만 알아서 그럴 수 없다(`LecturesPage` 참고).
+ *
+ * `submissionId`가 없으면(미제출) 피드백을 달 대상 자체가 없어 버튼 대신 대시를 둔다.
+ */
+function columnsFor(onFeedback: (submissionId: number) => void): Column<SubmissionRow>[] {
+  return [
+    { header: "이름", render: (row) => row.userName, width: "6rem" },
+    { header: "학과", render: (row) => row.major },
+    {
+      header: "제출",
+      align: "center",
+      width: "6rem",
+      // 지각 제출을 제출과 같이 두면 마감을 지킨 사람과 구분이 사라진다.
+      render: (row) => {
+        if (!row.submitted) return <Badge variant="neutral">미제출</Badge>;
+        return row.status === "LATE" ? <Badge variant="accent">지각</Badge> : <Badge variant="info">제출</Badge>;
+      },
     },
-  },
-  {
-    header: "제출 일시",
-    width: "11rem",
-    render: (row) => (row.submittedAt === null ? "-" : formatDateTime(row.submittedAt)),
-  },
-  {
-    header: "피드백",
-    align: "center",
-    width: "5rem",
-    render: (row) => (row.feedbackDone ? "완료" : "-"),
-  },
-];
+    {
+      header: "제출 일시",
+      width: "11rem",
+      render: (row) => (row.submittedAt === null ? "-" : formatDateTime(row.submittedAt)),
+    },
+    {
+      header: "피드백",
+      align: "center",
+      width: "6rem",
+      render: (row) => {
+        const submissionId = row.submissionId;
+        if (submissionId === null) return "-";
+        return (
+          <button type="button" onClick={() => onFeedback(submissionId)}>
+            {row.feedbackDone ? "완료" : "작성"}
+          </button>
+        );
+      },
+    },
+  ];
+}
 
 interface SubmissionStatusModalProps {
   lectureId: number;
+  onFeedback: (submissionId: number) => void;
   onClose: () => void;
 }
 
@@ -69,7 +86,8 @@ interface SubmissionStatusModalProps {
  * (두 훅의 주석 참고)를 필터를 바꿀 때마다 만나게 된다. 모달의 정체(`?modal=&id=`)만
  * 주소에 남기고 나머지는 여기서 든다.
  */
-export function SubmissionStatusModal({ lectureId, onClose }: SubmissionStatusModalProps) {
+export function SubmissionStatusModal({ lectureId, onFeedback, onClose }: SubmissionStatusModalProps) {
+  const columns = columnsFor(onFeedback);
   const [submitted, setSubmitted] = useState<TriState>("all");
   const [feedbackDone, setFeedbackDone] = useState<TriState>("all");
   const [groupId, setGroupId] = useState(0);
@@ -132,7 +150,7 @@ export function SubmissionStatusModal({ lectureId, onClose }: SubmissionStatusMo
           </p>
         )}
 
-        {isPending && <TableSkeleton columns={COLUMNS.length} />}
+        {isPending && <TableSkeleton columns={columns.length} />}
         {isError && <ErrorState message={submissionsErrorMessage(error)} onRetry={() => void refetch()} />}
 
         {/*
@@ -157,7 +175,7 @@ export function SubmissionStatusModal({ lectureId, onClose }: SubmissionStatusMo
           ) : data.content.length === 0 ? null : (
             <>
               <DataTable
-                columns={COLUMNS}
+                columns={columns}
                 rows={data.content}
                 rowKey={(row) => row.userId}
                 caption={`${data.lecture.title} 과제 제출 현황`}

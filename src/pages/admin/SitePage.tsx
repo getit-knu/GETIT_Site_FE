@@ -9,6 +9,7 @@ import { useSettingsLocked } from "../../hooks/recruitment/useRecruitment";
 import { useGeneration, useSaveGeneration, useSaveTracks, useTracks } from "../../hooks/site/useSiteSettings";
 import type { Generation } from "../../types/site";
 
+import { ActivityPhotosSection } from "./site/ActivityPhotosSection";
 import { CurriculumsSection } from "./site/CurriculumsSection";
 import { EventsSection } from "./site/EventsSection";
 import { FaqSection } from "./site/FaqSection";
@@ -27,6 +28,7 @@ const SECTION_NAV_ITEMS = [
   { id: "curriculums", label: "커리큘럼" },
   { id: "events", label: "행사 일정" },
   { id: "staffs", label: "운영진" },
+  { id: "activity-photos", label: "활동 사진" },
   { id: "features", label: "기능 활성화" },
 ] as const;
 
@@ -201,6 +203,7 @@ export default function SitePage() {
           <StaffsSection generationNo={generation.generationNo} />
         </>
       )}
+      <ActivityPhotosSection />
       <FeaturesSection />
     </div>
   );

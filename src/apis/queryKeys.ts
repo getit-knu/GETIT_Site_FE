@@ -89,6 +89,7 @@ export const queryKeys = {
     tracks: () => [...queryKeys.site.all, "tracks"] as const,
     faqs: () => [...queryKeys.site.all, "faqs"] as const,
     features: () => [...queryKeys.site.all, "features"] as const,
+    activityPhotos: () => [...queryKeys.site.all, "activity-photos"] as const,
   },
 
   /** 어드민 프로젝트 관리(#222). 필터(학기)·페이지마다 캐시가 갈라진다. */
@@ -107,6 +108,8 @@ export const queryKeys = {
   groups: {
     all: ["groups"] as const,
     board: () => [...queryKeys.groups.all, "board"] as const,
+    /** 부원 자기 조 조회(BE#148). 어드민 전체 조 목록(`board`)과 다른 엔드포인트다. */
+    mine: () => [...queryKeys.groups.all, "mine"] as const,
   },
 
   /** 지원 시스템 설정. 세 영역이 각자 조회한다. */
@@ -163,5 +166,6 @@ export const queryKeys = {
     projects: (params: PublicProjectListParams) => [...queryKeys.public.all, "projects", params] as const,
     home: () => [...queryKeys.public.all, "home"] as const,
     events: (year: number, month: number) => [...queryKeys.public.all, "events", year, month] as const,
+    activityPhotos: () => [...queryKeys.public.all, "activity-photos"] as const,
   },
 } as const;

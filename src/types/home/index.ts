@@ -1,10 +1,10 @@
 import type { components } from "../../apis/generated";
 
-/** Home 화면 목 데이터 타입. 실제 API가 생기기 전까지 정적/목업 콘텐츠에 쓴다. */
-export interface Activity {
-  id: string;
-  label: string;
-}
+/**
+ * `GET /api/public/activity-photos` 응답(BE#146). 홈 "GETIT과 함께한 순간들" 마퀴가 쓴다.
+ * 노출(`isVisible`)로 설정된 사진만 순서대로 온다 — 이 목록엔 그 필드 자체가 없다.
+ */
+export type PublicActivityPhoto = Required<components["schemas"]["ActivityPhotoPublicResult"]>;
 
 /**
  * `GET /api/public/faqs` 응답(2.5, #212). 비공개(`isVisible: false`) 처리한 FAQ는

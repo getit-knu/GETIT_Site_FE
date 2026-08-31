@@ -24,6 +24,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 내 프로필 조회
+         * @description 명세서 1.5
+         */
+        get: operations["getMe"];
+        /**
+         * 내 프로필 수정
+         * @description 이슈 #147
+         */
+        put: operations["updateMe"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/applications/me/draft": {
         parameters: {
             query?: never;
@@ -553,6 +577,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/member/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 프로젝트 등록(승인 대기)
+         * @description 이슈 #148
+         */
+        post: operations["submitProject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/member/lectures/{lectureId}/questions": {
         parameters: {
             query?: never;
@@ -993,6 +1037,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/projects/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 프로젝트 반려
+         * @description 이슈 #148
+         */
+        post: operations["rejectProject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/projects/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 프로젝트 승인
+         * @description 이슈 #148
+         */
+        post: operations["approveProject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/lectures": {
         parameters: {
             query?: never;
@@ -1361,6 +1445,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/member/group": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 내 조 조회
+         * @description 이슈 #148
+         */
+        get: operations["getMyGroup"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/files/{id}/download-url": {
         parameters: {
             query?: never;
@@ -1373,26 +1477,6 @@ export interface paths {
          * @description 명세서 4.3. 비공개 저장소라 요청 시점마다 짧게 사는 주소를 발급한다.
          */
         get: operations["downloadUrl"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 내 프로필 조회
-         * @description 명세서 1.5
-         */
-        get: operations["getMe"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1879,6 +1963,36 @@ export interface components {
             /** @enum {string} */
             status?: "SUBMITTED" | "LATE";
         };
+        MeUpdateRequest: {
+            name: string;
+            phoneNumber?: string;
+            /** Format: int64 */
+            profileFileId?: number;
+        };
+        ApiResponseMeResponse: {
+            success?: boolean;
+            data?: components["schemas"]["MeResponse"];
+            error?: components["schemas"]["ErrorResponse"];
+        };
+        MeResponse: {
+            /** Format: int64 */
+            id?: number;
+            email?: string;
+            name?: string;
+            phoneNumber?: string;
+            college?: string;
+            major?: string;
+            /** Format: int32 */
+            studentYear?: number;
+            studentNumber?: string;
+            profileImageUrl?: string;
+            /** @enum {string} */
+            role?: "GUEST" | "MEMBER" | "ADMIN";
+            /** Format: int32 */
+            generationNo?: number;
+            /** @enum {string} */
+            status?: "ACTIVE" | "WITHDRAWN";
+        };
         ApplicationAnswerRequest: {
             /** Format: int64 */
             questionId: number;
@@ -1999,6 +2113,8 @@ export interface components {
             section: "EXECUTIVE" | "SW" | "STARTUP";
             department: string;
             introduction?: string;
+            githubUrl?: string;
+            instagramUrl?: string;
             /** Format: int64 */
             fileId?: number;
             /** Format: int32 */
@@ -2020,6 +2136,8 @@ export interface components {
             section?: "EXECUTIVE" | "SW" | "STARTUP";
             department?: string;
             introduction?: string;
+            githubUrl?: string;
+            instagramUrl?: string;
             profileImageUrl?: string;
             /** Format: int32 */
             order?: number;
@@ -2365,6 +2483,9 @@ export interface components {
             isFeatured?: boolean;
             /** Format: int32 */
             order?: number;
+            /** @enum {string} */
+            status?: "PENDING" | "APPROVED" | "REJECTED";
+            statusLabel?: string;
         };
         LectureRequestAssignmentPart: {
             title: string;
@@ -2469,6 +2590,38 @@ export interface components {
             content?: string;
             /** Format: date-time */
             updatedAt?: string;
+        };
+        ProjectSubmitRequest: {
+            title: string;
+            semester: string;
+            description?: string;
+            techStacks?: string[];
+            codeUrl?: string;
+            demoUrl?: string;
+            /** Format: int64 */
+            fileId?: number;
+        };
+        ApiResponseMemberProjectResult: {
+            success?: boolean;
+            data?: components["schemas"]["MemberProjectResult"];
+            error?: components["schemas"]["ErrorResponse"];
+        };
+        MemberProjectResult: {
+            /** Format: int64 */
+            id?: number;
+            title?: string;
+            teamName?: string;
+            semester?: string;
+            description?: string;
+            techStacks?: string[];
+            codeUrl?: string;
+            demoUrl?: string;
+            /** Format: int64 */
+            fileId?: number;
+            thumbnailUrl?: string;
+            /** @enum {string} */
+            status?: "PENDING" | "APPROVED" | "REJECTED";
+            statusLabel?: string;
         };
         MemberQuestionRequestCreate: {
             content: string;
@@ -2766,6 +2919,8 @@ export interface components {
             staffRole?: string;
             department?: string;
             introduction?: string;
+            githubUrl?: string;
+            instagramUrl?: string;
             profileImageUrl?: string;
             /** Format: int32 */
             order?: number;
@@ -3176,6 +3331,28 @@ export interface components {
             status?: "SUBMITTED" | "LATE";
             feedbacks?: components["schemas"]["LectureResultFeedbackItem"][];
         };
+        ApiResponseGroupWithMembersResult: {
+            success?: boolean;
+            data?: components["schemas"]["GroupWithMembersResult"];
+            error?: components["schemas"]["ErrorResponse"];
+        };
+        GroupMemberResult: {
+            /** Format: int64 */
+            userId?: number;
+            name?: string;
+            major?: string;
+            /** @enum {string} */
+            role?: "GUEST" | "MEMBER" | "ADMIN";
+            roleLabel?: string;
+        };
+        GroupWithMembersResult: {
+            /** Format: int64 */
+            id?: number;
+            name?: string;
+            /** Format: int32 */
+            memberCount?: number;
+            members?: components["schemas"]["GroupMemberResult"][];
+        };
         ApiResponseDownloadUrlResponse: {
             success?: boolean;
             data?: components["schemas"]["DownloadUrlResponse"];
@@ -3187,30 +3364,6 @@ export interface components {
             contentType?: string;
             /** Format: int32 */
             expiresIn?: number;
-        };
-        ApiResponseMeResponse: {
-            success?: boolean;
-            data?: components["schemas"]["MeResponse"];
-            error?: components["schemas"]["ErrorResponse"];
-        };
-        MeResponse: {
-            /** Format: int64 */
-            id?: number;
-            email?: string;
-            name?: string;
-            phoneNumber?: string;
-            college?: string;
-            major?: string;
-            /** Format: int32 */
-            studentYear?: number;
-            studentNumber?: string;
-            profileImageUrl?: string;
-            /** @enum {string} */
-            role?: "GUEST" | "MEMBER" | "ADMIN";
-            /** Format: int32 */
-            generationNo?: number;
-            /** @enum {string} */
-            status?: "ACTIVE" | "WITHDRAWN";
         };
         ApiResponseMyApplicationResult: {
             success?: boolean;
@@ -3694,23 +3847,6 @@ export interface components {
             groups?: components["schemas"]["GroupWithMembersResult"][];
             unassigned?: components["schemas"]["GroupMemberResult"][];
         };
-        GroupMemberResult: {
-            /** Format: int64 */
-            userId?: number;
-            name?: string;
-            major?: string;
-            /** @enum {string} */
-            role?: "GUEST" | "MEMBER" | "ADMIN";
-            roleLabel?: string;
-        };
-        GroupWithMembersResult: {
-            /** Format: int64 */
-            id?: number;
-            name?: string;
-            /** Format: int32 */
-            memberCount?: number;
-            members?: components["schemas"]["GroupMemberResult"][];
-        };
         ApiResponseListUpcomingEventResult: {
             success?: boolean;
             data?: components["schemas"]["UpcomingEventResult"][];
@@ -3829,6 +3965,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResponseSubmissionResultDetail"];
+                };
+            };
+        };
+    };
+    getMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseMeResponse"];
+                };
+            };
+        };
+    };
+    updateMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MeUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseMeResponse"];
                 };
             };
         };
@@ -4789,6 +4969,30 @@ export interface operations {
             };
         };
     };
+    submitProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectSubmitRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseMemberProjectResult"];
+                };
+            };
+        };
+    };
     getQuestions: {
         parameters: {
             query?: never;
@@ -5481,6 +5685,50 @@ export interface operations {
             };
         };
     };
+    rejectProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseProjectResultItem"];
+                };
+            };
+        };
+    };
+    approveProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseProjectResultItem"];
+                };
+            };
+        };
+    };
     getLectures: {
         parameters: {
             query?: {
@@ -5924,6 +6172,26 @@ export interface operations {
             };
         };
     };
+    getMyGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseGroupWithMembersResult"];
+                };
+            };
+        };
+    };
     downloadUrl: {
         parameters: {
             query?: never;
@@ -5942,26 +6210,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResponseDownloadUrlResponse"];
-                };
-            };
-        };
-    };
-    getMe: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResponseMeResponse"];
                 };
             };
         };

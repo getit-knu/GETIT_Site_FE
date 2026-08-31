@@ -180,4 +180,14 @@ describe("ScheduleSection", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("권한이 없습니다");
     expect(screen.queryByLabelText("전체 시작")).not.toBeInTheDocument();
   });
+
+  it("잠긴 상태면 입력칸·저장 버튼이 막히고 그 이유를 알려준다", async () => {
+    // 그냥 disabled로만 보이면 왜 안 눌리는지 알 방법이 없다 — 이유를 직접 보여줘야 한다.
+    renderSection(true);
+    await screen.findByRole("button", { name: "저장" });
+
+    expect(screen.getByLabelText("전체 시작")).toBeDisabled();
+    expect(saveButton()).toBeDisabled();
+    expect(screen.getByText(/모집이 이미 시작돼 일정을 수정할 수 없습니다/)).toBeInTheDocument();
+  });
 });

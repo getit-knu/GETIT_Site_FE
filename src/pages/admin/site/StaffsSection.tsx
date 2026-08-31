@@ -24,10 +24,21 @@ interface Draft {
   section: StaffSection;
   department: string;
   introduction: string;
+  githubUrl: string;
+  instagramUrl: string;
 }
 
 function emptyDraft(section: StaffSection): Draft {
-  return { id: null, name: "", staffRole: "", section, department: "", introduction: "" };
+  return {
+    id: null,
+    name: "",
+    staffRole: "",
+    section,
+    department: "",
+    introduction: "",
+    githubUrl: "",
+    instagramUrl: "",
+  };
 }
 
 function toDraft(staff: Staff): Draft {
@@ -38,13 +49,23 @@ function toDraft(staff: Staff): Draft {
     section: staff.section,
     department: staff.department,
     introduction: staff.introduction,
+    githubUrl: staff.githubUrl ?? "",
+    instagramUrl: staff.instagramUrl ?? "",
   };
+}
+
+/** BE `@HttpUrl` 검증(http · https만 허용)을 그대로 미러링한다 — 계정이 없으면 빈 칸이라 통과. */
+const HTTP_URL_PATTERN = /^https?:\/\/\S+$/;
+
+function invalidUrlReason(label: string, value: string): string | null {
+  if (value.trim() === "") return null;
+  return HTTP_URL_PATTERN.test(value.trim()) ? null : `${label}은(는) http 또는 https로 시작하는 주소여야 합니다.`;
 }
 
 function invalidReason(draft: Draft): string | null {
   if (draft.name.trim() === "") return "이름을 입력해 주세요.";
   if (draft.staffRole.trim() === "") return "직책을 입력해 주세요.";
-  return null;
+  return invalidUrlReason("GitHub 링크", draft.githubUrl) ?? invalidUrlReason("Instagram 링크", draft.instagramUrl);
 }
 
 interface FormProps {
@@ -70,6 +91,8 @@ function StaffForm({ draft: initial, generationNo, onClose }: FormProps) {
       section: draft.section,
       department: draft.department.trim(),
       introduction: draft.introduction,
+      githubUrl: draft.githubUrl.trim() === "" ? null : draft.githubUrl.trim(),
+      instagramUrl: draft.instagramUrl.trim() === "" ? null : draft.instagramUrl.trim(),
       // TODO: 프로필 이미지는 파일 업로드(13.1·13.2)가 붙은 뒤에 지원한다.
       fileId: null,
       generationNo,
@@ -92,6 +115,18 @@ function StaffForm({ draft: initial, generationNo, onClose }: FormProps) {
           />
         </div>
         <Input label="학과 · 학번" value={draft.department} onChange={(department) => set({ department })} />
+        <Input
+          label="GitHub 링크"
+          placeholder="https://github.com/..."
+          value={draft.githubUrl}
+          onChange={(githubUrl) => set({ githubUrl })}
+        />
+        <Input
+          label="Instagram 링크"
+          placeholder="https://instagram.com/..."
+          value={draft.instagramUrl}
+          onChange={(instagramUrl) => set({ instagramUrl })}
+        />
       </div>
       <TextArea
         label="한줄 소개"

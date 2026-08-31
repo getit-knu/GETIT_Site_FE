@@ -46,11 +46,14 @@ export interface UserListParams {
 /**
  * `PUT /api/admin/users/{id}` 요청 본문. 셋 다 선택 — 보낸 필드만 바뀐다.
  *
- * `groupId`는 스키마엔 optional 숫자뿐이지만, "조에서 뺀다"는 뜻으로 명시적 `null`을
- * 보낼 수 있어야 해서 손으로 되돌린다.
+ * **`groupId: null`은 "조에서 뺀다"는 뜻이 아니다 — BE `UserAdminService.updateUser`가
+ * `if (groupId != null) user.assignToGroup(groupId)`로만 짜여 있어, `null`을 보내면
+ * 그 필드를 그냥 건드리지 않는다(기존 값 유지).** 즉 이 엔드포인트로는 이미 조가 배정된
+ * 사용자를 미배정 상태로 되돌릴 방법이 아예 없다(BE 소스로 확인함, 2026-08-31) — FE의
+ * "미배정" 옵션(`MembersTab`)이 그래서 실제로는 아무 효과가 없다. BE가 명시적 해제를
+ * 지원하는 방법을 추가하기 전까지는 이 한계를 안내만 하고 있다.
  */
 export type UpdateUserPayload = Omit<components["schemas"]["UserUpdateRequest"], "groupId"> & {
-  /** `null` 이면 조에서 뺀다. */
   groupId?: number | null;
 };
 
