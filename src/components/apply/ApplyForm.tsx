@@ -110,7 +110,7 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
         <div className={styles.inner}>
           <div className={styles.heading}>
             <h1 className={styles.title}>GETIT 지원하기</h1>
-            <p className={styles.subtitle}>금융과 IT를 함께 배우고 성장할 준비가 되셨나요?</p>
+            <p className={styles.subtitle}>GETIT과 함께 배우고 성장할 준비가 되셨나요?</p>
           </div>
 
           <div className={styles.card}>
