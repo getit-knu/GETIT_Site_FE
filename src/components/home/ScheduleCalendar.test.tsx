@@ -123,21 +123,28 @@ describe("ScheduleCalendar", () => {
     expect(await screen.findByRole("heading", { name: "2025년 11월" })).toBeInTheDocument();
   });
 
-  it("월 표시 점을 누르면 해당 달로 바로 이동한다", async () => {
+  it("오늘 버튼을 누르면 몇 달을 넘겨봤든 오늘이 속한 달로 돌아온다", async () => {
+    // 하단 점 페이지네이션(월 바로가기)을 걷어내고 "오늘" 버튼으로 대체했다(좌우 화살표와 중복이라).
     renderCalendar();
     await screen.findByRole("heading", { name: "2026년 1월" });
 
-    await userEvent.click(screen.getByRole("button", { name: "5월로 이동" }));
+    const nextButton = screen.getByRole("button", { name: "다음 달" });
+    await userEvent.click(nextButton);
+    await userEvent.click(nextButton);
+    expect(screen.getByRole("heading", { name: "2026년 3월" })).toBeInTheDocument();
 
-    expect(screen.getByRole("heading", { name: "2026년 5월" })).toBeInTheDocument();
-    expect(await screen.findByText("창업 해커톤")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "오늘로 이동" }));
+
+    expect(screen.getByRole("heading", { name: "2026년 1월" })).toBeInTheDocument();
   });
 
   it("여러 날에 걸친 일정은 종료일까지 함께 보여준다", async () => {
     renderCalendar();
     await screen.findByRole("heading", { name: "2026년 1월" });
 
-    await userEvent.click(screen.getByRole("button", { name: "5월로 이동" }));
+    const nextButton = screen.getByRole("button", { name: "다음 달" });
+    for (let i = 0; i < 4; i++) await userEvent.click(nextButton);
+    expect(screen.getByRole("heading", { name: "2026년 5월" })).toBeInTheDocument();
 
     expect(await screen.findByText("2026-05-20 ~ 2026-05-21")).toBeInTheDocument();
   });

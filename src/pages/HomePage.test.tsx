@@ -47,7 +47,7 @@ describe("HomePage", () => {
 
     expect(headingTexts).toEqual([
       "LET'S MAKEANYTHING.",
-      "GETIT과 함께한 순간들",
+      "GET IT과 함께한 순간들",
       "커리큘럼",
       "프로젝트 쇼케이스",
       "자주 묻는 질문",

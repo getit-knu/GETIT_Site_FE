@@ -99,7 +99,7 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
       : submitApplication.error !== null
         ? { text: applicationSubmitErrorMessage(submitApplication.error), isError: true }
         : saveDraft.isSuccess
-          ? { text: "임시 저장했습니다.", isError: false }
+          ? { text: "임시 저장했어요.", isError: false }
           : reason !== null
             ? { text: reason, isError: true }
             : null;
@@ -109,8 +109,8 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
       <div className={styles.hero}>
         <div className={styles.inner}>
           <div className={styles.heading}>
-            <h1 className={styles.title}>GETIT 지원하기</h1>
-            <p className={styles.subtitle}>GETIT과 함께 배우고 성장할 준비가 되셨나요?</p>
+            <h1 className={styles.title}>GET IT 지원하기</h1>
+            <p className={styles.subtitle}>SW와 창업을 함께 배우고 성장할 준비가 되셨나요?</p>
           </div>
 
           <div className={styles.card}>

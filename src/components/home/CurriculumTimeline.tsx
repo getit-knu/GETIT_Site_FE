@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import type { CSSProperties } from "react";
 
 import { getHome } from "../../apis/public/publicApi";
 import { queryKeys } from "../../apis/queryKeys";
+import { useScrollReveal } from "../../hooks/ui/useScrollReveal";
 
 import styles from "./CurriculumTimeline.module.scss";
 
@@ -15,6 +17,10 @@ import styles from "./CurriculumTimeline.module.scss";
  */
 export function CurriculumTimeline() {
   const { data } = useQuery({ queryKey: queryKeys.public.home(), queryFn: getHome });
+  const [headingRef, headingRevealed] = useScrollReveal<HTMLDivElement>();
+  // 타임라인은 세로로 길어 컨테이너 기준 threshold를 낮게 잡는다 — 스파인이 그려지기
+  // 시작하면 행들이 계단식 지연으로 좌우에서 따라 들어온다(CurriculumTimeline.module.scss).
+  const [timelineRef, timelineRevealed] = useScrollReveal<HTMLDivElement>(0.1);
   const curriculums = data?.curriculums ?? [];
 
   if (curriculums.length === 0) return null;
@@ -27,17 +33,22 @@ export function CurriculumTimeline() {
       <div className={styles.blobTeal} aria-hidden="true" />
 
       <div className={styles.inner}>
-        <div className={styles.heading}>
+        <div ref={headingRef} data-revealed={headingRevealed || undefined} className={styles.heading}>
           <h2 className={styles.title}>커리큘럼</h2>
           <p className={styles.subtitle}>체계적인 교육 프로그램으로 성장하세요</p>
         </div>
 
         <div className={styles.timeline}>
-          <div className={styles.timelineList}>
+          <div ref={timelineRef} data-revealed={timelineRevealed || undefined} className={styles.timelineList}>
             <div className={styles.spine} aria-hidden="true" />
 
             {ordered.map((item, index) => (
-              <div key={item.id} className={styles.row} data-side={index % 2 === 0 ? "left" : "right"}>
+              <div
+                key={item.id}
+                className={styles.row}
+                data-side={index % 2 === 0 ? "left" : "right"}
+                style={{ "--reveal-index": index } as CSSProperties}
+              >
                 <div className={styles.chip}>
                   <span className={styles.chipIndex}>{index + 1}</span>
                   <div>

@@ -48,7 +48,7 @@ export default function LoginPage() {
         </span>
 
         <h1 className={styles.title}>로그인</h1>
-        <p className={styles.subtitle}>GETIT에 오신 것을 환영합니다</p>
+        <p className={styles.subtitle}>GET IT에 오신 것을 환영합니다</p>
 
         <div className={styles.card}>
           <a className={styles.googleButton} href={googleLoginUrl}>

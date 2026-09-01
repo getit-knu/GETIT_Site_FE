@@ -12,8 +12,16 @@
  * 콘텐츠가 짧은 화면(빈 목록·안내 문구뿐인 상태 등)에서는 `flex: 1`이 늘린 여백에
  * 배경색이 없어 흰 여백이 그대로 비쳐 미완성처럼 보였다 — 사이트 기본 배경(#f8f8f8)을
  * 깔아 두면 각 페이지의 `.page` 배경이 짧게 끝나도 자연스럽게 이어진다.
+ *
+ * `padding-top: 4rem`은 Nav가 `position: fixed`로 바뀌면서(픽스 라운드 4, `Nav.module.scss`
+ * 참고) 문서 흐름에서 완전히 빠졌기 때문에 필요해졌다 — 안 주면 각 페이지의 첫 4rem이
+ * Nav 밑에 깔려 가려진다. Nav `.inner`의 `height: 4rem`과 값을 맞춘다. Home의
+ * `full-viewport-section` 믹스인은 이 패딩을 감안해 이미 `min-height: calc(100vh - 4rem)`을
+ * 쓰고 있어 — 패딩(4rem) + 히어로(100vh - 4rem) = 정확히 한 화면(100vh)이라 별도 조정이
+ * 필요 없다.
  */
 .content {
   flex: 1;
+  padding-top: 4rem;
   background-color: $color-background;
 }

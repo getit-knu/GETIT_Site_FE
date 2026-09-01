@@ -1,6 +1,7 @@
 @use "../../styles/abstracts/variables" as *;
 @use "../../styles/abstracts/breakpoints" as *;
 @use "../../styles/abstracts/container";
+@use "../../styles/abstracts/motion" as *;
 
 .section {
   @include container.full-viewport-section;
@@ -25,6 +26,8 @@
 }
 
 .heading {
+  @include scroll-reveal;
+
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -66,6 +69,35 @@
   box-shadow:
     0 4px 6px -1px rgb(0 0 0 / 10%),
     0 2px 4px -2px rgb(0 0 0 / 10%);
+
+  // 스크롤 등장(목록 컨테이너의 data-revealed가 계단식 지연으로 카드를 하나씩 올린다)과
+  // hover 피드백(테두리·그림자)이 한 transition 목록에 산다 — 프로퍼티가 겹치지 않아 안전하다.
+  opacity: 0;
+  transform: translateY(1rem);
+  transition:
+    opacity $duration-slow $ease-out calc(var(--reveal-index, 0) * 70ms),
+    transform $duration-slow $ease-out calc(var(--reveal-index, 0) * 70ms),
+    border-color $duration-fast $ease-out,
+    box-shadow $duration-fast $ease-out;
+
+  // 어느 카드를 누르게 될지 커서만 올려도 보이게 — 테두리가 accent로 살짝 물든다.
+  &:hover {
+    border-color: rgb(40 57 151 / 35%);
+    box-shadow:
+      0 6px 10px -1px rgb(0 0 0 / 12%),
+      0 3px 5px -2px rgb(0 0 0 / 10%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+.list[data-revealed] .item {
+  opacity: 1;
+  transform: none;
 }
 
 .question {
@@ -100,6 +132,46 @@
 
 .iconOpen {
   transform: rotate(45deg);
+}
+
+// 답변 펼침·접힘. 높이를 모르는 콘텐츠는 `grid-template-rows` 0fr↔1fr 애니메이션으로만
+// 부드럽게 열 수 있다(max-height 방식은 추정치라 타이밍이 어긋난다). 접힘은
+// `useAnimatedPresence`가 `data-exiting` 동안 마운트를 유지해 재생 시간을 벌어 준다.
+.answerReveal {
+  display: grid;
+  animation: faq-expand $duration-base $ease-out;
+  grid-template-rows: 1fr;
+
+  &[data-exiting] {
+    animation: faq-collapse $duration-base $ease-out forwards;
+  }
+}
+
+@keyframes faq-expand {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
+@keyframes faq-collapse {
+  to {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  // animationend가 안 오는 만큼 unmount는 useAnimatedPresence의 타임아웃 폴백이 맡는다.
+  .answerReveal,
+  .answerReveal[data-exiting] {
+    animation: none;
+  }
+}
+
+.answerClip {
+  overflow: hidden;
+  min-height: 0;
 }
 
 .answer {
