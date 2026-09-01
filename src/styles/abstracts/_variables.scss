@@ -28,3 +28,7 @@ $color-status-rejected-text: #991b1b;
 // $color-placeholder-bg는 옅은 테두리 색으로도 재사용된다(Nav 하단 테두리, FAQ 카드 테두리 등).
 $color-placeholder-bg: #e5e7eb;
 $color-placeholder-icon: #99a1af;
+
+// 어두운 배경(토스트 등) 위에 얹는 글자색. 값은 $color-surface 와 같지만 쓰임이 반대라
+// 이름을 따로 둔다 — 배경색 토큰을 글자색 자리에 쓰면 의도가 드러나지 않는다.
+$color-text-inverse: $color-surface;
