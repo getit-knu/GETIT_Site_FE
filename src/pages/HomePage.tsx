@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 
 import { ActivityPhotos } from "../components/home/ActivityPhotos";
 import { CurriculumTimeline } from "../components/home/CurriculumTimeline";
@@ -18,10 +18,29 @@ export default function HomePage() {
    * <ScrollRestoration />(또는 브라우저 자체)이 이전 스크롤 위치를 복원하려 하는데, 그
    * 시도가 끝나기 전에 scroll-snap-type: mandatory가 이미 걸려 있으면 브라우저가 복원
    * 위치를 무시하고 "가장 가까운 스냅 지점"으로 되돌린다 — Footer도 실제 스냅 지점이라
-   * (`Footer.module.scss` 참고) 새로고침을 반복하면 매번 그리로 튄다. 복원이 끝났을
-   * 다음 프레임에 스냅을 켜면 이 경쟁을 피한다.
+   * (`Footer.module.scss` 참고) 새로고침을 반복하면 매번 그리로 튄다. 복원이 끄트머리에
+   * 닿았을 다음 프레임에 스냅을 켜면 이 경쟁을 피한다.
+   *
+   * **이 한 프레임으로는 아직 부족하다 — 새로고침 튐은 남아 있다.** 1280x720에서 홈을
+   * 스크롤한 뒤 새로고침하면 여전히 매번 맨 아래(Footer)에 고정된다. 스냅이 켜지는 시점을
+   * 재 보면 `readyState`는 이미 `complete`인데 `scrollHeight`는 최종 6300 중 1874(약 30%)
+   * 뿐이다 — SPA라 문서 자체는 일찍 끝나고 React가 뒤늦게 채우기 때문에 `load`도 신호가
+   * 되지 못한다. 그렇게 짧은 문서에 mandatory 스냅이 걸리면 Footer에 붙어 버리고, 이후
+   * 문서가 길어져도 스냅이 Footer를 놓아주지 않는다. 이건 "언제 켜느냐"를 바꾸는 것으로는
+   * 안정적으로 못 막고, mandatory 자체를 손대야 하는 별개 문제다(아직 미해결).
+   *
+   * **끄는 쪽은 반대로 최대한 이르게 — `useLayoutEffect`여야 한다.** 떠날 때도 같은 경쟁이
+   * 있는데 방향이 반대다. `<ScrollRestoration />`은 라우트가 바뀌면 레이아웃 이펙트에서
+   * `window.scrollTo(0, 0)`을 부른다(react-router `useScrollRestoration`). 이걸 passive
+   * cleanup(`useEffect`)에서 떼면 React가 페인트 뒤로 미루므로, 스크롤 복귀가 도는 시점엔
+   * 스냅이 아직 켜져 있다. 그 페이지에는 홈의 섹션이 없어 남은 스냅 지점이 Footer 하나뿐이라,
+   * mandatory 스냅이 `scrollTo(0, 0)`을 가로채 문서 맨 아래로 끌고 간다 — 다른 페이지로
+   * 넘어갔는데 푸터가 보이던 증상의 정체다.
+   *
+   * 레이아웃 이펙트의 정리는 커밋의 mutation 단계에서 돌고, 형제의 레이아웃 이펙트는 그
+   * 다음 layout 단계에서 돈다. 그래서 이 순서는 우연이 아니라 React가 보장한다.
    */
-  useEffect(() => {
+  useLayoutEffect(() => {
     const frame = requestAnimationFrame(() => {
       document.documentElement.classList.add("home-scroll-snap");
     });
