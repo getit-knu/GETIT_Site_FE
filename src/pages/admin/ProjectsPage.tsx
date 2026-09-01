@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { AdminProjectFormModal } from "../../components/project/AdminProjectFormModal";
 import { Button } from "../../components/ui/Button/Button";
 import { Pagination } from "../../components/ui/Pagination/Pagination";
-import { EmptyState, ErrorState } from "../../components/ui/states/States";
+import { CardGridSkeleton, EmptyState, ErrorState } from "../../components/ui/states/States";
 import { projectErrorMessage, projectSaveErrorMessage } from "../../errors/project/errorMessages";
 import {
   useApproveProject,
@@ -77,7 +77,9 @@ export default function AdminProjectsPage() {
         <Button onClick={() => openModal("project")}>+ 프로젝트 추가</Button>
       </div>
 
-      {isPending && <p className={styles.loading}>불러오는 중…</p>}
+      {isPending && (
+        <CardGridSkeleton className={styles.grid} count={6} height="16rem" label="프로젝트 목록 불러오는 중" />
+      )}
       {isError && <ErrorState message={projectErrorMessage(error)} onRetry={() => void refetch()} />}
 
       {data && data.content.length === 0 && <EmptyState message="등록된 프로젝트가 없습니다." />}

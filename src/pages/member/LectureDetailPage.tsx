@@ -2,7 +2,7 @@ import { Link, useParams } from "react-router";
 
 import { AssignmentSection, MaterialLink } from "../../components/lecture/AssignmentSection";
 import { QnaSection } from "../../components/lecture/QnaSection";
-import { ErrorState } from "../../components/ui/states/States";
+import { ErrorState, TextSkeleton } from "../../components/ui/states/States";
 import { lectureErrorMessage } from "../../errors/lecture/errorMessages";
 import { useMemberLectureDetail } from "../../hooks/lecture/useMemberLectures";
 import { formatDateTime } from "../../libs/formatDate";
@@ -43,7 +43,8 @@ export default function LectureDetailPage() {
   const { id } = useParams();
   const { data: lecture, isPending, isError, error, refetch } = useMemberLectureDetail(Number(id));
 
-  if (isPending) return <p className={styles.notFound}>불러오는 중…</p>;
+  // 제목·설명 몇 줄과 영상 자리가 온다.
+  if (isPending) return <TextSkeleton lines={5} label="강의 불러오는 중" />;
   if (isError) return <ErrorState message={lectureErrorMessage(error)} onRetry={() => void refetch()} />;
 
   return <LectureDetailView lecture={lecture} />;

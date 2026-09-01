@@ -5,7 +5,7 @@ import { LectureCard } from "../../components/lecture/LectureCard";
 import { LectureFormModal } from "../../components/lecture/LectureFormModal";
 import { SubmissionStatusModal } from "../../components/lecture/SubmissionStatusModal";
 import { Button } from "../../components/ui/Button/Button";
-import { EmptyState, ErrorState } from "../../components/ui/states/States";
+import { EmptyState, ErrorState, TextSkeleton } from "../../components/ui/states/States";
 import { lectureErrorMessage } from "../../errors/lecture/errorMessages";
 import { useDeleteLecture, useLectureBoard } from "../../hooks/lecture/useLectures";
 import { useModalParams } from "../../hooks/ui/useModalParams";
@@ -65,7 +65,8 @@ export default function LecturesPage() {
     removeLecture.mutate(lecture.id);
   }
 
-  if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
+  // 트랙 탭 한 줄과 강의 목록이 온다.
+  if (isPending) return <TextSkeleton lines={6} label="강의 목록 불러오는 중" />;
   // 문구는 BE ErrorCode 에서 가져온다. FE 가 코드를 새로 짓지 않는다.
   if (isError) return <ErrorState message={lectureErrorMessage(error)} onRetry={() => void refetch()} />;
 

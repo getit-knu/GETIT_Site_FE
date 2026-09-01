@@ -11,7 +11,7 @@ import {
   type ProjectFilterValue,
 } from "../components/project/ProjectFilterTabs";
 import { Pagination } from "../components/ui/Pagination/Pagination";
-import { EmptyState, ErrorState } from "../components/ui/states/States";
+import { BlockSkeleton, CardGridSkeleton, EmptyState, ErrorState } from "../components/ui/states/States";
 import { projectErrorMessage } from "../errors/project/errorMessages";
 import type { PublicProject } from "../types/project";
 
@@ -45,8 +45,14 @@ export default function ProjectsPage() {
         </div>
 
         {data && <ProjectFilterTabs semesters={data.semesters} value={filter} onChange={handleFilterChange} />}
+        {/* 학기 탭은 데이터가 와야 그릴 수 있다. 자리를 안 잡으면 목록이 통째로 밀린다(실측 67px).
+            실패했을 때는 잡지 않는다 — 오지 않을 탭 자리를 계속 비워 둘 이유가 없다. */}
+        {isPending && <BlockSkeleton height="2.375rem" label="학기 필터 불러오는 중" />}
 
-        {isPending && <p className={styles.loading}>불러오는 중…</p>}
+        {/* 한 페이지가 6장이라 스켈레톤도 6장. 높이는 실측(1440 폭에서 471px)에 맞춘다. */}
+        {isPending && (
+          <CardGridSkeleton className={styles.grid} count={6} height="29.5rem" label="프로젝트 불러오는 중" />
+        )}
         {isError && <ErrorState message={projectErrorMessage(error)} onRetry={() => void refetch()} />}
 
         {data && data.content.length === 0 && <EmptyState message="등록된 프로젝트가 없습니다." />}

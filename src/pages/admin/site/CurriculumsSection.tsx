@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { Button } from "../../../components/ui/Button/Button";
 import { Input } from "../../../components/ui/Input/Input";
-import { ErrorState } from "../../../components/ui/states/States";
+import { ErrorState, TextSkeleton } from "../../../components/ui/states/States";
 import { siteErrorMessage, siteSaveErrorMessage } from "../../../errors/site/errorMessages";
 import { useCurriculums, useDeleteCurriculum, useSaveCurriculum } from "../../../hooks/site/useContent";
 import type { Curriculum, CurriculumPayload } from "../../../types/site";
@@ -94,7 +94,7 @@ export function CurriculumsSection({ generationId }: { generationId: number }) {
     <section id="curriculums" className={styles.section}>
       <h2 className={styles.sectionTitle}>커리큘럼</h2>
 
-      {isPending && <p className={styles.hint}>불러오는 중…</p>}
+      {isPending && <TextSkeleton lines={4} label="커리큘럼 불러오는 중" />}
       {isError && <ErrorState message={siteErrorMessage(error)} onRetry={() => void refetch()} />}
 
       {data &&

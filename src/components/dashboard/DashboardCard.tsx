@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { EmptyState, ErrorState } from "../ui/states/States";
+import { EmptyState, ErrorState, TextSkeleton } from "../ui/states/States";
 
 import styles from "./DashboardCard.module.scss";
 
@@ -32,7 +32,11 @@ export function DashboardCard<T>({ title, action, query, isEmpty, emptyMessage, 
       </header>
 
       <div className={styles.body}>
-        {isPending && <p className={styles.loading}>불러오는 중…</p>}
+        {/*
+          카드가 한 화면에 다섯 장 뜬다. 전부 "불러오는 중"으로만 읽히면 화면을 보지 않는
+          사용자는 무엇이 아직 안 왔는지 알 수 없어, 카드 제목을 이름에 넣는다.
+        */}
+        {isPending && <TextSkeleton lines={3} label={`${title} 불러오는 중`} />}
         {isError && <ErrorState message={`${title}을(를) 불러오지 못했습니다.`} onRetry={() => void refetch()} />}
         {data !== undefined && (isEmpty?.(data) ? <EmptyState message={emptyMessage} /> : children(data))}
       </div>

@@ -1,12 +1,28 @@
+import type { ReactNode } from "react";
 import clsx from "clsx";
 
 import { memberErrorMessage } from "../../errors/member/errorMessages";
 import { useMySummary } from "../../hooks/member/useMemberSummary";
 import type { LectureBrief } from "../../types/member";
 import { MyQuestionsCard } from "../../components/member/MyQuestionsCard";
-import { ErrorState } from "../../components/ui/states/States";
+import { ErrorState, TextSkeleton } from "../../components/ui/states/States";
 
 import styles from "./DashboardPage.module.scss";
+
+/**
+ * 제목까지 지우고 기다리지 않는다 — "대시보드"는 조회 결과와 무관하게 이미 정해진 글이라,
+ * 로딩·에러·본문이 같은 껍데기를 공유하면 응답이 도착해도 제목이 제자리에 그대로 있다.
+ */
+function DashboardShell({ children }: { children: ReactNode }) {
+  return (
+    <div className={styles.page}>
+      <div className={styles.inner}>
+        <h1 className={styles.title}>대시보드</h1>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 function LectureHistoryGroup({
   label,
@@ -39,14 +55,23 @@ function LectureHistoryGroup({
 export default function DashboardPage() {
   const { data, isPending, isError, error, refetch } = useMySummary();
 
-  if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
-  if (isError) return <ErrorState message={memberErrorMessage(error)} onRetry={() => void refetch()} />;
+  // 통계 카드 두 칸과 과제 내역 몇 줄이 온다.
+  if (isPending)
+    return (
+      <DashboardShell>
+        <TextSkeleton lines={6} label="대시보드 불러오는 중" />
+      </DashboardShell>
+    );
+  if (isError)
+    return (
+      <DashboardShell>
+        <ErrorState message={memberErrorMessage(error)} onRetry={() => void refetch()} />
+      </DashboardShell>
+    );
 
   return (
-    <div className={styles.page}>
-      <div className={styles.inner}>
-        <h1 className={styles.title}>대시보드</h1>
-
+    <DashboardShell>
+      <>
         <div className={styles.statsCard}>
           <h3 className={styles.sectionTitle}>학습 통계</h3>
           <div className={styles.statsGrid}>
@@ -93,7 +118,7 @@ export default function DashboardPage() {
         </div>
 
         <MyQuestionsCard />
-      </div>
-    </div>
+      </>
+    </DashboardShell>
   );
 }

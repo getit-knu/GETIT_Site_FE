@@ -5,7 +5,7 @@ import { useCriteria, useSaveCriteria } from "../../hooks/recruitment/useRecruit
 import type { CriterionDraft } from "../../types/recruitment";
 import { Button } from "../ui/Button/Button";
 import { EditableListRow } from "../ui/EditableListRow/EditableListRow";
-import { ErrorState } from "../ui/states/States";
+import { ErrorState, FormSkeleton } from "../ui/states/States";
 
 import styles from "./Section.module.scss";
 
@@ -74,7 +74,7 @@ export function CriteriaSection() {
     );
   }
 
-  if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
+  if (isPending) return <FormSkeleton fields={3} label="평가 기준 불러오는 중" />;
   if (isError) {
     return <ErrorState message={recruitmentErrorMessage(error)} onRetry={() => void refetch()} />;
   }

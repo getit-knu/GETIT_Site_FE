@@ -1,14 +1,15 @@
 import { applicationResultErrorMessage } from "../../errors/application/errorMessages";
 import { useApplicationResult } from "../../hooks/application/useMyApplication";
 import { formatDateTime } from "../../libs/formatDate";
-import { ErrorState } from "../ui/states/States";
+import { ErrorState, TextSkeleton } from "../ui/states/States";
 import styles from "../../pages/ApplyPage.module.scss";
 
 /** 지원서가 이미 심사 단계로 넘어간 뒤(제출됨 이상)의 결과 화면. */
 export function ResultView() {
   const { data, isPending, isError, error, refetch } = useApplicationResult();
 
-  if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
+  // 상태 한 줄과 발표 일정 두 줄이 온다.
+  if (isPending) return <TextSkeleton lines={3} label="지원 결과 불러오는 중" />;
   if (isError) {
     return <ErrorState message={applicationResultErrorMessage(error)} onRetry={() => void refetch()} />;
   }

@@ -23,7 +23,7 @@ import type {
 } from "../../types/application";
 import { Button } from "../ui/Button/Button";
 import { PaginatedModal } from "../ui/PaginatedModal/PaginatedModal";
-import { ErrorState } from "../ui/states/States";
+import { ErrorState, FormSkeleton, TextSkeleton } from "../ui/states/States";
 
 import { DecisionButtons } from "./DecisionButtons";
 import styles from "./ApplicationDetailModal.module.scss";
@@ -94,7 +94,7 @@ function EvaluationSection({ applicationId, status }: EvaluationSectionProps) {
   const [draft, setDraft] = useState<Draft | null>(null);
   const locked = status !== "SUBMITTED";
 
-  if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
+  if (isPending) return <FormSkeleton fields={3} label="평가 불러오는 중" />;
   if (isError) return <ErrorState message={evaluationErrorMessage(error)} onRetry={() => void refetch()} />;
 
   // 별도 const 로 다시 잡아 둔다 — `data` 를 그대로 쓰면 아래 중첩 함수 안에서는
@@ -213,7 +213,7 @@ export function ApplicationDetailModal({
         data && <DecisionButtons id={data.id} name={data.basicInfo.name} status={data.status} onDecided={onClose} />
       }
     >
-      {isPending && <p className={styles.loading}>불러오는 중…</p>}
+      {isPending && <TextSkeleton lines={6} label="지원서 불러오는 중" />}
 
       {isError && <ErrorState message={applicationErrorMessage(error)} onRetry={() => void refetch()} />}
 

@@ -1,6 +1,6 @@
 import { groupErrorMessage } from "../../errors/user/errorMessages";
 import { useMyGroup } from "../../hooks/group/useMyGroup";
-import { EmptyState, ErrorState } from "../../components/ui/states/States";
+import { EmptyState, ErrorState, TextSkeleton } from "../../components/ui/states/States";
 
 import { MyProjectsSection } from "./MyProjectsSection";
 import { ProjectSubmitForm } from "./ProjectSubmitForm";
@@ -18,7 +18,8 @@ export default function GroupPage() {
       <div className={styles.inner}>
         <h1 className={styles.title}>내 그룹</h1>
 
-        {isPending && <p className={styles.loading}>불러오는 중…</p>}
+        {/* 조 이름 한 줄과 조원 몇 줄이 온다. */}
+        {isPending && <TextSkeleton lines={4} label="내 그룹 불러오는 중" />}
         {isError && <ErrorState message={groupErrorMessage(error)} onRetry={() => void refetch()} />}
 
         {data === null && (

@@ -64,12 +64,6 @@
   grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
 }
 
-.loading {
-  padding: 3rem 1rem;
-  color: var(--admin-text-muted);
-  text-align: center;
-}
-
 .toolbar {
   display: flex;
   justify-content: flex-end;

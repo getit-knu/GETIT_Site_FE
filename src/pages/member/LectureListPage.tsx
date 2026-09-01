@@ -5,7 +5,7 @@ import { LectureFilterTabs } from "../../components/lecture/LectureFilterTabs";
 import { ALL_LECTURES_FILTER, filterToParams } from "../../components/lecture/lectureFilters";
 import { MemberLectureCard } from "../../components/lecture/MemberLectureCard";
 import { Pagination } from "../../components/ui/Pagination/Pagination";
-import { EmptyState, ErrorState } from "../../components/ui/states/States";
+import { BlockSkeleton, CardGridSkeleton, EmptyState, ErrorState } from "../../components/ui/states/States";
 import { lectureErrorMessage } from "../../errors/lecture/errorMessages";
 import { useMemberLectures, useMemberTracks } from "../../hooks/lecture/useMemberLectures";
 
@@ -36,12 +36,16 @@ export default function LectureListPage() {
 
         {tracksQuery.isError ? (
           <ErrorState message={lectureErrorMessage(tracksQuery.error)} onRetry={() => void tracksQuery.refetch()} />
+        ) : tracksQuery.isPending ? (
+          // 트랙 탭은 데이터가 와야 그릴 수 있다. 자리를 안 잡으면 아래 목록이 통째로 밀린다.
+          <BlockSkeleton height="2.375rem" label="트랙 필터 불러오는 중" />
         ) : (
-          !tracksQuery.isPending && <LectureFilterTabs tracks={tracks} value={filter} onChange={handleFilterChange} />
+          <LectureFilterTabs tracks={tracks} value={filter} onChange={handleFilterChange} />
         )}
 
         {lecturesQuery.isPending ? (
-          <p className={styles.loading}>불러오는 중…</p>
+          // 격자가 데스크톱에서 4열이라 두 줄(8장)을 잡는다.
+          <CardGridSkeleton className={styles.grid} count={8} height="20rem" label="강의 목록 불러오는 중" />
         ) : lecturesQuery.isError ? (
           <ErrorState message={lectureErrorMessage(lecturesQuery.error)} onRetry={() => void lecturesQuery.refetch()} />
         ) : lecturesQuery.data.content.length === 0 ? (
