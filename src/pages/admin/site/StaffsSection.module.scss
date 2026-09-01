@@ -104,15 +104,19 @@
   margin-top: 0.75rem;
 }
 
-.field {
+.identity {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
 }
 
-.label {
-  color: var(--admin-text-muted);
-  font-size: 0.8125rem;
+.thumb {
+  width: 2rem;
+  height: 2rem;
+  object-fit: cover;
+  border-radius: 999px;
+  background: var(--admin-hover);
 }
 
 .add {

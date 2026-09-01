@@ -3,7 +3,7 @@ import { downloadFile } from "../../libs/downloadFile";
 import { getQuestions } from "../recruitment/recruitmentApi";
 import type {
   AdjacentApplicants,
-  Applicant,
+  ApplicantBoard,
   ApplicantListParams,
   ApplicationAnswer,
   ApplicationDetail,
@@ -12,7 +12,6 @@ import type {
   DocumentDecisionResult,
   EvaluationPayload,
   EvaluationSummary,
-  Page,
 } from "../../types/application";
 
 /**
@@ -22,8 +21,8 @@ import type {
 const BASE = "/api/admin/recruitment/applications";
 
 /** `GET /api/admin/recruitment/applications?generationId=&status=&page=&size=` */
-export async function getApplicants(params: ApplicantListParams): Promise<Page<Applicant>> {
-  const { data } = await client.get<Page<Applicant>>(BASE, { params });
+export async function getApplicants(params: ApplicantListParams): Promise<ApplicantBoard> {
+  const { data } = await client.get<ApplicantBoard>(BASE, { params });
   return data;
 }
 

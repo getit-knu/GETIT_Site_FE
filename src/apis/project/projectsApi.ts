@@ -25,3 +25,19 @@ export async function updateProject(id: number, payload: AdminProjectPayload): P
 export async function deleteProject(id: number): Promise<void> {
   await client.delete(`/api/admin/projects/${id}`);
 }
+
+/**
+ * `POST /api/admin/projects/{id}/approve` (BE#148)
+ *
+ * 반려한 것도 다시 승인할 수 있다 — BE 는 `PENDING` 에서만 오는 것으로 보지 않는다.
+ */
+export async function approveProject(id: number): Promise<AdminProject> {
+  const { data } = await client.post<AdminProject>(`/api/admin/projects/${id}/approve`);
+  return data;
+}
+
+/** `POST /api/admin/projects/{id}/reject` (BE#148). 반려 사유는 아직 서버가 받지 않는다. */
+export async function rejectProject(id: number): Promise<AdminProject> {
+  const { data } = await client.post<AdminProject>(`/api/admin/projects/${id}/reject`);
+  return data;
+}

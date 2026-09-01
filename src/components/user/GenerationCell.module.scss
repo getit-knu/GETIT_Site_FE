@@ -1,0 +1,14 @@
+.generationInput {
+  width: 3.5rem;
+  padding: 0.25rem 0.375rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 0.375rem;
+  background-color: var(--admin-surface);
+  color: var(--admin-text);
+  text-align: center;
+  font: inherit;
+
+  &:disabled {
+    color: var(--admin-text-disabled);
+  }
+}

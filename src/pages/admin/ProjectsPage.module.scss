@@ -1,3 +1,5 @@
+@use "../../styles/abstracts/variables" as *;
+
 .page {
   display: flex;
   flex-direction: column;
@@ -54,6 +56,15 @@
   gap: 0.5rem;
 }
 
+// 배지가 둘 이상이면 `.head` 의 space-between 이 제목과 배지들을 셋으로 벌려 놓는다.
+// 한 덩어리로 묶어야 오른쪽에 나란히 붙는다.
+.badges {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.25rem;
+}
+
 .badge {
   padding: 0.125rem 0.5rem;
   border-radius: 999px;
@@ -62,6 +73,22 @@
   font-size: 0.6875rem;
   font-weight: 600;
   white-space: nowrap;
+}
+
+// 상태 배지 틴트. 값은 `_variables.scss` 의 시맨틱 토큰에서 가져온다.
+.pending {
+  background-color: $color-status-pending-bg;
+  color: $color-status-pending-text;
+}
+
+.approved {
+  background-color: $color-status-approved-bg;
+  color: $color-status-approved-text;
+}
+
+.rejected {
+  background-color: $color-status-rejected-bg;
+  color: $color-status-rejected-text;
 }
 
 .muted {
