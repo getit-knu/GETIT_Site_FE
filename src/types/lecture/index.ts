@@ -329,3 +329,17 @@ export interface MemberQuestion {
 
 /** 4.7 응답. */
 export type MemberQuestionCreateResult = Required<components["schemas"]["MemberQuestionResultCreateResult"]>;
+
+/**
+ * 강의를 가로지르는 "내 질문" 한 줄.
+ *
+ * **아직 엔드포인트가 없다**(`getit-knu/GETIT_Site_BE#185`) — 지금은 강의별
+ * (`/api/member/lectures/{lectureId}/questions`)로만 조회된다. 부원 대시보드는 강의와
+ * 무관하게 자기 질문을 봐야 해서, 강의를 순회해 N번 부르는 대신 새 엔드포인트를 기다린다.
+ *
+ * `MemberQuestion` 과 달리 **어느 강의의 질문인지**가 실려 온다 — 목록만 봐선 구분이 안 된다.
+ */
+export interface MyQuestion extends MemberQuestion {
+  lectureId: number;
+  lectureTitle: string;
+}

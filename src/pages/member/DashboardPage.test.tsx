@@ -1,14 +1,18 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
+import { createMemoryRouter, RouterProvider } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as api from "../../apis/member/memberApi";
+import { getMyQuestions } from "../../apis/qna/myQuestionsApi";
 import type { MySummary } from "../../types/member";
 
 import DashboardPage from "./DashboardPage";
 
 vi.mock("../../apis/member/memberApi");
+// 내 질문 카드가 실제 요청을 내보내지 않게 막는다. 카드 자체는 MyQuestionsCard 테스트가 본다.
+vi.mock("../../apis/qna/myQuestionsApi");
 
 function summary(over: Partial<MySummary> = {}): MySummary {
   return {
@@ -38,9 +42,13 @@ function summary(over: Partial<MySummary> = {}): MySummary {
 
 function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  // 내 질문 카드가 `Link` 를 쓴다 — 라우터 없이 그리면 질문이 하나라도 있을 때 터진다.
+  const router = createMemoryRouter([{ path: "/member/dashboard", element: <DashboardPage /> }], {
+    initialEntries: ["/member/dashboard"],
+  });
   return render(
     <QueryClientProvider client={queryClient}>
-      <DashboardPage />
+      <RouterProvider router={router} />
     </QueryClientProvider>,
   );
 }
@@ -90,5 +98,31 @@ describe("DashboardPage", () => {
     await userEvent.click(screen.getByRole("button", { name: "다시 시도" }));
 
     expect(await screen.findByText("수강한 강의")).toBeInTheDocument();
+  });
+  it("내 질문 영역이 대시보드에 있다", async () => {
+    vi.mocked(api.getMySummary).mockResolvedValue(summary());
+    vi.mocked(getMyQuestions).mockResolvedValue({
+      content: [
+        {
+          id: 1,
+          lectureId: 7,
+          lectureTitle: "3주차",
+          authorName: "김부원",
+          content: "질문입니다",
+          createdAt: "2026-09-01T10:00:00+09:00",
+          status: "PENDING",
+          answers: [],
+        },
+      ],
+      page: 0,
+      size: 5,
+      totalElements: 1,
+      totalPages: 1,
+      first: true,
+      last: true,
+    });
+    renderPage();
+
+    expect(await screen.findByRole("heading", { name: "내 질문" })).toBeInTheDocument();
   });
 });

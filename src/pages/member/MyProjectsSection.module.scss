@@ -1,0 +1,79 @@
+@use "../../styles/abstracts/variables" as *;
+
+.sectionTitle {
+  margin: 0 0 0.5rem;
+  color: $color-heading;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.loading {
+  padding: 1rem 0;
+  color: $color-text-secondary;
+  font-size: 0.9375rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  border-radius: 0.625rem;
+  padding: 0.875rem 1rem;
+  background-color: $color-placeholder-bg;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.itemTitle {
+  color: $color-heading;
+  font-weight: 600;
+}
+
+.badge {
+  border-radius: 999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+// 상태 배지 틴트. 어드민 프로젝트 관리와 같은 토큰을 쓴다(ProjectsPage.tsx 참고) —
+// 부원·어드민 화면에서 같은 상태가 다른 색으로 보이면 안 된다.
+.pending {
+  background-color: $color-status-pending-bg;
+  color: $color-status-pending-text;
+}
+
+.approved {
+  background-color: $color-status-approved-bg;
+  color: $color-status-approved-text;
+}
+
+.rejected {
+  background-color: $color-status-rejected-bg;
+  color: $color-status-rejected-text;
+}
+
+.meta {
+  margin: 0.25rem 0 0;
+  color: $color-text-secondary;
+  font-size: 0.8125rem;
+}
+
+.reason {
+  margin: 0.5rem 0 0;
+  color: $color-danger;
+  font-size: 0.8125rem;
+}

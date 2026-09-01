@@ -27,6 +27,7 @@ function project(over: Partial<AdminProject> = {}): AdminProject {
     order: 1,
     status: "APPROVED",
     statusLabel: "공개",
+    rejectReason: null,
     ...over,
   };
 }
@@ -180,23 +181,29 @@ describe("AdminProjectsPage", () => {
     expect(screen.queryByRole("button", { name: "반려" })).not.toBeInTheDocument();
   });
 
-  it("공개 중인 것을 반려할 때는 내려간다고 알린다", async () => {
-    const confirmSpy = vi.fn().mockReturnValue(true);
-    vi.stubGlobal("confirm", confirmSpy);
+  it("공개 중인 것을 반려할 때는 내려간다고 알리고, 적은 사유를 그대로 보낸다", async () => {
+    // BE가 사유를 필수로 받는다(#190) — 안 보내면 400.
+    const promptSpy = vi.fn().mockReturnValue("팀명이 부적절합니다.");
+    vi.stubGlobal("prompt", promptSpy);
     renderPage();
     await screen.findByText("AI 포트폴리오 추천 시스템");
 
     await userEvent.click(screen.getByRole("button", { name: "반려" }));
 
-    expect(confirmSpy.mock.lastCall?.[0]).toContain("공개 사이트에서 내려갑니다");
-    await waitFor(() => expect(api.rejectProject).toHaveBeenCalledWith(1));
+    expect(promptSpy.mock.lastCall?.[0]).toContain("공개 사이트에서 내려갑니다");
+    await waitFor(() => expect(api.rejectProject).toHaveBeenCalledWith(1, "팀명이 부적절합니다."));
   });
 
-  it("반려를 취소하면 아무 일도 일어나지 않는다", async () => {
-    vi.stubGlobal("confirm", vi.fn().mockReturnValue(false));
+  it("반려 사유를 취소하거나 비우면 아무 일도 일어나지 않는다", async () => {
+    vi.stubGlobal("prompt", vi.fn().mockReturnValue(null));
     renderPage();
     await screen.findByText("AI 포트폴리오 추천 시스템");
 
+    await userEvent.click(screen.getByRole("button", { name: "반려" }));
+
+    expect(api.rejectProject).not.toHaveBeenCalled();
+
+    vi.mocked(window.prompt).mockReturnValue("   ");
     await userEvent.click(screen.getByRole("button", { name: "반려" }));
 
     expect(api.rejectProject).not.toHaveBeenCalled();

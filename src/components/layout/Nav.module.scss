@@ -5,13 +5,27 @@
 .nav {
   position: sticky;
   top: 0;
-  z-index: 10;
+  // 모달(1000)보다 낮게 유지한다 — 헤더가 모달을 덮으면 안 된다. DdayBadge(20)는
+  // 화면 하단 고정이라 겹치지 않지만, 같은 "페이지 위에 뜬 UI" 층으로 맞춰 둔다.
+  z-index: 20;
 
-  // 스크롤 시 콘텐츠가 배경으로 비치도록 반투명 처리.
-  background-color: rgba($color-background, 0.9);
+  /*
+    글래스모피즘(#273) — 헤더 전용 짙은 색(팀 피드백)에 투명도를 두고 블러를 얹어,
+    스크롤 중 본문이 헤더 뒤로 비치게 한다. `backdrop-filter` 미지원 브라우저는
+    블러 없이 반투명만 남으면 글자가 겹쳐 안 읽히므로, 그때는 불투명 배경으로 뗀다.
 
-  // 팔레트에 없는 옅은 보조색 — nav 테두리 전용이라 전역 토큰으로 빼지 않는다.
-  border-bottom: 1px solid #e5e7eb;
+    0.9 밑으로 낮춰 비치게 하되, 너무 낮추면 밝은 배경이 블러로 크게 섞일 때 흰 글자
+    대비가 4.5:1 밑으로 떨어질 수 있어(가장 밝은 경우로 계산해 여유를 둠) 0.88로 둔다.
+  */
+  background-color: rgba($color-accent, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    background-color: $color-accent;
+  }
+
+  // 배경 자체가 본문($color-background)과 색이 갈려서, 테두리 없이도 경계가 뚜렷하다.
 }
 
 .inner {
@@ -25,7 +39,7 @@
 }
 
 .logo {
-  color: $color-accent;
+  color: $color-text-inverse;
   font-size: 1.5rem;
   font-weight: 700;
   text-decoration: none;
@@ -40,7 +54,7 @@
   padding: 0;
   border: none;
   background: none;
-  color: $color-text-primary;
+  color: $color-text-inverse;
   cursor: pointer;
 
   svg {
@@ -56,7 +70,7 @@
 .links {
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: 0.5rem;
 
   // 좁은 화면에서는 기본으로 숨기고, 햄버거 버튼을 눌러야 nav 바로 아래 드롭다운으로
   // 펼쳐진다. `.inner`가 `position: relative`라 그 기준으로 붙는다.
@@ -70,8 +84,9 @@
     align-items: stretch;
     gap: 0;
     padding: 0.5rem 0;
-    background-color: $color-background;
-    border-bottom: 1px solid #e5e7eb;
+    // 헤더와 이어지는 패널로 보이도록 같은 색을 쓴다 — 흰 패널이 갑자기 튀어나오면 어색하다.
+    background-color: $color-accent;
+    box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 20%);
 
     &.open {
       display: flex;
@@ -80,46 +95,63 @@
 }
 
 .link {
-  color: $color-text-primary;
+  border-radius: 9999px;
+  padding: 0.5rem 0.875rem;
+  color: $color-text-inverse;
   font-size: 1rem;
   font-weight: 500;
   text-decoration: none;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: rgba($color-text-inverse, 0.12);
+  }
 
   @media (width <= $breakpoint-mobile) {
+    border-radius: 0;
     padding: 0.75rem 2rem;
     text-align: center;
   }
 }
 
 .active {
-  color: $color-accent;
+  background-color: rgba($color-text-inverse, 0.18);
   font-weight: 600;
 }
 
 .logoutButton {
   border: none;
+  border-radius: 9999px;
   background: none;
-  padding: 0;
-  color: $color-text-primary;
+  padding: 0.5rem 0.875rem;
+  color: $color-text-inverse;
   font: inherit;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: rgba($color-text-inverse, 0.12);
+  }
 
   @media (width <= $breakpoint-mobile) {
+    border-radius: 0;
     padding: 0.75rem 2rem;
     text-align: center;
   }
 }
 
 .cta {
+  // 어두운 헤더 위에서 눈에 띄도록 배경·글자색을 뒤집는다 — 본문에서 쓰는 어두운 필
+  // 그대로 두면 헤더 배경에 묻힌다.
   border-radius: 9999px;
   padding: 0.625rem 1.5rem;
-  background-color: $color-text-primary;
+  background-color: $color-text-inverse;
   box-shadow:
     0 4px 3px rgb(0 0 0 / 10%),
     0 2px 2px rgb(0 0 0 / 10%);
-  color: $color-background;
+  color: $color-accent;
   font-size: 1rem;
   font-weight: 600;
 

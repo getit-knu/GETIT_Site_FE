@@ -36,6 +36,24 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
+/**
+ * 세션이 완전히 끝났을 때(재발급까지 실패) 부를 콜백. `main.tsx`에서 앱 시작 시 한 번만
+ * 등록한다.
+ *
+ * **왜 필요한가(이슈 #295)**: `clearAccessToken()`은 메모리상의 토큰만 지운다. 그것만으론
+ * `auth.me` 쿼리 캐시가 그대로 남아 `useSession()`의 `isAuthenticated`가 계속 `true`다 —
+ * `auth.me` 쿼리 자신이 다시 실행돼 실패해야만 로그아웃 상태로 바뀌는데, 다른 요청이 여기서
+ * 세션 종료를 확정해도 그 쿼리를 건드리지 않으면 재실행될 계기가 없다. 그래서 세션이 끝나는
+ * 바로 이 지점에서 `auth.me`를 무효화해 `RequireRole`이 반응하게 한다.
+ *
+ * `client.ts`는 `queryClient` 인스턴스를 모른다(순환 의존을 피하려고) — 콜백으로만 안다.
+ */
+let onSessionEnded: (() => void) | null = null;
+
+export function setOnSessionEnded(callback: () => void): void {
+  onSessionEnded = callback;
+}
+
 /** 갱신 요청 자체가 401 이면 다시 갱신할 수 없다. 무한 루프를 막는 유일한 기준점이다. */
 const REFRESH_URL = "/api/auth/refresh";
 
@@ -146,8 +164,10 @@ client.interceptors.response.use(
 
       // 여기까지 왔으면 이 브라우저의 세션은 끝났다. 토큰을 남겨 두면
       // 이후 요청이 전부 401 로 죽는다. 지우면 세션 쿼리가 실패하고
-      // RequireRole 이 로그인으로 보낸다.
+      // RequireRole 이 로그인으로 보낸다 — 단, auth.me 쿼리 자신을 깨우지 않으면
+      // 그 실패가 실제로 일어나지 않는다(#295). 그래서 콜백으로 함께 알린다.
       clearAccessToken();
+      onSessionEnded?.();
     }
 
     // 403 은 토큰을 지우지 않는다. 로그인은 유효하고 권한만 모자란 상태라,

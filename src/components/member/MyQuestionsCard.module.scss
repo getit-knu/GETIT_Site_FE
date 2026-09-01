@@ -1,0 +1,83 @@
+@use "../../styles/abstracts/variables" as *;
+
+.card {
+  margin-top: 1.5rem;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  background-color: $color-background;
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 10%),
+    0 1px 2px -1px rgb(0 0 0 / 10%);
+}
+
+.title {
+  margin: 0 0 1rem;
+  color: $color-heading;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.hint {
+  margin: 0;
+  color: $color-text-secondary;
+  font-size: 0.875rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.item {
+  border-bottom: 1px solid $color-placeholder-bg;
+  padding-bottom: 0.75rem;
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}
+
+.link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-decoration: none;
+}
+
+.lecture {
+  color: $color-accent;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+// 질문이 길어도 한 줄로 둔다. 카드가 긴 질문 하나에 끌려 늘어나지 않는다.
+.content {
+  overflow: hidden;
+  color: $color-heading;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  display: flex;
+  gap: 0.5rem;
+  color: $color-text-secondary;
+  font-size: 0.75rem;
+}
+
+// 상태 색은 전역 토큰에서만 가져온다. 카드 배경(#f8f8f8) 대비 6.71:1 · 6.68:1 로 AA 충족.
+.answered {
+  color: $color-success-text;
+  font-weight: 600;
+}
+
+.waiting {
+  color: $color-warning-text;
+  font-weight: 600;
+}

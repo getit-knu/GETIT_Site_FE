@@ -36,8 +36,8 @@ export async function approveProject(id: number): Promise<AdminProject> {
   return data;
 }
 
-/** `POST /api/admin/projects/{id}/reject` (BE#148). 반려 사유는 아직 서버가 받지 않는다. */
-export async function rejectProject(id: number): Promise<AdminProject> {
-  const { data } = await client.post<AdminProject>(`/api/admin/projects/${id}/reject`);
+/** `POST /api/admin/projects/{id}/reject` (BE#190). 사유는 필수 — 비우면 BE가 400으로 막는다. */
+export async function rejectProject(id: number, reason: string): Promise<AdminProject> {
+  const { data } = await client.post<AdminProject>(`/api/admin/projects/${id}/reject`, { reason });
   return data;
 }
