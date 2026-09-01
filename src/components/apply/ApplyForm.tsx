@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { getColleges, getMajors } from "../../apis/public/publicApi";
@@ -6,20 +6,31 @@ import { queryKeys } from "../../apis/queryKeys";
 import { Toast } from "../ui/Toast/Toast";
 import { applicationSaveErrorMessage, applicationSubmitErrorMessage } from "../../errors/application/errorMessages";
 import { useSaveDraft, useSubmitApplication } from "../../hooks/application/useMyApplication";
+import { useDebouncedValue } from "../../hooks/ui/useDebouncedValue";
+import { prefersReducedMotion } from "../../libs/prefersReducedMotion";
 import type { ApplicationDraftPayload, ApplicationFormResult, MyApplicationResult } from "../../types/application";
-import { Input } from "../ui/Input/Input";
 import styles from "../../pages/ApplyPage.module.scss";
 
 import type { AnswerState } from "./answerState";
-import type { Answers, BasicInfoState } from "./applyFormState";
+import type { Answers, BasicInfoState, BlockedFieldKey } from "./applyFormState";
 import {
   initialAnswers,
-  submitInvalidReason,
+  submitBlocker,
   toAnswerPayloads,
   toBasicInfoPayload,
   toBasicInfoState,
 } from "./applyFormState";
+import { BasicInfoFields } from "./BasicInfoFields";
 import { QuestionField } from "./QuestionField";
+
+/**
+ * 마지막 입력에서 이만큼 조용하면 알아서 임시 저장한다.
+ *
+ * 지원서는 길다. 브라우저가 닫히거나 세션이 끊기면 작성분이 통째로 날아가는데, 지금까지는
+ * "임시 저장"을 손수 누른 적이 있어야만 살아남았다. 타이핑 중에 요청이 계속 나가지 않도록
+ * 손이 멈춘 뒤에만 보낸다.
+ */
+const AUTO_SAVE_QUIET_MS = 2000;
 
 interface ApplyFormProps {
   form: ApplicationFormResult;
@@ -31,17 +42,39 @@ interface ApplyFormProps {
 export function ApplyForm({ form, existing }: ApplyFormProps) {
   const [basicInfo, setBasicInfo] = useState(() => toBasicInfoState(existing?.basicInfo ?? form.basicInfoPrefill));
   const [answers, setAnswers] = useState<Answers>(() => initialAnswers(form.questions, existing?.answers ?? null));
-  const collegeSelectId = useId();
-  const majorSelectId = useId();
+
+  // 모든 입력칸 id를 한 뿌리에서 만든다 — 제출을 막는 칸을 `getElementById`로 바로 찾기 위해서다.
+  // 학번은 BE도 필수로 안 봐서 제출을 막지 않지만, 라벨을 잇기 위해 같은 규칙으로 id를 만든다.
+  const fieldIdPrefix = useId();
+  const fieldId = (key: BlockedFieldKey | "studentId") => `${fieldIdPrefix}${key}`;
 
   const saveDraft = useSaveDraft();
   const submitApplication = useSubmitApplication();
   // 제출은 되돌릴 수 없다. 한 번 눌렀다고 바로 보내지 않고 되묻는다 (#275).
   const [confirming, setConfirming] = useState(false);
 
+  /**
+   * 고칠 때마다 1씩 오른다. 자동 저장의 기준점이자 "아직 안 보낸 변경이 있나"의 근거다.
+   *
+   * 값(`basicInfo`·`answers`)을 직접 디바운스하지 않는 이유: 둘 다 고칠 때마다 새 객체라
+   * 참조가 매번 달라져 대기 시간이 영영 초기화된다. 숫자 하나면 그런 일이 없다.
+   */
+  const [editCount, setEditCount] = useState(0);
+  const settledEditCount = useDebouncedValue(editCount, AUTO_SAVE_QUIET_MS);
+  // 서버가 실제로 받아준 시점의 editCount. 요청을 보낸 시점이 아니라 성공한 시점에만 올린다 —
+  // 저장이 실패했는데 "다 저장됐다"고 여기면 경고 없이 작성분이 날아간다.
+  const [savedEditCount, setSavedEditCount] = useState(0);
+  const hasUnsavedEdits = editCount > savedEditCount;
+  // 방금 저장이 손으로 누른 것인지 알아서 된 것인지 — 안내 문구를 가른다.
+  const [lastSaveWasAuto, setLastSaveWasAuto] = useState(false);
+  // 제출을 눌렀는데 막힌 경우에만 보여주는 안내. 상시 잔소리가 아니라 누른 것에 대한 답이다.
+  const [blocked, setBlocked] = useState<string | null>(null);
+
   function edit(apply: () => void) {
     if (saveDraft.isSuccess || saveDraft.isError) saveDraft.reset();
     if (submitApplication.isError) submitApplication.reset();
+    setEditCount((count) => count + 1);
+    setBlocked(null);
     apply();
   }
 
@@ -64,45 +97,118 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
 
   const { data: colleges = [] } = useQuery({ queryKey: queryKeys.public.colleges(), queryFn: getColleges });
   const { data: majors = [] } = useQuery({ queryKey: queryKeys.public.majors(), queryFn: getMajors });
-  const majorOptions = majors.filter((major) => major.collegeId === basicInfo.collegeId);
 
   const questions = [...form.questions].sort((a, b) => a.order - b.order);
-  const reason = submitInvalidReason(basicInfo, answers, questions);
+  const blocker = submitBlocker(basicInfo, answers, questions);
 
   function buildPayload(): ApplicationDraftPayload {
     return { basicInfo: toBasicInfoPayload(basicInfo), answers: toAnswerPayloads(answers) };
   }
 
+  /** 저장 성공을 `editCount` 기준으로 못박는다. 그 뒤에 더 고친 게 있으면 여전히 "안 저장됨"이다. */
   function handleSaveDraft() {
-    saveDraft.mutate(buildPayload());
+    const at = editCount;
+    saveDraft.mutate(buildPayload(), {
+      onSuccess: () => {
+        setLastSaveWasAuto(false);
+        setSavedEditCount(at);
+      },
+    });
+  }
+
+  /** 못 채운 칸으로 화면을 옮기고 커서를 놓는다. */
+  function focusField(key: BlockedFieldKey) {
+    const target = document.getElementById(fieldId(key));
+    if (target === null) return;
+
+    target.scrollIntoView({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    // 스크롤과 포커스를 같이 걸면 브라우저가 포커스 쪽으로 한 번 더 튄다 — 부드러운 이동이 끝나고
+    // 커서만 옮기도록 다음 프레임으로 미룬다(preventScroll 로 두 번째 점프를 막는다).
+    requestAnimationFrame(() => target.focus({ preventScroll: true }));
   }
 
   /** 제출 버튼. 바로 보내지 않고 되묻는 토스트를 띄운다. */
   function handleSubmit() {
-    if (reason !== null) return;
+    // 예전엔 이 버튼을 `disabled` 로 잠갔다. 왜 못 누르는지는 아래 문구가 말해 줬지만 **어디를**
+    // 고쳐야 하는지는 알려주지 않아, 긴 폼에서 직접 찾아 올라가야 했다. 이제 누를 수 있게 두고
+    // 누르면 못 채운 첫 칸으로 데려다 놓는다(잠긴 버튼은 포커스도 안 잡혀 이유를 물을 수조차 없다).
+    if (blocker !== null) {
+      setBlocked(blocker.message);
+      focusField(blocker.field);
+      return;
+    }
     setConfirming(true);
   }
 
   function handleConfirmSubmit() {
     setConfirming(false);
-    // 되묻는 동안에도 폼은 고칠 수 있다. 그 사이에 다시 채워지지 않은 곳이 생겼으면 보내지 않는다 —
-    // 막는 이유는 아래 feedback 이 그대로 보여준다(값을 고치면 edit() 가 이전 결과를 지운다).
-    if (reason !== null) return;
+    // 되묻는 동안에도 폼은 고칠 수 있다. 그 사이에 다시 채워지지 않은 곳이 생겼으면 보내지 않는다.
+    if (blocker !== null) {
+      setBlocked(blocker.message);
+      focusField(blocker.field);
+      return;
+    }
     submitApplication.mutate(buildPayload());
   }
 
-  // 방금 한 행동(저장/제출)의 결과가 있으면 그게 우선이다 — "제출을 막는 이유"는
-  // 아직 아무 액션도 없을 때만 보여주는 상시 힌트라 실제 서버 응답보다 낮은 우선순위다.
-  const feedback =
+  // 손이 멈춘 뒤 알아서 저장한다. `settledEditCount` 가 실제로 앞으로 나아갔을 때만 보내고,
+  // 다른 이유로 이 이펙트가 다시 돌 때는 `savedEditCount` 비교에서 걸러진다.
+  useEffect(() => {
+    if (settledEditCount === 0 || settledEditCount <= savedEditCount) return;
+    // 제출이 끝났거나 진행 중이면 임시 저장을 덧씌우지 않는다.
+    if (submitApplication.isPending || submitApplication.isSuccess) return;
+    if (saveDraft.isPending) return;
+
+    saveDraft.mutate(
+      { basicInfo: toBasicInfoPayload(basicInfo), answers: toAnswerPayloads(answers) },
+      {
+        onSuccess: () => {
+          setLastSaveWasAuto(true);
+          setSavedEditCount(settledEditCount);
+        },
+      },
+    );
+  }, [settledEditCount, savedEditCount, basicInfo, answers, saveDraft, submitApplication]);
+
+  // 아직 서버가 못 받은 변경이 있는 채로 창을 닫거나 새로고침하면 브라우저가 한 번 되묻는다.
+  // (문구는 브라우저가 정한다 — 사이트가 마음대로 쓰지 못하게 막혀 있다.)
+  useEffect(() => {
+    if (!hasUnsavedEdits) return;
+
+    function warnBeforeUnload(event: BeforeUnloadEvent) {
+      event.preventDefault();
+    }
+
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [hasUnsavedEdits]);
+
+  // 잘못된 것을 알리는 줄. 제출을 막는 안내는 **제출을 눌렀을 때만** 뜬다 — 예전엔 폼을
+  // 열자마자 "다 입력해 주세요"가 떠 있어, 아직 아무것도 안 한 사람에게 먼저 잘못을
+  // 지적하는 꼴이었다.
+  const errorText =
     saveDraft.error !== null
-      ? { text: applicationSaveErrorMessage(saveDraft.error), isError: true }
+      ? applicationSaveErrorMessage(saveDraft.error)
       : submitApplication.error !== null
-        ? { text: applicationSubmitErrorMessage(submitApplication.error), isError: true }
-        : saveDraft.isSuccess
-          ? { text: "임시 저장했어요.", isError: false }
-          : reason !== null
-            ? { text: reason, isError: true }
-            : null;
+        ? applicationSubmitErrorMessage(submitApplication.error)
+        : blocked;
+
+  /*
+    저장 상태는 **에러와 다른 자리**에 둔다.
+
+    한 줄을 같이 쓰던 때는 우선순위가 높은 에러가 저장 안내를 덮어, 제출을 눌렀다가 막힌
+    사람은 그 사이 자동 저장이 됐다는 사실을 영영 못 봤다. 보이지 않는 자동 저장은 믿을 수
+    없고, 믿을 수 없으면 창을 닫지 못한다.
+  */
+  const saveStatus = saveDraft.isPending
+    ? "저장 중…"
+    : saveDraft.isSuccess
+      ? lastSaveWasAuto
+        ? "자동으로 임시 저장했어요."
+        : "임시 저장했어요."
+      : hasUnsavedEdits
+        ? "아직 저장하지 않은 변경이 있어요."
+        : null;
 
   return (
     <div className={styles.page}>
@@ -136,75 +242,15 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
             <form className={styles.form}>
               <section className={styles.section}>
                 <h3 className={styles.sectionTitle}>기본 정보</h3>
-                <div className={styles.fieldGrid}>
-                  <Input label="이름 *" value={basicInfo.name} onChange={update("name")} placeholder="홍길동" />
-                  <Input
-                    label="이메일 *"
-                    type="email"
-                    value={basicInfo.email}
-                    onChange={update("email")}
-                    placeholder="example@email.com"
-                  />
-                  <Input
-                    label="전화번호 *"
-                    value={basicInfo.phone}
-                    onChange={update("phone")}
-                    placeholder="010-1234-5678"
-                  />
-                  <div className={styles.selectField}>
-                    <label htmlFor={collegeSelectId} className={styles.selectLabel}>
-                      단과 대학 *
-                    </label>
-                    <select
-                      id={collegeSelectId}
-                      className={styles.select}
-                      value={basicInfo.collegeId}
-                      onChange={(event) => handleCollegeChange(Number(event.target.value))}
-                    >
-                      <option value={0}>단과 대학을 선택해주세요</option>
-                      {colleges.map((college) => (
-                        <option key={college.id} value={college.id}>
-                          {college.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className={styles.selectField}>
-                    <label htmlFor={majorSelectId} className={styles.selectLabel}>
-                      전공 *
-                    </label>
-                    <select
-                      id={majorSelectId}
-                      className={styles.select}
-                      value={basicInfo.majorId}
-                      disabled={basicInfo.collegeId === 0}
-                      onChange={(event) => handleMajorChange(Number(event.target.value))}
-                    >
-                      <option value={0}>
-                        {basicInfo.collegeId === 0 ? "단과 대학을 먼저 선택해주세요" : "전공을 선택해주세요"}
-                      </option>
-                      {majorOptions.map((major) => (
-                        <option key={major.id} value={major.id}>
-                          {major.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <Input
-                    label="학년 *"
-                    type="number"
-                    value={basicInfo.grade}
-                    onChange={update("grade")}
-                    placeholder="1"
-                  />
-                  <Input
-                    label="학번(10자) *"
-                    value={basicInfo.studentId}
-                    onChange={update("studentId")}
-                    placeholder="2021123456"
-                    maxLength={10}
-                  />
-                </div>
+                <BasicInfoFields
+                  value={basicInfo}
+                  colleges={colleges}
+                  majors={majors}
+                  fieldId={fieldId}
+                  onChange={update}
+                  onCollegeChange={handleCollegeChange}
+                  onMajorChange={handleMajorChange}
+                />
               </section>
 
               <section className={styles.section}>
@@ -213,6 +259,7 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
                   {questions.map((question) => (
                     <QuestionField
                       key={question.id}
+                      id={fieldId(`question-${question.id}`)}
                       question={question}
                       answer={answers[question.id]}
                       onChange={(next) => updateAnswer(question.id, next)}
@@ -227,12 +274,11 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
 
       <div className={styles.stickyFooter}>
         <div className={styles.footerInner}>
-          {feedback !== null && (
-            <p
-              className={feedback.isError ? styles.reason : styles.saved}
-              role={feedback.isError ? undefined : "status"}
-            >
-              {feedback.text}
+          {errorText !== null && <p className={styles.reason}>{errorText}</p>}
+          {/* 저장 상태는 조용히 알린다 — role="status" 라 스크린리더도 하던 일을 끊지 않고 듣는다. */}
+          {saveStatus !== null && (
+            <p className={styles.saved} role="status">
+              {saveStatus}
             </p>
           )}
           <p className={styles.notice}>제출하면 더 이상 수정할 수 없습니다.</p>
@@ -249,7 +295,7 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
               type="button"
               className={styles.submitButton}
               onClick={handleSubmit}
-              disabled={reason !== null || submitApplication.isPending}
+              disabled={submitApplication.isPending}
             >
               {submitApplication.isPending ? "제출 중…" : "제출하기"}
             </button>

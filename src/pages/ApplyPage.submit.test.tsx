@@ -214,8 +214,7 @@ describe("ApplyPage 최종 제출", () => {
     await userEvent.click(screen.getByRole("button", { name: "제출" }));
 
     expect(submit).not.toHaveBeenCalled();
-    expect(
-      screen.getByText("이름 · 이메일 · 전화번호 · 단과 대학 · 전공 · 학년을 모두 입력해 주세요."),
-    ).toBeInTheDocument();
+    // 비운 칸 하나를 콕 짚어 준다 — 여섯 칸을 뭉뚱그려 나열하던 시절엔 어디가 빈지 직접 찾아야 했다.
+    expect(await screen.findByText("전화번호를 입력해 주세요.")).toBeInTheDocument();
   });
 });
