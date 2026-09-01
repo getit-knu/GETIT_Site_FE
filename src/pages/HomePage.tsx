@@ -5,7 +5,6 @@ import { CurriculumTimeline } from "../components/home/CurriculumTimeline";
 import { DdayBadge } from "../components/home/DdayBadge";
 import { FAQSection } from "../components/home/FAQSection";
 import { Hero } from "../components/home/Hero";
-import { HomeBoundaryDecor } from "../components/home/HomeBoundaryDecor";
 import { ProjectShowcase } from "../components/home/ProjectShowcase";
 import { ScheduleCalendar } from "../components/home/ScheduleCalendar";
 
@@ -34,7 +33,6 @@ export default function HomePage() {
 
   return (
     <>
-      <HomeBoundaryDecor />
       <DdayBadge />
       <Hero />
       <ScheduleCalendar />

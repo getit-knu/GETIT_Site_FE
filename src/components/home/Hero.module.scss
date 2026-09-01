@@ -1,12 +1,12 @@
 @use "../../styles/abstracts/variables" as *;
 @use "../../styles/abstracts/breakpoints" as *;
 @use "../../styles/abstracts/container";
+@use "../../styles/abstracts/blob-decor" as blob;
 
-// 배경 장식 실험(블롭 → 워시 2차 → 히어로 한정 오로라)을 세 차례 거쳤지만, 오로라가
-// "너무 어두워진다"는 사용자 피드백으로 최종 기각됐다 — 히어로는 장식 없는 밝은 상태로
-// 되돌린다. `overflow: hidden`도 필요 없다(번지는 절대 위치 장식이 더는 없다). Home 전체의
-// 좌우 여백 장식은 이제 히어로 내부가 아니라 `HomeBoundaryDecor`(`pages/HomePage.tsx`)가
-// `position: fixed`로 전담한다.
+// 배경 장식은 블롭(원) → 워시 → 오로라 → 좌우 바운더리 데코까지 네 차례를 거쳐 다시 블롭으로
+// 롤백됐다(`blob-decor.scss` 히스토리 참고). 원래 블롭이 촌스러워 보인 핵심 원인은 섹션 경계의
+// `overflow: hidden`에 하드 엣지로 잘린 것이었다 — 이번엔 원 자체를 `radial-gradient`로 그려
+// 가장자리가 투명하게 소멸하므로 `overflow: hidden`이 필요 없다(잘려도 티가 안 난다).
 .hero {
   @include container.full-viewport-section;
 
@@ -22,7 +22,64 @@
   }
 }
 
+// 블롭 3개: accent 남색, 옅은 페리윙클, 옅은 보라. 서로 다른 이동 경로(a/b)·duration
+// (19s/25s/31s, 서로 나누어떨어지지 않아 패턴이 반복돼 보이지 않는다)·delay로 움직여
+// 겹치는 순간 mix-blend-mode: multiply가 색을 짙게 섞는다.
+.blobNavy {
+  @include blob.blob-base;
+
+  top: -6rem;
+  left: -7rem;
+  width: 26rem;
+  height: 26rem;
+  background: radial-gradient(circle, rgb(40 57 151 / 30%) 0%, transparent 70%);
+  opacity: 0.8;
+  animation: blob-drift-a 19s ease-in-out infinite;
+
+  @media (width <= $breakpoint-mobile) {
+    width: 16rem;
+    height: 16rem;
+  }
+}
+
+.blobPeriwinkle {
+  @include blob.blob-base;
+
+  top: -2rem;
+  right: -9rem;
+  width: 34rem;
+  height: 32rem;
+  background: radial-gradient(circle, rgb(220 228 255 / 75%) 0%, transparent 70%);
+  opacity: 0.85;
+  animation: blob-drift-b 25s ease-in-out infinite;
+  animation-delay: -6s;
+
+  @media (width <= $breakpoint-mobile) {
+    width: 20rem;
+    height: 20rem;
+  }
+}
+
+.blobLavender {
+  @include blob.blob-base;
+
+  bottom: -8rem;
+  left: 12%;
+  width: 20rem;
+  height: 20rem;
+  background: radial-gradient(circle, rgb(214 200 245 / 55%) 0%, transparent 70%);
+  opacity: 0.75;
+  animation: blob-drift-a 31s ease-in-out infinite;
+  animation-delay: -14s;
+
+  @media (width <= $breakpoint-mobile) {
+    display: none;
+  }
+}
+
 .inner {
+  position: relative;
+  z-index: 1;
   display: flex;
   max-width: 43rem;
   flex-direction: column;

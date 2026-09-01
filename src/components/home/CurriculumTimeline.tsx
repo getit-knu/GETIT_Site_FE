@@ -23,6 +23,10 @@ export function CurriculumTimeline() {
 
   return (
     <section className={styles.section}>
+      <div className={styles.blobNavy} aria-hidden="true" />
+      <div className={styles.blobTeal} aria-hidden="true" />
+      <div className={styles.blobLavender} aria-hidden="true" />
+
       <div className={styles.inner}>
         <div className={styles.heading}>
           <h2 className={styles.title}>커리큘럼</h2>

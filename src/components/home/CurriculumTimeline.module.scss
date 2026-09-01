@@ -1,11 +1,11 @@
 @use "../../styles/abstracts/variables" as *;
 @use "../../styles/abstracts/container";
 @use "../../styles/abstracts/breakpoints" as *;
+@use "../../styles/abstracts/blob-decor" as blob;
 
-// 배경 장식(블롭 원 → radial-gradient 워시 → 히어로 한정 오로라)을 세 차례 시도했지만
-// 전부 기각됐다 — 이 섹션은 처음부터 끝까지 장식 없는 단색 배경이다. `overflow: hidden`도
-// 필요 없다(모서리 밖으로 번지는 절대 위치 요소가 없다). Home의 좌우 여백 장식은 이제
-// 섹션마다 개별로 두지 않고 `HomeBoundaryDecor`(`pages/HomePage.tsx`) 하나가 전담한다.
+// 배경 장식은 블롭(원) → 워시 → 오로라 → 좌우 바운더리 데코까지 네 차례를 거쳐 다시 블롭으로
+// 롤백됐다(`blob-decor.scss` 히스토리 참고). `radial-gradient`로 그린 원이라 가장자리가 투명하게
+// 소멸해 섹션 경계에서 잘려도 티가 안 난다 — `overflow: hidden`이 필요 없다.
 .section {
   @include container.full-viewport-section;
 
@@ -16,9 +16,66 @@
   background-color: $color-background;
 }
 
+// Hero와 톤을 맞추되 색조는 다르게(남색 + 청록 + 보라) 겹쳐서 Home 전체가 같은 시스템으로
+// 보이면서도 섹션마다 반복돼 보이지 않게 한다.
+.blobNavy {
+  @include blob.blob-base;
+
+  top: 10%;
+  right: -8rem;
+  width: 24rem;
+  height: 24rem;
+  background: radial-gradient(circle, rgb(40 57 151 / 26%) 0%, transparent 70%);
+  opacity: 0.8;
+  animation: blob-drift-b 22s ease-in-out infinite;
+  animation-delay: -4s;
+
+  @media (width <= $breakpoint-mobile) {
+    width: 16rem;
+    height: 16rem;
+  }
+}
+
+.blobTeal {
+  @include blob.blob-base;
+
+  bottom: -7rem;
+  left: -9rem;
+  width: 34rem;
+  height: 32rem;
+  background: radial-gradient(circle, rgb(196 232 230 / 65%) 0%, transparent 70%);
+  opacity: 0.85;
+  animation: blob-drift-a 29s ease-in-out infinite;
+  animation-delay: -11s;
+
+  @media (width <= $breakpoint-mobile) {
+    width: 20rem;
+    height: 20rem;
+  }
+}
+
+.blobLavender {
+  @include blob.blob-base;
+
+  top: -5rem;
+  left: 20%;
+  width: 18rem;
+  height: 18rem;
+  background: radial-gradient(circle, rgb(214 200 245 / 50%) 0%, transparent 70%);
+  opacity: 0.7;
+  animation: blob-drift-b 33s ease-in-out infinite;
+  animation-delay: -18s;
+
+  @media (width <= $breakpoint-mobile) {
+    display: none;
+  }
+}
+
 .inner {
   @include container.content-width;
 
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;

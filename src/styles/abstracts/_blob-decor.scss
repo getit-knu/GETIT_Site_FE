@@ -1,0 +1,68 @@
+// 배경 장식 블롭 공통 애니메이션. Hero·CurriculumTimeline이 같은 톤·움직임 규칙을 공유하도록
+// 키프레임과 베이스 스타일을 한곳에 모은다.
+//
+// 히스토리: 원래 블롭 2개(Hero·CurriculumTimeline 각각 1쌍) → "촌스럽다"는 피드백으로 워시
+// (radial-gradient 배경 전체), 오로라(conic-gradient) 순으로 대체를 시도했지만 각각 "티도 안
+// 난다"/"너무 어두워진다"로 기각됐고, 좌우 바운더리 데코(HomeBoundaryDecor)로도 가봤지만
+// 최종적으로 "원으로 롤백" 결정이 났다. 이번엔 두 가지를 더한다:
+//
+// 1) 잘림 방지 — 원래 블롭은 단색 배경이라 섹션 경계의 `overflow: hidden`에 하드 엣지로
+//    잘려서 촌스러워 보였다. 이번엔 `radial-gradient(circle, <색> 0%, transparent 70%)`로
+//    그려 원 가장자리 자체가 투명하다 — 어느 지점에서 잘려도 티가 안 나므로 섹션에
+//    `overflow: hidden`을 걸 필요가 없다.
+// 2) 겹침 변주 — 블롭 2개가 똑같이 움직이면 밋밋하다는 지적이 있었다. 이동 경로 2종
+//    (blob-drift-a/b)과 서로 나누어떨어지지 않는 duration(19s/25s/31s 등)을 조합해 패턴이
+//    반복돼 보이지 않게 하고, `mix-blend-mode: multiply`로 겹치는 순간 색이 자연스럽게
+//    짙어지게 한다(배경이 밝은 단색이라 multiply가 잘 어울린다).
+@keyframes blob-drift-a {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(2.5rem, -3rem) scale(1.12);
+  }
+
+  66% {
+    transform: translate(-1.75rem, 2.25rem) scale(0.92);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes blob-drift-b {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  40% {
+    transform: translate(-3rem, 2rem) scale(0.9);
+  }
+
+  70% {
+    transform: translate(2.25rem, 3.25rem) scale(1.15);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+// radial-gradient 배경이라 시각적으로는 border-radius: 50%가 불필요하지만, 그라디언트
+// 계산 박스를 정사각형 원 모양으로 명시하기 위해 남겨둔다. `will-change: transform`은
+// 7s→19~31s로 느려진 애니메이션이라도 매 프레임 리페인트 없이 컴포지터에서만 움직이게 한다.
+@mixin blob-base {
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  will-change: transform;
+
+  @media (prefers-reduced-motion: reduce) {
+    // reduced-motion에서도 정적 배치(위치·크기·색)는 그대로 유지하고 움직임만 끈다.
+    animation: none;
+  }
+}
