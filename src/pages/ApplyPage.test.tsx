@@ -236,7 +236,7 @@ describe("ApplyPage", () => {
     vi.mocked(getRecruitmentStatus).mockResolvedValue(recruitmentStatus({ applyEnabled: false }));
     renderPage();
 
-    expect(await screen.findByText("지금은 지원서 접수 기간이 아닙니다.")).toBeInTheDocument();
+    expect(await screen.findByText("지금은 지원서 접수 기간이 아니에요.")).toBeInTheDocument();
     expect(screen.queryByText("지원서를 작성하려면 먼저 로그인해 주세요.")).not.toBeInTheDocument();
     expect(getMyApplication).not.toHaveBeenCalled();
   });
@@ -245,7 +245,7 @@ describe("ApplyPage", () => {
     vi.mocked(getForm).mockResolvedValue(form({ phase: "BEFORE_OPEN" }));
     renderPage();
 
-    expect(await screen.findByText("지금은 지원서 접수 기간이 아닙니다.")).toBeInTheDocument();
+    expect(await screen.findByText("지금은 지원서 접수 기간이 아니에요.")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "지원서 작성" })).not.toBeInTheDocument();
   });
 

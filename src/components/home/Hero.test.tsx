@@ -14,9 +14,7 @@ describe("Hero", () => {
     renderHero();
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("LET'S MAKEANYTHING.");
-    expect(
-      screen.getByText("상상을 현실로 만드는 경북대학교 컴퓨터학부 SW&창업 동아리, GET IT입니다."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("상상을 현실로 만드는 IT 창업 동아리, GET IT입니다.")).toBeInTheDocument();
   });
 
   it("CTA가 지원하기·프로젝트 목록으로 이동하는 링크다", () => {
