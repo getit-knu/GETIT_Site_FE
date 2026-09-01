@@ -11,7 +11,7 @@ import { useApplicantFilters } from "../../hooks/application/useApplicantFilters
 import { useApplicants, useDecideApplicationsBulk } from "../../hooks/application/useApplicants";
 import { useModalParams } from "../../hooks/ui/useModalParams";
 import { formatDateTime } from "../../libs/formatDate";
-import type { Applicant, ApplicationStatus } from "../../types/application";
+import type { Applicant, ApplicantScoreSummary, ApplicationStatus } from "../../types/application";
 
 import { ApplicationDetailModal } from "./ApplicationDetailModal";
 import { DecisionButtons } from "./DecisionButtons";
@@ -65,6 +65,26 @@ function Score({ applicant }: { applicant: Applicant }) {
       {applicant.evaluatorCount != null && <span className={styles.none}> ({applicant.evaluatorCount}명)</span>}
     </span>
   );
+}
+
+/**
+ * 목록 위에 붙는 요약 한 줄. 그릴 것이 없으면 `null`.
+ *
+ * **`undefined` 와 `null` 을 갈라 쓴다.** 생성된 스키마(`PageResponseApplicantSummary`)엔
+ * `summary` 필드가 아직 없어(BE#188) 지금은 늘 `undefined` 다 — 그때 안내를 띄우면 모든
+ * 지원자 목록에 같은 문구가 상시로 남는데, 표의 `평가 점수` 칸이 이미 전부 `—` 라 같은
+ * 말을 두 번 하는 셈이다. 반대로 `summary: null` 은 서버가 필드를 주면서 값을 비운
+ * 것이므로 그 자리를 조용히 비우지 않고 평균이 없다는 사실을 드러낸다.
+ *
+ * 어느 쪽이든 `averageTotalScore` 에 접근하기 전에 걸러야 한다. 안 그러면 목록이 통째로
+ * 터진다 — 평균 한 줄 때문에 화면 전체를 잃는 것이 가장 나쁘다.
+ */
+function summaryText(summary: ApplicantScoreSummary | null | undefined): string | null {
+  if (summary === undefined) return null;
+  if (summary === null) return "지원자 전체 평균 정보가 없습니다.";
+  if (summary.averageTotalScore === null) return "아직 평가를 마친 지원자가 없습니다.";
+
+  return `지원자 전체 평균 ${summary.averageTotalScore.toFixed(1)}점 (평가 완료 ${summary.evaluatedCount}명)`;
 }
 
 export function ApplicantsTab() {
@@ -124,7 +144,7 @@ export function ApplicantsTab() {
     );
   }
 
-  const summary = data?.summary;
+  const summaryLine = summaryText(data?.summary);
 
   const columns: Column<Applicant>[] = [
     {
@@ -213,13 +233,7 @@ export function ApplicantsTab() {
         비교 기준은 서버가 준 것만 쓴다. 현재 페이지로 평균을 내면 페이지를 넘길 때마다
         기준이 달라져, 같은 점수가 높아 보였다 낮아 보였다 한다 (BE#188).
       */}
-      {summary !== undefined && (
-        <p className={styles.scoreSummary}>
-          {summary.averageTotalScore === null
-            ? "아직 평가를 마친 지원자가 없습니다."
-            : `지원자 전체 평균 ${summary.averageTotalScore.toFixed(1)}점 (평가 완료 ${summary.evaluatedCount}명)`}
-        </p>
-      )}
+      {summaryLine !== null && <p className={styles.scoreSummary}>{summaryLine}</p>}
 
       {exportError && <ErrorState message={exportError} onRetry={() => void handleExport()} />}
       {decideBulk.error !== null && <ErrorState message={applicationErrorMessage(decideBulk.error)} />}

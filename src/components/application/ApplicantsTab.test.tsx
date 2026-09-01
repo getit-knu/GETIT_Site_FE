@@ -174,6 +174,24 @@ describe("ApplicantsTab", () => {
     expect(screen.queryByText(/전체 평균/)).not.toBeInTheDocument();
   });
 
+  it("서버가 summary 를 null 로 주면 화면이 터지지 않고 평균이 없다고 알린다", async () => {
+    /*
+      필드가 없는 것(`undefined`)과 값이 빈 것(`null`)은 서버 직렬화 설정에 따라 갈린다.
+      생성된 스키마엔 `summary` 자체가 아직 없어 `null` 이 안 온다는 근거가 없다.
+      `null` 이 가드를 통과하면 `averageTotalScore` 접근에서 목록 전체가 터진다.
+    */
+    vi.mocked(api.getApplicants).mockResolvedValue(
+      page([applicant({ totalScore: 90, evaluatorCount: 2 })], { summary: null }),
+    );
+    renderPage();
+
+    const table = await screen.findByRole("table");
+    expect(within(table).getByText("김지원")).toBeInTheDocument();
+    expect(screen.getByText("지원자 전체 평균 정보가 없습니다.")).toBeInTheDocument();
+    // 없는 평균을 지어내지 않는다. 숫자가 붙은 평균 문구가 나오면 안 된다.
+    expect(screen.queryByText(/평균 \d/)).not.toBeInTheDocument();
+  });
+
   it("상태 탭이 URL 과 조회 조건에 함께 반영된다", async () => {
     const router = renderPage();
     await screen.findByRole("table");

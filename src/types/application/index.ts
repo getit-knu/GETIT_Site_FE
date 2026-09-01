@@ -60,8 +60,17 @@ export interface ApplicantScoreSummary {
   evaluatedCount: number;
 }
 
-/** 7.1 응답. `summary`는 BE#188 전까지 오지 않는다. */
-export type ApplicantBoard = Page<Applicant> & { summary?: ApplicantScoreSummary };
+/**
+ * 7.1 응답. `summary`는 BE#188 전까지 오지 않는다.
+ *
+ * **`| null`을 손으로 붙였다.** 생성된 스키마(`PageResponseApplicantSummary`)엔 `summary`
+ * 필드 자체가 아직 없어 "null이 오지 않는다"는 근거가 어디에도 없고, 이 레포는 springdoc이
+ * null 가능성을 안 실어 주는 함정을 손으로 되돌리는 관례를 이미 쓰고 있다
+ * (`types/user/index.ts`의 `AdminUser`). 필드가 생기는 순간 직렬화 설정에 따라
+ * `summary: null`(예: 평가된 지원서가 한 건도 없어 집계가 비는 경우)이 올 수 있어,
+ * **필드가 없는 것과 값이 빈 것을 둘 다 처리한다**(`ApplicantsTab` 의 `summaryText`).
+ */
+export type ApplicantBoard = Page<Applicant> & { summary?: ApplicantScoreSummary | null };
 
 /**
  * 7.1 조회 조건. **`evaluated`·`keyword`는 실제 API에 없다**(BE `getApplicants(generationId, status, pageable)`
