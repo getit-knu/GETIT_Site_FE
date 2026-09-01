@@ -13,7 +13,15 @@ export type Role = (typeof ROLES)[number];
 /** BE `UserStatus` enum. */
 export type UserStatus = "ACTIVE" | "WITHDRAWN";
 
-/** `GET /api/auth/me` 응답. 명세서 1.5 의 필드 순서를 그대로 따랐다. */
+/**
+ * `GET /api/auth/me` 응답. 명세서 1.5 의 필드 순서를 그대로 따랐다.
+ *
+ * `privacyConsentedAt`은 아직 BE에 없다(`getit-knu/GETIT_Site_BE#203`에서 추가 예정) — 그때까지는
+ * 응답 자체에 이 키가 없어 런타임엔 `undefined`로 온다. **그래서 옵셔널로 둔다** — `string | null`로
+ * 두면 "필드가 없다"와 "동의 안 했다(`null`)"를 구분 못 해, `OnboardingPage`가 신규 유저를
+ * "이미 동의했다"고 잘못 판단할 수 있다(`undefined !== null`이 `true`라 `!== null` 검사로는
+ * 안 걸러진다). 호출부는 반드시 `!me.privacyConsentedAt`(참-거짓)로 봐야 한다.
+ */
 export interface Me {
   id: number;
   email: string;
@@ -27,6 +35,8 @@ export interface Me {
   role: Role;
   generationNo: number | null;
   status: UserStatus;
+  /** 개인정보 수집·이용에 동의한 시각. 아직 동의 안 했으면 `null`, BE가 아직 필드 자체를 안 주면 `undefined`. */
+  privacyConsentedAt?: string | null;
 }
 
 /**

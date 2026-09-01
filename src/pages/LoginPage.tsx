@@ -1,12 +1,4 @@
-import { useState } from "react";
-import type { MouseEvent } from "react";
-
-import { PrivacyConsent } from "../components/ui/PrivacyConsent/PrivacyConsent";
-import { LOGIN_PRIVACY_NOTICE } from "../libs/privacyNotices";
-
 import styles from "./LoginPage.module.scss";
-
-const CONSENT_ID = "login-privacy-consent";
 
 /** Google 4색 로고. 브랜드 아이콘이라 원본 색상 그대로 직접 그린다(Figma 원격 asset은 7일 뒤 만료). */
 function GoogleIcon() {
@@ -29,23 +21,17 @@ function GoogleIcon() {
   );
 }
 
-/** 로그인. Figma 와이어프레임(`5:3207`) 기준. "테스트 계정" 섹션은 BE 대응 엔드포인트가 없어 제외. */
+/**
+ * 로그인. Figma 와이어프레임(`5:3207`) 기준. "테스트 계정" 섹션은 BE 대응 엔드포인트가 없어 제외.
+ *
+ * **개인정보 동의는 여기서 받지 않는다.** 한때 로그인 버튼 앞에 동의 체크박스를 뒀었는데,
+ * 그러면 이미 동의한 기존 회원도 로그인할 때마다 매번 다시 체크해야 했다(동의 여부를
+ * 저장할 방법이 없으면 매 세션 반복된다). Google OAuth는 "이 사람이 처음 오는지" 알려주지
+ * 않고, 그건 BE가 콜백에서 `isNewUser`로 알려주는 값이라 여기서는 판단할 수 없다 —
+ * 신규 유저 전용 동의는 `OAuthCallbackPage`(정확히는 그 뒤 온보딩 화면)에서 받는다.
+ */
 export default function LoginPage() {
   const googleLoginUrl = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/google`;
-  const [consent, setConsent] = useState(false);
-  const [blocked, setBlocked] = useState(false);
-
-  /*
-    구글로 넘어가는 순간부터는 BE가 계정을 만들고 이메일·이름 등을 그대로 받는다 —
-    돌아온 뒤에는 이미 늦다. 그래서 링크는 href를 그대로 두어(스크린리더에도 진짜
-    링크로 읽힌다) 클릭만 막고, 동의 칸으로 데려다 놓는다.
-  */
-  function handleLoginClick(event: MouseEvent<HTMLAnchorElement>) {
-    if (consent) return;
-    event.preventDefault();
-    setBlocked(true);
-    document.getElementById(CONSENT_ID)?.focus();
-  }
 
   return (
     <div className={styles.page}>
@@ -73,18 +59,7 @@ export default function LoginPage() {
         <p className={styles.subtitle}>GET IT에 오신 것을 환영합니다</p>
 
         <div className={styles.card}>
-          <PrivacyConsent
-            id={CONSENT_ID}
-            checked={consent}
-            onChange={(next) => {
-              setConsent(next);
-              if (next) setBlocked(false);
-            }}
-            notice={LOGIN_PRIVACY_NOTICE}
-            error={blocked ? "로그인하려면 개인정보 수집·이용에 동의해 주세요." : undefined}
-          />
-
-          <a className={styles.googleButton} href={googleLoginUrl} onClick={handleLoginClick}>
+          <a className={styles.googleButton} href={googleLoginUrl}>
             <GoogleIcon />
             Google로 로그인
           </a>
