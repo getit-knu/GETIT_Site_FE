@@ -6,9 +6,7 @@ import styles from "./Hero.module.scss";
 export function Hero() {
   return (
     <section className={styles.hero}>
-      <div className={styles.washAccent} aria-hidden="true" />
-      <div className={styles.washViolet} aria-hidden="true" />
-      <div className={styles.washTeal} aria-hidden="true" />
+      <div className={styles.aurora} aria-hidden="true" />
 
       <div className={styles.inner}>
         <p className={styles.badge}>경북대학교 컴퓨터학부 SW&창업 동아리</p>

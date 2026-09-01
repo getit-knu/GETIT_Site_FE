@@ -1,7 +1,6 @@
 @use "../../styles/abstracts/variables" as *;
 @use "../../styles/abstracts/breakpoints" as *;
 @use "../../styles/abstracts/container";
-@use "../../styles/abstracts/motion" as *;
 
 .hero {
   @include container.full-viewport-section;
@@ -19,64 +18,52 @@
   }
 }
 
-// 배경 워시. 예전엔 둥둥 떠다니는 블롭 원 2개였는데(사용자 피드백: "촌스러움") radial-gradient
-// 번짐으로 교체했다 — 1차 시도(8~12% 불투명도)는 "티가 안 난다"는 피드백을 받아 알파·크기를
-// 크게 올렸다(지금은 뷰포트 60~80% 크기, accent 기준 20%). 그래도 형태 자체는 gradient가
-// 가장자리(70%)에서 투명하게 사라지므로 블롭처럼 또렷한 원으로는 안 보인다. 움직임은 위치가
-// 눈에 띄게 이동하면 "떠다니는 원"으로 되돌아가 버리므로 opacity·scale 드리프트만 아주 느리게
-// (60s+) 준다.
-.washAccent,
-.washViolet,
-.washTeal {
+// 히어로 한정 오로라. 2차례의 radial-gradient 워시(블롭 대체)가 "티가 안 난다"는 피드백에
+// 이어 "밋밋하다"는 사용자 판단을 받아, 이번엔 홈 전체가 아니라 히어로 하나에만 conic-gradient
+// 기반 오로라를 넣기로 방향을 바꿨다 — 그 대신 히어로 밖 섹션(커리큘럼 등)은 장식 없이 깔끔한
+// 단색 배경으로 되돌린다.
+//
+// 구조: 히어로보다 훨씬 큰 정사각형(140vmax, 뷰포트 대각선보다 크다)을 회전시켜 conic-gradient의
+// 3색(남색·보라·청록)이 흐르듯 섞이게 한다. 마스크는 처음엔 이 140vmax 박스 기준 퍼센트
+// (circle, 65%)로 잡았는데, 그러면 마스크의 "완전 투명" 반경이 박스 자신의 대각선 기준이라
+// 실제 히어로 크기보다 훨씬 커서 — 히어로 하단(다음 섹션과 만나는 경계)에서 여전히 꽤 진한
+// 색으로 하드 엣지가 잘렸다(스크린샷으로 확인, task-13 픽스 라운드 2 보고서의 전/후 비교 참고).
+// 그래서 마스크 크기 자체를 뷰포트 단위(vw/vh)로 못박아 히어로 자신의 절반 크기보다 확실히
+// 작게 잡았다 — 이제 마스크가 히어로 자기 자신의 경계에 닿기 전에 이미 완전히 투명해진다.
+.aurora {
   position: absolute;
   z-index: 0;
-  border-radius: 50%;
-  filter: blur(4.375rem);
-  animation: wash-drift 72s $ease-out infinite alternate;
+  top: 50%;
+  left: 50%;
+  width: 140vmax;
+  height: 140vmax;
+  // 위치는 항상 정중앙 고정 — 아래 애니메이션은 `rotate`(개별 트랜스폼 속성)만 바꾸므로
+  // `translate`로 잡은 중앙 위치는 회전 내내 전혀 움직이지 않는다("떠다니는 원" 금지 제약).
+  translate: -50% -50%;
+  background: conic-gradient(
+    from 0deg,
+    rgb(40 57 151 / 40%) 0deg,
+    rgb(109 40 160 / 34%) 130deg,
+    rgb(13 148 136 / 30%) 250deg,
+    rgb(40 57 151 / 40%) 360deg
+  );
+  filter: blur(4.5rem);
+  mask-image: radial-gradient(ellipse 58vw 34vh at center, #000 0%, #000 38%, rgb(0 0 0 / 0%) 70%);
+  -webkit-mask-image: radial-gradient(ellipse 58vw 34vh at center, #000 0%, #000 38%, rgb(0 0 0 / 0%) 70%);
+  animation: aurora-rotate 70s linear infinite;
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
   }
 }
 
-.washAccent {
-  top: -18vw;
-  left: -14vw;
-  width: min(70vw, 60rem);
-  height: min(70vw, 60rem);
-  // $color-accent(#283997) 20% — 1차보다 알파를 2배 가까이 올려 배경 워시가 확실히 보이게 했다.
-  background: radial-gradient(circle, rgb(40 57 151 / 20%) 0%, rgb(40 57 151 / 0%) 70%);
-}
-
-.washViolet {
-  right: -14vw;
-  bottom: -20vw;
-  width: min(74vw, 62rem);
-  height: min(74vw, 62rem);
-  // 보라 계열 보조 톤 — 팔레트에 없어 여기서만 하드코딩. accent와 다른 모서리에 둬 깊이감을 준다.
-  background: radial-gradient(circle, rgb(109 40 160 / 16%) 0%, rgb(109 40 160 / 0%) 70%);
-  animation-delay: 24s;
-}
-
-.washTeal {
-  top: 4vw;
-  right: 2vw;
-  width: min(42vw, 34rem);
-  height: min(42vw, 34rem);
-  // 청록 계열 — 세 번째 겹으로 accent·보라 사이에 톤 변화를 하나 더 준다(크기는 가장 작게).
-  background: radial-gradient(circle, rgb(13 148 136 / 13%) 0%, rgb(13 148 136 / 0%) 70%);
-  animation-delay: 12s;
-}
-
-@keyframes wash-drift {
+@keyframes aurora-rotate {
   from {
-    opacity: 0.75;
-    scale: 1;
+    rotate: 0deg;
   }
 
   to {
-    opacity: 1;
-    scale: 1.06;
+    rotate: 360deg;
   }
 }
 

@@ -1,13 +1,11 @@
 @use "../../styles/abstracts/variables" as *;
 @use "../../styles/abstracts/container";
 @use "../../styles/abstracts/breakpoints" as *;
-@use "../../styles/abstracts/motion" as *;
 
-// `overflow: hidden`을 걷어냈다 — 예전엔 모서리 밖으로 번지는 블롭 원을 가리는 용도였는데,
-// 블롭이 스크롤 스냅으로 섹션이 부분 노출되는 타이밍에 이 섹션 자신의 경계에서 하드 엣지로
-// 잘려 옆 섹션(프로젝트 쇼케이스)으로 새어 들어간 것처럼 보이는 문제가 있었다(브라우저로 재현·
-// 확인함). 아래 워시는 블롭과 달리 radial-gradient가 가장자리에서 이미 투명하게 사라지므로
-// 클리핑이 필요 없다.
+// 배경 장식(블롭 원 → radial-gradient 워시)을 두 차례 시도했지만 사용자가 최종적으로 "히어로
+// 한정 오로라"로 방향을 좁혔다(Hero.module.scss 참고) — 히어로 밖 섹션은 장식 없는 단색
+// 배경으로 되돌린다. `overflow: hidden`도 필요 없다(모서리 밖으로 번지는 절대 위치 요소가
+// 더는 없다).
 .section {
   @include container.full-viewport-section;
 
@@ -16,56 +14,6 @@
   align-items: center;
   padding: 8rem 0;
   background-color: $color-background;
-}
-
-// 배경 워시. Hero와 같은 톤·모션으로 Home 섹션들끼리 통일감을 준다(1차보다 알파를 올려 "티가
-// 안 난다"는 피드백에 맞췄다). 크기는 Hero만큼 키우지 않았다 — 이 섹션은 위아래로 옆 섹션과
-// 맞닿아 있고 `overflow: hidden`도 없앤 상태라(위 주석 참고), 너무 크게 번지면 옆 섹션까지
-// 짙게 새어 들어간다. 대신 색은 Hero와 같은 accent·보라 두 톤을 그대로 맞췄다.
-.washAccent,
-.washViolet {
-  position: absolute;
-  z-index: 0;
-  border-radius: 50%;
-  filter: blur(4.375rem);
-  animation: wash-drift 72s $ease-out infinite alternate;
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-  }
-
-  @media (width <= $breakpoint-mobile) {
-    display: none;
-  }
-}
-
-.washAccent {
-  top: -3.75rem;
-  right: -7.5rem;
-  width: 34rem;
-  height: 34rem;
-  background: radial-gradient(circle, rgb(40 57 151 / 16%) 0%, rgb(40 57 151 / 0%) 70%);
-}
-
-.washViolet {
-  bottom: -6.25rem;
-  left: -8.75rem;
-  width: 36rem;
-  height: 36rem;
-  background: radial-gradient(circle, rgb(109 40 160 / 13%) 0%, rgb(109 40 160 / 0%) 70%);
-  animation-delay: 24s;
-}
-
-@keyframes wash-drift {
-  from {
-    opacity: 0.75;
-    scale: 1;
-  }
-
-  to {
-    opacity: 1;
-    scale: 1.06;
-  }
 }
 
 .inner {

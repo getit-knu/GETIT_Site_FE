@@ -23,9 +23,6 @@ export function CurriculumTimeline() {
 
   return (
     <section className={styles.section}>
-      <div className={styles.washAccent} aria-hidden="true" />
-      <div className={styles.washViolet} aria-hidden="true" />
-
       <div className={styles.inner}>
         <div className={styles.heading}>
           <h2 className={styles.title}>커리큘럼</h2>
