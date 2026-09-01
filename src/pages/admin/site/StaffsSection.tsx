@@ -9,6 +9,7 @@ import { siteSaveErrorMessage, siteErrorMessage } from "../../../errors/site/err
 import { useDeleteStaff, useReorderStaffs, useSaveStaff, useStaffs } from "../../../hooks/site/useStaffs";
 import type { Staff, StaffPayload, StaffSection } from "../../../types/site";
 
+import { StaffPhotoField } from "./StaffPhotoField";
 import styles from "./StaffsSection.module.scss";
 
 const SECTIONS: { value: StaffSection; label: string }[] = [
@@ -26,6 +27,16 @@ interface Draft {
   introduction: string;
   githubUrl: string;
   instagramUrl: string;
+  /**
+   * 저장할 프로필 사진.
+   *
+   * `null` 은 "사진 없음"(새로 만들거나 제거를 누른 상태), 숫자는 올린 파일,
+   * `undefined` 는 **기존 사진이 있는데 그 id 를 모르는 상태**다 — 이때는 저장을 막는다
+   * (`Staff.fileId` 주석 참고).
+   */
+  fileId: number | null | undefined;
+  /** 이미 등록된 사진 주소. 미리보기에만 쓴다. */
+  photoUrl: string | null;
 }
 
 function emptyDraft(section: StaffSection): Draft {
@@ -38,6 +49,9 @@ function emptyDraft(section: StaffSection): Draft {
     introduction: "",
     githubUrl: "",
     instagramUrl: "",
+    // 새 운영진에겐 지킬 사진이 없다. 안 올리면 그대로 사진 없이 저장된다.
+    fileId: null,
+    photoUrl: null,
   };
 }
 
@@ -51,6 +65,9 @@ function toDraft(staff: Staff): Draft {
     introduction: staff.introduction,
     githubUrl: staff.githubUrl ?? "",
     instagramUrl: staff.instagramUrl ?? "",
+    // 사진이 없는 운영진은 지킬 것이 없으므로 `undefined` 여도 `null` 로 본다.
+    fileId: staff.profileImageUrl === null ? null : staff.fileId,
+    photoUrl: staff.profileImageUrl,
   };
 }
 
@@ -66,11 +83,18 @@ function invalidReason(draft: Draft): string | null {
   if (draft.name.trim() === "") return "이름을 입력해 주세요.";
   if (draft.staffRole.trim() === "") return "직책을 입력해 주세요.";
   /*
-    구역은 검사하지 않는다 — `Select` 라 항상 값이 있고 "선택 안 함" 옵션도 없다.
     구역 라벨의 `*` 는 공개 카드에 나가는 값이라는 표시일 뿐이고, 비울 수 없으니
     막을 것도 없다. 아래 이름 · 직책 · 학과의 `*` 는 실제로 저장을 막는다.
   */
   if (draft.department.trim() === "") return "학과 · 학번을 입력해 주세요.";
+  /*
+    등록된 사진이 있는데 그 id 를 모르면 저장할 수 없다 — 수정 요청은 `fileId` 를 통째로
+    덮어쓰므로 보내지 않으면 서버가 사진을 지운다. 조회 응답에 `fileId` 가 실려 오기
+    시작하면(BE#187) 이 검사는 저절로 통과한다.
+  */
+  if (draft.fileId === undefined) {
+    return "등록된 사진 정보를 불러오지 못했습니다. 사진을 다시 올리거나 제거해 주세요.";
+  }
   return invalidUrlReason("GitHub 링크", draft.githubUrl) ?? invalidUrlReason("Instagram 링크", draft.instagramUrl);
 }
 
@@ -99,8 +123,8 @@ function StaffForm({ draft: initial, generationNo, onClose }: FormProps) {
       introduction: draft.introduction,
       githubUrl: draft.githubUrl.trim() === "" ? null : draft.githubUrl.trim(),
       instagramUrl: draft.instagramUrl.trim() === "" ? null : draft.instagramUrl.trim(),
-      // TODO: 프로필 이미지는 파일 업로드(13.1·13.2)가 붙은 뒤에 지원한다.
-      fileId: null,
+      // `undefined` 는 `invalidReason` 이 이미 막았다.
+      fileId: draft.fileId ?? null,
       generationNo,
     };
     save.mutate({ id: draft.id, payload }, { onSuccess: onClose });
@@ -131,6 +155,8 @@ function StaffForm({ draft: initial, generationNo, onClose }: FormProps) {
           onChange={(instagramUrl) => set({ instagramUrl })}
         />
       </div>
+      <StaffPhotoField currentUrl={draft.photoUrl} onFileIdChange={(fileId) => set({ fileId })} />
+
       <TextArea
         label="한줄 소개"
         rows={2}
@@ -209,10 +235,16 @@ export function StaffsSection({ generationNo }: { generationNo: number }) {
                 <ul className={styles.staffs}>
                   {inSection.map((staff, at) => (
                     <li key={staff.id} className={styles.staff}>
-                      <div className={styles.info}>
-                        <strong>{staff.name}</strong>
-                        <span>{staff.staffRole}</span>
-                        <span className={styles.muted}>{staff.department}</span>
+                      <div className={styles.identity}>
+                        {/* 올린 사진이 목록에 바로 반영되는지 여기서 확인한다. */}
+                        {staff.profileImageUrl !== null && (
+                          <img src={staff.profileImageUrl} alt="" className={styles.thumb} />
+                        )}
+                        <div className={styles.info}>
+                          <strong>{staff.name}</strong>
+                          <span>{staff.staffRole}</span>
+                          <span className={styles.muted}>{staff.department}</span>
+                        </div>
                       </div>
                       <div className={styles.actions}>
                         <button

@@ -2,6 +2,7 @@ import { groupErrorMessage } from "../../errors/user/errorMessages";
 import { useMyGroup } from "../../hooks/group/useMyGroup";
 import { EmptyState, ErrorState } from "../../components/ui/states/States";
 
+import { MyProjectsSection } from "./MyProjectsSection";
 import { ProjectSubmitForm } from "./ProjectSubmitForm";
 import styles from "./GroupPage.module.scss";
 
@@ -45,6 +46,8 @@ export default function GroupPage() {
             </section>
 
             <section className={styles.submitSection}>
+              <MyProjectsSection />
+
               <h2 className={styles.sectionTitle}>프로젝트 등록</h2>
               <p className={styles.hint}>등록하면 관리자 승인 후 프로젝트 목록에 공개됩니다.</p>
               <ProjectSubmitForm />

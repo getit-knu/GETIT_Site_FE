@@ -29,9 +29,8 @@ export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
  * (BE 확인함). `studentNumber`는 제출 시 필수 검증 대상이 아니라(#189 확인) `null`일 수
  * 있다. `grade`는 기본 정보 필수 검증 대상이라 제출된 지원서엔 항상 있다.
  *
- * `totalScore`·`evaluatorCount`는 **아직 서버가 주지 않는다**(`getit-knu/GETIT_Site_BE#188` —
- * `ApplicantSummary`에 점수 필드 자체가 없다). 값이 실려 오기 시작하면 화면이 그대로
- * 그린다. 아무도 평가하지 않은 지원자는 그 뒤에도 `null`이다.
+ * `totalScore`·`evaluatorCount`는 `getit-knu/GETIT_Site_BE#188`로 채워지기 시작했다.
+ * 아무도 평가하지 않은 지원자는 `null`이다.
  */
 export interface Applicant {
   id: number;
@@ -61,14 +60,16 @@ export interface ApplicantScoreSummary {
 }
 
 /**
- * 7.1 응답. `summary`는 BE#188 전까지 오지 않는다.
+ * 7.1 응답을 화면이 쓰기 좋게 편 형태.
  *
- * **`| null`을 손으로 붙였다.** 생성된 스키마(`PageResponseApplicantSummary`)엔 `summary`
- * 필드 자체가 아직 없어 "null이 오지 않는다"는 근거가 어디에도 없고, 이 레포는 springdoc이
- * null 가능성을 안 실어 주는 함정을 손으로 되돌리는 관례를 이미 쓰고 있다
- * (`types/user/index.ts`의 `AdminUser`). 필드가 생기는 순간 직렬화 설정에 따라
- * `summary: null`(예: 평가된 지원서가 한 건도 없어 집계가 비는 경우)이 올 수 있어,
- * **필드가 없는 것과 값이 빈 것을 둘 다 처리한다**(`ApplicantsTab` 의 `summaryText`).
+ * **실제 BE 응답(`ApplicantListResult`)은 이 모양이 아니다** — 페이지 필드가 최상위가
+ * 아니라 `applicants` 키 아래 감싸여 오고, `summary`는 그 옆 형제 필드다. BE#188 스키마가
+ * 아직 없을 때 짐작으로 이 타입을 최상위 페이지 형태로 짜 둔 게 실제와 달랐다(생성된
+ * 스키마로 확인함) — `apis/application/applicationsApi.ts`의 `getApplicants`가 실제 응답을
+ * 이 평평한 형태로 풀어서 준다. 화면(`ApplicantsTab`)은 이 타입만 알면 된다.
+ *
+ * `summary`가 `undefined`(필드 자체가 없음)와 `null`(값이 빔)을 구분하는 이유는
+ * `ApplicantsTab`의 `summaryText` 주석 참고.
  */
 export type ApplicantBoard = Page<Applicant> & { summary?: ApplicantScoreSummary | null };
 

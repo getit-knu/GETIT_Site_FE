@@ -33,6 +33,7 @@ const RESULT: MemberProject = {
   thumbnailUrl: "",
   status: "PENDING",
   statusLabel: "승인 대기",
+  rejectReason: null,
 };
 
 describe("ProjectSubmitForm", () => {
