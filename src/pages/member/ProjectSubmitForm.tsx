@@ -167,8 +167,16 @@ export function ProjectSubmitForm() {
 
       <ThumbnailField currentUrl={null} onFileIdChange={(fileId) => set({ fileId })} />
 
-      {reason !== null && <p className={styles.reason}>{reason}</p>}
-      {submit.error !== null && <p className={styles.reason}>{projectSaveErrorMessage(submit.error)}</p>}
+      {reason !== null && (
+        <p role="status" className={styles.reason}>
+          {reason}
+        </p>
+      )}
+      {submit.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {projectSaveErrorMessage(submit.error)}
+        </p>
+      )}
 
       <div className={styles.formFooter}>
         <Button disabled={reason !== null || submit.isPending} onClick={handleSubmit}>

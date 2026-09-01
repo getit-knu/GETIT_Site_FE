@@ -78,8 +78,16 @@ function ActivityPhotoForm({ draft: initial, onClose }: FormProps) {
 
       <div className={styles.formFooter}>
         {/* 저장을 막는 이유를 미리 보여준다. 눌러 보고 알게 하지 않는다. */}
-        {reason !== null && <p className={styles.reason}>{reason}</p>}
-        {save.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(save.error)}</p>}
+        {reason !== null && (
+          <p role="status" className={styles.reason}>
+            {reason}
+          </p>
+        )}
+        {save.error !== null && (
+          <p role="alert" className={styles.reason}>
+            {siteSaveErrorMessage(save.error)}
+          </p>
+        )}
         <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
           취소
         </Button>
@@ -138,7 +146,11 @@ export function ActivityPhotosSection() {
         + 활동 사진 추가
       </button>
 
-      {remove.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(remove.error)}</p>}
+      {remove.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {siteSaveErrorMessage(remove.error)}
+        </p>
+      )}
 
       {editing !== null && (
         <ActivityPhotoForm key={editing.id ?? "new"} draft={editing} onClose={() => setEditing(null)} />

@@ -102,8 +102,16 @@ function EventForm({ draft: initial, generationId, onClose }: FormProps) {
       </label>
 
       <div className={styles.formFooter}>
-        {reason !== null && <p className={styles.reason}>{reason}</p>}
-        {save.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(save.error)}</p>}
+        {reason !== null && (
+          <p role="status" className={styles.reason}>
+            {reason}
+          </p>
+        )}
+        {save.error !== null && (
+          <p role="alert" className={styles.reason}>
+            {siteSaveErrorMessage(save.error)}
+          </p>
+        )}
         <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
           취소
         </Button>
@@ -165,7 +173,11 @@ export function EventsSection({ generationId }: { generationId: number }) {
         + 행사 추가
       </button>
 
-      {remove.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(remove.error)}</p>}
+      {remove.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {siteSaveErrorMessage(remove.error)}
+        </p>
+      )}
 
       {editing !== null && (
         <EventForm

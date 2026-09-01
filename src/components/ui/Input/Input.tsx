@@ -22,6 +22,15 @@ interface InputProps {
   type?: InputType;
   disabled?: boolean;
   maxLength?: number;
+  /**
+   * `type="number"` 일 때 받을 수 있는 범위.
+   *
+   * **타이핑을 막지는 않는다** — 브라우저는 범위 밖 값도 치게 놔둔다(스피너와 `:invalid`
+   * 상태에만 반영된다). 실제로 막는 것은 폼의 검증이고, 이건 스피너 경계를 맞추고
+   * 보조기기가 "1에서 6 사이"라고 미리 읽어 주게 하는 값이다.
+   */
+  min?: number;
+  max?: number;
 }
 
 export function Input({
@@ -36,9 +45,12 @@ export function Input({
   type = "text",
   disabled,
   maxLength,
+  min,
+  max,
 }: InputProps) {
   const generatedId = useId();
   const id = givenId ?? generatedId;
+  const errorId = `${id}-error`;
 
   return (
     <div className={styles.wrapper}>
@@ -55,12 +67,24 @@ export function Input({
         onChange={(event) => onChange(event.target.value)}
         onBlur={onBlur}
         aria-label={label ? undefined : ariaLabel}
+        /*
+          빨간 테두리는 눈에만 보인다. `aria-invalid` 로 상태를,
+          `aria-describedby` 로 이유를 칸 자체에 붙여야 한다.
+
+          아래 문구의 `role="alert"` 만으로는 부족하다 — alert 는 DOM 에 꽂히는
+          **그 순간 한 번** 읽히고 끝이라, 사용자가 나중에 이 칸으로 다시 탭해
+          오면 "이메일, 편집" 만 들리고 왜 막혔는지는 알 수 없다.
+        */
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
         placeholder={placeholder}
         disabled={disabled}
         maxLength={maxLength}
+        min={min}
+        max={max}
       />
       {error && (
-        <p role="alert" className={styles.errorMessage}>
+        <p id={errorId} role="alert" className={styles.errorMessage}>
           {error}
         </p>
       )}

@@ -216,8 +216,16 @@ export function AdminProjectFormModal({ project, onClose }: AdminProjectFormModa
           Home 화면에 소개
         </label>
 
-        {reason !== null && <p className={styles.reason}>{reason}</p>}
-        {save.error !== null && <p className={styles.reason}>{projectSaveErrorMessage(save.error)}</p>}
+        {reason !== null && (
+          <p role="status" className={styles.reason}>
+            {reason}
+          </p>
+        )}
+        {save.error !== null && (
+          <p role="alert" className={styles.reason}>
+            {projectSaveErrorMessage(save.error)}
+          </p>
+        )}
       </ModalBody>
 
       <ModalFooter>

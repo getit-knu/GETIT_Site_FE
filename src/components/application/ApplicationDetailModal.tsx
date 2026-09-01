@@ -156,11 +156,26 @@ function EvaluationSection({ applicationId, status }: EvaluationSectionProps) {
             ` · 운영진 평균 ${summary.totalScore.toFixed(1)}점(${summary.evaluatorCount}명 완료)`}
         </p>
 
-        {/* 저장을 막는 이유를 미리 보여준다. 눌러 보고 알게 하지 않는다. */}
-        {locked && <p className={styles.reason}>합불이 이미 결정돼 채점할 수 없습니다.</p>}
-        {!locked && reason !== null && <p className={styles.reason}>{reason}</p>}
+        {/*
+          저장을 막는 이유를 미리 보여준다. 눌러 보고 알게 하지 않는다.
 
-        {saveError !== null && <p className={styles.reason}>{evaluationSaveErrorMessage(saveError)}</p>}
+          role 을 셋으로 가르는 기준은 `ApplyForm` 의 같은 자리 주석 참고. 여기 세 줄이
+          그 세 경우를 한 번에 보여준다 — `locked` 는 이 지원자에 대해 늘 참인 설명문이라
+          사건이 아니고(role 없음), `reason` 은 점수를 고치는 동안 바뀌며(status),
+          `saveError` 는 저장을 누른 뒤에만 생긴다(alert).
+        */}
+        {locked && <p className={styles.reason}>합불이 이미 결정돼 채점할 수 없습니다.</p>}
+        {!locked && reason !== null && (
+          <p role="status" className={styles.reason}>
+            {reason}
+          </p>
+        )}
+
+        {saveError !== null && (
+          <p role="alert" className={styles.reason}>
+            {evaluationSaveErrorMessage(saveError)}
+          </p>
+        )}
       </section>
 
       <div className={styles.saveRow}>

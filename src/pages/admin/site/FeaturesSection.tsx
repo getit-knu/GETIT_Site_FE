@@ -49,7 +49,11 @@ export function FeaturesSection() {
       )}
 
       {/* 실패하면 스위치가 원래대로 돌아간다. 왜 돌아갔는지도 말해 준다. */}
-      {toggle.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(toggle.error)}</p>}
+      {toggle.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {siteSaveErrorMessage(toggle.error)}
+        </p>
+      )}
     </section>
   );
 }

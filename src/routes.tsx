@@ -1,8 +1,10 @@
 import type { ComponentType } from "react";
-import { createBrowserRouter, Outlet, ScrollRestoration, type RouteObject } from "react-router";
+import { createBrowserRouter, type RouteObject } from "react-router";
 
 import { RequireRole } from "./components/auth/RequireRole";
+import { Root } from "./components/layout/Root";
 import { FullScreenLoader } from "./components/ui/FullScreenLoader/FullScreenLoader";
+import { formatTitle, HOME_TITLE } from "./libs/documentTitle";
 import { ROLES } from "./types/auth";
 
 /**
@@ -33,21 +35,45 @@ function layout(load: () => Promise<Record<string, ComponentType>>, name: string
  * 권한 검사는 각 영역의 부모 라우트에서 `RequireRole` 로 **한 번만** 한다.
  * 페이지마다 걸면 새 페이지를 추가할 때 빠뜨리기 쉽고, 빠뜨려도 티가 나지 않는다.
  */
+/*
+  같은 이름의 화면이 영역마다 있어서 붙이는 꼬리표다 — 부원 대시보드와 어드민 대시보드가
+  둘 다 "대시보드" 라, 탭을 둘 다 열어 두면 어느 쪽인지 알 수 없다. 공개 화면은 겹치는
+  이름이 없고 방문자가 "영역" 이라는 개념을 알 필요도 없어 붙이지 않는다.
+*/
+const MEMBER = "부원";
+const ADMIN = "관리자";
+
 const areaRoutes: RouteObject[] = [
   // ── 공개 ────────────────────────────────────────────────
   // 콜백·403은 Nav/Footer가 필요 없는 화면이라 PublicLayout 밖에 둔다.
   {
     lazy: layout(() => import("./components/layout/PublicLayout"), "PublicLayout"),
     children: [
-      { path: "/", lazy: page(() => import("./pages/HomePage")) },
-      { path: "/projects", lazy: page(() => import("./pages/ProjectsPage")) },
-      { path: "/apply", lazy: page(() => import("./pages/ApplyPage")) },
-      { path: "/leaders", lazy: page(() => import("./pages/LeadersPage")) },
-      { path: "/login", lazy: page(() => import("./pages/LoginPage")) },
+      { path: "/", handle: { title: HOME_TITLE }, lazy: page(() => import("./pages/HomePage")) },
+      {
+        path: "/projects",
+        handle: { title: formatTitle("프로젝트 쇼케이스") },
+        lazy: page(() => import("./pages/ProjectsPage")),
+      },
+      { path: "/apply", handle: { title: formatTitle("지원하기") }, lazy: page(() => import("./pages/ApplyPage")) },
+      {
+        path: "/leaders",
+        handle: { title: formatTitle("운영진 소개") },
+        lazy: page(() => import("./pages/LeadersPage")),
+      },
+      { path: "/login", handle: { title: formatTitle("로그인") }, lazy: page(() => import("./pages/LoginPage")) },
     ],
   },
-  { path: "/oauth/callback", lazy: page(() => import("./pages/OAuthCallbackPage")) },
-  { path: "/403", lazy: page(() => import("./pages/ForbiddenPage")) },
+  {
+    path: "/oauth/callback",
+    handle: { title: formatTitle("로그인 중") },
+    lazy: page(() => import("./pages/OAuthCallbackPage")),
+  },
+  {
+    path: "/403",
+    handle: { title: formatTitle("접근 권한이 없습니다") },
+    lazy: page(() => import("./pages/ForbiddenPage")),
+  },
 
   // 내 정보(#240). GUEST·MEMBER·ADMIN 전부 접근 가능해야 해서 `/member`·`/admin`
   // 밖에 둔다 — 로그인만 돼 있으면 role 무관하게 통과(`RequireRole allowed={ROLES}`).
@@ -58,7 +84,9 @@ const areaRoutes: RouteObject[] = [
     children: [
       {
         lazy: layout(() => import("./components/layout/PublicLayout"), "PublicLayout"),
-        children: [{ index: true, lazy: page(() => import("./pages/MyPage")) }],
+        children: [
+          { index: true, handle: { title: formatTitle("내 정보") }, lazy: page(() => import("./pages/MyPage")) },
+        ],
       },
     ],
   },
@@ -73,10 +101,26 @@ const areaRoutes: RouteObject[] = [
       {
         lazy: layout(() => import("./components/layout/MemberLayout"), "MemberLayout"),
         children: [
-          { index: true, lazy: page(() => import("./pages/member/LectureListPage")) },
-          { path: "lectures/:id", lazy: page(() => import("./pages/member/LectureDetailPage")) },
-          { path: "dashboard", lazy: page(() => import("./pages/member/DashboardPage")) },
-          { path: "group", lazy: page(() => import("./pages/member/GroupPage")) },
+          {
+            index: true,
+            handle: { title: formatTitle("강좌 목록", MEMBER) },
+            lazy: page(() => import("./pages/member/LectureListPage")),
+          },
+          {
+            path: "lectures/:id",
+            handle: { title: formatTitle("강의", MEMBER) },
+            lazy: page(() => import("./pages/member/LectureDetailPage")),
+          },
+          {
+            path: "dashboard",
+            handle: { title: formatTitle("대시보드", MEMBER) },
+            lazy: page(() => import("./pages/member/DashboardPage")),
+          },
+          {
+            path: "group",
+            handle: { title: formatTitle("내 그룹", MEMBER) },
+            lazy: page(() => import("./pages/member/GroupPage")),
+          },
         ],
       },
     ],
@@ -92,20 +136,56 @@ const areaRoutes: RouteObject[] = [
       {
         lazy: layout(() => import("./components/admin/AdminLayout"), "AdminLayout"),
         children: [
-          { index: true, lazy: page(() => import("./pages/admin/AdminHomePage")) },
-          { path: "applications", lazy: page(() => import("./pages/admin/ApplicationsPage")) },
-          { path: "lectures", lazy: page(() => import("./pages/admin/LecturesPage")) },
-          { path: "projects", lazy: page(() => import("./pages/admin/ProjectsPage")) },
-          { path: "users", lazy: page(() => import("./pages/admin/UsersPage")) },
-          { path: "site", lazy: page(() => import("./pages/admin/SitePage")) },
-          { path: "questions", lazy: page(() => import("./pages/admin/QuestionsPage")) },
-          { path: "settings", lazy: page(() => import("./pages/admin/SettingsPage")) },
+          {
+            index: true,
+            handle: { title: formatTitle("대시보드", ADMIN) },
+            lazy: page(() => import("./pages/admin/AdminHomePage")),
+          },
+          {
+            path: "applications",
+            handle: { title: formatTitle("지원서 관리", ADMIN) },
+            lazy: page(() => import("./pages/admin/ApplicationsPage")),
+          },
+          {
+            path: "lectures",
+            handle: { title: formatTitle("강의 관리", ADMIN) },
+            lazy: page(() => import("./pages/admin/LecturesPage")),
+          },
+          {
+            path: "projects",
+            handle: { title: formatTitle("프로젝트 관리", ADMIN) },
+            lazy: page(() => import("./pages/admin/ProjectsPage")),
+          },
+          {
+            path: "users",
+            handle: { title: formatTitle("사용자 관리", ADMIN) },
+            lazy: page(() => import("./pages/admin/UsersPage")),
+          },
+          {
+            path: "site",
+            handle: { title: formatTitle("사이트 관리", ADMIN) },
+            lazy: page(() => import("./pages/admin/SitePage")),
+          },
+          {
+            path: "questions",
+            handle: { title: formatTitle("Q&A 관리", ADMIN) },
+            lazy: page(() => import("./pages/admin/QuestionsPage")),
+          },
+          {
+            path: "settings",
+            handle: { title: formatTitle("설정", ADMIN) },
+            lazy: page(() => import("./pages/admin/SettingsPage")),
+          },
         ],
       },
     ],
   },
 
-  { path: "*", lazy: page(() => import("./pages/NotFoundPage")) },
+  {
+    path: "*",
+    handle: { title: formatTitle("페이지를 찾을 수 없습니다") },
+    lazy: page(() => import("./pages/NotFoundPage")),
+  },
 ];
 
 /**
@@ -113,22 +193,12 @@ const areaRoutes: RouteObject[] = [
  *
  * 첫 진입 때는 해당 페이지 청크를 아직 받는 중이라 그릴 것이 없다.
  * `HydrateFallback` 을 주지 않으면 라우터가 그 틈에 무엇을 그릴지 몰라 경고를 낸다.
- *
- * `createBrowserRouter`는 페이지 전환 시 스크롤 위치를 알아서 맨 위로 돌려주지 않는다 —
- * `<ScrollRestoration />`을 라우터 트리 안에 직접 그려야 동작한다(react-router 데이터
- * 라우터 API의 opt-in 기능). 그래서 여기서는 `element` 를 비워 두는 대신 `Outlet`과
- * 나란히 그린다.
  */
 const routes: RouteObject[] = [
   {
     // 첫 진입 청크를 받는 동안 보이는 화면. `null`이면 그동안 흰 화면만 남는다.
     HydrateFallback: () => <FullScreenLoader label="GET IT을 여는 중이에요" />,
-    Component: () => (
-      <>
-        <ScrollRestoration />
-        <Outlet />
-      </>
-    ),
+    Component: Root,
     children: areaRoutes,
   },
 ];
