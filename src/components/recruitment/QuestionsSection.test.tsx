@@ -74,8 +74,10 @@ describe("QuestionsSection", () => {
     expect(screen.queryByLabelText("1번 문항 1번 선택지")).not.toBeInTheDocument();
   });
 
-  it("서술형을 객관식으로 바꾸면 선택지를 만들고 maxLength 를 비운다", async () => {
+  it("서술형을 객관식으로 바꾸면 선택지를 2개 만들고 maxLength 를 비운다", async () => {
     // 명세서 6.3 에서 maxLength 는 TEXT 만, options 는 CHOICE 만 쓴다.
+    // BE가 선택형 질문에 옵션 2개 이상을 요구한다 — 1개만 만들면 타입을 고르자마자
+    // (이 값이 바로 저장 요청으로 나간다) VALIDATION_FAILED로 막힌다.
     renderSection();
     await screen.findByLabelText("1번 문항 유형");
 
@@ -83,7 +85,26 @@ describe("QuestionsSection", () => {
 
     await waitFor(() => expect(api.updateQuestion).toHaveBeenCalled());
     expect(lastUpdate()?.[1]).toMatchObject({ type: "CHOICE", maxLength: null });
-    expect(lastUpdate()?.[1].options).toHaveLength(1);
+    expect(lastUpdate()?.[1].options).toHaveLength(2);
+  });
+
+  it("옵션 검증에 실패하면 서버가 준 이유를 그대로 보여준다", async () => {
+    /*
+      VALIDATION_FAILED는 이 도메인에서 일정 순서 · 문항 선택지 개수 · 재정렬 완전성 등
+      서로 다른 검증에 전부 같은 코드로 쓰인다. "일정" 문구로 고정해 두면 이 화면에서
+      실제로 겪은 것과 다른 오류(선택지 개수)가 뜬다 — 서버가 준 message를 그대로 쓴다.
+    */
+    vi.mocked(api.updateQuestion).mockRejectedValue({
+      code: "VALIDATION_FAILED",
+      message: "선택형 질문은 옵션이 2개 이상 필요합니다.",
+    });
+    renderSection();
+    await screen.findByLabelText("1번 문항 유형");
+
+    await userEvent.selectOptions(screen.getByLabelText("1번 문항 유형"), "CHOICE");
+
+    expect(await screen.findByText("선택형 질문은 옵션이 2개 이상 필요합니다.")).toBeInTheDocument();
+    expect(screen.queryByText(/일정이 올바르지 않습니다/)).not.toBeInTheDocument();
   });
 
   it("객관식을 서술형으로 바꾸면 선택지를 비운다", async () => {
@@ -185,7 +206,10 @@ describe("QuestionsSection", () => {
     await userEvent.selectOptions(filter(), "CHOICE");
     await userEvent.click(screen.getByRole("button", { name: "+ 문항 추가" }));
 
-    expect(vi.mocked(api.createQuestion).mock.lastCall?.[0]).toMatchObject({ type: "CHOICE", maxLength: null });
+    const created = vi.mocked(api.createQuestion).mock.lastCall?.[0];
+    expect(created).toMatchObject({ type: "CHOICE", maxLength: null });
+    // BE가 선택형 질문에 옵션 2개 이상을 요구한다 — 1개면 만들자마자 VALIDATION_FAILED로 막힌다.
+    expect(created?.options).toHaveLength(2);
   });
 
   it("걸러 보는 유형이 체크박스면 그 유형으로 만들고 선택지를 하나 채운다", async () => {
