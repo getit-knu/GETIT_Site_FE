@@ -2,6 +2,23 @@
 @use "../../styles/abstracts/breakpoints" as *;
 @use "../../styles/abstracts/container";
 @use "../../styles/abstracts/blob-decor" as blob;
+@use "../../styles/abstracts/motion" as *;
+
+// 첫 진입 등장. 배지 → 제목 → 설명 → 버튼 순으로 살짝 떠오르며 나타난다(UX 라운드 2).
+// fill-mode backwards라 delay 동안에도 from 상태(투명)로 대기한다.
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem);
+  }
+}
+
+// 마우스 패럴랙스(Hero.tsx가 --parallax-x/y를 -0.5~0.5로 갱신). 요소마다 깊이 계수를
+// 달리해 입체감을 낸다. transition을 함께 걸어 커서를 빠르게 움직여도 부드럽게 따라온다.
+@mixin parallax-layer($depth) {
+  transform: translate3d(calc(var(--parallax-x, 0) * #{$depth}), calc(var(--parallax-y, 0) * #{$depth}), 0);
+  transition: transform $duration-base $ease-out;
+}
 
 // 배경 장식은 블롭(원) → 워시 → 오로라 → 좌우 바운더리 데코까지 네 차례를 거쳐 다시 블롭으로
 // 롤백됐다(`blob-decor.scss` 히스토리 참고). 원래 블롭이 촌스러워 보인 핵심 원인은 섹션 경계의
@@ -89,6 +106,9 @@
 }
 
 .badge {
+  @include parallax-layer(0.25rem);
+
+  animation: hero-rise $duration-slow $ease-out backwards;
   margin: 0;
   color: $color-accent;
   font-size: 1rem;
@@ -97,6 +117,9 @@
 }
 
 .heading {
+  @include parallax-layer(0.5rem);
+
+  animation: hero-rise $duration-slow $ease-out 90ms backwards;
   display: flex;
   flex-direction: column;
   margin: 1.5rem 0 0;
@@ -116,6 +139,9 @@
 }
 
 .description {
+  @include parallax-layer(0.35rem);
+
+  animation: hero-rise $duration-slow $ease-out 180ms backwards;
   margin: 1.5rem 0 0;
   color: $color-text-secondary;
   font-size: 1.25rem;
@@ -126,6 +152,9 @@
 }
 
 .actions {
+  @include parallax-layer(0.2rem);
+
+  animation: hero-rise $duration-slow $ease-out 270ms backwards;
   display: flex;
   gap: 1rem;
   margin-top: 3rem;
@@ -149,6 +178,29 @@
   color: #fff;
   font-size: 1.125rem;
   font-weight: 700;
+  transition:
+    transform $duration-fast $ease-out,
+    box-shadow $duration-fast $ease-out,
+    background-color $duration-fast $ease-out;
+
+  &:hover {
+    background-color: $color-accent-hover;
+    box-shadow:
+      0 14px 12px rgb(0 0 0 / 14%),
+      0 6px 5px rgb(0 0 0 / 12%);
+    transform: translateY(-2px);
+
+    .ctaIcon {
+      transform: translateX(0.1875rem);
+    }
+  }
+
+  &:active {
+    box-shadow:
+      0 6px 5px rgb(0 0 0 / 10%),
+      0 2px 2px rgb(0 0 0 / 10%);
+    transform: translateY(0) scale(0.98);
+  }
 
   @media (width <= $breakpoint-mobile) {
     justify-content: center;
@@ -159,6 +211,7 @@
 .ctaIcon {
   width: 1.25rem;
   height: 1.25rem;
+  transition: transform $duration-fast $ease-out;
 }
 
 .secondaryCta {
@@ -173,9 +226,52 @@
   color: $color-text-primary;
   font-size: 1.125rem;
   font-weight: 700;
+  transition:
+    transform $duration-fast $ease-out,
+    box-shadow $duration-fast $ease-out,
+    background-color $duration-fast $ease-out;
+
+  &:hover {
+    background-color: rgb(54 65 83 / 6%);
+    box-shadow:
+      0 14px 18px rgb(0 0 0 / 12%),
+      0 6px 8px rgb(0 0 0 / 10%);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    box-shadow:
+      0 6px 8px rgb(0 0 0 / 10%),
+      0 2px 3px rgb(0 0 0 / 10%);
+    transform: translateY(0) scale(0.98);
+  }
 
   @media (width <= $breakpoint-mobile) {
     justify-content: center;
     width: 100%;
+  }
+}
+
+// 동작 줄이기: 등장·패럴랙스·hover 이동을 전부 끈다(색·그림자 변화는 유지).
+@media (prefers-reduced-motion: reduce) {
+  .badge,
+  .heading,
+  .description,
+  .actions {
+    animation: none;
+    transform: none;
+    transition: none;
+  }
+
+  .primaryCta,
+  .secondaryCta {
+    &:hover,
+    &:active {
+      transform: none;
+    }
+  }
+
+  .primaryCta:hover .ctaIcon {
+    transform: none;
   }
 }

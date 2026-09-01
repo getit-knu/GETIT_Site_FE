@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRef, useState, type WheelEvent } from "react";
+import { useRef, useState, type CSSProperties, type WheelEvent } from "react";
 
 import { getEvents } from "../../apis/public/publicApi";
 import { queryKeys } from "../../apis/queryKeys";
+import { useScrollReveal } from "../../hooks/ui/useScrollReveal";
 import type { SiteEventType } from "../../types/site";
 import { Badge } from "../ui/Badge/Badge";
 
@@ -45,7 +46,11 @@ export function ScheduleCalendar() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [monthIndex, setMonthIndex] = useState(now.getMonth());
+  // 달 넘김 방향. 날짜 그리드가 이동 방향에서 미끄러져 들어오는 애니메이션의 기준(UX 라운드 2).
+  const [direction, setDirection] = useState<"next" | "prev">("next");
   const lastWheelAt = useRef(0);
+  const [eventsCardRef, eventsCardRevealed] = useScrollReveal<HTMLDivElement>();
+  const [calendarCardRef, calendarCardRevealed] = useScrollReveal<HTMLDivElement>();
 
   const month = monthIndex + 1;
   const { data } = useQuery({ queryKey: queryKeys.public.events(year, month), queryFn: () => getEvents(year, month) });
@@ -67,6 +72,7 @@ export function ScheduleCalendar() {
    * 전에 두 클릭이 같은 monthIndex 값을 캡처해 둘 다 같은 달로 이동해 버린다.
    */
   function stepMonth(delta: number) {
+    setDirection(delta > 0 ? "next" : "prev");
     setMonthIndex((current) => {
       const total = current + delta;
       const next = ((total % 12) + 12) % 12;
@@ -78,6 +84,8 @@ export function ScheduleCalendar() {
 
   /** 헤더의 "오늘" 버튼 — 몇 달을 넘겨봤든 오늘이 속한 달로 바로 돌아온다. */
   function goToToday() {
+    // 과거를 보고 있었으면 앞으로(next), 미래를 보고 있었으면 뒤로(prev) 미끄러진다.
+    setDirection(year * 12 + monthIndex < now.getFullYear() * 12 + now.getMonth() ? "next" : "prev");
     setYear(now.getFullYear());
     setMonthIndex(now.getMonth());
   }
@@ -103,7 +111,7 @@ export function ScheduleCalendar() {
   return (
     <section className={styles.section}>
       <div className={styles.inner}>
-        <div className={styles.eventsCard}>
+        <div ref={eventsCardRef} data-revealed={eventsCardRevealed || undefined} className={styles.eventsCard}>
           <div className={styles.eventsHeader}>
             <div>
               <h3 className={styles.eventsTitle}>
@@ -119,8 +127,8 @@ export function ScheduleCalendar() {
 
           {events.length > 0 ? (
             <ul className={styles.eventList}>
-              {events.map((event) => (
-                <li key={event.id} className={styles.eventItem}>
+              {events.map((event, index) => (
+                <li key={event.id} className={styles.eventItem} style={{ "--reveal-index": index } as CSSProperties}>
                   <span className={styles.eventDay}>{dayOf(event.startDate)}</span>
                   <div>
                     <h4 className={styles.eventTitle}>{event.title}</h4>
@@ -138,7 +146,12 @@ export function ScheduleCalendar() {
           )}
         </div>
 
-        <div className={styles.calendarCard} onWheel={handleWheel}>
+        <div
+          ref={calendarCardRef}
+          data-revealed={calendarCardRevealed || undefined}
+          className={styles.calendarCard}
+          onWheel={handleWheel}
+        >
           <div className={styles.calendarHeader}>
             <div className={styles.calendarNavGroup}>
               <button type="button" className={styles.navButton} aria-label="이전 달" onClick={() => stepMonth(-1)}>
@@ -174,7 +187,9 @@ export function ScheduleCalendar() {
               ))}
             </div>
 
-            <div className={styles.dateGrid}>
+            {/* key로 달마다 다시 그려 이동 방향에서 미끄러져 들어오게 한다 — 휠·버튼 어느 쪽으로
+                넘겨도 "어느 방향으로 이동했는지"가 눈에 남는다. */}
+            <div key={`${year}-${monthIndex}`} className={styles.dateGrid} data-direction={direction}>
               {calendarCells.map((date, index) =>
                 date === null ? (
                   <span key={`empty-${index}`} />

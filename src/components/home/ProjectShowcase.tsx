@@ -3,8 +3,32 @@ import { Link } from "react-router";
 
 import { getHome } from "../../apis/public/publicApi";
 import { queryKeys } from "../../apis/queryKeys";
+import { useScrollReveal } from "../../hooks/ui/useScrollReveal";
+import type { HomeFeaturedProject } from "../../types/home";
 
 import styles from "./ProjectShowcase.module.scss";
+
+/**
+ * 쇼케이스 한 줄. 행마다 각자 뷰포트에 들어올 때 아래에서 떠오른다(UX 라운드 2) —
+ * 섹션 단위로 한 번에 나타나면 아래쪽 행들은 정작 보일 때 이미 끝나 있어 행 단위로 건다.
+ */
+function ShowcaseRow({ project }: { project: HomeFeaturedProject }) {
+  const [rowRef, rowRevealed] = useScrollReveal<HTMLLIElement>();
+
+  return (
+    <li ref={rowRef} data-revealed={rowRevealed || undefined} className={styles.row}>
+      <div
+        className={styles.thumbnail}
+        style={project.thumbnailUrl ? { backgroundImage: `url(${project.thumbnailUrl})` } : undefined}
+        aria-hidden="true"
+      />
+      <div className={styles.content}>
+        <h3 className={styles.projectTitle}>{project.title}</h3>
+        <p className={styles.projectDescription}>{project.description}</p>
+      </div>
+    </li>
+  );
+}
 
 /**
  * `GET /api/public/home`(#218)의 `featuredProjects` — 어드민에서 `isFeatured`로
@@ -16,6 +40,7 @@ import styles from "./ProjectShowcase.module.scss";
  */
 export function ProjectShowcase() {
   const { data } = useQuery({ queryKey: queryKeys.public.home(), queryFn: getHome });
+  const [headingRef, headingRevealed] = useScrollReveal<HTMLDivElement>();
   const projects = data?.featuredProjects ?? [];
 
   if (projects.length === 0) return null;
@@ -23,24 +48,14 @@ export function ProjectShowcase() {
   return (
     <section className={styles.section}>
       <div className={styles.inner}>
-        <div className={styles.heading}>
+        <div ref={headingRef} data-revealed={headingRevealed || undefined} className={styles.heading}>
           <h2 className={styles.title}>프로젝트 쇼케이스</h2>
           <p className={styles.subtitle}>GET IT 부원들이 만든 프로젝트를 확인해보세요</p>
         </div>
 
         <ul className={styles.list}>
           {projects.map((project) => (
-            <li key={project.id} className={styles.row}>
-              <div
-                className={styles.thumbnail}
-                style={project.thumbnailUrl ? { backgroundImage: `url(${project.thumbnailUrl})` } : undefined}
-                aria-hidden="true"
-              />
-              <div className={styles.content}>
-                <h3 className={styles.projectTitle}>{project.title}</h3>
-                <p className={styles.projectDescription}>{project.description}</p>
-              </div>
-            </li>
+            <ShowcaseRow key={project.id} project={project} />
           ))}
         </ul>
 

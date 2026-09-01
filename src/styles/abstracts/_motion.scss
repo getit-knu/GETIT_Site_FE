@@ -6,3 +6,51 @@ $duration-slow: 400ms;
 
 // 감속 곡선 하나만 쓴다. 등장·퇴장이 같은 커브라야 한 시스템으로 느껴진다.
 $ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+// 스크롤 등장(reveal) 공통 스타일. `useScrollReveal` 훅이 붙이는 `data-revealed`와 짝을 이룬다.
+// 훅이 못 도는 환경(JS 실패·jsdom)이나 동작 줄이기 사용자를 위해 CSS 쪽에서도
+// prefers-reduced-motion이면 처음부터 드러난 상태로 둔다 — 콘텐츠가 영영 안 보이는 일은 없어야 한다.
+//
+// $from: 등장 전 위치(예: translateY(1.5rem), translateX(-2rem)).
+// 형제끼리 시차를 주려면 인라인 스타일로 `--reveal-delay`를 넘긴다(예: calc 계단식 지연).
+@mixin scroll-reveal($from: translateY(1.5rem), $duration: $duration-slow) {
+  opacity: 0;
+  transform: $from;
+  transition:
+    opacity $duration $ease-out var(--reveal-delay, 0ms),
+    transform $duration $ease-out var(--reveal-delay, 0ms);
+
+  &[data-revealed] {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+// 눌리는 감각. 버튼·CTA류가 hover에서 살짝 떠오르고 active에서 눌린다.
+// transform만 건드리므로 각 컴포넌트의 색·그림자 transition과 자유롭게 합성된다.
+@mixin pressable($lift: -2px) {
+  transition: transform $duration-fast $ease-out;
+
+  &:hover {
+    transform: translateY($lift);
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.97);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:hover,
+    &:active {
+      transform: none;
+    }
+  }
+}

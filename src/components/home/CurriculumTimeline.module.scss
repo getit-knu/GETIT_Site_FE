@@ -2,6 +2,7 @@
 @use "../../styles/abstracts/container";
 @use "../../styles/abstracts/breakpoints" as *;
 @use "../../styles/abstracts/blob-decor" as blob;
+@use "../../styles/abstracts/motion" as *;
 
 // 배경 장식은 블롭(원) → 워시 → 오로라 → 좌우 바운더리 데코까지 네 차례를 거쳐 다시 블롭으로
 // 롤백됐다(`blob-decor.scss` 히스토리 참고). `radial-gradient`로 그린 원이라 가장자리가 투명하게
@@ -82,6 +83,8 @@
 }
 
 .heading {
+  @include scroll-reveal;
+
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -126,6 +129,7 @@
 }
 
 // 학기 안 모든 항목을 관통하는 세로선. 각 .row 는 그 위에 얹힌 노드 하나씩을 가진다.
+// 스크롤 등장 시 위에서 아래로 "그려진다"(scaleY) — 행들이 좌우에서 붙는 흐름의 축이 된다.
 .spine {
   position: absolute;
   top: 0;
@@ -133,10 +137,36 @@
   left: 50%;
   width: 0.125rem;
   background-color: rgb(40 57 151 / 18%);
-  transform: translateX(-50%);
+  transform: translateX(-50%) scaleY(0);
+  transform-origin: top;
+  transition: transform 700ms $ease-out;
 
   @media (width <= $breakpoint-mobile) {
     left: 0.375rem;
+  }
+}
+
+// 타임라인 컨테이너가 뷰포트에 들어오면(useScrollReveal → data-revealed) 스파인이 그려지고,
+// 행이 자기 쪽(좌/우)에서 계단식 지연(--reveal-index)으로 들어오고, 노드가 뒤따라 콕 찍힌다.
+.timelineList[data-revealed] {
+  .spine {
+    transform: translateX(-50%) scaleY(1);
+  }
+
+  .row {
+    opacity: 1;
+    transform: none;
+  }
+
+  .node {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spine {
+    transform: translateX(-50%) scaleY(1);
+    transition: none;
   }
 }
 
@@ -144,6 +174,28 @@
   position: relative;
   display: flex;
   min-height: 2.125rem;
+  opacity: 0;
+  transition:
+    opacity $duration-slow $ease-out calc(var(--reveal-index, 0) * 90ms),
+    transform $duration-slow $ease-out calc(var(--reveal-index, 0) * 90ms);
+
+  &[data-side="left"] {
+    transform: translateX(-1.5rem);
+  }
+
+  &[data-side="right"] {
+    transform: translateX(1.5rem);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    opacity: 1;
+    transition: none;
+
+    &[data-side="left"],
+    &[data-side="right"] {
+      transform: none;
+    }
+  }
 
   &[data-side="left"] {
     justify-content: flex-end;
@@ -175,7 +227,13 @@
   border: 0.1875rem solid $color-background;
   border-radius: 50%;
   background-color: $color-accent;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform $duration-base $ease-out calc(var(--reveal-index, 0) * 90ms + 150ms);
+
+  @media (prefers-reduced-motion: reduce) {
+    transform: translate(-50%, -50%) scale(1);
+    transition: none;
+  }
 
   @media (width <= $breakpoint-mobile) {
     left: 0.375rem;
@@ -194,6 +252,25 @@
   box-shadow:
     0 20px 12.5px rgb(0 0 0 / 10%),
     0 8px 5px rgb(0 0 0 / 10%);
+  transition:
+    transform $duration-fast $ease-out,
+    box-shadow $duration-fast $ease-out;
+
+  // 커서를 올린 칩이 살짝 떠올라 "지금 읽는 항목"이 또렷해진다.
+  &:hover {
+    box-shadow:
+      0 24px 16px rgb(0 0 0 / 12%),
+      0 10px 6px rgb(0 0 0 / 10%);
+    transform: translateY(-3px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
+  }
 
   @media (width <= $breakpoint-mobile) {
     width: 100%;
