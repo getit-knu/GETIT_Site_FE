@@ -102,7 +102,9 @@ describe("UsersPage", () => {
 
     const table = await screen.findByRole("table", { name: "사용자 목록" });
     expect(table).toHaveTextContent("김부원");
-    expect(table).toHaveTextContent("경영대학 경영학과");
+    // 소속은 텍스트가 아니라 입력칸으로 그려진다(AffiliationCell) — 값으로 확인한다.
+    expect(screen.getByLabelText("김부원 단과대학")).toHaveValue("경영대학");
+    expect(screen.getByLabelText("김부원 학과")).toHaveValue("경영학과");
   });
 
   it("권한을 바꾸면 서버에 보낸다", async () => {

@@ -15,6 +15,7 @@ import { useDeleteUser, usePromoteApplicants, useUpdateUser, useUsers } from "..
 import { ROLES, type Role } from "../../types/auth";
 import type { AdminUser, PromotionResult } from "../../types/user";
 
+import { AffiliationCell } from "./AffiliationCell";
 import { GenerationCell } from "./GenerationCell";
 import styles from "./MembersTab.module.scss";
 
@@ -106,7 +107,17 @@ export function MembersTab() {
     // 서버가 아직 안 주는 값이라 대부분 "-" 로 뜬다(BE#182). 승격 때 지원서에서 옮겨 온다.
     { header: "연락처", render: (u) => u.phoneNumber ?? "-", width: "9rem" },
     // GUEST 는 아직 소속·학년·기수가 없을 수 있다.
-    { header: "소속", render: (u) => (u.college && u.major ? `${u.college} ${u.major}` : "-"), width: "13rem" },
+    {
+      header: "소속",
+      width: "13rem",
+      render: (u) => (
+        <AffiliationCell
+          user={u}
+          disabled={updateUser.isPending}
+          onSave={(patch) => updateUser.mutate({ id: u.id, payload: patch })}
+        />
+      ),
+    },
     {
       header: "학년",
       render: (u) => (u.studentYear === null ? "-" : `${u.studentYear}학년`),
