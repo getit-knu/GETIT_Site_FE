@@ -12,7 +12,7 @@ import type { ApplicationDraftPayload, ApplicationFormResult, MyApplicationResul
 import styles from "../../pages/ApplyPage.module.scss";
 
 import type { AnswerState } from "./answerState";
-import type { Answers, BasicInfoState, BlockedFieldKey } from "./applyFormState";
+import type { Answers, BasicInfoState, BlockedFieldKey, SubmitBlocker } from "./applyFormState";
 import {
   initialAnswers,
   submitBlocker,
@@ -67,7 +67,10 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
   // 방금 저장이 손으로 누른 것인지 알아서 된 것인지 — 안내 문구를 가른다.
   const [lastSaveWasAuto, setLastSaveWasAuto] = useState(false);
   // 제출을 눌렀는데 막힌 경우에만 보여주는 안내. 상시 잔소리가 아니라 누른 것에 대한 답이다.
-  const [blocked, setBlocked] = useState<string | null>(null);
+  // 문구만이 아니라 **어느 칸이었는지**까지 들고 있는다 — 그 칸에도 이유를 붙여 줘야
+  // 화면을 보지 않는 사람이 포커스가 옮겨 간 이유를 알 수 있다. `edit()` 이 어떤
+  // 입력에서든 이걸 비우므로, 고치기 시작하면 표시는 알아서 사라진다.
+  const [blocked, setBlocked] = useState<SubmitBlocker | null>(null);
 
   function edit(apply: () => void) {
     if (saveDraft.isSuccess || saveDraft.isError) saveDraft.reset();
@@ -132,7 +135,7 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
     // 고쳐야 하는지는 알려주지 않아, 긴 폼에서 직접 찾아 올라가야 했다. 이제 누를 수 있게 두고
     // 누르면 못 채운 첫 칸으로 데려다 놓는다(잠긴 버튼은 포커스도 안 잡혀 이유를 물을 수조차 없다).
     if (blocker !== null) {
-      setBlocked(blocker.message);
+      setBlocked(blocker);
       focusField(blocker.field);
       return;
     }
@@ -143,7 +146,7 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
     setConfirming(false);
     // 되묻는 동안에도 폼은 고칠 수 있다. 그 사이에 다시 채워지지 않은 곳이 생겼으면 보내지 않는다.
     if (blocker !== null) {
-      setBlocked(blocker.message);
+      setBlocked(blocker);
       focusField(blocker.field);
       return;
     }
@@ -182,6 +185,15 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
     return () => window.removeEventListener("beforeunload", warnBeforeUnload);
   }, [hasUnsavedEdits]);
 
+  /*
+    기본 정보 칸이 막았을 때는 푸터가 통째로 비켜선다.
+
+    `BasicInfoFields` 가 그 칸 자체에 이유를 붙이고 제출을 누르면 커서도 거기로 가는데,
+    푸터까지 같은 문장을 띄우면 **화면에 두 번 뜨고 소리로도 두 번 읽힌다**(브라우저와
+    테스트로 확인함). 문항 칸은 아직 자기 자리에서 이유를 말하지 못하므로 그때는 여기가 맡는다.
+  */
+  const blockedFieldSpeaksForItself = blocked !== null && !blocked.field.startsWith("question-");
+
   // 잘못된 것을 알리는 줄. 제출을 막는 안내는 **제출을 눌렀을 때만** 뜬다 — 예전엔 폼을
   // 열자마자 "다 입력해 주세요"가 떠 있어, 아직 아무것도 안 한 사람에게 먼저 잘못을
   // 지적하는 꼴이었다.
@@ -190,7 +202,9 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
       ? applicationSaveErrorMessage(saveDraft.error)
       : submitApplication.error !== null
         ? applicationSubmitErrorMessage(submitApplication.error)
-        : blocked;
+        : blockedFieldSpeaksForItself
+          ? null
+          : (blocked?.message ?? null);
 
   /*
     저장 상태는 **에러와 다른 자리**에 둔다.
@@ -243,6 +257,7 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
                 <h3 className={styles.sectionTitle}>기본 정보</h3>
                 <BasicInfoFields
                   value={basicInfo}
+                  blocked={blocked}
                   colleges={colleges}
                   majors={majors}
                   fieldId={fieldId}

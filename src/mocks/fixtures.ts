@@ -12,23 +12,34 @@ import type { StaffDirectory } from "../types/site";
  */
 
 /**
- * dev 로그인 사용자.
+ * dev 로그인 사용자의 role. **기본은 `GUEST`** — 사이트를 찾아오는 사람 대부분이 그거고,
+ * 부원으로 고정해 두면 공개 화면이 실제 방문자에게 어떻게 보이는지 확인할 수가 없다.
  *
- * **`MEMBER` 로 둔다.** `GUEST` 면 `RequireRole` 이 `/member/*` 를 전부 막아 부원 화면을
- * 백엔드 없이 열어볼 수가 없다. 지원서 흐름은 role 이 아니라 `GET /api/applications/me`
- * 로 갈리므로(`ApplyPage` 참고) 부원으로 둬도 그대로 볼 수 있다.
+ * 부원·운영진 화면은 `RequireRole` 이 막으므로 그때만 올려서 띄운다:
+ *
+ * ```
+ * MOCK_ROLE=MEMBER npm run dev
+ * MOCK_ROLE=ADMIN  npm run dev
+ * ```
+ *
+ * dev 서버(Node) 안에서만 읽히는 값이다 — 목 자체가 `devApiMockPlugin` 소비라
+ * `vite build` 산출물에는 들어가지 않는다. 지원서 흐름은 role 이 아니라
+ * `GET /api/applications/me` 로 갈리므로(`ApplyPage` 참고) 어느 쪽이든 볼 수 있다.
  */
+const MOCK_ROLE: Me["role"] =
+  process.env.MOCK_ROLE === "MEMBER" || process.env.MOCK_ROLE === "ADMIN" ? process.env.MOCK_ROLE : "GUEST";
+
 export const me: Me = {
   id: 1,
   email: "dev@getit.dev",
-  name: "개발용 부원",
+  name: "개발용 사용자",
   phoneNumber: "010-0000-0000",
   college: "IT대학",
   major: "컴퓨터학부",
   studentYear: 3,
   studentNumber: "2023000000",
   profileImageUrl: null,
-  role: "MEMBER",
+  role: MOCK_ROLE,
   generationNo: 9,
   status: "ACTIVE",
 };
