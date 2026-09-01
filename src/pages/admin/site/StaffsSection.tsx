@@ -166,8 +166,16 @@ function StaffForm({ draft: initial, generationNo, onClose }: FormProps) {
 
       <div className={styles.formFooter}>
         {/* 저장을 막는 이유를 미리 보여준다. 눌러 보고 알게 하지 않는다. */}
-        {reason !== null && <p className={styles.reason}>{reason}</p>}
-        {save.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(save.error)}</p>}
+        {reason !== null && (
+          <p role="status" className={styles.reason}>
+            {reason}
+          </p>
+        )}
+        {save.error !== null && (
+          <p role="alert" className={styles.reason}>
+            {siteSaveErrorMessage(save.error)}
+          </p>
+        )}
         <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
           취소
         </Button>
@@ -282,8 +290,16 @@ export function StaffsSection({ generationNo }: { generationNo: number }) {
           );
         })}
 
-      {reorder.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(reorder.error)}</p>}
-      {remove.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(remove.error)}</p>}
+      {reorder.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {siteSaveErrorMessage(reorder.error)}
+        </p>
+      )}
+      {remove.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {siteSaveErrorMessage(remove.error)}
+        </p>
+      )}
 
       {/* 고치는 대상이 바뀌면 폼을 새로 만든다. 그래야 `useState` 초기값이 다시 잡힌다. */}
       {editing !== null && (

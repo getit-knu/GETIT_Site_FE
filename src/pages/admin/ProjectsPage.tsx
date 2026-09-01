@@ -146,9 +146,21 @@ export default function AdminProjectsPage() {
         </>
       )}
 
-      {remove.error !== null && <p className={styles.reason}>{projectSaveErrorMessage(remove.error)}</p>}
-      {approve.error !== null && <p className={styles.reason}>{projectSaveErrorMessage(approve.error)}</p>}
-      {reject.error !== null && <p className={styles.reason}>{projectSaveErrorMessage(reject.error)}</p>}
+      {remove.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {projectSaveErrorMessage(remove.error)}
+        </p>
+      )}
+      {approve.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {projectSaveErrorMessage(approve.error)}
+        </p>
+      )}
+      {reject.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {projectSaveErrorMessage(reject.error)}
+        </p>
+      )}
 
       {modal === "project" && <AdminProjectFormModal project={editing} onClose={closeModal} />}
     </div>

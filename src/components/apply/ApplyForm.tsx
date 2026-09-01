@@ -273,7 +273,22 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
 
       <div className={styles.stickyFooter}>
         <div className={styles.footerInner}>
-          {errorText !== null && <p className={styles.reason}>{errorText}</p>}
+          {/*
+            `role="alert"` 없이는 이 줄이 **소리로는 존재하지 않았다.** 스티키 푸터라 화면
+            아래에 고정돼 있어, 저장·제출이 실패해도 눈으로 보지 않는 사용자는 아무 일도
+            없었다고 여긴다 — 바로 아래 "저장했습니다"는 `role="status"`로 읽히고 있어서
+            성공만 알려 주고 실패는 삼키는 꼴이었다.
+
+            폼 오류 문구의 role 은 화면 전체에서 이 기준으로 나눈다(24개 파일):
+            - **누른 뒤 벌어진 사건**(저장·삭제 실패, 잘못된 파일) → `alert`. 끼어들어 알린다.
+            - **타이핑 중 바뀌는 안내**(제출을 막는 이유) → `status`. 글자마다 말을 끊지 않는다.
+            - **상시 설명문**(반려 사유, "이미 결정돼 채점할 수 없습니다") → role 없음. 사건이 아니다.
+          */}
+          {errorText !== null && (
+            <p role="alert" className={styles.reason}>
+              {errorText}
+            </p>
+          )}
           {/* 저장 상태는 조용히 알린다 — role="status" 라 스크린리더도 하던 일을 끊지 않고 듣는다. */}
           {saveStatus !== null && (
             <p className={styles.saved} role="status">

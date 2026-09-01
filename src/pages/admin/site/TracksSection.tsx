@@ -106,8 +106,16 @@ export function TracksSection({ tracks, onChange, onSave, saving, reason, saveEr
       </button>
 
       <div className={styles.footer}>
-        {reason !== null && <p className={styles.reason}>{reason}</p>}
-        {saveError !== null && <p className={styles.reason}>{saveError}</p>}
+        {reason !== null && (
+          <p role="status" className={styles.reason}>
+            {reason}
+          </p>
+        )}
+        {saveError !== null && (
+          <p role="alert" className={styles.reason}>
+            {saveError}
+          </p>
+        )}
         {saved && saveError === null && (
           <p className={styles.saved} role="status">
             저장했습니다.

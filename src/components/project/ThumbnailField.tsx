@@ -84,7 +84,11 @@ export function ThumbnailField({ currentUrl, onFileIdChange }: ThumbnailFieldPro
       />
 
       {uploading && <p className={styles.hint}>올리는 중…</p>}
-      {error !== null && <p className={styles.reason}>{error}</p>}
+      {error !== null && (
+        <p role="alert" className={styles.reason}>
+          {error}
+        </p>
+      )}
     </div>
   );
 }

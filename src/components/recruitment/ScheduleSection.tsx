@@ -159,8 +159,16 @@ export function ScheduleSection({ id }: ScheduleSectionProps) {
         </Button>
       </div>
 
-      {reason !== null && <p className={styles.reason}>{reason}</p>}
-      {save.error !== null && <p className={styles.reason}>{recruitmentErrorMessage(save.error)}</p>}
+      {reason !== null && (
+        <p role="status" className={styles.reason}>
+          {reason}
+        </p>
+      )}
+      {save.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {recruitmentErrorMessage(save.error)}
+        </p>
+      )}
     </section>
   );
 }

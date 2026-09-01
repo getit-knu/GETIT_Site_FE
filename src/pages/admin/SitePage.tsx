@@ -91,8 +91,16 @@ function GenerationSection({ generation }: { generation: Generation | null }) {
       </p>
 
       <div className={styles.footer}>
-        {reason !== null && <p className={styles.reason}>{reason}</p>}
-        {save.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(save.error)}</p>}
+        {reason !== null && (
+          <p role="status" className={styles.reason}>
+            {reason}
+          </p>
+        )}
+        {save.error !== null && (
+          <p role="alert" className={styles.reason}>
+            {siteSaveErrorMessage(save.error)}
+          </p>
+        )}
         {save.isSuccess && save.error === null && (
           <p className={styles.saved} role="status">
             저장했습니다.

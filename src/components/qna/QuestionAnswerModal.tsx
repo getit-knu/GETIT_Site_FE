@@ -68,7 +68,11 @@ function AnswerForm({ question, onClose }: { question: QuestionDetail; onClose: 
           disabled={isSaving}
         />
 
-        {saveError !== null && <p className={styles.reason}>{answerSaveErrorMessage(saveError)}</p>}
+        {saveError !== null && (
+          <p role="alert" className={styles.reason}>
+            {answerSaveErrorMessage(saveError)}
+          </p>
+        )}
       </ModalBody>
 
       <ModalFooter>

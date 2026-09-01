@@ -39,6 +39,7 @@ export function Input({
 }: InputProps) {
   const generatedId = useId();
   const id = givenId ?? generatedId;
+  const errorId = `${id}-error`;
 
   return (
     <div className={styles.wrapper}>
@@ -55,12 +56,22 @@ export function Input({
         onChange={(event) => onChange(event.target.value)}
         onBlur={onBlur}
         aria-label={label ? undefined : ariaLabel}
+        /*
+          빨간 테두리는 눈에만 보인다. `aria-invalid` 로 상태를,
+          `aria-describedby` 로 이유를 칸 자체에 붙여야 한다.
+
+          아래 문구의 `role="alert"` 만으로는 부족하다 — alert 는 DOM 에 꽂히는
+          **그 순간 한 번** 읽히고 끝이라, 사용자가 나중에 이 칸으로 다시 탭해
+          오면 "이메일, 편집" 만 들리고 왜 막혔는지는 알 수 없다.
+        */
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
         placeholder={placeholder}
         disabled={disabled}
         maxLength={maxLength}
       />
       {error && (
-        <p role="alert" className={styles.errorMessage}>
+        <p id={errorId} role="alert" className={styles.errorMessage}>
           {error}
         </p>
       )}

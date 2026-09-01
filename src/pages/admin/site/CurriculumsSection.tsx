@@ -66,8 +66,16 @@ function CurriculumForm({ draft: initial, generationId, onClose }: FormProps) {
       </div>
 
       <div className={styles.formFooter}>
-        {reason !== null && <p className={styles.reason}>{reason}</p>}
-        {save.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(save.error)}</p>}
+        {reason !== null && (
+          <p role="status" className={styles.reason}>
+            {reason}
+          </p>
+        )}
+        {save.error !== null && (
+          <p role="alert" className={styles.reason}>
+            {siteSaveErrorMessage(save.error)}
+          </p>
+        )}
         <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
           취소
         </Button>
@@ -127,7 +135,11 @@ export function CurriculumsSection({ generationId }: { generationId: number }) {
         </button>
       )}
 
-      {remove.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(remove.error)}</p>}
+      {remove.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {siteSaveErrorMessage(remove.error)}
+        </p>
+      )}
 
       {editing !== null && (
         <CurriculumForm

@@ -141,9 +141,17 @@ export function CriteriaSection() {
       </div>
 
       {/* 저장을 막는 이유를 미리 보여준다. 눌러 보고 알게 하지 않는다. */}
-      {reason !== null && <p className={styles.reason}>{reason}</p>}
+      {reason !== null && (
+        <p role="status" className={styles.reason}>
+          {reason}
+        </p>
+      )}
 
-      {save.error !== null && <p className={styles.reason}>{recruitmentErrorMessage(save.error)}</p>}
+      {save.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {recruitmentErrorMessage(save.error)}
+        </p>
+      )}
     </section>
   );
 }

@@ -96,7 +96,11 @@ function FeedbackForm({ submissionId, feedbacks, nextSubmissionId, onNavigate }:
         </button>
       )}
 
-      {save.error !== null && <p className={styles.error}>{feedbackErrorMessage(save.error)}</p>}
+      {save.error !== null && (
+        <p role="alert" className={styles.error}>
+          {feedbackErrorMessage(save.error)}
+        </p>
+      )}
 
       <div className={styles.actions}>
         <Button disabled={isBlank || save.isPending} onClick={() => submit()}>

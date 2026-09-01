@@ -129,7 +129,11 @@ export function QuestionsSection() {
         </Button>
       </div>
 
-      {anyError !== null && <p className={styles.reason}>{recruitmentErrorMessage(anyError)}</p>}
+      {anyError !== null && (
+        <p role="alert" className={styles.reason}>
+          {recruitmentErrorMessage(anyError)}
+        </p>
+      )}
     </section>
   );
 }
