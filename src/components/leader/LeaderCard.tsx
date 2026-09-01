@@ -2,11 +2,7 @@ import type { PublicStaff } from "../../types/site";
 
 import styles from "./LeaderCard.module.scss";
 
-/**
- * 아직 실제 사진이 없다(`profileImageUrl`이 비어 있거나 존재하지 않는 CDN 주소다).
- * Figma도 실제 사진 대신 그라디언트 placeholder라, `order`(1·2·3)로 고정 팔레트를
- * 순서대로 배정한다. 실제 사진 연동은 후속 이슈에서 다룬다.
- */
+/** `profileImageUrl`이 없는(비었거나 아직 안 올린) 운영진은 `order`(1·2·3)로 고정 팔레트를 순서대로 배정한다. */
 const PHOTO_GRADIENTS = [
   "linear-gradient(150deg, #2b7fff 0%, #ad46ff 100%)",
   "linear-gradient(150deg, #ad46ff 0%, #f6339a 100%)",
@@ -25,7 +21,11 @@ export function LeaderCard({ staff, showRole = true }: LeaderCardProps) {
 
   return (
     <div className={styles.card}>
-      <div className={styles.photo} style={{ backgroundImage: gradient }} aria-hidden="true" />
+      {staff.profileImageUrl ? (
+        <img className={styles.photo} src={staff.profileImageUrl} alt="" />
+      ) : (
+        <div className={styles.photo} style={{ backgroundImage: gradient }} aria-hidden="true" />
+      )}
 
       <div className={styles.content}>
         <div className={styles.nameRow}>
@@ -64,6 +64,7 @@ export function LeaderCard({ staff, showRole = true }: LeaderCardProps) {
         </div>
         {showRole && <p className={styles.role}>{staff.staffRole}</p>}
         <p className={styles.department}>{staff.department}</p>
+        {staff.introduction !== "" && <p className={styles.introduction}>{staff.introduction}</p>}
       </div>
     </div>
   );
