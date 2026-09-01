@@ -42,26 +42,23 @@ test.describe("홈 스크롤 스냅", () => {
   });
 
   /*
-   * 아직 안 고친 버그를 그대로 적어 둔 것이라 `fixme`다. 지우지 말고, 고칠 때 `fixme`만 떼면 된다.
+   * 새로고침하면 언제나 맨 위(#297).
    *
-   * 재현: 1280x720에서 홈을 스크롤한 뒤 새로고침하면 매번 문서 맨 아래(Footer)에 고정된다.
-   * 대조 실험으로 원인이 스냅임을 확인했다 — 스냅 클래스가 붙지 못하게 막으면 복원 위치
-   * (1154)로 정상 복귀하고, 붙게 두면 맨 아래(5580 = 최대 스크롤)에 박힌다.
+   * 고치기 전에는 1280x720에서 홈을 스크롤한 뒤 새로고침할 때마다 맨 아래(Footer)에 고정됐다.
+   * 대조 실험으로 원인이 스냅임을 확인했다 — 스냅 클래스가 붙지 못하게 막으면 복원 위치로
+   * 정상 복귀하고, 붙게 두면 맨 아래(5580 = 최대 스크롤)에 박혔다.
    *
-   * 왜 #297의 "한 프레임 미루기"로 안 막히나: 스냅이 켜지는 순간을 재 보면 `readyState`는 이미
-   * `complete`인데 `scrollHeight`는 최종 6300 중 1874(약 30%)다. SPA라 문서 자체는 일찍 끝나고
-   * React가 뒤늦게 채우기 때문에 `load` 이벤트로 미뤄도 소용없다(실제로 시도해 보고 되돌렸다).
-   * 그렇게 짧은 문서에 mandatory 스냅이 걸리면 Footer에 붙고, 이후 문서가 길어져도 스냅이
-   * Footer를 놓아주지 않는다.
+   * `<ScrollRestoration />`이 새로고침 뒤 이전 위치를 되살리는데, 그 시점엔 React가 아직 문서를
+   * 다 채우지 못해 `scrollHeight`가 최종값의 30%뿐이다. 그 짧은 문서에 1497을 복원하면 이미
+   * 끝을 넘어서 있어 유일한 스냅 지점인 Footer에 붙고, 문서가 길어져도 놓아주지 않는다.
+   * 스냅을 켜는 시점을 미루는 것으로는 못 막았다(`load`도 SPA에선 신호가 안 된다). 그래서
+   * 복원 자체를 하지 않는다 — `src/main.tsx` 참고.
    *
-   * 1440x900에서는 복원 위치가 마침 그때의 짧은 문서 안에 들어와서 재현되지 않는다 — 한
-   * 해상도만 보고 "괜찮다"고 넘기면 놓친다.
-   *
-   * 켜는 시점을 옮기는 것으로는 안정적으로 못 막고, `mandatory` 자체를 손대야 한다(예:
-   * `proximity`로 낮추기, 또는 레이아웃 높이가 안정된 뒤에 켜기). 연출이 바뀌는 선택이라
-   * 별도 판단이 필요하다.
+   * **1440x900에서는 재현되지 않는다.** 복원 위치가 마침 그때의 짧은 문서 안에 들어오기
+   * 때문이다. Playwright 기본 뷰포트가 1280x720이라 이 테스트가 성립한다 — 해상도를 바꾸면
+   * 조용히 무의미해질 수 있으니 유의할 것.
    */
-  test.fixme("홈에서 스크롤한 채 새로고침해도 푸터로 튀지 않는다(#297, 미해결)", async ({ page }) => {
+  test("홈에서 스크롤한 채 새로고침하면 맨 위에서 시작한다(#297)", async ({ page }) => {
     await page.goto("/");
     await page.waitForFunction(() => document.documentElement.classList.contains("home-scroll-snap"));
     await page.evaluate((y) => window.scrollTo(0, y), HOME_SCROLL);
@@ -75,10 +72,25 @@ test.describe("홈 스크롤 스냅", () => {
       .poll(() => page.evaluate(() => Math.round(document.documentElement.scrollHeight - window.innerHeight)))
       .toBeGreaterThan(3000);
 
-    const { scrollY, maxScroll } = await page.evaluate(() => ({
-      scrollY: Math.round(window.scrollY),
-      maxScroll: Math.round(document.documentElement.scrollHeight - window.innerHeight),
-    }));
-    expect(scrollY).toBeLessThan(maxScroll - 10);
+    await expect.poll(() => page.evaluate(() => Math.round(window.scrollY))).toBe(0);
+  });
+
+  test("세션 안에서 뒤로가기하면 스크롤 위치는 그대로 복원된다", async ({ page }) => {
+    // 새로고침 복원을 껐다고 해서 세션 안의 뒤로가기까지 죽으면 안 된다. react-router는
+    // sessionStorage를 마운트 때 한 번만 읽어 메모리 맵으로 옮기고 그 뒤로는 메모리에 쌓으므로,
+    // 지운 것은 "지난 문서가 남긴 기록"뿐이다 — 이 테스트가 그 경계를 지킨다.
+    await page.goto("/");
+    await page.waitForFunction(() => document.documentElement.classList.contains("home-scroll-snap"));
+    await page.evaluate((y) => window.scrollTo(0, y), HOME_SCROLL);
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    const leftAt = await page.evaluate(() => Math.round(window.scrollY));
+
+    await page.getByRole("navigation").getByRole("link", { name: "프로젝트" }).click();
+    await expect(page).toHaveURL(/\/projects$/);
+    await expect.poll(() => page.evaluate(() => Math.round(window.scrollY))).toBe(0);
+
+    await page.goBack();
+    await expect(page).toHaveURL(/\/$/);
+    await expect.poll(() => page.evaluate(() => Math.round(window.scrollY)), { timeout: 5000 }).toBe(leftAt);
   });
 });
