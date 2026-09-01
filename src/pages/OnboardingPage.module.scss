@@ -1,0 +1,53 @@
+@use "../styles/abstracts/variables" as *;
+
+.page {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1rem;
+  background-image: linear-gradient(147deg, #eff6ff 0%, #eef2ff 50%, #faf5ff 100%);
+}
+
+.inner {
+  display: flex;
+  width: 100%;
+  max-width: 28rem;
+  flex-direction: column;
+  align-items: center;
+}
+
+.title {
+  margin: 0;
+  color: $color-heading;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.subtitle {
+  margin: 0.5rem 0 0;
+  color: $color-text-secondary;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.card {
+  display: flex;
+  width: 100%;
+  margin-top: 2rem;
+  flex-direction: column;
+  gap: 1.25rem;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  background-color: $color-background;
+  box-shadow:
+    0 20px 12.5px rgb(0 0 0 / 10%),
+    0 8px 5px rgb(0 0 0 / 10%);
+}
+
+.reason {
+  margin: 0;
+  color: $color-danger;
+  font-size: 0.8125rem;
+}

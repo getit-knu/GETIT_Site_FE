@@ -75,6 +75,17 @@ const areaRoutes: RouteObject[] = [
     lazy: page(() => import("./pages/ForbiddenPage")),
   },
 
+  // 신규 유저 온보딩(개인정보 동의). `/me`와 같은 이유로 role 무관하게 통과시킨다 —
+  // GUEST도(승격 전 첫 로그인이라) 여기부터 거쳐야 한다. Nav·Footer가 필요 없는
+  // 화면이라 `/oauth/callback`처럼 PublicLayout 밖에 둔다.
+  {
+    path: "/onboarding",
+    element: <RequireRole allowed={ROLES} />,
+    children: [
+      { index: true, handle: { title: formatTitle("환영합니다") }, lazy: page(() => import("./pages/OnboardingPage")) },
+    ],
+  },
+
   // 내 정보(#240). GUEST·MEMBER·ADMIN 전부 접근 가능해야 해서 `/member`·`/admin`
   // 밖에 둔다 — 로그인만 돼 있으면 role 무관하게 통과(`RequireRole allowed={ROLES}`).
   // 공개 Nav·MemberLayout·AdminLayout Topbar가 각자 이 경로로 진입 링크를 건다.
