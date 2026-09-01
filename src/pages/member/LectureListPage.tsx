@@ -49,14 +49,9 @@ export default function LectureListPage() {
           /*
             격자가 데스크톱에서 4열이라 두 줄(8장)을 잡는다.
 
-            **높이가 한 값으로 고정되지 않는 자리다.** `MemberLectureCard` 의 `.title` 은
-            `ProjectCard`(#274)와 달리 줄 수가 묶여 있지 않아, 제목이 두 줄로 접히면 카드가
-            24px(한 줄) 커진다. 열 폭에 따라 접히는 지점이 달라져 실측이 두 값으로 갈렸다 —
-            1920·1440·1280·768 에서 318px, 1024·900·600 에서 294px.
-
-            열이 4열인 데스크톱 폭에 맞춰 318px 을 쓴다. 실제 강의 제목은 목보다 길어서
-            좁은 폭에서도 두 줄이 될 가능성이 높다. `.title` 에 line-clamp 를 걸어 #274 처럼
-            높이를 묶으면 이 값이 정확해진다 — 디자인 결정이라 여기서 하지 않았다.
+            **318px 은 폭과 무관하다.** `MemberLectureCard` 가 썸네일 10rem, 제목 3rem
+            (2줄 clamp), 마감 줄까지 전부 고정이라 여덟 폭(1920~390) 실측이 모두 같았다.
+            그 고정이 풀리면 이 값도 같이 틀어진다 — `MemberLectureCard.module.scss` 참고.
           */
           <CardGridSkeleton className={styles.grid} count={8} height="19.875rem" label="강의 목록 불러오는 중" />
         ) : lecturesQuery.isError ? (
