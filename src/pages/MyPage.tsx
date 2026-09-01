@@ -8,6 +8,13 @@ import { Button } from "../components/ui/Button/Button";
 import { Input } from "../components/ui/Input/Input";
 import { meSaveErrorMessage } from "../errors/auth/errorMessages";
 import { useSession, useUpdateMe } from "../hooks/auth/useSession";
+import {
+  PHONE_NUMBER_EXAMPLE,
+  PHONE_NUMBER_FORMAT_MESSAGE,
+  PHONE_NUMBER_MAX_LENGTH,
+  formatPhoneNumber,
+  isValidPhoneNumber,
+} from "../libs/phoneNumber";
 import type { Me, MeUpdatePayload } from "../types/auth";
 import type { College, Major } from "../types/college";
 
@@ -84,7 +91,9 @@ function invalidReason(input: {
 }): string | null {
   if (input.name.trim() === "") return "이름을 입력해 주세요.";
   if (input.name.trim().length > 50) return "이름은 50자 이내로 입력해 주세요.";
-  if (input.phoneNumber.trim().length > 20) return "전화번호는 20자 이내로 입력해 주세요.";
+  // 전화번호는 선택 항목이라 빈 값은 그대로 둔다(저장할 때 `null`). 다만 적었다면 지원서와
+  // 같은 꼴이어야 한다 — BE 는 길이만 보므로 여기서 안 막으면 꼴이 뒤섞인 채 쌓인다(#334).
+  if (input.phoneNumber.trim() !== "" && !isValidPhoneNumber(input.phoneNumber)) return PHONE_NUMBER_FORMAT_MESSAGE;
   // BE가 둘 중 하나만 오면 AFFILIATION_INCOMPLETE로 막는다(#199) — 화면에서 미리 잡는다.
   if ((input.collegeId === 0) !== (input.majorId === 0)) return "단과대학과 학과를 함께 선택해 주세요.";
   return null;
@@ -137,7 +146,14 @@ function EditForm({ user, onClose }: EditFormProps) {
 
       <div className={styles.editGrid}>
         <Input label="이름 *" value={draft.name} onChange={(name) => set({ name })} />
-        <Input label="전화번호" value={draft.phoneNumber} onChange={(phoneNumber) => set({ phoneNumber })} />
+        <Input
+          label="전화번호"
+          value={draft.phoneNumber}
+          // 숫자만 쭉 쳐도 010-1234-5678 꼴로 끊긴다. 지원서 폼과 같은 함수를 쓴다.
+          onChange={(phoneNumber) => set({ phoneNumber: formatPhoneNumber(phoneNumber) })}
+          maxLength={PHONE_NUMBER_MAX_LENGTH}
+          placeholder={PHONE_NUMBER_EXAMPLE}
+        />
 
         <div className={styles.selectField}>
           <label htmlFor="mypage-college" className={styles.selectLabel}>

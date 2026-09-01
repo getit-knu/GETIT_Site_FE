@@ -1,3 +1,4 @@
+import { PHONE_NUMBER_FORMAT_MESSAGE, isValidPhoneNumber } from "../../libs/phoneNumber";
 import type { ApplicationFormQuestion, BasicInfo, MyApplicationAnswer } from "../../types/application";
 
 import type { AnswerState } from "./answerState";
@@ -31,29 +32,14 @@ export function toBasicInfoPayload(state: BasicInfoState): BasicInfo {
   return {
     name: state.name,
     email: state.email,
-    phoneNumber: state.phone.trim() === "" ? null : state.phone,
+    // 검증(`isValidPhoneNumber`)은 앞뒤 공백을 무시하고 통과시키므로, 저장할 때도 같이
+    // 털어야 한다. 안 그러면 통과한 값과 실제로 저장되는 값이 달라진다.
+    phoneNumber: state.phone.trim() === "" ? null : state.phone.trim(),
     collegeId: state.collegeId === 0 ? null : state.collegeId,
     majorId: state.majorId === 0 ? null : state.majorId,
     grade: state.grade.trim() === "" ? null : Number(state.grade),
     studentNumber: state.studentId.trim() === "" ? null : state.studentId,
   };
-}
-
-/**
- * 전화번호를 `010-1234-5678` 꼴로 다듬는다. 숫자만 남기고 자리 수에 맞춰 하이픈을 끼운다.
- *
- * 입력하는 동안 매 글자마다 부르므로, 다 치기 전 짧은 상태(`010`, `010-123`)도 그대로
- * 성립해야 한다. 숫자 11자리에서 끊어 그보다 길게 붙는 것을 막는다.
- *
- * 하이픈 자리에서 지우면 숫자가 그대로라 화면도 그대로다 — 하이픈은 우리가 끼운 것이지
- * 사용자가 친 글자가 아니기 때문이다. 한 번 더 지우면 앞 숫자가 지워진다.
- */
-export function formatPhoneNumber(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
-
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
-  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
 }
 
 export type Answers = Record<number, AnswerState>;
@@ -147,10 +133,12 @@ const BASIC_INFO_CHECKS: Array<{ field: BlockedFieldKey; message: string; isWron
   },
 
   { field: "phone", message: "전화번호를 입력해 주세요.", isWrong: (s) => s.phone.trim() === "" },
+  // 자릿수만 보던 때는 `020-1234-5678` 처럼 11자리이기만 한 값도 통과했다. 내 정보 수정과
+  // 같은 규칙으로 맞춘다(#334) — 같은 번호가 화면마다 다른 꼴로 쌓이지 않게.
   {
     field: "phone",
-    message: "전화번호를 11자리로 입력해 주세요. 예: 010-1234-5678",
-    isWrong: (s) => s.phone.replace(/\D/g, "").length !== 11,
+    message: PHONE_NUMBER_FORMAT_MESSAGE,
+    isWrong: (s) => !isValidPhoneNumber(s.phone),
   },
 
   { field: "college", message: "단과 대학을 선택해 주세요.", isWrong: (s) => s.collegeId === 0 },

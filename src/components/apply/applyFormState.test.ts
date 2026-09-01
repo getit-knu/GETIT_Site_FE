@@ -3,36 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ApplicationFormQuestion } from "../../types/application";
 
 import type { BasicInfoState } from "./applyFormState";
-import { formatPhoneNumber, submitBlocker } from "./applyFormState";
-
-describe("formatPhoneNumber", () => {
-  it("숫자만 쭉 치면 010-1234-5678 꼴로 끊어 준다", () => {
-    expect(formatPhoneNumber("01012345678")).toBe("010-1234-5678");
-  });
-
-  it("다 치기 전 짧은 상태도 그대로 성립한다", () => {
-    // 입력하는 동안 매 글자마다 부르므로 중간 상태가 어색하면 안 된다.
-    expect(formatPhoneNumber("0")).toBe("0");
-    expect(formatPhoneNumber("010")).toBe("010");
-    expect(formatPhoneNumber("0101")).toBe("010-1");
-    expect(formatPhoneNumber("0101234")).toBe("010-1234");
-    expect(formatPhoneNumber("01012345")).toBe("010-1234-5");
-  });
-
-  it("이미 하이픈이 든 값을 다시 넣어도 같은 결과다", () => {
-    // 이어쓰기로 불러온 값이 그대로 통과해야 한다.
-    expect(formatPhoneNumber("010-1234-5678")).toBe("010-1234-5678");
-  });
-
-  it("숫자가 아닌 글자는 버린다", () => {
-    expect(formatPhoneNumber("010 1234 5678")).toBe("010-1234-5678");
-    expect(formatPhoneNumber("가010나1234")).toBe("010-1234");
-  });
-
-  it("11자리를 넘겨 쳐도 더 붙지 않는다", () => {
-    expect(formatPhoneNumber("010123456789999")).toBe("010-1234-5678");
-  });
-});
+import { submitBlocker, toBasicInfoPayload } from "./applyFormState";
 
 describe("submitBlocker 문항 안내", () => {
   const question = (over: Partial<ApplicationFormQuestion>): ApplicationFormQuestion => ({
@@ -95,8 +66,10 @@ describe("submitBlocker 문항 안내", () => {
     expect(submitBlocker({ ...filled, grade: "4" }, {}, [], true)).toBeNull();
   });
 
-  it("전화번호는 11자리를 채워야 한다", () => {
+  it("전화번호는 010-1234-5678 형식만 받는다", () => {
+    // 자릿수만 보던 때는 `020-1234-5678` 처럼 11자리이기만 한 값도 통과했다(#334).
     expect(submitBlocker({ ...filled, phone: "010-1234" }, {}, [], true)?.field).toBe("phone");
+    expect(submitBlocker({ ...filled, phone: "020-1234-5678" }, {}, [], true)?.field).toBe("phone");
     expect(submitBlocker({ ...filled, phone: "010-1234-5678" }, {}, [], true)).toBeNull();
   });
 
@@ -121,5 +94,27 @@ describe("submitBlocker 문항 안내", () => {
 
   it("전부 채우고 동의까지 하면 막지 않는다", () => {
     expect(submitBlocker(filled, {}, [], true)).toBeNull();
+  });
+});
+
+describe("toBasicInfoPayload", () => {
+  const state: BasicInfoState = {
+    name: "홍길동",
+    email: "hong@getit.com",
+    phone: " 010-1234-5678 ",
+    collegeId: 1,
+    majorId: 1,
+    grade: "3",
+    studentId: "",
+  };
+
+  it("전화번호의 앞뒤 공백을 털어 보낸다", () => {
+    // 검증은 공백을 무시하고 통과시키므로, 저장할 때 안 털면 통과한 값과 저장되는 값이
+    // 달라진다 — 공백이 섞인 채로 쌓이면 형식을 통일한 의미가 없다.
+    expect(toBasicInfoPayload(state).phoneNumber).toBe("010-1234-5678");
+  });
+
+  it("공백뿐인 전화번호는 null 로 보낸다", () => {
+    expect(toBasicInfoPayload({ ...state, phone: "   " }).phoneNumber).toBeNull();
   });
 });

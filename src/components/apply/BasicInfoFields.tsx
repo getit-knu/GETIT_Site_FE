@@ -1,9 +1,9 @@
+import { PHONE_NUMBER_EXAMPLE, PHONE_NUMBER_MAX_LENGTH, formatPhoneNumber } from "../../libs/phoneNumber";
 import type { College, Major } from "../../types/college";
 import { Input } from "../ui/Input/Input";
 import styles from "../../pages/ApplyPage.module.scss";
 
 import type { BasicInfoState, BlockedFieldKey, SubmitBlocker } from "./applyFormState";
-import { formatPhoneNumber } from "./applyFormState";
 
 interface BasicInfoFieldsProps {
   value: BasicInfoState;
@@ -70,7 +70,8 @@ export function BasicInfoFields({
         // 숫자만 쭉 쳐도 010-1234-5678 꼴로 알아서 끊긴다 — 하이픈을 손으로 넣게 하면
         // 사람마다 다르게 저장되고, 넣는 자리를 틀리면 다시 지우고 쳐야 한다.
         onChange={(next) => onChange("phone")(formatPhoneNumber(next))}
-        placeholder="010-1234-5678"
+        maxLength={PHONE_NUMBER_MAX_LENGTH}
+        placeholder={PHONE_NUMBER_EXAMPLE}
       />
       <div className={styles.selectField}>
         <label htmlFor={fieldId("college")} className={styles.selectLabel}>
