@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { getMe, updateMe } from "../../apis/auth/authApi";
+import { confirmPrivacyConsent, getMe, updateMe } from "../../apis/auth/authApi";
 import { queryKeys } from "../../apis/queryKeys";
 import type { Me, MeUpdatePayload, Role } from "../../types/auth";
 
@@ -55,6 +55,18 @@ export function useUpdateMe() {
 
   return useMutation({
     mutationFn: (payload: MeUpdatePayload) => updateMe(payload),
+    onSuccess: (me) => {
+      queryClient.setQueryData(queryKeys.auth.me(), me);
+    },
+  });
+}
+
+/** 개인정보 수집·이용 동의(`OnboardingPage` 전용). `updateMe`와 같은 방식으로 캐시를 갱신한다. */
+export function useConfirmPrivacyConsent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: confirmPrivacyConsent,
     onSuccess: (me) => {
       queryClient.setQueryData(queryKeys.auth.me(), me);
     },

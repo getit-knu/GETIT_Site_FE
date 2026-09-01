@@ -14,6 +14,18 @@ export async function updateMe(payload: MeUpdatePayload): Promise<Me> {
 }
 
 /**
+ * 개인정보 수집·이용 동의를 서버에 기록한다. `OnboardingPage`(신규 유저 전용)에서만 부른다.
+ *
+ * `getit-knu/GETIT_Site_BE#203`(PR #204, 2026-09-01 머지됨)에서 만든 엔드포인트다. 본문은
+ * 선택이라 안 보낸다 — 이미 동의한 사용자가 다시 불러도 200이고 최초 동의 시각이 유지된다
+ * (멱등이라 중복 호출을 따로 걸러낼 필요가 없다).
+ */
+export async function confirmPrivacyConsent(): Promise<Me> {
+  const { data } = await client.post<Me>("/api/auth/consent");
+  return data;
+}
+
+/**
  * Access Token 재발급. (명세서 1.3)
  *
  * Refresh Token 은 HttpOnly 쿠키라 여기서 직접 넘기지 않는다.

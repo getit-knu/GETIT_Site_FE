@@ -34,6 +34,7 @@ function renderAt(path: string) {
       { path: "/", element: <p>홈</p> },
       { path: "/member", element: <p>부원 본문</p> },
       { path: "/admin", element: <p>관리자 본문</p> },
+      { path: "/onboarding", element: <p>온보딩 본문</p> },
       { path: "/oauth/callback", element: <OAuthCallbackPage /> },
     ],
     { initialEntries: [path] },
@@ -69,9 +70,25 @@ describe("OAuthCallbackPage", () => {
 
   it("GUEST는 아직 갈 곳이 없어 홈으로 보낸다", async () => {
     vi.mocked(getMe).mockResolvedValue(meWithRole("GUEST"));
-    renderAt("/oauth/callback?isNewUser=true");
+    renderAt("/oauth/callback");
 
     expect(await screen.findByText("홈")).toBeInTheDocument();
+  });
+
+  it("신규 유저는 역할과 무관하게 온보딩부터 거친다", async () => {
+    // 온보딩(개인정보 동의)을 안 거치면 회원 정보를 서버가 아예 못 갖게 된다 —
+    // 역할별 도착지보다 항상 우선한다.
+    vi.mocked(getMe).mockResolvedValue(meWithRole("MEMBER"));
+    renderAt("/oauth/callback?isNewUser=true");
+
+    expect(await screen.findByText("온보딩 본문")).toBeInTheDocument();
+  });
+
+  it("기존 유저는 isNewUser가 없으면 온보딩을 거치지 않는다", async () => {
+    vi.mocked(getMe).mockResolvedValue(meWithRole("MEMBER"));
+    renderAt("/oauth/callback?isNewUser=false");
+
+    expect(await screen.findByText("부원 본문")).toBeInTheDocument();
   });
 
   it("토큰 재발급에 실패하면 실패 화면을 보여주고, 홈으로 버튼이 동작한다", async () => {
