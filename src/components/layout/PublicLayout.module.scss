@@ -2,7 +2,9 @@
 
 .layout {
   display: flex;
-  min-height: 100vh;
+  min-height: 100vh; // 폴백 — dvh를 모르는 브라우저용.
+  // 모바일 주소창이 접히고 펼쳐지며 뷰포트 높이가 바뀌는 걸 100vh는 반영하지 못한다(#273).
+  min-height: 100dvh;
   flex-direction: column;
 }
 

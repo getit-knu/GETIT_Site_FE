@@ -1,9 +1,9 @@
 import type { AxiosError, AxiosResponse } from "axios";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getAccessToken, setAccessToken } from "../libs/accessToken";
 
-import { client, type ApiErrorPayload } from "./client";
+import { client, setOnSessionEnded, type ApiErrorPayload } from "./client";
 
 /**
  * 인터셉터를 직접 꺼내 돌린다. axios 내부 핸들러 배열을 읽는 방식이라
@@ -115,6 +115,40 @@ describe("실패 응답 인터셉터", () => {
     await expect(runErrorInterceptor(500, null)).rejects.toMatchObject({ code: "UNKNOWN_ERROR" });
 
     expect(getAccessToken()).toBe("valid-token");
+  });
+});
+
+describe("세션 종료 콜백(#295)", () => {
+  beforeEach(() => {
+    setAccessToken(null);
+  });
+
+  afterEach(() => {
+    // 이후 파일의 다른 테스트로 스파이가 새지 않게 비워 둔다.
+    setOnSessionEnded(() => {});
+  });
+
+  it("401로 세션이 끝나면 등록된 콜백을 부른다", async () => {
+    // 콜백이 없으면 auth.me 쿼리 캐시가 그대로 남아 로그인 상태로 잘못 보인다(#295).
+    const onSessionEnded = vi.fn();
+    setOnSessionEnded(onSessionEnded);
+
+    await expect(
+      runErrorInterceptor(401, { code: "UNAUTHORIZED", message: "인증이 필요합니다." }),
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+
+    expect(onSessionEnded).toHaveBeenCalledOnce();
+  });
+
+  it("403 은 세션이 끝난 게 아니므로 콜백을 부르지 않는다", async () => {
+    const onSessionEnded = vi.fn();
+    setOnSessionEnded(onSessionEnded);
+
+    await expect(runErrorInterceptor(403, { code: "FORBIDDEN", message: "권한이 없습니다." })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+
+    expect(onSessionEnded).not.toHaveBeenCalled();
   });
 });
 
