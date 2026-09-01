@@ -10,9 +10,15 @@
   justify-content: center;
   background-color: rgb(0 0 0 / 50%);
 
-  // 열림 애니메이션만 건다(UX 라운드 2) — 닫힘은 즉시 unmount라(Modal.tsx) 퇴장 연출이
-  // 없어도 어색하지 않고, "화면을 비켜 주는" 동작은 빠를수록 좋다.
   animation: modal-overlay-in $duration-base $ease-out;
+
+  // 닫힐 때도 연출이 있다. `Modal.tsx`가 `useAnimatedPresence`로 unmount를 늦춰 주므로
+  // 사라지기 전 이 애니메이션이 끝까지 재생된다.
+  &[data-exiting] {
+    animation: modal-overlay-out $duration-fast $ease-out forwards;
+    // 사라지는 중인 껍데기가 클릭을 가로채면 안 된다 — 뒤 화면이 이미 사용자 것이다.
+    pointer-events: none;
+  }
 }
 
 @keyframes modal-overlay-in {
@@ -21,8 +27,19 @@
   }
 }
 
+@keyframes modal-overlay-out {
+  to {
+    opacity: 0;
+  }
+}
+
 .dialog {
   animation: modal-dialog-in $duration-base $ease-out;
+
+  // 들어올 때보다 짧게 나간다 — 화면을 비켜 주는 동작은 빠를수록 좋다.
+  &[data-exiting] {
+    animation: modal-dialog-out $duration-fast $ease-out forwards;
+  }
   display: flex;
   width: 90%;
   max-width: 32rem;
@@ -77,10 +94,24 @@
   }
 }
 
+@keyframes modal-dialog-out {
+  to {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.98);
+  }
+}
+
+/*
+ * 동작 줄이기: 연출은 끄되 **애니메이션 자체를 없애지는 않는다**.
+ *
+ * `animation: none`으로 지우면 `animationend`가 영영 오지 않아 `endExit()`가 안 불린다.
+ * 훅의 타임아웃 폴백이 결국 정리해 주지만 그동안 사라진 모달이 화면에 남아 있다 —
+ * 눈에 안 보이는 길이(1ms)로 줄여 즉시 끝나되 이벤트는 오게 한다.
+ */
 @media (prefers-reduced-motion: reduce) {
   .overlay,
   .dialog {
-    animation: none;
+    animation-duration: 1ms;
   }
 }
 

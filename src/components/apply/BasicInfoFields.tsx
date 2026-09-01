@@ -3,13 +3,14 @@ import { Input } from "../ui/Input/Input";
 import styles from "../../pages/ApplyPage.module.scss";
 
 import type { BasicInfoState, BlockedFieldKey } from "./applyFormState";
+import { formatPhoneNumber } from "./applyFormState";
 
 interface BasicInfoFieldsProps {
   value: BasicInfoState;
   colleges: College[];
   majors: Major[];
   /** 입력칸 id를 만든다. `ApplyForm`이 제출을 막는 칸을 찾을 때 같은 함수를 쓴다. */
-  fieldId: (key: BlockedFieldKey | "studentId") => string;
+  fieldId: (key: BlockedFieldKey) => string;
   onChange: <K extends keyof BasicInfoState>(key: K) => (value: string) => void;
   onCollegeChange: (collegeId: number) => void;
   onMajorChange: (majorId: number) => void;
@@ -48,7 +49,9 @@ export function BasicInfoFields({
         id={fieldId("phone")}
         label="전화번호 *"
         value={value.phone}
-        onChange={onChange("phone")}
+        // 숫자만 쭉 쳐도 010-1234-5678 꼴로 알아서 끊긴다 — 하이픈을 손으로 넣게 하면
+        // 사람마다 다르게 저장되고, 넣는 자리를 틀리면 다시 지우고 쳐야 한다.
+        onChange={(next) => onChange("phone")(formatPhoneNumber(next))}
         placeholder="010-1234-5678"
       />
       <div className={styles.selectField}>

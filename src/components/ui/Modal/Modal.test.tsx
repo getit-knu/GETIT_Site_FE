@@ -1,4 +1,5 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitForElementToBeRemoved } from "@testing-library/react";
+import { StrictMode } from "react";
 import { it, expect, vi } from "vitest";
 
 import { Modal, ModalBody, ModalHeader } from "./Modal";
@@ -139,4 +140,74 @@ it("포커스 트랩이 비활성화된 요소를 건너뛴다", () => {
   fireEvent.keyDown(document, { key: "Tab" });
 
   expect(document.activeElement).toBe(first);
+});
+
+it("닫히면 퇴장 연출이 끝날 때까지 남지만 접근성 트리에서는 즉시 빠진다", async () => {
+  // 예전엔 `isOpen`이 false가 되는 순간 통째로 사라져서 퇴장 연출을 걸 자리가 없었다.
+  // 이제 잠깐 남지만, 그동안 스크린리더에는 이미 닫힌 대화상자로 취급된다.
+  const { rerender } = render(
+    <Modal isOpen onClose={() => {}}>
+      <p>내용</p>
+    </Modal>,
+  );
+  expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+  rerender(
+    <Modal isOpen={false} onClose={() => {}}>
+      <p>내용</p>
+    </Modal>,
+  );
+
+  expect(screen.getByTestId("modal-overlay")).toHaveAttribute("data-exiting");
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+  // 폴백 타임아웃이 지나면 DOM에서도 사라진다(jsdom엔 animationend가 없다).
+  await waitForElementToBeRemoved(() => screen.queryByTestId("modal-overlay"));
+});
+
+it("닫히는 중에 오버레이를 눌러도 다시 닫으라고 하지 않는다", () => {
+  const onClose = vi.fn();
+  const { rerender } = render(
+    <Modal isOpen onClose={onClose}>
+      <p>내용</p>
+    </Modal>,
+  );
+
+  rerender(
+    <Modal isOpen={false} onClose={onClose}>
+      <p>내용</p>
+    </Modal>,
+  );
+  fireEvent.click(screen.getByTestId("modal-overlay"));
+
+  expect(onClose).not.toHaveBeenCalled();
+});
+
+it("StrictMode 안에서 닫힌 채 마운트한 뒤 열어도 열린다", () => {
+  /*
+    앱은 `main.tsx`에서 StrictMode 안에 있는데 이 파일의 다른 테스트들은 벗겨 놓고 렌더한다.
+    닫힌 채 마운트했다가 여는 흔한 경로를 앱과 같은 조건에서 한 번은 확인해 둔다.
+
+    다만 실제로 났던 "브라우저에서 모달이 아예 안 열리는" 회귀는 jsdom에서는 재현되지 않아
+    이 테스트로 잡히지 않는다 — 그 성질은 `useAnimatedPresence.test.ts` 의 "open이 true인
+    렌더에서 mounted가 false인 순간이 한 번도 없다" 가 지킨다.
+  */
+  const { rerender } = render(
+    <StrictMode>
+      <Modal isOpen={false} onClose={() => {}}>
+        <p>내용</p>
+      </Modal>
+    </StrictMode>,
+  );
+  expect(screen.queryByText("내용")).not.toBeInTheDocument();
+
+  rerender(
+    <StrictMode>
+      <Modal isOpen onClose={() => {}}>
+        <p>내용</p>
+      </Modal>
+    </StrictMode>,
+  );
+
+  expect(screen.getByRole("dialog")).toBeInTheDocument();
 });
