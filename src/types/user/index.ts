@@ -31,6 +31,14 @@ export type AdminUser = Omit<
   generationNo: number | null;
   /** 조가 배정되지 않았으면 `null`. */
   group: Required<components["schemas"]["GroupSummary"]> | null;
+  /**
+   * 연락처.
+   *
+   * **아직 서버가 주지 않는다**(`getit-knu/GETIT_Site_BE#182`) — `User` 엔티티엔 있지만
+   * `UserSummary` 가 빼고 있어 `undefined` 로 온다. 값이 실려 오기 시작하면 화면이
+   * 그대로 그린다. 승격을 거치지 않은 `GUEST` 는 그 뒤에도 비어 있을 수 있다.
+   */
+  phoneNumber?: string | null;
 };
 
 export interface UserListParams {

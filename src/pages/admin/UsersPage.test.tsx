@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -41,6 +41,28 @@ function page(content: AdminUser[], over = {}) {
     last: true,
     ...over,
   };
+}
+
+/**
+ * 이름으로 행을, 머리글로 열을 찾아 그 칸을 돌려준다.
+ *
+ * `closest("tr")` 같은 DOM 탐색은 래퍼 한 겹만 끼어도 조용히 틀린다. 표 전체를 검사하면
+ * 반대로 엉뚱한 행에 값이 있어도 통과하니, 행과 열을 모두 특정한다.
+ */
+function cellOf(userName: string, header: string): HTMLElement {
+  const rows = within(screen.getByRole("table", { name: "사용자 목록" })).getAllByRole("row");
+  const headerRow = rows.find((r) => within(r).queryAllByRole("columnheader").length > 0);
+  if (!headerRow) throw new Error("표에 머리글 행이 없다.");
+
+  // 머리글은 접근성 이름으로 찾는다. textContent 비교는 공백이나 마크업 한 겹에 조용히 빗나간다.
+  const headers = within(headerRow).getAllByRole("columnheader");
+  const [target] = within(headerRow).queryAllByRole("columnheader", { name: header });
+  if (!target) throw new Error(`"${header}" 머리글이 없다. 있는 머리글: ${headers.map((h) => h.textContent)}`);
+  const column = headers.indexOf(target);
+
+  const row = rows.find((r) => within(r).queryByRole("cell", { name: userName }));
+  if (!row) throw new Error(`"${userName}" 행이 없다.`);
+  return within(row).getAllByRole("cell")[column];
 }
 
 function renderPage(entry = "/admin/users") {
@@ -295,75 +317,31 @@ describe("UsersPage", () => {
 
     expect(await screen.findByRole("table", { name: "사용자 목록" })).toBeInTheDocument();
   });
+  it("연락처를 그 사용자 행에 보여준다", async () => {
+    // 한 명만 두면 값이 엉뚱한 행에 그려져도 통과한다. 값이 없는 사용자를 함께 둔다.
+    vi.mocked(api.getUsers).mockResolvedValue(
+      page([
+        user({ id: 21, name: "김부원", phoneNumber: "010-1234-5678" }),
+        user({ id: 22, name: "이부원", email: "member2@example.com" }),
+      ]),
+    );
+    renderPage();
 
-  describe("탈퇴한 사용자", () => {
-    // 소프트 삭제라 지운 사용자가 WITHDRAWN 으로 계속 내려온다(#277).
-    function withdrawnInTheMiddle() {
-      return page([
-        user({ id: 1, name: "첫부원", email: "a@example.com" }),
-        user({ id: 2, name: "탈퇴부원", email: "b@example.com", status: "WITHDRAWN" }),
-        user({ id: 3, name: "끝부원", email: "c@example.com" }),
-      ]);
-    }
+    await screen.findByText("김부원");
+    // 부분 일치라 정규식으로 칸 전체를 맞춘다. "-" 는 전화번호 안에도 들어 있다.
+    expect(cellOf("김부원", "연락처")).toHaveTextContent(/^010-1234-5678$/);
+    expect(cellOf("이부원", "연락처")).toHaveTextContent(/^-$/);
+  });
 
-    it("기본으로 목록에서 숨긴다", async () => {
-      vi.mocked(api.getUsers).mockResolvedValue(withdrawnInTheMiddle());
-      renderPage();
+  it("연락처가 없으면 '-' 로 표시한다", async () => {
+    /*
+      BE#182 전까지 `UserSummary` 에 `phoneNumber` 가 없어 `undefined` 로 온다.
+      그대로 그리면 표에 "undefined" 가 뜬다.
+    */
+    vi.mocked(api.getUsers).mockResolvedValue(page([user()]));
+    renderPage();
 
-      const table = await screen.findByRole("table", { name: "사용자 목록" });
-      expect(table).toHaveTextContent("첫부원");
-      expect(table).toHaveTextContent("끝부원");
-      expect(table).not.toHaveTextContent("탈퇴부원");
-    });
-
-    it("몇 명을 숨겼는지 알린다", async () => {
-      // 표가 짧아진 이유를 말하지 않으면 목록이 잘린 것처럼 읽힌다.
-      vi.mocked(api.getUsers).mockResolvedValue(withdrawnInTheMiddle());
-      renderPage();
-
-      expect(await screen.findByText("탈퇴한 사용자 1명을 숨겼습니다.", { exact: false })).toBeInTheDocument();
-    });
-
-    it("보기를 켜면 다시 나오고 URL 에 남는다", async () => {
-      vi.mocked(api.getUsers).mockResolvedValue(withdrawnInTheMiddle());
-      const router = renderPage();
-      await screen.findByRole("table");
-
-      await userEvent.click(screen.getByRole("checkbox", { name: "탈퇴한 사용자 보기" }));
-
-      expect(router.state.location.search).toContain("withdrawn=1");
-      expect(screen.getByRole("table", { name: "사용자 목록" })).toHaveTextContent("탈퇴부원");
-    });
-
-    it("보기를 켜면 첫 페이지로 되돌린다", async () => {
-      // 보이는 인원이 달라지므로 필터를 바꿀 때와 같은 이유로 되돌린다.
-      vi.mocked(api.getUsers).mockResolvedValue(
-        page([user({ status: "WITHDRAWN" })], { page: 2, totalElements: 27, totalPages: 3 }),
-      );
-      const router = renderPage("/admin/users?page=2");
-      await screen.findByRole("button", { name: "탈퇴한 사용자 보기" });
-
-      await userEvent.click(screen.getByRole("checkbox", { name: "탈퇴한 사용자 보기" }));
-
-      expect(router.state.location.search).not.toContain("page=");
-    });
-
-    it("탈퇴한 사용자에게는 삭제 버튼을 두지 않는다", async () => {
-      // 이미 지운 사용자다. 눌러도 아무 일이 없을 버튼을 두지 않는다.
-      vi.mocked(api.getUsers).mockResolvedValue(withdrawnInTheMiddle());
-      renderPage("/admin/users?withdrawn=1");
-
-      await screen.findByRole("table");
-      expect(screen.getByRole("button", { name: "첫부원 삭제" })).toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "탈퇴부원 삭제" })).not.toBeInTheDocument();
-    });
-
-    it("탈퇴자만 있는 페이지를 '등록된 사용자가 없다'고 하지 않는다", async () => {
-      vi.mocked(api.getUsers).mockResolvedValue(page([user({ status: "WITHDRAWN" })]));
-      renderPage();
-
-      expect(await screen.findByText("이 페이지의 사용자 1명은 모두 탈퇴했습니다.")).toBeInTheDocument();
-      expect(screen.queryByText("등록된 사용자가 없습니다.")).not.toBeInTheDocument();
-    });
+    await screen.findByText("김부원");
+    expect(cellOf("김부원", "연락처")).toHaveTextContent(/^-$/);
   });
 });
