@@ -106,6 +106,31 @@ describe("LectureDetailPage", () => {
     expect(openSpy).toHaveBeenCalledWith("https://storage.example/501?sig=abc", "_blank", "noopener,noreferrer");
   });
 
+  it("강의 설명을 마크다운으로 렌더링한다", async () => {
+    // BE가 이 필드를 마크다운 원문으로 준다(`types/lecture/index.ts`의 `LectureDetail.description` 주석 참고).
+    vi.mocked(api.getMemberLectureDetail).mockResolvedValue(
+      detail({ description: "**HTML**과 CSS의\n\n- 태그\n- 속성\n\n을 이해합니다." }),
+    );
+    renderAt("/member/lectures/1");
+
+    // 굵게 처리된 부분이 <strong> 엘리먼트로 실제 렌더링됐는지 — 별표(**)가 그대로 화면에
+    // 남아 있으면 안 된다.
+    const strong = await screen.findByText("HTML", { selector: "strong" });
+    expect(strong).toBeInTheDocument();
+    // 목록(- 태그, - 속성)도 <li>로 렌더링된다(강의 자료 목록도 <li>라 텍스트로 특정한다).
+    expect(screen.getByText("태그", { selector: "li" })).toBeInTheDocument();
+    expect(screen.getByText("속성", { selector: "li" })).toBeInTheDocument();
+  });
+
+  it("과제 설명도 마크다운으로 렌더링한다", async () => {
+    vi.mocked(api.getMemberLectureDetail).mockResolvedValue(
+      detail({ assignment: { ...detail().assignment!, description: "**필수**: 완성한 페이지 링크를 제출하세요." } }),
+    );
+    renderAt("/member/lectures/1");
+
+    expect(await screen.findByText("필수", { selector: "strong" })).toBeInTheDocument();
+  });
+
   it("등록된 자료가 없으면 안내 문구를 보여준다", async () => {
     vi.mocked(api.getMemberLectureDetail).mockResolvedValue(detail({ materials: [] }));
     renderAt("/member/lectures/2");

@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router";
 
 import { AssignmentSection, MaterialLink } from "../../components/lecture/AssignmentSection";
 import { QnaSection } from "../../components/lecture/QnaSection";
+import { Markdown } from "../../components/ui/Markdown/Markdown";
 import { ErrorState, TextSkeleton } from "../../components/ui/states/States";
 import { lectureErrorMessage } from "../../errors/lecture/errorMessages";
 import { useMemberLectureDetail } from "../../hooks/lecture/useMemberLectures";
@@ -94,7 +95,7 @@ function LectureDetailView({ lecture }: { lecture: MemberLectureDetail }) {
 
               <section>
                 <h2 className={styles.sectionTitle}>학습 구성</h2>
-                <p className={styles.description}>{lecture.description}</p>
+                <Markdown className={styles.description} content={lecture.description} />
               </section>
             </div>
           </div>
