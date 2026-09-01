@@ -1,4 +1,5 @@
 @use "../../styles/abstracts/variables" as *;
+@use "../../styles/abstracts/motion" as *;
 
 .card {
   // 격자 칸을 꽉 채운다. 이게 없으면 카드가 제 내용만큼만 자라, 같은 줄인데도 글자
@@ -11,6 +12,25 @@
   box-shadow:
     0 1px 3px rgb(0 0 0 / 10%),
     0 1px 2px -1px rgb(0 0 0 / 10%);
+  transition:
+    transform $duration-fast $ease-out,
+    box-shadow $duration-fast $ease-out;
+
+  // 훑어보는 시선을 따라 살짝 떠오른다 — 클릭 대상은 아니라 리프트는 낮게(2px).
+  &:hover {
+    box-shadow:
+      0 6px 12px rgb(0 0 0 / 10%),
+      0 2px 4px -1px rgb(0 0 0 / 10%);
+    transform: translateY(-2px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
+  }
 }
 
 .photo {
@@ -46,9 +66,19 @@
   // 이름이 길어져도 아이콘은 줄어들지 않는다.
   flex-shrink: 0;
   color: $color-text-secondary;
+  transition:
+    color $duration-fast $ease-out,
+    transform $duration-fast $ease-out;
 
   &:hover {
     color: $color-accent;
+    transform: translateY(-1px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &:hover {
+      transform: none;
+    }
   }
 
   svg {

@@ -1,0 +1,62 @@
+@use "../../../styles/abstracts/variables" as *;
+@use "../../../styles/abstracts/motion" as *;
+
+.loader {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  background-color: $color-background;
+}
+
+/*
+ * 로고가 숨쉬듯 옅어졌다 진해진다.
+ *
+ * 빙글빙글 도는 스피너 대신 로고를 쓴다. 이 화면은 앱이 처음 뜨는 순간이라 사용자가 보는
+ * 첫 프레임인데, 정체 모를 원이 도는 것보다 "GET IT을 여는 중"이라고 말해 주는 편이 낫다.
+ *
+ * 등장 자체도 0.4초 늦춘다(`backwards`라 그동안은 투명). 청크가 캐시에 있어 30ms 만에
+ * 끝나는 흔한 경우에 로고가 번쩍하고 사라지면, 안 보이느니만 못한 깜빡임이 된다.
+ */
+.logo {
+  color: $color-accent;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  animation:
+    loader-appear $duration-slow $ease-out 400ms backwards,
+    loader-breathe 1.6s ease-in-out 800ms infinite;
+}
+
+.label {
+  margin: 0;
+  color: $color-text-secondary;
+  font-size: 0.9375rem;
+  animation: loader-appear $duration-slow $ease-out 500ms backwards;
+}
+
+@keyframes loader-appear {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
+@keyframes loader-breathe {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+// 동작 줄이기: 숨쉬기는 끄고, 늦게 나타나는 것만 남긴다(깜빡임 방지는 모션이 아니라 배려다).
+@media (prefers-reduced-motion: reduce) {
+  .logo {
+    animation: loader-appear 1ms linear 400ms backwards;
+  }
+
+  .label {
+    animation: loader-appear 1ms linear 500ms backwards;
+  }
+}

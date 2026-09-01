@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import clsx from "clsx";
 import { NavLink } from "react-router";
 
@@ -33,17 +33,29 @@ function ctaFor(user: Me | undefined): { to: string; label: string } {
  */
 export function Nav() {
   const [menuOpen, setMenuOpen] = useState(false);
+  // 스크롤을 시작하면 그림자를 살짝 드리워 "콘텐츠 위에 떠 있음"을 보여준다(UX 라운드 2).
+  // 맨 위에서는 그림자가 없어야 히어로와 한 장처럼 이어진다.
+  const [scrolled, setScrolled] = useState(() => window.scrollY > 8);
   const { user, isAuthenticated } = useSession();
   const handleLogout = useLogout();
   const closeMenu = () => setMenuOpen(false);
 
+  useEffect(() => {
+    function handleScroll() {
+      setScrolled(window.scrollY > 8);
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const cta = ctaFor(user);
 
   return (
-    <header className={styles.nav}>
+    <header className={clsx(styles.nav, scrolled && styles.scrolled)}>
       <nav className={styles.inner} aria-label="주요 메뉴">
-        <NavLink to="/" className={styles.logo} onClick={closeMenu}>
-          GETIT
+        <NavLink viewTransition to="/" className={styles.logo} onClick={closeMenu}>
+          GET IT
         </NavLink>
 
         <button
@@ -67,6 +79,7 @@ export function Nav() {
 
         <div id={NAV_LINKS_ID} className={clsx(styles.links, menuOpen && styles.open)}>
           <NavLink
+            viewTransition
             to="/"
             end
             className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
@@ -75,6 +88,7 @@ export function Nav() {
             홈
           </NavLink>
           <NavLink
+            viewTransition
             to="/projects"
             className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
             onClick={closeMenu}
@@ -82,6 +96,7 @@ export function Nav() {
             프로젝트
           </NavLink>
           <NavLink
+            viewTransition
             to="/leaders"
             className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
             onClick={closeMenu}
@@ -91,6 +106,7 @@ export function Nav() {
           {isAuthenticated ? (
             <>
               <NavLink
+                viewTransition
                 to="/me"
                 className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
                 onClick={closeMenu}
@@ -110,6 +126,7 @@ export function Nav() {
             </>
           ) : (
             <NavLink
+              viewTransition
               to="/login"
               className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
               onClick={closeMenu}
@@ -117,7 +134,7 @@ export function Nav() {
               로그인
             </NavLink>
           )}
-          <NavLink to={cta.to} className={styles.cta} onClick={closeMenu}>
+          <NavLink viewTransition to={cta.to} className={styles.cta} onClick={closeMenu}>
             {cta.label}
           </NavLink>
         </div>

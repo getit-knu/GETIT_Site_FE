@@ -6,6 +6,7 @@ import { getMe, refreshAccessToken } from "../apis/auth/authApi";
 import { queryKeys } from "../apis/queryKeys";
 import { setAccessToken } from "../libs/accessToken";
 import type { Role } from "../types/auth";
+import { FullScreenLoader } from "../components/ui/FullScreenLoader/FullScreenLoader";
 
 /** 역할별 로그인 후 도착지. 아직 승인 전인 GUEST는 갈 곳이 없어 홈에 남는다. */
 function destinationFor(role: Role): string {
@@ -67,6 +68,5 @@ export default function OAuthCallbackPage() {
     );
   }
 
-  // TODO(A-3): 전체 화면 로딩 컴포넌트로 교체한다.
-  return <p>로그인 중…</p>;
+  return <FullScreenLoader label="로그인하는 중이에요" />;
 }

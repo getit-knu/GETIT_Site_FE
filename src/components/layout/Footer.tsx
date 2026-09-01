@@ -11,25 +11,25 @@ export function Footer() {
       <div className={styles.inner}>
         <div className={styles.grid}>
           <div>
-            <h3 className={styles.heading}>GETIT</h3>
-            <p className={styles.muted}>상상을 현실로 만드는 IT 창업 동아리, GETIT</p>
+            <h3 className={styles.heading}>GET IT</h3>
+            <p className={styles.muted}>상상을 현실로 만드는 경북대학교 컴퓨터학부 SW&창업 동아리, GET IT</p>
           </div>
 
           <div>
             <h4 className={styles.subheading}>바로가기</h4>
             <ul className={styles.linkList}>
               <li>
-                <Link to="/apply" className={styles.link}>
+                <Link viewTransition to="/apply" className={styles.link}>
                   지원하기
                 </Link>
               </li>
               <li>
-                <Link to="/projects" className={styles.link}>
+                <Link viewTransition to="/projects" className={styles.link}>
                   프로젝트
                 </Link>
               </li>
               <li>
-                <Link to="/leaders" className={styles.link}>
+                <Link viewTransition to="/leaders" className={styles.link}>
                   운영진
                 </Link>
               </li>
@@ -44,7 +44,7 @@ export function Footer() {
           </div>
         </div>
 
-        <p className={styles.copyright}>© 2026 GETIT. All rights reserved.</p>
+        <p className={styles.copyright}>© 2026 GET IT. All rights reserved.</p>
       </div>
     </footer>
   );

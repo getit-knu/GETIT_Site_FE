@@ -14,7 +14,7 @@ import type { MyApplicationResult } from "../types/application";
 
 import styles from "./ApplyPage.module.scss";
 
-const NOT_OPEN_MESSAGE = "지금은 지원서 접수 기간이 아닙니다.";
+const NOT_OPEN_MESSAGE = "지금은 지원서 접수 기간이 아니에요.";
 
 /** 헤더만 있는 안내 화면. 로그인 유도 · 모집 기간 아님 안내가 이 모양을 함께 쓴다. */
 function NoticePage({ message, action }: { message: string; action?: ReactNode }) {
@@ -23,7 +23,7 @@ function NoticePage({ message, action }: { message: string; action?: ReactNode }
       <div className={styles.hero}>
         <div className={styles.inner}>
           <div className={styles.heading}>
-            <h1 className={styles.title}>GETIT 지원하기</h1>
+            <h1 className={styles.title}>GET IT 지원하기</h1>
             <p className={styles.subtitle}>{message}</p>
             {action}
           </div>
@@ -66,7 +66,7 @@ function LoginGate() {
         <NoticePage
           message="지원서를 작성하려면 먼저 로그인해 주세요."
           action={
-            <Link to="/login" className={styles.loginCta}>
+            <Link viewTransition to="/login" className={styles.loginCta}>
               로그인하러 가기
             </Link>
           }

@@ -4,6 +4,8 @@ import clsx from "clsx";
 import styles from "./TextArea.module.scss";
 
 interface TextAreaProps {
+  /** 바깥에서 이 칸을 지목해야 할 때만 준다(`Input`의 같은 이름 프롭 설명 참고). */
+  id?: string;
   label?: string;
   value: string;
   onChange: (value: string) => void;
@@ -17,6 +19,7 @@ interface TextAreaProps {
 }
 
 export function TextArea({
+  id: givenId,
   label,
   value,
   onChange,
@@ -28,7 +31,8 @@ export function TextArea({
   name,
   disabled,
 }: TextAreaProps) {
-  const id = useId();
+  const generatedId = useId();
+  const id = givenId ?? generatedId;
 
   return (
     <div className={styles.wrapper}>

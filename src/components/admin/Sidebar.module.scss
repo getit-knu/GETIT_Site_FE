@@ -1,4 +1,5 @@
 @use "../../styles/abstracts/breakpoints" as *;
+@use "../../styles/abstracts/motion" as *;
 
 // 데스크톱에선 항상 보이는 고정 사이드바. 240px 폭이 375px 화면 대부분을 차지해
 // 본문이 못 쓸 만큼 짓눌리던 문제라, 좁은 화면에선 오프캔버스 드로어로 바꾼다(#180).
@@ -17,7 +18,7 @@
     left: 0;
     z-index: 40;
     transform: translateX(-100%);
-    transition: transform 0.2s ease;
+    transition: transform $duration-base $ease-out;
 
     &.open {
       transform: translateX(0);

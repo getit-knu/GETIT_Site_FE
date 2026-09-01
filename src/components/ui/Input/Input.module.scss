@@ -1,4 +1,5 @@
 @use "../../../styles/abstracts/variables" as *;
+@use "../../../styles/abstracts/motion" as *;
 @use "../../../styles/abstracts/form-field";
 
 .wrapper {
@@ -17,9 +18,15 @@
   color: $color-text-primary;
   font-size: 0.875rem;
 
-  &:focus {
-    outline: 2px solid $color-accent;
-    outline-offset: 1px;
+  // 포커스 링이 뚝 나타나는 대신 스르륵 차오른다.
+  transition:
+    border-color $duration-fast $ease-out,
+    box-shadow $duration-fast $ease-out;
+
+  &:focus-visible {
+    outline: none;
+    border-color: $color-accent;
+    box-shadow: $focus-ring;
   }
 
   &:disabled {

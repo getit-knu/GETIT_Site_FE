@@ -36,7 +36,7 @@ describe("MemberLayout", () => {
   it("GETIT 로고 · 본문을 함께 렌더링한다", () => {
     renderAt("/member");
 
-    expect(screen.getByRole("link", { name: "GETIT" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "GET IT" })).toBeInTheDocument();
     expect(screen.getByText("부원 본문")).toBeInTheDocument();
   });
 

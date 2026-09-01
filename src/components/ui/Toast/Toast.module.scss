@@ -1,4 +1,5 @@
 @use "../../../styles/abstracts/variables" as *;
+@use "../../../styles/abstracts/motion" as *;
 
 .toast {
   position: fixed;
@@ -17,6 +18,41 @@
   background-color: $color-heading;
   color: $color-text-inverse;
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 25%);
+
+  // 화면 아래에서 밀려 올라온다 — 나타난 자리(아래)와 움직이는 방향이 같아야 어디서 왔는지 읽힌다.
+  animation: toast-in $duration-base $ease-out;
+
+  // 왔던 곳으로 되돌아 내려간다. `Toast.tsx`가 unmount를 늦춰 주므로 끝까지 재생된다.
+  &[data-exiting] {
+    animation: toast-out $duration-fast $ease-out forwards;
+    // 내려가는 중인 띠가 뒤 화면의 클릭을 가로채면 안 된다.
+    pointer-events: none;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+}
+
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
+/*
+ * 동작 줄이기: 연출은 없애되 애니메이션 자체는 남긴다 — `animation: none`으로 지우면
+ * `animationend`가 안 와서 `endExit()`가 안 불리고, 사라진 토스트가 폴백 타임아웃까지
+ * 화면에 남는다(Modal.module.scss에 같은 설명이 있다).
+ */
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation-duration: 1ms;
+  }
 }
 
 .message {

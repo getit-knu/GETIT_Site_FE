@@ -38,9 +38,9 @@ describe("PublicLayout", () => {
   it("Nav · 본문 · Footer를 함께 렌더링한다", () => {
     renderAt("/");
 
-    expect(screen.getByRole("link", { name: "GETIT" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "GET IT" })).toBeInTheDocument();
     expect(screen.getByText("홈 본문")).toBeInTheDocument();
-    expect(screen.getByText("© 2026 GETIT. All rights reserved.")).toBeInTheDocument();
+    expect(screen.getByText("© 2026 GET IT. All rights reserved.")).toBeInTheDocument();
   });
 
   it("홈 · 프로젝트 · 운영진 · 로그인 · 지원하기가 전부 실제 링크다", () => {

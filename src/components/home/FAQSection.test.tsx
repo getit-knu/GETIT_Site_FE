@@ -65,7 +65,9 @@ describe("FAQSection", () => {
     await userEvent.click(button);
 
     expect(button).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByText("없습니다.")).not.toBeInTheDocument();
+    // 접힘 애니메이션 동안 unmount가 늦춰진다(useAnimatedPresence) — jsdom엔 animationend가
+    // 없어 타임아웃 폴백이 지워질 때까지 기다린다.
+    await vi.waitFor(() => expect(screen.queryByText("없습니다.")).not.toBeInTheDocument());
   });
 
   it("한 번에 하나만 펼쳐진다", async () => {

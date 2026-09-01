@@ -6,6 +6,11 @@ import styles from "./Input.module.scss";
 type InputType = "text" | "email" | "password" | "number" | "date" | "datetime-local";
 
 interface InputProps {
+  /**
+   * 바깥에서 이 칸을 지목해야 할 때만 준다(예: 제출을 막는 칸으로 포커스를 옮기는 지원 폼).
+   * 안 주면 `useId`로 알아서 만든다 — 라벨 연결에만 쓰이므로 대개 필요 없다.
+   */
+  id?: string;
   label?: string;
   /** 라벨을 화면에 두지 않을 때 스크린리더용 이름. 표나 카드 안에서 쓴다. */
   ariaLabel?: string;
@@ -20,6 +25,7 @@ interface InputProps {
 }
 
 export function Input({
+  id: givenId,
   label,
   ariaLabel,
   value,
@@ -31,7 +37,8 @@ export function Input({
   disabled,
   maxLength,
 }: InputProps) {
-  const id = useId();
+  const generatedId = useId();
+  const id = givenId ?? generatedId;
 
   return (
     <div className={styles.wrapper}>
