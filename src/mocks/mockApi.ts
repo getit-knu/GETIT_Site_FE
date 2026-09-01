@@ -80,7 +80,7 @@ export function createMockApi() {
         return ok({
           generationNo: saved.generationNo,
           status: saved.status,
-          statusLabel: "서류 심사 중",
+          statusLabel: "서류를 검토하고 있어요",
           documentAnnouncedAt: "2026-09-08T18:00:00",
           finalAnnouncedAt: "2026-09-22T18:00:00",
           nextStep: null,

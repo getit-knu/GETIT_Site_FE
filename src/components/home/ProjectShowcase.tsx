@@ -25,7 +25,7 @@ export function ProjectShowcase() {
       <div className={styles.inner}>
         <div className={styles.heading}>
           <h2 className={styles.title}>프로젝트 쇼케이스</h2>
-          <p className={styles.subtitle}>GETIT 부원들이 만든 프로젝트를 확인해보세요</p>
+          <p className={styles.subtitle}>GET IT 부원들이 만든 프로젝트를 확인해보세요</p>
         </div>
 
         <ul className={styles.list}>

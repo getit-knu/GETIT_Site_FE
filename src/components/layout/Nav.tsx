@@ -43,7 +43,7 @@ export function Nav() {
     <header className={styles.nav}>
       <nav className={styles.inner} aria-label="주요 메뉴">
         <NavLink to="/" className={styles.logo} onClick={closeMenu}>
-          GETIT
+          GET IT
         </NavLink>
 
         <button

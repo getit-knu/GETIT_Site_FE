@@ -155,7 +155,7 @@ describe("ApplyPage", () => {
   it("지원서가 아직 없으면 양식 프리필로 폼을 채운다", async () => {
     await renderReadyPage();
 
-    expect(screen.getByRole("heading", { name: "GETIT 지원하기" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "GET IT 지원하기" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "지원서 작성" })).toBeInTheDocument();
     expect(screen.getByLabelText("이름 *")).toHaveValue("홍길동");
     expect(screen.getByLabelText("이메일 *")).toHaveValue("hong@getit.com");
@@ -279,7 +279,7 @@ describe("ApplyPage", () => {
     const payload = vi.mocked(saveDraft).mock.lastCall?.[0];
     expect(payload?.basicInfo.name).toBe("홍길동");
     expect(payload?.answers.find((a) => a.questionId === 1)?.answerText).toBe("성장하고 싶어서 지원합니다.");
-    expect(await screen.findByText("임시 저장했습니다.")).toBeInTheDocument();
+    expect(await screen.findByText("임시 저장했어요.")).toBeInTheDocument();
   });
 
   it("필수 정보 · 문항이 비어 있으면 제출을 막고 이유를 보여준다", async () => {

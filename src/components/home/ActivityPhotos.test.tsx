@@ -30,12 +30,12 @@ describe("ActivityPhotos", () => {
     ]);
     renderSection();
 
-    expect(await screen.findByRole("heading", { name: "GETIT과 함께한 순간들" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "GET IT과 함께한 순간들" })).toBeInTheDocument();
 
     // 무한 스크롤처럼 보이려고 카드 목록을 통째로 하나 더 복제해 붙인다. 복제본은
     // aria-hidden이라 접근성 트리(role 쿼리)에는 원본 목록 하나만 잡힌다.
     const list = within(screen.getByRole("list"));
-    const images = list.getAllByAltText("GETIT 활동 사진");
+    const images = list.getAllByAltText("GET IT 활동 사진");
     expect(images.map((img) => img.getAttribute("src"))).toEqual([
       "https://cdn.example.com/a.jpg",
       "https://cdn.example.com/b.jpg",
@@ -48,7 +48,7 @@ describe("ActivityPhotos", () => {
     vi.mocked(getActivityPhotos).mockResolvedValue([photo()]);
     renderSection();
 
-    expect(await screen.findAllByAltText("GETIT 활동 사진")).toHaveLength(2);
+    expect(await screen.findAllByAltText("GET IT 활동 사진")).toHaveLength(2);
   });
 
   it("등록된 사진이 없으면 섹션 자체를 숨긴다", async () => {
@@ -56,6 +56,6 @@ describe("ActivityPhotos", () => {
     renderSection();
 
     await waitFor(() => expect(getActivityPhotos).toHaveBeenCalled());
-    expect(screen.queryByRole("heading", { name: "GETIT과 함께한 순간들" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "GET IT과 함께한 순간들" })).not.toBeInTheDocument();
   });
 });

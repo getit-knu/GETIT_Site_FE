@@ -26,7 +26,7 @@ export function MemberLayout() {
       <header className={styles.nav}>
         <nav className={styles.inner} aria-label="부원 메뉴">
           <Link to="/" className={styles.logo} onClick={closeMenu}>
-            GETIT
+            GET IT
           </Link>
 
           <button

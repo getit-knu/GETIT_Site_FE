@@ -253,7 +253,7 @@ export const applicationForm: ApplicationFormResult = {
       order: 1,
       type: "TEXT",
       content: "지원 동기를 알려주세요.",
-      placeholder: "GETIT에서 하고 싶은 것",
+      placeholder: "GET IT에서 하고 싶은 것",
       required: true,
       maxLength: 500,
       options: null,

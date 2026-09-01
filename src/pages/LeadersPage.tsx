@@ -24,7 +24,7 @@ export default function LeadersPage() {
       <div className={styles.inner}>
         <div className={styles.heading}>
           <h1 className={styles.title}>운영진 소개</h1>
-          <p className={styles.subtitle}>GETIT을 이끌어가는 열정적인 운영진들을 만나보세요</p>
+          <p className={styles.subtitle}>GET IT을 이끌어가는 열정적인 운영진들을 만나보세요</p>
         </div>
 
         <StaffGroup title="Leader" staffs={leaders} showRole />

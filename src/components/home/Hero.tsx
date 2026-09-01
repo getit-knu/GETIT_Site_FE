@@ -10,14 +10,14 @@ export function Hero() {
       <div className={styles.blobTeal} aria-hidden="true" />
 
       <div className={styles.inner}>
-        <p className={styles.badge}>IT STARTUP CLUB</p>
+        <p className={styles.badge}>SW & STARTUP CLUB</p>
 
         <h1 className={styles.heading}>
           <span>LET&apos;S MAKE</span>
           <span className={styles.headingAccent}>ANYTHING.</span>
         </h1>
 
-        <p className={styles.description}>상상을 현실로 만드는 IT 창업 동아리, GET IT입니다.</p>
+        <p className={styles.description}>상상을 현실로 만드는 경북대학교 컴퓨터학부 SW&창업 동아리, GET IT입니다.</p>
 
         <div className={styles.actions}>
           <Link to="/apply" className={styles.primaryCta}>

@@ -30,7 +30,7 @@ export function Sidebar({ open, onClose, onLogout }: SidebarProps) {
 
       <nav className={clsx(styles.sidebar, open && styles.open)} aria-label="관리자 메뉴">
         <NavLink to="/" className={styles.brand} onClick={onClose}>
-          GETIT
+          GET IT
         </NavLink>
 
         <ul className={styles.menu}>

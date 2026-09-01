@@ -11,7 +11,7 @@ function CardList({ photos, hidden }: { photos: PublicActivityPhoto[]; hidden?: 
     <ul className={styles.grid} aria-hidden={hidden}>
       {photos.map((photo) => (
         <li key={photo.id} className={styles.card}>
-          <img src={photo.imageUrl} alt="GETIT 활동 사진" className={styles.thumbnail} />
+          <img src={photo.imageUrl} alt="GET IT 활동 사진" className={styles.thumbnail} />
         </li>
       ))}
     </ul>
@@ -35,7 +35,7 @@ export function ActivityPhotos() {
   return (
     <section className={styles.section}>
       <div className={styles.heading}>
-        <h2 className={styles.title}>GETIT과 함께한 순간들</h2>
+        <h2 className={styles.title}>GET IT과 함께한 순간들</h2>
         <p className={styles.subtitle}>타과생도 부담 없이, 동아리 활동 현장을 먼저 만나보세요</p>
       </div>
 

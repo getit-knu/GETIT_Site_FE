@@ -8,7 +8,7 @@ describe("LoginPage", () => {
     render(<LoginPage />);
 
     expect(screen.getByRole("heading", { name: "로그인" })).toBeInTheDocument();
-    expect(screen.getByText("GETIT에 오신 것을 환영합니다")).toBeInTheDocument();
+    expect(screen.getByText("GET IT에 오신 것을 환영합니다")).toBeInTheDocument();
   });
 
   it("Google 로그인 버튼이 BE의 OAuth2 시작 경로를 가리킨다", () => {

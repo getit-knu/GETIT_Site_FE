@@ -103,7 +103,7 @@ export function ScheduleCalendar() {
               <h3 className={styles.eventsTitle}>
                 {year}년 {month}월
               </h3>
-              <p className={styles.eventsSubtitle}>GETIT 활동 일정</p>
+              <p className={styles.eventsSubtitle}>GET IT 활동 일정</p>
             </div>
             <div className={styles.monthBadge}>
               <span className={styles.monthNumber}>{month}</span>

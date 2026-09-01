@@ -23,7 +23,7 @@ function NoticePage({ message, action }: { message: string; action?: ReactNode }
       <div className={styles.hero}>
         <div className={styles.inner}>
           <div className={styles.heading}>
-            <h1 className={styles.title}>GETIT 지원하기</h1>
+            <h1 className={styles.title}>GET IT 지원하기</h1>
             <p className={styles.subtitle}>{message}</p>
             {action}
           </div>
