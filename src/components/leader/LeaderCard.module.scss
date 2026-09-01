@@ -1,6 +1,9 @@
 @use "../../styles/abstracts/variables" as *;
 
 .card {
+  // 격자 칸을 꽉 채운다. 이게 없으면 카드가 제 내용만큼만 자라, 같은 줄인데도 글자
+  // 조합에 따라 높이가 1~2px 씩 어긋난다(실제로 재서 확인함).
+  height: 100%;
   overflow: hidden;
   border: 1px solid $color-placeholder-bg;
   border-radius: 1rem;
@@ -12,6 +15,7 @@
 
 .photo {
   height: 8rem;
+  background-position: center;
   background-size: cover;
 }
 
@@ -25,14 +29,22 @@
   gap: 0.3125rem;
 }
 
+// 이름이 길어도 SNS 아이콘을 밀어내거나 줄을 넘기지 않는다 (#274).
+// flex 항목은 기본 `min-width: auto` 라 내용보다 작아지지 않아, 줄여 주려면 풀어야 한다.
 .name {
+  min-width: 0;
+  overflow: hidden;
   color: $color-heading;
   font-size: 1rem;
   font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .snsIcon {
   display: inline-flex;
+  // 이름이 길어져도 아이콘은 줄어들지 않는다.
+  flex-shrink: 0;
   color: $color-text-secondary;
 
   &:hover {
@@ -46,14 +58,20 @@
 }
 
 .role {
+  overflow: hidden;
   margin: 0.25rem 0 0;
   color: $color-accent;
   font-size: 0.875rem;
   font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .department {
+  overflow: hidden;
   margin: 0.5rem 0 0;
   color: $color-text-secondary;
   font-size: 0.75rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }

@@ -83,8 +83,8 @@ function invalidReason(draft: Draft): string | null {
   if (draft.name.trim() === "") return "이름을 입력해 주세요.";
   if (draft.staffRole.trim() === "") return "직책을 입력해 주세요.";
   /*
-    구역은 검사하지 않는다 — `Select` 라 항상 값이 있고 "선택 안 함" 옵션도 없다.
-    `*` 는 공개 카드에 나가는 값이라는 표시일 뿐이다.
+    구역 라벨의 `*` 는 공개 카드에 나가는 값이라는 표시일 뿐이고, 비울 수 없으니
+    막을 것도 없다. 아래 이름 · 직책 · 학과의 `*` 는 실제로 저장을 막는다.
   */
   if (draft.department.trim() === "") return "학과 · 학번을 입력해 주세요.";
   /*
