@@ -120,6 +120,9 @@ async function fillAll() {
   await userEvent.type(screen.getByLabelText("지원 동기는 무엇인가요? *"), "성장하고 싶어서 지원합니다.");
   await userEvent.click(screen.getByRole("radio", { name: "SW" }));
   await userEvent.click(screen.getByRole("checkbox", { name: "동의합니다" }));
+  // 개인정보 동의(고정 칸) — 위 "동의합니다"는 어드민이 만든 지원 문항(CHECKBOX)이고, 이건
+  // 별개로 화면이 항상 갖고 있는 칸이다.
+  await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 수집·이용에 동의합니다/ }));
 }
 
 describe("ApplyPage 최종 제출", () => {
@@ -201,6 +204,19 @@ describe("ApplyPage 최종 제출", () => {
     expect(payload?.basicInfo.grade).toBe(2);
 
     expect(await screen.findByRole("heading", { name: "심사 중" })).toBeInTheDocument();
+  });
+
+  it("개인정보 동의를 안 하면 다른 칸을 다 채워도 제출을 막는다", async () => {
+    await renderReadyPage();
+    await fillAll();
+    // fillAll이 이미 체크한 걸 다시 풀어, "동의 빼고 다 채운" 상태를 만든다.
+    await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 수집·이용에 동의합니다/ }));
+
+    await userEvent.click(screen.getByRole("button", { name: "제출하기" }));
+
+    expect(submit).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "제출" })).not.toBeInTheDocument();
+    expect(await screen.findByText("개인정보 수집·이용에 동의해 주세요.")).toBeInTheDocument();
   });
 
   it("되묻는 동안 폼이 다시 미완성이 되면 확인을 눌러도 보내지 않는다", async () => {
