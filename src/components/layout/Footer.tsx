@@ -12,7 +12,7 @@ export function Footer() {
         <div className={styles.grid}>
           <div>
             <h3 className={styles.heading}>GET IT</h3>
-            <p className={styles.muted}>상상을 현실로 만드는 경북대학교 컴퓨터학부 SW&창업 동아리, GET IT</p>
+            <p className={styles.muted}>상상을 현실로 만드는 동아리, GET IT</p>
           </div>
 
           <div>
