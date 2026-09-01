@@ -38,13 +38,24 @@ export default function LectureListPage() {
           <ErrorState message={lectureErrorMessage(tracksQuery.error)} onRetry={() => void tracksQuery.refetch()} />
         ) : tracksQuery.isPending ? (
           // 트랙 탭은 데이터가 와야 그릴 수 있다. 자리를 안 잡으면 아래 목록이 통째로 밀린다.
-          <BlockSkeleton height="2.375rem" label="트랙 필터 불러오는 중" />
+          // 높이는 같은 모양인 프로젝트 학기 탭 한 줄 실측값(35px). 여러 줄로 접히는 경우는
+          // 트랙 개수가 곧 기다리는 데이터라 미리 알 수 없다 — `ProjectsPage` 주석 참고.
+          <BlockSkeleton height="2.1875rem" label="트랙 필터 불러오는 중" />
         ) : (
           <LectureFilterTabs tracks={tracks} value={filter} onChange={handleFilterChange} />
         )}
 
         {lecturesQuery.isPending ? (
-          // 격자가 데스크톱에서 4열이라 두 줄(8장)을 잡는다.
+          /*
+            격자가 데스크톱에서 4열이라 두 줄(8장)을 잡는다.
+
+            **높이는 실측이 아니라 스타일시트에서 계산한 값이다** — dev 목 API 에 부원
+            라우트가 없어(`role: GUEST`) 브라우저로 잴 수가 없다. 썸네일 10rem + 본문
+            패딩 1.25rem×2 + 배지 줄 + 제목 + 마감 줄 ≈ 320px.
+
+            `MemberLectureCard` 의 `.title` 은 `ProjectCard` 와 달리 줄 수가 안 묶여 있어
+            (line-clamp 없음) 제목이 길면 카드가 그만큼 커진다. 320px 은 제목 두 줄 기준이다.
+          */
           <CardGridSkeleton className={styles.grid} count={8} height="20rem" label="강의 목록 불러오는 중" />
         ) : lecturesQuery.isError ? (
           <ErrorState message={lectureErrorMessage(lecturesQuery.error)} onRetry={() => void lecturesQuery.refetch()} />
