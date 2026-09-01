@@ -2,9 +2,18 @@
 @use "../../styles/abstracts/container";
 @use "../../styles/abstracts/breakpoints" as *;
 
+// `position: sticky`였다가 `fixed`로 바꿨다(사용자 지시 — 픽스 라운드 4: "위쪽 스크롤 넘치더라도
+// 아래로 내려오지 않게"). macOS 오버스크롤(러버밴딩)로 문서 맨 위에서 더 당기면, sticky는 자신을
+// 담고 있는 문서 자체가 오버스크롤 여백만큼 밀려 내려가는 것을 따라가 버려 nav가 화면 위로
+// 같이 내려오는 것처럼 보였다 — fixed는 뷰포트에 고정이라 이 현상 자체가 없다. `fixed`는 문서
+// 흐름에서 완전히 빠지므로, 그만큼 콘텐츠가 가리지 않게 `PublicLayout.module.scss`의 `.content`에
+// `padding-top: 4rem`을 더했다(`.inner`의 `height: 4rem`과 값을 맞춤).
 .nav {
-  position: sticky;
+  position: fixed;
   top: 0;
+  // fixed는 문서 흐름에서 빠져 너비가 콘텐츠에 맞춰 줄어든다 — 좌우를 못박아 화면 폭을 채운다.
+  right: 0;
+  left: 0;
   // 모달(1000)보다 낮게 유지한다 — 헤더가 모달을 덮으면 안 된다. DdayBadge(20)는
   // 화면 하단 고정이라 겹치지 않지만, 같은 "페이지 위에 뜬 UI" 층으로 맞춰 둔다.
   z-index: 20;
