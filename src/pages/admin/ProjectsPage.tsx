@@ -53,14 +53,19 @@ export default function AdminProjectsPage() {
     remove.mutate(project.id);
   }
 
+  /**
+   * BE가 사유를 필수로 받는다(#190) — 비워 보내면 이 기능의 목적(부원이 이유를 아는 것)이
+   * 없어진다. `prompt` 자체가 확인 절차를 겸한다 — 취소하거나 빈 채로 넘기면 반려하지 않는다.
+   */
   function handleReject(project: AdminProject) {
     // 공개 중인 것을 내리는 것이라 되돌리려면 다시 승인해야 한다.
     const message =
       project.status === "APPROVED"
-        ? `"${project.title}"을(를) 반려할까요? 공개 사이트에서 내려갑니다.`
-        : `"${project.title}"을(를) 반려할까요?`;
-    if (!window.confirm(message)) return;
-    reject.mutate(project.id);
+        ? `"${project.title}"을(를) 반려할까요? 공개 사이트에서 내려갑니다. 반려 사유를 입력해 주세요.`
+        : `"${project.title}"을(를) 반려할까요? 반려 사유를 입력해 주세요.`;
+    const reason = window.prompt(message)?.trim();
+    if (!reason) return;
+    reject.mutate({ id: project.id, reason });
   }
 
   const editing =
