@@ -73,7 +73,7 @@ export function toAnswerPayloads(answers: Answers): MyApplicationAnswer[] {
  * 이유만 알려주고 어디를 고쳐야 하는지는 안 알려주면, 긴 폼에서는 직접 찾아 올라가야 한다.
  */
 export type BlockedFieldKey =
-  "name" | "email" | "phone" | "college" | "major" | "grade" | "studentId" | `question-${number}`;
+  "name" | "email" | "phone" | "college" | "major" | "grade" | "studentId" | `question-${number}` | "privacyConsent";
 
 export interface SubmitBlocker {
   /** 데려다 놓아야 할 입력칸. */
@@ -173,6 +173,7 @@ export function submitBlocker(
   basicInfo: BasicInfoState,
   answers: Answers,
   questions: ApplicationFormQuestion[],
+  privacyConsent: boolean,
 ): SubmitBlocker | null {
   for (const check of BASIC_INFO_CHECKS) {
     if (check.isWrong(basicInfo)) return { field: check.field, message: check.message };
@@ -196,6 +197,12 @@ export function submitBlocker(
         message: `${question.maxLength}자를 넘었어요: ${questionLabel(question.content)}`,
       };
     }
+  }
+
+  // 개인정보 동의는 BE 스키마에 없는 화면 전용 칸이라 맨 끝에서 본다 — 다른 칸을 다 채워야
+  // 마지막으로 이 동의만 남는 게, 실제로 제출 직전에 확인하는 것과 순서가 맞다.
+  if (!privacyConsent) {
+    return { field: "privacyConsent", message: "개인정보 수집·이용에 동의해 주세요." };
   }
 
   return null;

@@ -20,6 +20,9 @@ const APPLICATION_ERROR_MESSAGES: Record<string, string> = {
   REQUIRED_ANSWER_MISSING: "필수 질문에 답변하지 않았습니다.",
   ANSWER_LENGTH_EXCEEDED: "답변이 글자 수 제한을 초과했습니다.",
   BASIC_INFO_INCOMPLETE: "이름 · 이메일 · 연락처 · 단과대학 · 전공 · 학년을 모두 입력해야 합니다.",
+  // 개인정보 동의 없이 제출을 시도한 경우(#203) — 화면에서 이미 막고 있어 정상 경로로는
+  // 안 뜨지만, 그 사이 값이 바뀌었을 수 있어 서버 응답도 대비한다.
+  PRIVACY_CONSENT_REQUIRED: "개인정보 수집·이용에 동의해야 제출할 수 있습니다.",
   // 결과 조회(3.5)만의 문맥이다 — 이 엔드포인트에서 RESOURCE_NOT_FOUND는 항상
   // "제출한 지원서가 없다"는 뜻이다(BE `ApplicationService.getResult` 참고).
   RESOURCE_NOT_FOUND: "제출한 지원서가 없습니다.",

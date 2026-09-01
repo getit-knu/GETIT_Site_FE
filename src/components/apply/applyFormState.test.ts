@@ -33,18 +33,20 @@ describe("submitBlocker 문항 안내", () => {
   it("부탁 꼴 문항을 문장에 끼워 넣지 않는다", () => {
     // `"…알려주세요."에 답변해 주세요.` 는 같은 부탁을 두 번 하고 마침표도 두 번 찍혔다.
     const q = question({});
-    expect(submitBlocker(filled, { 1: empty }, [q])?.message).toBe("아직 답하지 않았어요: 지원 동기를 알려주세요");
+    expect(submitBlocker(filled, { 1: empty }, [q], true)?.message).toBe(
+      "아직 답하지 않았어요: 지원 동기를 알려주세요",
+    );
   });
 
   it("서술문 문항도 채우라는 뜻이 살아 있다", () => {
     const q = question({ content: "개인정보 수집에 동의합니다", type: "CHECKBOX" });
-    expect(submitBlocker(filled, { 1: { answerText: null, selectedOptions: [] } }, [q])?.message).toBe(
+    expect(submitBlocker(filled, { 1: { answerText: null, selectedOptions: [] } }, [q], true)?.message).toBe(
       "아직 답하지 않았어요: 개인정보 수집에 동의합니다",
     );
   });
 
   it("기본 정보는 빈 칸을 하나만 짚는다", () => {
-    expect(submitBlocker({ ...filled, phone: "" }, {}, [])).toEqual({
+    expect(submitBlocker({ ...filled, phone: "" }, {}, [], true)).toEqual({
       field: "phone",
       message: "전화번호를 입력해 주세요.",
     });
@@ -52,30 +54,46 @@ describe("submitBlocker 문항 안내", () => {
 
   it("이메일 형식이 어긋나면 그 칸을 짚는다", () => {
     // BE가 받아 주더라도 오타 난 주소로는 합격 안내가 닿지 않아 지원자만 손해다.
-    const wrong = submitBlocker({ ...filled, email: "hong@getit" }, {}, []);
+    const wrong = submitBlocker({ ...filled, email: "hong@getit" }, {}, [], true);
     expect(wrong?.field).toBe("email");
     expect(wrong?.message).toContain("이메일 형식");
   });
 
   it("학년은 1~6만 받는다", () => {
-    expect(submitBlocker({ ...filled, grade: "0" }, {}, [])?.field).toBe("grade");
-    expect(submitBlocker({ ...filled, grade: "9" }, {}, [])?.field).toBe("grade");
-    expect(submitBlocker({ ...filled, grade: "2.5" }, {}, [])?.field).toBe("grade");
-    expect(submitBlocker({ ...filled, grade: "4" }, {}, [])).toBeNull();
+    expect(submitBlocker({ ...filled, grade: "0" }, {}, [], true)?.field).toBe("grade");
+    expect(submitBlocker({ ...filled, grade: "9" }, {}, [], true)?.field).toBe("grade");
+    expect(submitBlocker({ ...filled, grade: "2.5" }, {}, [], true)?.field).toBe("grade");
+    expect(submitBlocker({ ...filled, grade: "4" }, {}, [], true)).toBeNull();
   });
 
   it("전화번호는 010-1234-5678 형식만 받는다", () => {
     // 자릿수만 보던 때는 `020-1234-5678` 처럼 11자리이기만 한 값도 통과했다(#334).
-    expect(submitBlocker({ ...filled, phone: "010-1234" }, {}, [])?.field).toBe("phone");
-    expect(submitBlocker({ ...filled, phone: "020-1234-5678" }, {}, [])?.field).toBe("phone");
-    expect(submitBlocker({ ...filled, phone: "010-1234-5678" }, {}, [])).toBeNull();
+    expect(submitBlocker({ ...filled, phone: "010-1234" }, {}, [], true)?.field).toBe("phone");
+    expect(submitBlocker({ ...filled, phone: "020-1234-5678" }, {}, [], true)?.field).toBe("phone");
+    expect(submitBlocker({ ...filled, phone: "010-1234-5678" }, {}, [], true)).toBeNull();
   });
 
   it("학번은 비워도 되지만 적었다면 10자리여야 한다", () => {
     // BE도 학번은 필수로 안 본다 — 다만 절반만 적힌 학번은 없느니만 못하다.
-    expect(submitBlocker({ ...filled, studentId: "" }, {}, [])).toBeNull();
-    expect(submitBlocker({ ...filled, studentId: "2021" }, {}, [])?.field).toBe("studentId");
-    expect(submitBlocker({ ...filled, studentId: "2021123456" }, {}, [])).toBeNull();
+    expect(submitBlocker({ ...filled, studentId: "" }, {}, [], true)).toBeNull();
+    expect(submitBlocker({ ...filled, studentId: "2021" }, {}, [], true)?.field).toBe("studentId");
+    expect(submitBlocker({ ...filled, studentId: "2021123456" }, {}, [], true)).toBeNull();
+  });
+
+  it("개인정보 동의를 안 하면 다른 칸을 다 채워도 막는다", () => {
+    expect(submitBlocker(filled, {}, [], false)).toEqual({
+      field: "privacyConsent",
+      message: "개인정보 수집·이용에 동의해 주세요.",
+    });
+  });
+
+  it("기본 정보·문항이 안 끝났으면 동의보다 그 칸을 먼저 짚는다", () => {
+    // 동의는 맨 끝에서 본다 — 앞 칸이 비어 있으면 굳이 동의 여부까지 안 봐도 이미 막힌다.
+    expect(submitBlocker({ ...filled, phone: "" }, {}, [], false)?.field).toBe("phone");
+  });
+
+  it("전부 채우고 동의까지 하면 막지 않는다", () => {
+    expect(submitBlocker(filled, {}, [], true)).toBeNull();
   });
 });
 

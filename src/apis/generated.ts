@@ -749,6 +749,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/consent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 개인정보 수집·이용 동의
+         * @description 이슈 #203
+         */
+        post: operations["consent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/applications/me/submit": {
         parameters: {
             query?: never;
@@ -2064,6 +2084,8 @@ export interface components {
             generationNo?: number;
             /** @enum {string} */
             status?: "ACTIVE" | "WITHDRAWN";
+            /** Format: date-time */
+            privacyConsentedAt?: string;
         };
         ApplicationAnswerRequest: {
             /** Format: int64 */
@@ -2074,6 +2096,7 @@ export interface components {
         ApplicationDraftRequest: {
             basicInfo?: components["schemas"]["BasicInfo"];
             answers?: components["schemas"]["ApplicationAnswerRequest"][];
+            privacyConsent?: boolean;
         };
         BasicInfo: {
             name?: string;
@@ -2772,6 +2795,9 @@ export interface components {
             /** Format: int64 */
             accessTokenExpiresIn?: number;
         };
+        PrivacyConsentRequest: {
+            privacyConsent?: boolean;
+        };
         ApiResponseSubmitResult: {
             success?: boolean;
             data?: components["schemas"]["SubmitResult"];
@@ -2784,6 +2810,8 @@ export interface components {
             status?: "DRAFT" | "SUBMITTED" | "DOC_PASS" | "DOC_FAIL" | "FINAL_PASS" | "FINAL_FAIL";
             /** Format: date-time */
             submittedAt?: string;
+            /** Format: date-time */
+            privacyConsentedAt?: string;
         };
         PromoteRequest: {
             /** Format: int64 */
@@ -5360,6 +5388,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    consent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PrivacyConsentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseMeResponse"];
+                };
             };
         };
     };

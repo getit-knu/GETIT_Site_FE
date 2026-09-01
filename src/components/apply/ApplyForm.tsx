@@ -7,8 +7,10 @@ import { Toast } from "../ui/Toast/Toast";
 import { applicationSaveErrorMessage, applicationSubmitErrorMessage } from "../../errors/application/errorMessages";
 import { useSaveDraft, useSubmitApplication } from "../../hooks/application/useMyApplication";
 import { useDebouncedValue } from "../../hooks/ui/useDebouncedValue";
+import { APPLICATION_PRIVACY_NOTICE } from "../../libs/privacyNotices";
 import { prefersReducedMotion } from "../../libs/prefersReducedMotion";
 import type { ApplicationDraftPayload, ApplicationFormResult, MyApplicationResult } from "../../types/application";
+import { PrivacyConsent } from "../ui/PrivacyConsent/PrivacyConsent";
 import styles from "../../pages/ApplyPage.module.scss";
 
 import type { AnswerState } from "./answerState";
@@ -51,6 +53,13 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
   const submitApplication = useSubmitApplication();
   // 제출은 되돌릴 수 없다. 한 번 눌렀다고 바로 보내지 않고 되묻는다 (#275).
   const [confirming, setConfirming] = useState(false);
+
+  /*
+    BE 스키마에 없는 화면 전용 값이라 `basicInfo`가 아니라 따로 둔다 — 저장(임시저장)
+    대상도 아니다. 이어쓰기(`existing`)여도 매번 다시 확인한다: 저장된 적 없는 동의를
+    "이미 동의했다"고 가정하면 안 된다.
+  */
+  const [privacyConsent, setPrivacyConsent] = useState(false);
 
   /**
    * 고칠 때마다 1씩 오른다. 자동 저장의 기준점이자 "아직 안 보낸 변경이 있나"의 근거다.
@@ -101,10 +110,14 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
   const { data: majors = [] } = useQuery({ queryKey: queryKeys.public.majors(), queryFn: getMajors });
 
   const questions = [...form.questions].sort((a, b) => a.order - b.order);
-  const blocker = submitBlocker(basicInfo, answers, questions);
+  const blocker = submitBlocker(basicInfo, answers, questions, privacyConsent);
 
+  /**
+   * `privacyConsent`는 제출에서만 뜻이 있다(BE가 그때만 확인한다, `applyFormState.ts` 주석 참고) —
+   * 임시 저장 때도 그냥 지금 체크 상태를 함께 보낸다. 굳이 갈라 보낼 이유가 없다.
+   */
   function buildPayload(): ApplicationDraftPayload {
-    return { basicInfo: toBasicInfoPayload(basicInfo), answers: toAnswerPayloads(answers) };
+    return { basicInfo: toBasicInfoPayload(basicInfo), answers: toAnswerPayloads(answers), privacyConsent };
   }
 
   /** 저장 성공을 `editCount` 기준으로 못박는다. 그 뒤에 더 고친 게 있으면 여전히 "안 저장됨"이다. */
@@ -162,7 +175,7 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
     if (saveDraft.isPending) return;
 
     saveDraft.mutate(
-      { basicInfo: toBasicInfoPayload(basicInfo), answers: toAnswerPayloads(answers) },
+      { basicInfo: toBasicInfoPayload(basicInfo), answers: toAnswerPayloads(answers), privacyConsent },
       {
         onSuccess: () => {
           setLastSaveWasAuto(true);
@@ -170,7 +183,7 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
         },
       },
     );
-  }, [settledEditCount, savedEditCount, basicInfo, answers, saveDraft, submitApplication]);
+  }, [settledEditCount, savedEditCount, basicInfo, answers, privacyConsent, saveDraft, submitApplication]);
 
   // 아직 서버가 못 받은 변경이 있는 채로 창을 닫거나 새로고침하면 브라우저가 한 번 되묻는다.
   // (문구는 브라우저가 정한다 — 사이트가 마음대로 쓰지 못하게 막혀 있다.)
@@ -280,6 +293,20 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
                     />
                   ))}
                 </div>
+              </section>
+
+              <section className={styles.section}>
+                <h3 className={styles.sectionTitle}>개인정보 동의</h3>
+                <PrivacyConsent
+                  id={fieldId("privacyConsent")}
+                  checked={privacyConsent}
+                  onChange={(next) => {
+                    setPrivacyConsent(next);
+                    if (next && blocked?.field === "privacyConsent") setBlocked(null);
+                  }}
+                  notice={APPLICATION_PRIVACY_NOTICE}
+                  error={blocked?.field === "privacyConsent" ? blocked.message : undefined}
+                />
               </section>
             </form>
           </div>

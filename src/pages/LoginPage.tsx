@@ -21,7 +21,15 @@ function GoogleIcon() {
   );
 }
 
-/** 로그인. Figma 와이어프레임(`5:3207`) 기준. "테스트 계정" 섹션은 BE 대응 엔드포인트가 없어 제외. */
+/**
+ * 로그인. Figma 와이어프레임(`5:3207`) 기준. "테스트 계정" 섹션은 BE 대응 엔드포인트가 없어 제외.
+ *
+ * **개인정보 동의는 여기서 받지 않는다.** 한때 로그인 버튼 앞에 동의 체크박스를 뒀었는데,
+ * 그러면 이미 동의한 기존 회원도 로그인할 때마다 매번 다시 체크해야 했다(동의 여부를
+ * 저장할 방법이 없으면 매 세션 반복된다). Google OAuth는 "이 사람이 처음 오는지" 알려주지
+ * 않고, 그건 BE가 콜백에서 `isNewUser`로 알려주는 값이라 여기서는 판단할 수 없다 —
+ * 신규 유저 전용 동의는 `OAuthCallbackPage`(정확히는 그 뒤 온보딩 화면)에서 받는다.
+ */
 export default function LoginPage() {
   const googleLoginUrl = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/google`;
 

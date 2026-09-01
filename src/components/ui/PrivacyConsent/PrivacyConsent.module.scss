@@ -1,0 +1,52 @@
+@use "../../../styles/abstracts/variables" as *;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  color: $color-text-primary;
+  font-size: 0.875rem;
+  cursor: pointer;
+
+  input {
+    // 라벨 첫 줄 텍스트와 나란히 맞춘다 — 기본 체크박스는 살짝 위로 붙어 어색하다.
+    margin-top: 0.1875rem;
+    flex-shrink: 0;
+  }
+}
+
+.details {
+  border: 1px solid $color-border;
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  color: $color-text-secondary;
+  font-size: 0.8125rem;
+
+  summary {
+    color: $color-accent;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  &[open] summary {
+    margin-bottom: 0.5rem;
+  }
+}
+
+.notice {
+  color: $color-text-secondary;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+.error {
+  margin: 0;
+  color: $color-danger;
+  font-size: 0.8125rem;
+}
