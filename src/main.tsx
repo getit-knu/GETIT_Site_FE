@@ -3,6 +3,8 @@ import { StrictMode, Suspense, lazy } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router";
 
+import { setOnSessionEnded } from "./apis/client.ts";
+import { queryKeys } from "./apis/queryKeys.ts";
 import { createQueryClient } from "./apis/queryClient.ts";
 import { ErrorBoundary } from "./errors/ErrorBoundary.tsx";
 import { router } from "./routes.tsx";
@@ -15,6 +17,11 @@ const ReactQueryDevtools = import.meta.env.DEV
   : null;
 
 const queryClient = createQueryClient();
+
+// 세션이 끝나면(재발급까지 실패) auth.me를 무효화해 RequireRole이 반응하게 한다(#295).
+setOnSessionEnded(() => {
+  void queryClient.invalidateQueries({ queryKey: queryKeys.auth.me() });
+});
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

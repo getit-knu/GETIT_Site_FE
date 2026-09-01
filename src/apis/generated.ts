@@ -345,6 +345,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/recruitment/schedule/apply-enabled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 지원 접수 열기 · 닫기
+         * @description 이슈 #170
+         */
+        put: operations["changeApplyEnabled"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/recruitment/questions/{id}": {
         parameters: {
             query?: never;
@@ -571,7 +591,11 @@ export interface paths {
          */
         put: operations["update"];
         post?: never;
-        delete?: never;
+        /**
+         * 피드백 삭제
+         * @description 이슈 #91
+         */
+        delete: operations["delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -584,7 +608,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * 우리 조 프로젝트 목록
+         * @description 이슈 #190
+         */
+        get: operations["getMyProjects"];
         put?: never;
         /**
          * 프로젝트 등록(승인 대기)
@@ -1048,7 +1076,7 @@ export interface paths {
         put?: never;
         /**
          * 프로젝트 반려
-         * @description 이슈 #148
+         * @description 이슈 #148 · #190
          */
         post: operations["rejectProject"];
         delete?: never;
@@ -1234,7 +1262,7 @@ export interface paths {
         };
         /**
          * 전공 목록
-         * @description 명세서 2.7
+         * @description 명세서 2.7 (전체 조회)
          */
         get: operations["getMajors"];
         put?: never;
@@ -1325,6 +1353,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/public/colleges/{collegeId}/majors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 단과대학별 전공 목록
+         * @description 명세서 2.7
+         */
+        get: operations["getMajorsOfCollege"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/public/activity-photos": {
         parameters: {
             query?: never;
@@ -1357,6 +1405,26 @@ export interface paths {
          * @description 소분류가 없거나 발행된 강의가 없는 트랙도 포함한다. 강의 목록의 tabs 로는 보이지 않는다.
          */
         get: operations["getTracks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/member/questions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 내 질문 전체 조회
+         * @description 이슈 #185
+         */
+        get: operations["getMyQuestions"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1899,7 +1967,7 @@ export interface paths {
          * 파일 삭제
          * @description 명세서 13.3
          */
-        delete: operations["delete"];
+        delete: operations["delete_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2035,6 +2103,9 @@ export interface components {
             groupId?: number;
             /** Format: int32 */
             generationNo?: number;
+            unassignGroup?: boolean;
+            college?: string;
+            major?: string;
         };
         ApiResponseUserSummary: {
             success?: boolean;
@@ -2051,6 +2122,7 @@ export interface components {
             id?: number;
             name?: string;
             email?: string;
+            phoneNumber?: string;
             college?: string;
             major?: string;
             /** Format: int32 */
@@ -2138,6 +2210,8 @@ export interface components {
             introduction?: string;
             githubUrl?: string;
             instagramUrl?: string;
+            /** Format: int64 */
+            fileId?: number;
             profileImageUrl?: string;
             /** Format: int32 */
             order?: number;
@@ -2317,6 +2391,10 @@ export interface components {
             interviewStartAt?: string;
             /** Format: date-time */
             interviewEndAt?: string;
+            applyEnabled?: boolean;
+        };
+        ApplyToggleRequest: {
+            enabled: boolean;
         };
         ApplicationQuestionRequest: {
             /** @enum {string} */
@@ -2486,6 +2564,7 @@ export interface components {
             /** @enum {string} */
             status?: "PENDING" | "APPROVED" | "REJECTED";
             statusLabel?: string;
+            rejectReason?: string;
         };
         LectureRequestAssignmentPart: {
             title: string;
@@ -2622,6 +2701,7 @@ export interface components {
             /** @enum {string} */
             status?: "PENDING" | "APPROVED" | "REJECTED";
             statusLabel?: string;
+            rejectReason?: string;
         };
         MemberQuestionRequestCreate: {
             content: string;
@@ -2837,6 +2917,9 @@ export interface components {
             success?: boolean;
             data?: components["schemas"]["AdminAnswerResultCreateResult"];
             error?: components["schemas"]["ErrorResponse"];
+        };
+        ProjectRejectRequest: {
+            reason: string;
         };
         LectureRequestCreate: {
             /** Format: int64 */
@@ -3148,6 +3231,50 @@ export interface components {
             id?: number;
             name?: string;
         };
+        ApiResponsePageResponseMemberQuestionResultMyListItem: {
+            success?: boolean;
+            data?: components["schemas"]["PageResponseMemberQuestionResultMyListItem"];
+            error?: components["schemas"]["ErrorResponse"];
+        };
+        MemberQuestionResultAnswerItem: {
+            /** Format: int64 */
+            id?: number;
+            adminName?: string;
+            content?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        MemberQuestionResultMyListItem: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int64 */
+            lectureId?: number;
+            lectureTitle?: string;
+            content?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** @enum {string} */
+            status?: "PENDING" | "ANSWERED";
+            answers?: components["schemas"]["MemberQuestionResultAnswerItem"][];
+        };
+        PageResponseMemberQuestionResultMyListItem: {
+            content?: components["schemas"]["MemberQuestionResultMyListItem"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            first?: boolean;
+            last?: boolean;
+        };
+        ApiResponseListMemberProjectResult: {
+            success?: boolean;
+            data?: components["schemas"]["MemberProjectResult"][];
+            error?: components["schemas"]["ErrorResponse"];
+        };
         ApiResponseMeSummaryResultResponse: {
             success?: boolean;
             data?: components["schemas"]["MeSummaryResultResponse"];
@@ -3233,14 +3360,6 @@ export interface components {
             success?: boolean;
             data?: components["schemas"]["MemberQuestionResultListItem"][];
             error?: components["schemas"]["ErrorResponse"];
-        };
-        MemberQuestionResultAnswerItem: {
-            /** Format: int64 */
-            id?: number;
-            adminName?: string;
-            content?: string;
-            /** Format: date-time */
-            createdAt?: string;
         };
         MemberQuestionResultListItem: {
             /** Format: int64 */
@@ -3594,10 +3713,20 @@ export interface components {
             totalScore?: number;
             valid?: boolean;
         };
-        ApiResponsePageResponseApplicantSummary: {
+        ApiResponseApplicantListResult: {
             success?: boolean;
-            data?: components["schemas"]["PageResponseApplicantSummary"];
+            data?: components["schemas"]["ApplicantListResult"];
             error?: components["schemas"]["ErrorResponse"];
+        };
+        ApplicantListResult: {
+            applicants?: components["schemas"]["PageResponseApplicantSummary"];
+            summary?: components["schemas"]["ApplicantListResultEvaluationOverview"];
+        };
+        ApplicantListResultEvaluationOverview: {
+            /** Format: double */
+            averageTotalScore?: number;
+            /** Format: int32 */
+            evaluatedCount?: number;
         };
         ApplicantSummary: {
             /** Format: int64 */
@@ -3611,6 +3740,10 @@ export interface components {
             status?: "DRAFT" | "SUBMITTED" | "DOC_PASS" | "DOC_FAIL" | "FINAL_PASS" | "FINAL_FAIL";
             /** Format: date-time */
             submittedAt?: string;
+            /** Format: double */
+            totalScore?: number;
+            /** Format: int32 */
+            evaluatorCount?: number;
         };
         PageResponseApplicantSummary: {
             content?: components["schemas"]["ApplicantSummary"][];
@@ -4545,6 +4678,30 @@ export interface operations {
             };
         };
     };
+    changeApplyEnabled: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplyToggleRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseRecruitmentScheduleResult"];
+                };
+            };
+        };
+    };
     updateQuestion: {
         parameters: {
             query?: never;
@@ -4965,6 +5122,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResponseFeedbackResultUpdateResult"];
+                };
+            };
+        };
+    };
+    delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                feedbackId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getMyProjects: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListMemberProjectResult"];
                 };
             };
         };
@@ -5642,6 +5839,7 @@ export interface operations {
         parameters: {
             query: {
                 semester?: string;
+                status?: "PENDING" | "APPROVED" | "REJECTED";
                 pageable: components["schemas"]["Pageable"];
             };
             header?: never;
@@ -5694,7 +5892,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectRejectRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -6043,6 +6245,28 @@ export interface operations {
             };
         };
     };
+    getMajorsOfCollege: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                collegeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseListMajorResult"];
+                };
+            };
+        };
+    };
     getPhotos_1: {
         parameters: {
             query?: never;
@@ -6079,6 +6303,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResponseListTrackResult"];
+                };
+            };
+        };
+    };
+    getMyQuestions: {
+        parameters: {
+            query: {
+                status?: "PENDING" | "ANSWERED";
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponsePageResponseMemberQuestionResultMyListItem"];
                 };
             };
         };
@@ -6386,7 +6633,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResponsePageResponseApplicantSummary"];
+                    "application/json": components["schemas"]["ApiResponseApplicantListResult"];
                 };
             };
         };
@@ -6667,7 +6914,7 @@ export interface operations {
             };
         };
     };
-    delete: {
+    delete_1: {
         parameters: {
             query?: never;
             header?: never;

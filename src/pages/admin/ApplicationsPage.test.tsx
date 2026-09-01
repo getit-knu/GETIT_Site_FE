@@ -24,6 +24,7 @@ function schedule(totalStartAt: string): RecruitmentSchedule {
     documentEndAt: "2099-12-01T23:59",
     interviewStartAt: "2099-12-15T00:00",
     interviewEndAt: "2099-12-31T23:59",
+    applyEnabled: true,
   };
 }
 

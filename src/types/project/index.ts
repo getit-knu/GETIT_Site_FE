@@ -35,7 +35,10 @@ export interface PublicProjectListParams {
  * `semester`는 자유 문자열이 아니라 `\d{4}-(SPRING|SUMMER|FALL|WINTER)` 패턴 고정값이다
  * (BE 확인함) — 화면은 연도 입력 + 계절 선택으로 만들어 이 문자열을 조립한다.
  */
-export type AdminProject = Required<components["schemas"]["ProjectResultItem"]>;
+/** `rejectReason`은 반려된 적 없으면 `null`이다(BE 확인함) — springdoc이 이 nullable을 못 잡는다. */
+export type AdminProject = Omit<Required<components["schemas"]["ProjectResultItem"]>, "rejectReason"> & {
+  rejectReason: string | null;
+};
 
 /**
  * `POST`/`PUT /api/admin/projects` 요청 본문.
@@ -81,11 +84,12 @@ export interface AdminProjectListParams {
 export type ProjectSubmitPayload = components["schemas"]["ProjectSubmitRequest"];
 
 /**
- * `POST /api/member/projects` 응답. 등록 직후 결과 확인용 — 승인 대기 상태(`PENDING`)로
- * 시작해 어드민이 승인해야 공개 목록·홈 쇼케이스에 나타난다(`AdminProject.status` 참고).
+ * `POST`·`GET /api/member/projects` 응답(BE#148·#190). 승인 대기 상태(`PENDING`)로 시작해
+ * 어드민이 승인해야 공개 목록·홈 쇼케이스에 나타난다(`AdminProject.status` 참고).
  *
- * **BE가 스스로 인정한 공백**: 부원이 자기가 이미 낸 프로젝트 목록(승인 상태 포함)을
- * 다시 조회하는 엔드포인트(`GET /api/member/projects` 같은 것)가 아직 없다 — 그래서
- * 이 타입은 등록 직후 응답에만 쓰고, "내가 낸 프로젝트 목록" 화면은 이번 스코프에 없다.
+ * `GET`은 내 조가 낸 프로젝트 전체를 준다(#296) — 등록한 사람이 아니어도 같은 조원이면
+ * 보인다. `rejectReason`은 반려된 적 없으면 `null`이다 — springdoc이 이 nullable을 못 잡는다.
  */
-export type MemberProject = Required<components["schemas"]["MemberProjectResult"]>;
+export type MemberProject = Omit<Required<components["schemas"]["MemberProjectResult"]>, "rejectReason"> & {
+  rejectReason: string | null;
+};

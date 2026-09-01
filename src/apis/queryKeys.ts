@@ -137,6 +137,8 @@ export const queryKeys = {
      * 캐시가 겹쳐 개수가 다른 목록이 그대로 재사용된다.
      */
     myQuestions: (page: number, size: number) => [...queryKeys.member.all, "myQuestions", page, size] as const,
+    /** 내 조가 낸 프로젝트 전체(#296). */
+    myProjects: () => [...queryKeys.member.all, "myProjects"] as const,
   },
 
   /** 부원 강의 조회(4.x, #193). 어드민 `lectures`와는 스키마·엔드포인트가 다른 별개 도메인이다. */
