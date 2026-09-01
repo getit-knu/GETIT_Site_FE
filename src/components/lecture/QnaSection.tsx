@@ -5,7 +5,7 @@ import { useCreateLectureQuestion, useMyLectureQuestions } from "../../hooks/lec
 import { formatDateTime } from "../../libs/formatDate";
 import { Button } from "../ui/Button/Button";
 import { TextArea } from "../ui/TextArea/TextArea";
-import { EmptyState, ErrorState } from "../ui/states/States";
+import { EmptyState, ErrorState, TextSkeleton } from "../ui/states/States";
 // AssignmentSection과 같은 이유로 LectureDetailPage의 스타일 모듈을 그대로 쓴다.
 import styles from "../../pages/member/LectureDetailPage.module.scss";
 
@@ -41,7 +41,7 @@ export function QnaSection({ lectureId }: QnaSectionProps) {
       <h2 className={styles.materialsHeading}>내 질문</h2>
 
       {isPending ? (
-        <p className={styles.noMaterials}>불러오는 중…</p>
+        <TextSkeleton lines={4} label="질문 목록 불러오는 중" />
       ) : isError ? (
         <ErrorState message={lectureErrorMessage(error)} onRetry={() => void refetch()} />
       ) : questions.length === 0 ? (

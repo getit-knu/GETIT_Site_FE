@@ -13,7 +13,7 @@ import type { Group, GroupMember } from "../../types/group";
 import { Button } from "../ui/Button/Button";
 import { Input } from "../ui/Input/Input";
 import { Select } from "../ui/Select/Select";
-import { EmptyState, ErrorState } from "../ui/states/States";
+import { EmptyState, ErrorState, TextSkeleton } from "../ui/states/States";
 
 import styles from "./GroupsTab.module.scss";
 
@@ -126,7 +126,7 @@ export function GroupsTab() {
     createGroup.mutate(trimmed, { onSuccess: () => setNewName("") });
   }
 
-  if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
+  if (isPending) return <TextSkeleton lines={6} label="조 편성 불러오는 중" />;
   // 문구는 BE ErrorCode 에서 가져온다. FE 가 코드를 새로 짓지 않는다.
   if (isError) return <ErrorState message={groupErrorMessage(error)} onRetry={() => void refetch()} />;
 

@@ -9,12 +9,6 @@
   background-color: $color-background;
 }
 
-.loading {
-  padding: 7rem 1rem;
-  color: $color-text-secondary;
-  text-align: center;
-}
-
 /*
  * 접수 기간이 아님·로그인 필요 같은 짧은 안내 문구만 있을 때, `.page`가 `.content`의
  * 남는 세로 공간까지 채우도록 `flex: 1`을 줘서 이 그라디언트가 아래까지 이어지게 한다

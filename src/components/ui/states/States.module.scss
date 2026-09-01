@@ -1,3 +1,15 @@
+@use "../../../styles/abstracts/variables" as *;
+
+/*
+ * 로딩 · 에러 · 빈 상태의 모양.
+ *
+ * **색은 전역 SCSS 토큰을 직접 쓴다 — `--admin-*` 커스텀 프로퍼티를 쓰지 않는다.**
+ * 그 변수들은 `AdminLayout.module.scss`의 `.layout` 안에서만 정의되는데, 이 컴포넌트는
+ * 공개·부원 화면에서도 쓰이고 모달은 `document.body`로 포털되어 `.layout` 밖으로 나간다.
+ * 그 자리에서는 변수가 없어 선언이 통째로 무효가 되고(`background-color`는 transparent가
+ * 된다) 스켈레톤이 아예 안 보였다.
+ */
+
 .state {
   display: flex;
   flex-direction: column;
@@ -8,24 +20,80 @@
 }
 
 .message {
-  color: var(--admin-text-muted);
+  color: $color-text-secondary;
   font-size: 0.9375rem;
 }
 
 .action {
   padding: 0.5rem 1rem;
-  border: 1px solid var(--admin-border);
+  border: 1px solid $color-border;
   border-radius: 0.5rem;
   background: none;
-  color: var(--admin-text);
+  color: $color-text-primary;
   cursor: pointer;
   font: inherit;
   font-size: 0.875rem;
 
   &:hover {
-    background-color: var(--admin-hover);
+    background-color: $color-disabled-bg;
   }
 }
+
+/*
+ * 스켈레톤 공통.
+ *
+ * **200ms 동안은 자리만 잡고 보이지 않는다.** 캐시된 응답처럼 금방 끝나는 조회에서는
+ * 스켈레톤이 한 프레임 번쩍이고 사라져 오히려 더 산만하다. 자리는 처음부터 차지하므로
+ * 늦게 나타나도 레이아웃은 밀리지 않는다.
+ */
+.reveal {
+  animation: skeleton-reveal 160ms ease-out 200ms both;
+}
+
+@keyframes skeleton-reveal {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* 덩어리 하나. 모든 스켈레톤이 이 모양을 공유한다. */
+.block {
+  display: block;
+  border-radius: 0.375rem;
+  background-color: $color-placeholder-bg;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/*
+ * 애니메이션을 원치 않는 사용자에게는 맥박도 페이드도 주지 않는다. 다만 **나타나는 시점을
+ * 미루는 것은 모션이 아니라 타이밍**이라 그대로 둔다 — 번쩍임은 모션 설정과 무관하게 거슬린다.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation-duration: 0s;
+  }
+
+  .block {
+    animation: none;
+  }
+}
+
+/* 표 */
 
 .skeleton {
   display: flex;
@@ -36,24 +104,70 @@
   display: flex;
   gap: 1rem;
   padding: 0.875rem 1rem;
-  border-bottom: 1px solid var(--admin-border);
+  border-bottom: 1px solid $color-border;
 }
 
 .skeletonCell {
   height: 0.875rem;
   flex: 1;
-  border-radius: 0.25rem;
-  background-color: var(--admin-hover);
-  animation: pulse 1.4s ease-in-out infinite;
+  align-self: center;
 }
 
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
+/* 문단 */
 
-  50% {
-    opacity: 0.45;
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.textLine {
+  height: 0.875rem;
+
+  // 마지막 줄은 짧게 — 실제 문단이 그렇게 끝나서, 이 한 줄이 "글이 올 자리"로 읽히게 한다.
+  // 한 줄뿐일 때는 짧게 만들 이유가 없다.
+  &:not(:only-child):last-child {
+    width: 60%;
   }
+}
+
+/* 카드 격자 */
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1.5rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.card {
+  height: 100%;
+  border-radius: 0.75rem;
+}
+
+/* 폼 */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formLabel {
+  width: 7rem;
+  height: 0.875rem;
+}
+
+.formInput {
+  height: 2.75rem;
+  border-radius: 0.5rem;
 }

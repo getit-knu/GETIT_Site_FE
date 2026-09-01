@@ -8,7 +8,7 @@ import { Button } from "../ui/Button/Button";
 import { Input } from "../ui/Input/Input";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "../ui/Modal/Modal";
 import { Select } from "../ui/Select/Select";
-import { ErrorState } from "../ui/states/States";
+import { ErrorState, FormSkeleton } from "../ui/states/States";
 import { TextArea } from "../ui/TextArea/TextArea";
 
 import { AttachmentsField } from "./AttachmentsField";
@@ -321,7 +321,7 @@ export function LectureFormModal({ lectureId, tracks, onClose }: LectureFormModa
 
       {isEdit && isPending && (
         <ModalBody>
-          <p className={styles.hint}>불러오는 중…</p>
+          <FormSkeleton fields={4} label="강의 정보 불러오는 중" />
         </ModalBody>
       )}
 

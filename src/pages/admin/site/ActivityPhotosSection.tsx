@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { Button } from "../../../components/ui/Button/Button";
 import { Input } from "../../../components/ui/Input/Input";
-import { ErrorState } from "../../../components/ui/states/States";
+import { ErrorState, TextSkeleton } from "../../../components/ui/states/States";
 import { siteErrorMessage, siteSaveErrorMessage } from "../../../errors/site/errorMessages";
 import { useActivityPhotos, useDeleteActivityPhoto, useSaveActivityPhoto } from "../../../hooks/site/useContent";
 import type { ActivityPhoto, ActivityPhotoPayload } from "../../../types/site";
@@ -106,7 +106,7 @@ export function ActivityPhotosSection() {
     <section id="activity-photos" className={styles.section}>
       <h2 className={styles.sectionTitle}>활동 사진</h2>
 
-      {isPending && <p className={styles.hint}>불러오는 중…</p>}
+      {isPending && <TextSkeleton lines={3} label="활동 사진 불러오는 중" />}
       {isError && <ErrorState message={siteErrorMessage(error)} onRetry={() => void refetch()} />}
 
       {data &&

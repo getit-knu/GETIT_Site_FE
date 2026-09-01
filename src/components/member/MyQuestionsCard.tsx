@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { useMyQuestions } from "../../hooks/qna/useMyQuestions";
 import { formatDateTime } from "../../libs/formatDate";
 import type { MyQuestion } from "../../types/lecture";
+import { TextSkeleton } from "../ui/states/States";
 
 import styles from "./MyQuestionsCard.module.scss";
 
@@ -25,7 +26,7 @@ export function MyQuestionsCard() {
     <div className={styles.card}>
       <h3 className={styles.title}>내 질문</h3>
 
-      {isPending && <p className={styles.hint}>불러오는 중…</p>}
+      {isPending && <TextSkeleton lines={3} label="내 질문 불러오는 중" />}
       {isError && <p className={styles.hint}>질문을 불러오지 못했습니다.</p>}
 
       {data && data.content.length === 0 && <p className={styles.hint}>아직 남긴 질문이 없습니다.</p>}

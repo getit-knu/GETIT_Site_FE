@@ -11,7 +11,7 @@ import {
 import type { QuestionType, RecruitmentQuestion } from "../../types/recruitment";
 import { Button } from "../ui/Button/Button";
 import { Select } from "../ui/Select/Select";
-import { ErrorState } from "../ui/states/States";
+import { ErrorState, TextSkeleton } from "../ui/states/States";
 
 import { QuestionRow } from "./QuestionRow";
 import styles from "./Section.module.scss";
@@ -37,7 +37,7 @@ export function QuestionsSection() {
 
   const busy = create.isPending || update.isPending || remove.isPending || reorder.isPending;
 
-  if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
+  if (isPending) return <TextSkeleton lines={4} label="지원서 문항 불러오는 중" />;
   if (isError) {
     return <ErrorState message={recruitmentErrorMessage(error)} onRetry={() => void refetch()} />;
   }

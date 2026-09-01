@@ -6,7 +6,7 @@ import { getRecruitmentStatus } from "../apis/public/publicApi";
 import { queryKeys } from "../apis/queryKeys";
 import { ApplyForm } from "../components/apply/ApplyForm";
 import { ResultView } from "../components/apply/ResultView";
-import { ErrorState } from "../components/ui/states/States";
+import { ErrorState, FormSkeleton } from "../components/ui/states/States";
 import { applicationFormErrorMessage, myApplicationErrorMessage } from "../errors/application/errorMessages";
 import { recruitmentErrorMessage } from "../errors/recruitment/errorMessages";
 import { useApplicationForm, useMyApplication } from "../hooks/application/useMyApplication";
@@ -33,6 +33,30 @@ function NoticePage({ message, action }: { message: string; action?: ReactNode }
   );
 }
 
+/**
+ * 기다리는 화면.
+ *
+ * **제목은 그대로 두고 폼 자리만 비워 둔다.** 이 화면은 조회를 세 번 겹쳐서 하는데
+ * (모집 상태 → 내 지원서 → 양식) 단계마다 화면을 통째로 비우면 같은 제목이 세 번
+ * 나타났다 사라진다. 껍데기를 `NoticePage` 와 공유해 그 깜빡임을 없앤다.
+ */
+function LoadingPage({ label }: { label: string }) {
+  return (
+    <div className={styles.page}>
+      <div className={styles.hero}>
+        <div className={styles.inner}>
+          <div className={styles.heading}>
+            <h1 className={styles.title}>GET IT 지원하기</h1>
+          </div>
+          <div className={styles.card}>
+            <FormSkeleton fields={4} label={label} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface FormGateProps {
   existing: MyApplicationResult | null;
 }
@@ -41,7 +65,7 @@ interface FormGateProps {
 function FormGate({ existing }: FormGateProps) {
   const { data, isPending, isError, error, refetch } = useApplicationForm();
 
-  if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
+  if (isPending) return <LoadingPage label="지원서 양식 불러오는 중" />;
   if (isError) {
     return <ErrorState message={applicationFormErrorMessage(error)} onRetry={() => void refetch()} />;
   }
@@ -57,7 +81,7 @@ function FormGate({ existing }: FormGateProps) {
 function LoginGate() {
   const { data, isPending, isError, error, refetch } = useMyApplication();
 
-  if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
+  if (isPending) return <LoadingPage label="지원서 불러오는 중" />;
   if (isError) {
     const isUnauthorized =
       typeof error === "object" && error !== null && "code" in error && error.code === "UNAUTHORIZED";
@@ -106,7 +130,7 @@ export default function ApplyPage() {
     queryFn: getRecruitmentStatus,
   });
 
-  if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
+  if (isPending) return <LoadingPage label="모집 상태 불러오는 중" />;
   if (isError) return <ErrorState message={recruitmentErrorMessage(error)} onRetry={() => void refetch()} />;
   if (!status.applyEnabled) return <NoticePage message={NOT_OPEN_MESSAGE} />;
 

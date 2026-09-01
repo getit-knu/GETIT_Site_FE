@@ -2,6 +2,7 @@ import type { ApplicationDraftPayload, MyApplicationResult } from "../types/appl
 
 import { eventsFor } from "./eventFixtures";
 import * as fx from "./fixtures";
+import { memberLectures, memberTracks, myGroup, myProjects, myQuestions, mySummary } from "./memberLectureFixtures";
 
 export interface MockResponse {
   status: number;
@@ -67,6 +68,34 @@ export function createMockApi() {
         return ok(fx.staffs);
       case "GET /api/public/projects":
         return ok(fx.projects);
+      case "GET /api/member/me/summary":
+        return ok(mySummary);
+      case "GET /api/member/projects":
+        return ok(myProjects);
+      case "GET /api/member/group":
+        return ok(myGroup);
+      case "GET /api/member/questions":
+        return ok(myQuestions);
+      case "GET /api/member/tracks":
+        return ok(memberTracks);
+      case "GET /api/member/lectures": {
+        // 필터를 실제로 걸어 준다 — 전부 그대로 돌려주면 dev 에서 탭을 눌러도 아무 일도
+        // 일어나지 않아, 필터가 동작하는지 아닌지 알 수 없다.
+        const trackId = searchParams.get("trackId");
+        const subCategoryId = searchParams.get("subCategoryId");
+        const track = trackId !== null ? memberTracks.find((t) => t.id === Number(trackId)) : undefined;
+        const subCategory =
+          subCategoryId !== null
+            ? memberTracks.flatMap((t) => t.subCategories).find((c) => c.id === Number(subCategoryId))
+            : undefined;
+
+        const content = memberLectures.content.filter(
+          (lecture) =>
+            (track === undefined || lecture.trackName === track.name) &&
+            (subCategory === undefined || lecture.subCategoryName === subCategory.name),
+        );
+        return ok({ ...memberLectures, content, totalElements: content.length });
+      }
       case "GET /api/public/events": {
         const year = Number(searchParams.get("year") ?? new Date().getFullYear());
         const month = Number(searchParams.get("month") ?? new Date().getMonth() + 1);

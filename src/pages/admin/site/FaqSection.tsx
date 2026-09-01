@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "../../../components/ui/Button/Button";
 import { Input } from "../../../components/ui/Input/Input";
 import { TextArea } from "../../../components/ui/TextArea/TextArea";
-import { ErrorState } from "../../../components/ui/states/States";
+import { ErrorState, TextSkeleton } from "../../../components/ui/states/States";
 import { siteErrorMessage, siteSaveErrorMessage } from "../../../errors/site/errorMessages";
 import { useDeleteFaq, useFaqs, useSaveFaq } from "../../../hooks/site/useContent";
 import type { Faq, FaqPayload } from "../../../types/site";
@@ -101,7 +101,7 @@ export function FaqSection() {
     <section id="faqs" className={styles.section}>
       <h2 className={styles.sectionTitle}>FAQ</h2>
 
-      {isPending && <p className={styles.hint}>불러오는 중…</p>}
+      {isPending && <TextSkeleton lines={4} label="FAQ 불러오는 중" />}
       {isError && <ErrorState message={siteErrorMessage(error)} onRetry={() => void refetch()} />}
 
       {data &&

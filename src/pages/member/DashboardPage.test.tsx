@@ -58,11 +58,14 @@ describe("DashboardPage", () => {
     vi.resetAllMocks();
   });
 
-  it("불러오는 동안 로딩 문구를 보여준다", () => {
+  it("불러오는 동안 제목은 그대로 두고 본문 자리만 잡는다", () => {
+    // 제목은 조회 결과와 무관하게 이미 정해진 글이다. 로딩 동안 같이 지우면 응답이
+    // 도착하는 순간 제목까지 새로 나타나며 화면이 밀린다.
     vi.mocked(api.getMySummary).mockReturnValue(new Promise(() => {}));
     renderPage();
 
-    expect(screen.getByText("불러오는 중…")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "대시보드" })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "대시보드 불러오는 중" })).toBeInTheDocument();
   });
 
   it("학습 통계와 과제 제출 내역을 실제 데이터로 렌더링한다", async () => {

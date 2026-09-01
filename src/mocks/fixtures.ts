@@ -11,18 +11,25 @@ import type { StaffDirectory } from "../types/site";
  * `vite build` 산출물에 들어가지 않는다. 값은 실제 운영 데이터와 무관한 샘플이다.
  */
 
+/**
+ * dev 로그인 사용자.
+ *
+ * **`MEMBER` 로 둔다.** `GUEST` 면 `RequireRole` 이 `/member/*` 를 전부 막아 부원 화면을
+ * 백엔드 없이 열어볼 수가 없다. 지원서 흐름은 role 이 아니라 `GET /api/applications/me`
+ * 로 갈리므로(`ApplyPage` 참고) 부원으로 둬도 그대로 볼 수 있다.
+ */
 export const me: Me = {
   id: 1,
   email: "dev@getit.dev",
-  name: "개발용 지원자",
-  phoneNumber: null,
-  college: null,
-  major: null,
-  studentYear: null,
-  studentNumber: null,
+  name: "개발용 부원",
+  phoneNumber: "010-0000-0000",
+  college: "IT대학",
+  major: "컴퓨터학부",
+  studentYear: 3,
+  studentNumber: "2023000000",
   profileImageUrl: null,
-  role: "GUEST",
-  generationNo: null,
+  role: "MEMBER",
+  generationNo: 9,
   status: "ACTIVE",
 };
 

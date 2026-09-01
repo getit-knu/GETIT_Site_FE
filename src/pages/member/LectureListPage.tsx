@@ -5,7 +5,7 @@ import { LectureFilterTabs } from "../../components/lecture/LectureFilterTabs";
 import { ALL_LECTURES_FILTER, filterToParams } from "../../components/lecture/lectureFilters";
 import { MemberLectureCard } from "../../components/lecture/MemberLectureCard";
 import { Pagination } from "../../components/ui/Pagination/Pagination";
-import { EmptyState, ErrorState } from "../../components/ui/states/States";
+import { BlockSkeleton, CardGridSkeleton, EmptyState, ErrorState } from "../../components/ui/states/States";
 import { lectureErrorMessage } from "../../errors/lecture/errorMessages";
 import { useMemberLectures, useMemberTracks } from "../../hooks/lecture/useMemberLectures";
 
@@ -36,12 +36,24 @@ export default function LectureListPage() {
 
         {tracksQuery.isError ? (
           <ErrorState message={lectureErrorMessage(tracksQuery.error)} onRetry={() => void tracksQuery.refetch()} />
+        ) : tracksQuery.isPending ? (
+          // 트랙 탭은 데이터가 와야 그릴 수 있다. 자리를 안 잡으면 아래 목록이 통째로 밀린다.
+          // 높이는 같은 모양인 프로젝트 학기 탭 한 줄 실측값(35px). 여러 줄로 접히는 경우는
+          // 트랙 개수가 곧 기다리는 데이터라 미리 알 수 없다 — `ProjectsPage` 주석 참고.
+          <BlockSkeleton height="2.1875rem" label="트랙 필터 불러오는 중" />
         ) : (
-          !tracksQuery.isPending && <LectureFilterTabs tracks={tracks} value={filter} onChange={handleFilterChange} />
+          <LectureFilterTabs tracks={tracks} value={filter} onChange={handleFilterChange} />
         )}
 
         {lecturesQuery.isPending ? (
-          <p className={styles.loading}>불러오는 중…</p>
+          /*
+            격자가 데스크톱에서 4열이라 두 줄(8장)을 잡는다.
+
+            **318px 은 폭과 무관하다.** `MemberLectureCard` 가 썸네일 10rem, 제목 3rem
+            (2줄 clamp), 마감 줄까지 전부 고정이라 여덟 폭(1920~390) 실측이 모두 같았다.
+            그 고정이 풀리면 이 값도 같이 틀어진다 — `MemberLectureCard.module.scss` 참고.
+          */
+          <CardGridSkeleton className={styles.grid} count={8} height="19.875rem" label="강의 목록 불러오는 중" />
         ) : lecturesQuery.isError ? (
           <ErrorState message={lectureErrorMessage(lecturesQuery.error)} onRetry={() => void lecturesQuery.refetch()} />
         ) : lecturesQuery.data.content.length === 0 ? (
