@@ -32,7 +32,9 @@ export function toBasicInfoPayload(state: BasicInfoState): BasicInfo {
   return {
     name: state.name,
     email: state.email,
-    phoneNumber: state.phone.trim() === "" ? null : state.phone,
+    // 검증(`isValidPhoneNumber`)은 앞뒤 공백을 무시하고 통과시키므로, 저장할 때도 같이
+    // 털어야 한다. 안 그러면 통과한 값과 실제로 저장되는 값이 달라진다.
+    phoneNumber: state.phone.trim() === "" ? null : state.phone.trim(),
     collegeId: state.collegeId === 0 ? null : state.collegeId,
     majorId: state.majorId === 0 ? null : state.majorId,
     grade: state.grade.trim() === "" ? null : Number(state.grade),

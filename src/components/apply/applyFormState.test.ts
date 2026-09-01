@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ApplicationFormQuestion } from "../../types/application";
 
 import type { BasicInfoState } from "./applyFormState";
-import { submitBlocker } from "./applyFormState";
+import { submitBlocker, toBasicInfoPayload } from "./applyFormState";
 
 describe("submitBlocker 문항 안내", () => {
   const question = (over: Partial<ApplicationFormQuestion>): ApplicationFormQuestion => ({
@@ -76,5 +76,27 @@ describe("submitBlocker 문항 안내", () => {
     expect(submitBlocker({ ...filled, studentId: "" }, {}, [])).toBeNull();
     expect(submitBlocker({ ...filled, studentId: "2021" }, {}, [])?.field).toBe("studentId");
     expect(submitBlocker({ ...filled, studentId: "2021123456" }, {}, [])).toBeNull();
+  });
+});
+
+describe("toBasicInfoPayload", () => {
+  const state: BasicInfoState = {
+    name: "홍길동",
+    email: "hong@getit.com",
+    phone: " 010-1234-5678 ",
+    collegeId: 1,
+    majorId: 1,
+    grade: "3",
+    studentId: "",
+  };
+
+  it("전화번호의 앞뒤 공백을 털어 보낸다", () => {
+    // 검증은 공백을 무시하고 통과시키므로, 저장할 때 안 털면 통과한 값과 저장되는 값이
+    // 달라진다 — 공백이 섞인 채로 쌓이면 형식을 통일한 의미가 없다.
+    expect(toBasicInfoPayload(state).phoneNumber).toBe("010-1234-5678");
+  });
+
+  it("공백뿐인 전화번호는 null 로 보낸다", () => {
+    expect(toBasicInfoPayload({ ...state, phone: "   " }).phoneNumber).toBeNull();
   });
 });
