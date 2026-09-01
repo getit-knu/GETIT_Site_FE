@@ -25,6 +25,10 @@ function nextOptionId(options: QuestionOption[]): string {
  * 명세서 6.3 에서 `maxLength` 는 `TEXT` 만, `options` 는 `CHOICE`/`CHECKBOX` 만 쓴다.
  * 남겨 두면 서버가 쓰지 않는 값을 계속 들고 다니게 되고, 다시 바꿨을 때
  * 예전 선택지가 되살아난다. `CHECKBOX` 는 단일 동의 문항이라 옵션이 항상 1개다.
+ *
+ * **`CHOICE` 기본 선택지는 2개를 만든다.** BE가 선택형 질문에 옵션 2개 이상을
+ * 요구하는데(`ApplicationQuestionService.validateOptions`), 1개만 만들면 타입을
+ * 고르자마자(이 값이 바로 저장 요청으로 나간다) 매번 VALIDATION_FAILED로 막혔다.
  */
 function withType(question: RecruitmentQuestion, type: QuestionType): QuestionPayload {
   return {
@@ -34,7 +38,10 @@ function withType(question: RecruitmentQuestion, type: QuestionType): QuestionPa
     maxLength: type === "TEXT" ? (question.maxLength ?? 300) : null,
     options:
       type === "CHOICE"
-        ? (question.options ?? [{ id: "opt-1", label: "선택지 1" }])
+        ? (question.options ?? [
+            { id: "opt-1", label: "선택지 1" },
+            { id: "opt-2", label: "선택지 2" },
+          ])
         : type === "CHECKBOX"
           ? [question.options?.[0] ?? { id: "opt-1", label: "동의합니다" }]
           : null,

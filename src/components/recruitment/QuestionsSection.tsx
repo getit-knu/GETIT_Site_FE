@@ -111,8 +111,17 @@ export function QuestionsSection() {
               content: "새 문항",
               required: false,
               maxLength: type === "TEXT" ? 300 : null,
+              // CHOICE는 BE가 옵션 2개 이상을 요구한다(QuestionRow의 withType 주석 참고) —
+              // 1개만 보내면 만들자마자 VALIDATION_FAILED로 막힌다.
               options:
-                type === "TEXT" ? null : [{ id: "opt-1", label: type === "CHECKBOX" ? "동의합니다" : "선택지 1" }],
+                type === "TEXT"
+                  ? null
+                  : type === "CHECKBOX"
+                    ? [{ id: "opt-1", label: "동의합니다" }]
+                    : [
+                        { id: "opt-1", label: "선택지 1" },
+                        { id: "opt-2", label: "선택지 2" },
+                      ],
             });
           }}
         >
