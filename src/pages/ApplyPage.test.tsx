@@ -301,6 +301,43 @@ describe("ApplyPage", () => {
     await waitFor(() => expect(screen.getByLabelText("전화번호 *")).toHaveFocus());
   });
 
+  it("짚어 준 칸이 이유를 스스로 말한다", async () => {
+    /*
+     * 커서만 옮겨 주면 화면을 보지 않는 사람에게는 **커서가 갑자기 딴 데로 간 것**뿐이다.
+     * 그 칸에 `aria-invalid` 로 상태를, `aria-describedby` 로 이유를 붙여야 한다.
+     * 속성 존재가 아니라 실제로 읽히는 설명을 본다 — id 가 어긋나면 여기서 잡힌다.
+     */
+    await renderReadyPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "제출하기" }));
+
+    const phone = await screen.findByLabelText("전화번호 *");
+    await waitFor(() => expect(phone).toHaveAttribute("aria-invalid", "true"));
+    expect(phone).toHaveAccessibleDescription("전화번호를 입력해 주세요.");
+  });
+
+  it("짚어 준 이유를 푸터가 따라 하지 않는다", async () => {
+    // 칸과 푸터가 같이 띄우면 같은 문장이 화면에 두 번 뜨고 소리로도 두 번 읽힌다.
+    await renderReadyPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "제출하기" }));
+
+    await screen.findByText("전화번호를 입력해 주세요.");
+    expect(screen.getAllByText("전화번호를 입력해 주세요.")).toHaveLength(1);
+  });
+
+  it("칸을 고치면 잘못된 값 표시가 사라진다", async () => {
+    // 다 고쳤는데 빨간 칸이 남아 있으면 무엇을 더 해야 하는지 알 수 없다.
+    await renderReadyPage();
+    await userEvent.click(screen.getByRole("button", { name: "제출하기" }));
+    const phone = await screen.findByLabelText("전화번호 *");
+    await waitFor(() => expect(phone).toHaveAttribute("aria-invalid", "true"));
+
+    await userEvent.type(phone, "010-1234-5678");
+
+    await waitFor(() => expect(phone).not.toHaveAttribute("aria-invalid"));
+  });
+
   it("기본 정보를 다 채우면 답 안 한 문항을 짚는다", async () => {
     await renderReadyPage();
 

@@ -6,7 +6,7 @@ import { formatDateTime } from "../../libs/formatDate";
 import type { QuestionDetail } from "../../types/qna";
 import { Button } from "../ui/Button/Button";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "../ui/Modal/Modal";
-import { ErrorState } from "../ui/states/States";
+import { ErrorState, TextSkeleton } from "../ui/states/States";
 import { TextArea } from "../ui/TextArea/TextArea";
 
 import styles from "./QuestionAnswerModal.module.scss";
@@ -68,7 +68,11 @@ function AnswerForm({ question, onClose }: { question: QuestionDetail; onClose: 
           disabled={isSaving}
         />
 
-        {saveError !== null && <p className={styles.reason}>{answerSaveErrorMessage(saveError)}</p>}
+        {saveError !== null && (
+          <p role="alert" className={styles.reason}>
+            {answerSaveErrorMessage(saveError)}
+          </p>
+        )}
       </ModalBody>
 
       <ModalFooter>
@@ -107,7 +111,8 @@ export function QuestionAnswerModal({ questionId, onClose }: QuestionAnswerModal
 
       {isPending && (
         <ModalBody>
-          <p className={styles.loading}>불러오는 중…</p>
+          {/* 질문 본문 몇 줄과 답변 입력칸이 온다. */}
+          <TextSkeleton lines={3} label="질문 불러오는 중" />
         </ModalBody>
       )}
 

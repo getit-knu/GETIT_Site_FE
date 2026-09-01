@@ -6,7 +6,7 @@ import { formatDateTime } from "../../libs/formatDate";
 import { toIso, toLocalInput } from "../../libs/datetimeLocalInput";
 import type { RecruitmentSchedule, SchedulePayload } from "../../types/recruitment";
 import { Button } from "../ui/Button/Button";
-import { ErrorState } from "../ui/states/States";
+import { ErrorState, FormSkeleton } from "../ui/states/States";
 
 import styles from "./Section.module.scss";
 
@@ -85,12 +85,14 @@ export function ScheduleSection({ id }: ScheduleSectionProps) {
   const [edited, setEdited] = useState<ScheduleDraft | null>(null);
 
   if (isPending) {
+    // 모집 시작·마감, 서류 발표, 최종 발표 — 날짜 입력 네 칸이 온다.
+    const skeleton = <FormSkeleton fields={4} label="모집 일정 불러오는 중" />;
     return id !== undefined ? (
       <section id={id} className={styles.section}>
-        <p className={styles.loading}>불러오는 중…</p>
+        {skeleton}
       </section>
     ) : (
-      <p className={styles.loading}>불러오는 중…</p>
+      skeleton
     );
   }
 
@@ -157,8 +159,16 @@ export function ScheduleSection({ id }: ScheduleSectionProps) {
         </Button>
       </div>
 
-      {reason !== null && <p className={styles.reason}>{reason}</p>}
-      {save.error !== null && <p className={styles.reason}>{recruitmentErrorMessage(save.error)}</p>}
+      {reason !== null && (
+        <p role="status" className={styles.reason}>
+          {reason}
+        </p>
+      )}
+      {save.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {recruitmentErrorMessage(save.error)}
+        </p>
+      )}
     </section>
   );
 }

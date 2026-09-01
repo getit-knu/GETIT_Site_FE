@@ -60,4 +60,32 @@ describe("LeaderCard", () => {
       "https://instagram.com/honggildong",
     );
   });
+
+  it("사진이 있으면 실제 이미지를 보여준다", () => {
+    // alt=""(장식 이미지)라 role은 "img"가 아니라 "presentation"으로 잡힌다 — 태그로 직접 찾는다.
+    const { container } = render(
+      <LeaderCard staff={{ ...STAFF, profileImageUrl: "https://cdn.getit.com/staff/1.jpg" }} />,
+    );
+
+    expect(container.querySelector("img")).toHaveAttribute("src", "https://cdn.getit.com/staff/1.jpg");
+  });
+
+  it("사진이 없으면 그라디언트 placeholder를 보여준다", () => {
+    const { container } = render(<LeaderCard staff={STAFF} />);
+
+    expect(container.querySelector("img")).not.toBeInTheDocument();
+  });
+
+  it("소개글이 있으면 보여준다", () => {
+    render(<LeaderCard staff={{ ...STAFF, introduction: "새로운 기술을 배우고 나누는 걸 좋아합니다." }} />);
+
+    expect(screen.getByText("새로운 기술을 배우고 나누는 걸 좋아합니다.")).toBeInTheDocument();
+  });
+
+  it("소개글이 비어 있으면 아무것도 그리지 않는다", () => {
+    const { container } = render(<LeaderCard staff={STAFF} />);
+
+    // 역할 · 학과 문단만 있고 소개글 문단은 아예 없어야 한다.
+    expect(container.querySelectorAll("p")).toHaveLength(2);
+  });
 });

@@ -16,6 +16,19 @@ function calendar(year: number, month: number, events: PublicEventCalendar["even
 }
 
 /**
+ * 날짜 칸 안에서 특정 일정의 얇은 선을 집는다.
+ *
+ * 이어짐(`data-connect-*`)은 칸이 아니라 **선마다** 붙는다 — 한 칸에 여러 일정이 겹치면
+ * 8일에 끝난 일정과 9일에 시작한 다른 일정이 칸 단위로는 구분되지 않아, 서로 다른 일정을
+ * 한 줄로 이어 붙이는 거짓말이 된다.
+ */
+function lane(cell: HTMLElement, eventId: number) {
+  const found = cell.querySelector(`[data-event-id="${eventId}"]`);
+  if (found === null) throw new Error(`날짜 칸에 일정 ${eventId}의 선이 없다`);
+  return found;
+}
+
+/**
  * `StrictMode` 로 감싸서 렌더한다 — 앱은 `main.tsx` 에서 StrictMode 안에 있는데 테스트만
  * 벗겨 놓으면, StrictMode 가 일부러 드러내는 부작용(상태 업데이터 이중 호출 등)을 테스트가
  * 통과시켜 버린다. 실제로 연도 경계에서 2년씩 뛰던 버그를 이 테스트들이 놓쳤다.
@@ -199,9 +212,9 @@ describe("ScheduleCalendar", () => {
     await screen.findByText("신년 모임");
 
     // 1월 5일에 일정이 있다 — 누를 수 있어야 한다.
-    expect(screen.getByRole("button", { name: "1월 5일 일정 보기" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "1월 5일 일정 1개 보기" })).toBeInTheDocument();
     // 6일은 비었다 — 눌러도 갈 곳이 없으니 버튼이 아니다.
-    expect(screen.queryByRole("button", { name: "1월 6일 일정 보기" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "1월 6일 일정 1개 보기" })).not.toBeInTheDocument();
   });
 
   it("일정이 있는 날을 누르면 그 일정으로 목록을 스크롤한다", async () => {
@@ -212,11 +225,11 @@ describe("ScheduleCalendar", () => {
     const scrollTo = vi.fn();
     list.scrollTo = scrollTo;
 
-    await userEvent.click(screen.getByRole("button", { name: "1월 5일 일정 보기" }));
+    await userEvent.click(screen.getByRole("button", { name: "1월 5일 일정 1개 보기" }));
 
     expect(scrollTo).toHaveBeenCalledOnce();
     // 고른 날은 달력에서도 짚어 준다.
-    expect(screen.getByRole("button", { name: "1월 5일 일정 보기" })).toHaveAttribute("data-selected");
+    expect(screen.getByRole("button", { name: "1월 5일 일정 1개 보기" })).toHaveAttribute("data-selected");
   });
 
   it("달을 넘기면 골라 둔 날은 풀린다", async () => {
@@ -224,15 +237,16 @@ describe("ScheduleCalendar", () => {
     await screen.findByText("신년 모임");
 
     screen.getByRole("list").scrollTo = vi.fn();
-    await userEvent.click(screen.getByRole("button", { name: "1월 5일 일정 보기" }));
+    await userEvent.click(screen.getByRole("button", { name: "1월 5일 일정 1개 보기" }));
     await userEvent.click(screen.getByRole("button", { name: "다음 달" }));
     await userEvent.click(screen.getByRole("button", { name: "이전 달" }));
 
-    expect(screen.getByRole("button", { name: "1월 5일 일정 보기" })).not.toHaveAttribute("data-selected");
+    expect(screen.getByRole("button", { name: "1월 5일 일정 1개 보기" })).not.toHaveAttribute("data-selected");
   });
 
-  it("여러 날에 걸친 일정은 달력에서 두 칸을 하나로 잇는다", async () => {
-    // 5월 20~21일 창업 해커톤. 20일은 오른쪽으로, 21일은 왼쪽으로 이어져 하나의 알약이 된다.
+  it("여러 날에 걸친 일정은 두 칸의 선을 하나로 잇는다", async () => {
+    // 5월 20~21일 창업 해커톤(수·목). 20일 선은 오른쪽으로, 21일 선은 왼쪽으로 흘러
+    // 칸 사이 간격을 메우고 한 줄이 된다.
     renderCalendar();
     await screen.findByRole("heading", { name: "2026년 1월" });
 
@@ -240,13 +254,13 @@ describe("ScheduleCalendar", () => {
     for (let i = 0; i < 4; i++) await userEvent.click(nextButton);
     await screen.findByText("창업 해커톤");
 
-    const start = screen.getByRole("button", { name: "5월 20일 일정 보기" });
-    const end = screen.getByRole("button", { name: "5월 21일 일정 보기" });
+    const start = screen.getByRole("button", { name: "5월 20일 일정 1개 보기" });
+    const end = screen.getByRole("button", { name: "5월 21일 일정 1개 보기" });
 
-    expect(start).toHaveAttribute("data-connect-right");
-    expect(start).not.toHaveAttribute("data-connect-left");
-    expect(end).toHaveAttribute("data-connect-left");
-    expect(end).not.toHaveAttribute("data-connect-right");
+    expect(lane(start, 2)).toHaveAttribute("data-connect-right");
+    expect(lane(start, 2)).not.toHaveAttribute("data-connect-left");
+    expect(lane(end, 2)).toHaveAttribute("data-connect-left");
+    expect(lane(end, 2)).not.toHaveAttribute("data-connect-right");
   });
 
   it("여러 날에 걸친 일정은 종료일까지 함께 보여준다", async () => {

@@ -4,7 +4,7 @@ import { Button } from "../../../components/ui/Button/Button";
 import { Input } from "../../../components/ui/Input/Input";
 import { Select } from "../../../components/ui/Select/Select";
 import { TextArea } from "../../../components/ui/TextArea/TextArea";
-import { ErrorState } from "../../../components/ui/states/States";
+import { ErrorState, TextSkeleton } from "../../../components/ui/states/States";
 import { siteSaveErrorMessage, siteErrorMessage } from "../../../errors/site/errorMessages";
 import { useDeleteStaff, useReorderStaffs, useSaveStaff, useStaffs } from "../../../hooks/site/useStaffs";
 import type { Staff, StaffPayload, StaffSection } from "../../../types/site";
@@ -166,8 +166,16 @@ function StaffForm({ draft: initial, generationNo, onClose }: FormProps) {
 
       <div className={styles.formFooter}>
         {/* 저장을 막는 이유를 미리 보여준다. 눌러 보고 알게 하지 않는다. */}
-        {reason !== null && <p className={styles.reason}>{reason}</p>}
-        {save.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(save.error)}</p>}
+        {reason !== null && (
+          <p role="status" className={styles.reason}>
+            {reason}
+          </p>
+        )}
+        {save.error !== null && (
+          <p role="alert" className={styles.reason}>
+            {siteSaveErrorMessage(save.error)}
+          </p>
+        )}
         <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
           취소
         </Button>
@@ -218,7 +226,7 @@ export function StaffsSection({ generationNo }: { generationNo: number }) {
     <section id="staffs" className={styles.section}>
       <h2 className={styles.sectionTitle}>운영진</h2>
 
-      {isPending && <p className={styles.hint}>불러오는 중…</p>}
+      {isPending && <TextSkeleton lines={4} label="운영진 불러오는 중" />}
       {isError && <ErrorState message={siteErrorMessage(error)} onRetry={() => void refetch()} />}
 
       {data &&
@@ -282,8 +290,16 @@ export function StaffsSection({ generationNo }: { generationNo: number }) {
           );
         })}
 
-      {reorder.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(reorder.error)}</p>}
-      {remove.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(remove.error)}</p>}
+      {reorder.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {siteSaveErrorMessage(reorder.error)}
+        </p>
+      )}
+      {remove.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {siteSaveErrorMessage(remove.error)}
+        </p>
+      )}
 
       {/* 고치는 대상이 바뀌면 폼을 새로 만든다. 그래야 `useState` 초기값이 다시 잡힌다. */}
       {editing !== null && (

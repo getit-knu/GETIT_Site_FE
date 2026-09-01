@@ -101,11 +101,26 @@
   height: 0.75rem;
 }
 
+// 제목 줄 수가 카드 높이를 흔들지 않도록 두 줄로 잘라낸다 — `ProjectCard`(#274)와 같은
+// 이유다. 강의 제목은 길이가 제각각이라, 안 묶으면 한 줄짜리와 두 줄짜리가 섞인 격자에서
+// 같은 행의 카드가 전부 긴 쪽에 맞춰 늘어난다(실측: 폭에 따라 294px ↔ 318px).
+// 짧은 제목도 두 줄 자리를 차지해야 카드가 서로 어긋나지 않는다.
+// 이 고정 덕에 카드 높이가 318px 로 일정하고, `LectureListPage` 의 로딩 스켈레톤이
+// 그 값을 그대로 쓴다 — 여기를 바꾸면 그쪽 높이도 같이 고쳐야 한다.
 .title {
+  display: -webkit-box;
+  height: 3rem;
+  overflow: hidden;
   margin: 0.75rem 0 0;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   color: $color-heading;
   font-size: 1rem;
   font-weight: 700;
+
+  // `height: 3rem` 이 정확히 두 줄이 되도록 줄높이를 고정한다. 전역 `line-height` 에
+  // 기대면 그쪽이 바뀔 때 제목이 조용히 잘리거나 남는다.
+  line-height: 1.5rem;
 }
 
 .deadline {

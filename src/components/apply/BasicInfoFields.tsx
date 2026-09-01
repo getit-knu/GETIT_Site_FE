@@ -2,7 +2,7 @@ import type { College, Major } from "../../types/college";
 import { Input } from "../ui/Input/Input";
 import styles from "../../pages/ApplyPage.module.scss";
 
-import type { BasicInfoState, BlockedFieldKey } from "./applyFormState";
+import type { BasicInfoState, BlockedFieldKey, SubmitBlocker } from "./applyFormState";
 import { formatPhoneNumber } from "./applyFormState";
 
 interface BasicInfoFieldsProps {
@@ -11,6 +11,8 @@ interface BasicInfoFieldsProps {
   majors: Major[];
   /** 입력칸 id를 만든다. `ApplyForm`이 제출을 막는 칸을 찾을 때 같은 함수를 쓴다. */
   fieldId: (key: BlockedFieldKey) => string;
+  /** 제출을 막은 칸과 그 이유. `ApplyForm` 이 이 칸으로 포커스를 옮길 때 함께 넘긴다. */
+  blocked: SubmitBlocker | null;
   onChange: <K extends keyof BasicInfoState>(key: K) => (value: string) => void;
   onCollegeChange: (collegeId: number) => void;
   onMajorChange: (majorId: number) => void;
@@ -28,17 +30,32 @@ export function BasicInfoFields({
   colleges,
   majors,
   fieldId,
+  blocked,
   onChange,
   onCollegeChange,
   onMajorChange,
 }: BasicInfoFieldsProps) {
   const majorOptions = majors.filter((major) => major.collegeId === value.collegeId);
 
+  /*
+    포커스를 옮겨 주는 것만으로는 부족하다 — 화면을 보지 않는 사람에게는 커서가 갑자기
+    딴 데로 간 것뿐이다. 그 칸이 왜 막혔는지를 칸 자체에 붙여 줘야 한다(`Input` 주석 참고).
+  */
+  const errorOf = (key: BlockedFieldKey) => (blocked?.field === key ? blocked.message : undefined);
+
   return (
     <div className={styles.fieldGrid}>
-      <Input id={fieldId("name")} label="이름 *" value={value.name} onChange={onChange("name")} placeholder="홍길동" />
+      <Input
+        id={fieldId("name")}
+        error={errorOf("name")}
+        label="이름 *"
+        value={value.name}
+        onChange={onChange("name")}
+        placeholder="홍길동"
+      />
       <Input
         id={fieldId("email")}
+        error={errorOf("email")}
         label="이메일 *"
         type="email"
         value={value.email}
@@ -47,6 +64,7 @@ export function BasicInfoFields({
       />
       <Input
         id={fieldId("phone")}
+        error={errorOf("phone")}
         label="전화번호 *"
         value={value.phone}
         // 숫자만 쭉 쳐도 010-1234-5678 꼴로 알아서 끊긴다 — 하이픈을 손으로 넣게 하면
@@ -60,6 +78,8 @@ export function BasicInfoFields({
         </label>
         <select
           id={fieldId("college")}
+          aria-invalid={errorOf("college") ? true : undefined}
+          aria-describedby={errorOf("college") ? `${fieldId("college")}-error` : undefined}
           className={styles.select}
           value={value.collegeId}
           onChange={(event) => onCollegeChange(Number(event.target.value))}
@@ -71,6 +91,11 @@ export function BasicInfoFields({
             </option>
           ))}
         </select>
+        {errorOf("college") !== undefined && (
+          <p id={`${fieldId("college")}-error`} role="alert" className={styles.selectError}>
+            {errorOf("college")}
+          </p>
+        )}
       </div>
       <div className={styles.selectField}>
         <label htmlFor={fieldId("major")} className={styles.selectLabel}>
@@ -78,6 +103,8 @@ export function BasicInfoFields({
         </label>
         <select
           id={fieldId("major")}
+          aria-invalid={errorOf("major") ? true : undefined}
+          aria-describedby={errorOf("major") ? `${fieldId("major")}-error` : undefined}
           className={styles.select}
           value={value.majorId}
           disabled={value.collegeId === 0}
@@ -90,17 +117,28 @@ export function BasicInfoFields({
             </option>
           ))}
         </select>
+        {errorOf("major") !== undefined && (
+          <p id={`${fieldId("major")}-error`} role="alert" className={styles.selectError}>
+            {errorOf("major")}
+          </p>
+        )}
       </div>
       <Input
         id={fieldId("grade")}
+        error={errorOf("grade")}
         label="학년 *"
         type="number"
         value={value.grade}
         onChange={onChange("grade")}
         placeholder="1"
+        // 학부는 6학년까지다(초과학기 포함). 검증과 같은 범위를 칸에도 적어 둔다 —
+        // 스피너가 여기서 멈추고, 보조기기가 칸에 들어갈 때 범위를 미리 읽어 준다.
+        min={1}
+        max={6}
       />
       <Input
         id={fieldId("studentId")}
+        error={errorOf("studentId")}
         label="학번(10자) *"
         value={value.studentId}
         onChange={onChange("studentId")}

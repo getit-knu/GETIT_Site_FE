@@ -1,0 +1,127 @@
+import { toIso, toLocalInput } from "../../libs/datetimeLocalInput";
+import type { LectureDetail, LecturePayload, SubmissionType } from "../../types/lecture";
+
+/** 입력 중에는 빈 칸을 허용해야 지우고 다시 칠 수 있다. 숫자도 문자열로 든다. */
+export interface Draft {
+  trackId: number;
+  subCategoryId: number;
+  week: string;
+  title: string;
+  description: string;
+  youtubeUrl: string;
+  materialUrl: string;
+  durationMinutes: string;
+  isPublished: boolean;
+  fileIds: number[];
+  hasAssignment: boolean;
+  assignmentTitle: string;
+  assignmentDescription: string;
+  assignmentDeadline: string;
+  /** 파일 · 링크 중 이 과제가 받을 제출 방식. 최소 하나는 있어야 한다. */
+  allowedTypes: SubmissionType[];
+  /** `LINK` 를 허용할 때만 쓴다(예: "구글 드라이브 링크"). */
+  linkPlaceholder: string;
+}
+
+export function emptyDraft(trackId: number): Draft {
+  return {
+    trackId,
+    subCategoryId: 0,
+    week: "",
+    title: "",
+    description: "",
+    youtubeUrl: "",
+    materialUrl: "",
+    durationMinutes: "",
+    isPublished: false,
+    fileIds: [],
+    hasAssignment: false,
+    assignmentTitle: "",
+    assignmentDescription: "",
+    assignmentDeadline: "",
+    allowedTypes: ["FILE"],
+    linkPlaceholder: "",
+  };
+}
+
+export function toDraft(detail: LectureDetail): Draft {
+  return {
+    trackId: detail.trackId,
+    // 0 은 화면에서 쓰는 '없음' 값이다. 서버에는 null 로 보낸다.
+    subCategoryId: detail.subCategoryId ?? 0,
+    week: String(detail.week),
+    title: detail.title,
+    description: detail.description,
+    youtubeUrl: detail.youtubeUrl,
+    materialUrl: detail.materialUrl,
+    durationMinutes: detail.durationMinutes === null ? "" : String(detail.durationMinutes),
+    isPublished: detail.isPublished,
+    fileIds: detail.files.map((f) => f.fileId),
+    hasAssignment: detail.assignment !== null,
+    assignmentTitle: detail.assignment?.title ?? "",
+    assignmentDescription: detail.assignment?.description ?? "",
+    assignmentDeadline: detail.assignment ? toLocalInput(detail.assignment.deadline) : "",
+    allowedTypes: detail.assignment?.allowedTypes ?? ["FILE"],
+    linkPlaceholder: detail.assignment?.linkPlaceholder ?? "",
+  };
+}
+
+/** URL 형식은 서버도 검증한다(명세서 8.2). 눌러 보고 알게 하지 않는다. */
+function isBadUrl(value: string): boolean {
+  if (value.trim() === "") return false;
+  try {
+    new URL(value);
+    return false;
+  } catch {
+    return true;
+  }
+}
+
+export function invalidReason(draft: Draft): string | null {
+  if (draft.title.trim() === "") return "제목을 입력해 주세요.";
+
+  const week = Number(draft.week);
+  if (!Number.isInteger(week) || week < 1) return "주차는 1 이상의 정수여야 합니다.";
+
+  if (isBadUrl(draft.youtubeUrl)) return "유튜브 URL 형식이 올바르지 않습니다.";
+  if (isBadUrl(draft.materialUrl)) return "강의 자료 URL 형식이 올바르지 않습니다.";
+
+  if (draft.durationMinutes !== "" && Number(draft.durationMinutes) <= 0) {
+    return "재생 시간은 1분 이상이어야 합니다.";
+  }
+
+  if (draft.hasAssignment) {
+    if (draft.assignmentTitle.trim() === "") return "과제 제목을 입력해 주세요.";
+    if (draft.assignmentDescription.trim() === "") return "과제 설명을 입력해 주세요.";
+    if (draft.assignmentDeadline === "") return "과제 마감 기한을 입력해 주세요.";
+    // 형태가 어긋난 값(주소를 손으로 고친 경우 등)은 `toIso`가 빈 문자열을 돌려준다.
+    if (toIso(draft.assignmentDeadline) === "") return "과제 마감 기한 형식이 올바르지 않습니다.";
+    if (draft.allowedTypes.length === 0) return "과제 제출 방식을 하나 이상 선택해 주세요.";
+  }
+  return null;
+}
+
+export function toPayload(draft: Draft): LecturePayload {
+  return {
+    trackId: draft.trackId,
+    subCategoryId: draft.subCategoryId === 0 ? null : draft.subCategoryId,
+    week: Number(draft.week),
+    title: draft.title.trim(),
+    description: draft.description,
+    youtubeUrl: draft.youtubeUrl.trim(),
+    materialUrl: draft.materialUrl.trim(),
+    durationMinutes: draft.durationMinutes === "" ? null : Number(draft.durationMinutes),
+    isPublished: draft.isPublished,
+    fileIds: draft.fileIds,
+    // 과제가 없는 강의는 null 이다(명세서 8.2).
+    assignment: draft.hasAssignment
+      ? {
+          title: draft.assignmentTitle.trim(),
+          description: draft.assignmentDescription,
+          deadline: toIso(draft.assignmentDeadline),
+          allowedTypes: draft.allowedTypes,
+          linkPlaceholder: draft.allowedTypes.includes("LINK") ? draft.linkPlaceholder.trim() || null : null,
+        }
+      : null,
+  };
+}

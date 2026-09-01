@@ -1,4 +1,4 @@
-import { ErrorState } from "../../../components/ui/states/States";
+import { ErrorState, TextSkeleton } from "../../../components/ui/states/States";
 import { siteErrorMessage, siteSaveErrorMessage } from "../../../errors/site/errorMessages";
 import { useFeatures, useToggleFeature } from "../../../hooks/site/useStaffs";
 import { formatDateTime } from "../../../libs/formatDate";
@@ -22,7 +22,7 @@ export function FeaturesSection() {
         끄면 공개 사이트에서 해당 화면이 보이지 않습니다. 켜기 전에 화면이 준비됐는지 확인해 주세요.
       </p>
 
-      {isPending && <p className={styles.hint}>불러오는 중…</p>}
+      {isPending && <TextSkeleton lines={2} label="기능 설정 불러오는 중" />}
       {isError && <ErrorState message={siteErrorMessage(error)} onRetry={() => void refetch()} />}
 
       {data && (
@@ -49,7 +49,11 @@ export function FeaturesSection() {
       )}
 
       {/* 실패하면 스위치가 원래대로 돌아간다. 왜 돌아갔는지도 말해 준다. */}
-      {toggle.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(toggle.error)}</p>}
+      {toggle.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {siteSaveErrorMessage(toggle.error)}
+        </p>
+      )}
     </section>
   );
 }
