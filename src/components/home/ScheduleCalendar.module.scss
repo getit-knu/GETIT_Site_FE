@@ -119,6 +119,8 @@ $date-grid-gap: 0.25rem;
 }
 
 .eventItem {
+  // 카드를 덮는 오버레이 버튼(`.eventSelect`)의 기준.
+  position: relative;
   display: flex;
   // 목록 높이가 고정이라, 이게 없으면 항목이 서로 눌려 납작해진다(네 개째부터 스크롤이 아니라 압축).
   flex-shrink: 0;
@@ -187,6 +189,28 @@ $date-grid-gap: 0.25rem;
 
   50% {
     opacity: 0.45;
+  }
+}
+
+/*
+  카드를 덮어 카드 전체를 클릭 영역으로 만드는 투명 버튼. 카드 안에 `h4`가 있어 `<button>`으로
+  감쌀 수 없어서(HTML 콘텐츠 모델) 위에 얹는 방식을 쓴다.
+
+  포커스 링은 카드 바깥으로 내지 않는다 — 목록이 `overflow-y: auto`라 바깥으로 낸 링은 위·아래
+  끝 줄에서 잘려 보인다.
+*/
+.eventSelect {
+  position: absolute;
+  z-index: 1;
+  border: none;
+  border-radius: inherit;
+  inset: 0;
+  background: none;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 0.125rem solid $color-accent;
+    outline-offset: -0.25rem;
   }
 }
 
@@ -540,6 +564,7 @@ $date-grid-gap: 0.25rem;
   top: 0;
   height: var(--lane-height);
   border-radius: 9999px;
+  transition: opacity $duration-fast $ease-out;
   /*
     선 색은 왼쪽 목록의 종류 배지와 같은 계열이다 — 달력의 선과 목록의 배지가 같은 일정을
     가리킨다는 걸 색으로 잇는다. 다만 겹침을 실제로 갈라 주는 건 색이 아니라 줄 위치다:
@@ -582,5 +607,20 @@ $date-grid-gap: 0.25rem;
     inset-inline-end: -$date-grid-gap;
     border-start-end-radius: 0;
     border-end-end-radius: 0;
+  }
+
+  /*
+    목록 카드로 일정을 짚었을 때. 짚은 선은 건드리지 않고 **나머지를 흐리게** 한다.
+
+    선을 굵게 키우는 쪽은 택하지 않았다 — 줄 사이가 2px(모바일 1.5px)뿐이라 키우면 아래 줄을
+    침범하고, 숫자 아래 여유도 데스크톱 3.2px·모바일 2.8px밖에 없다(실측). 기하를 그대로 두고
+    대비만 바꾸면 좁은 칸에서도 깨지지 않는다.
+  */
+  .dateGrid[data-selecting-event] &:not([data-selected]) {
+    opacity: 0.3;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 }

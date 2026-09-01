@@ -69,6 +69,12 @@ type DayLane = {
 };
 
 /**
+ * 지금 짚고 있는 대상. "날"과 "일정"은 강조 범위가 달라 한 필드로 뭉갤 수 없다 —
+ * 자세한 이유는 아래 `selection` 상태 주석에 있다.
+ */
+type Selection = { kind: "day"; day: number } | { kind: "event"; eventId: number } | null;
+
+/**
  * 이 달에 걸치는 일정을 날짜별 "줄(lane)"로 눕힌다.
  *
  * 예전엔 한 날에 일정 하나만 남기고 나머지를 버려서(`if (!map.has(day))`), 프로덕션 10월처럼
@@ -147,8 +153,19 @@ export function ScheduleCalendar() {
   const { year, monthIndex } = cursor;
   // 달 넘김 방향. 날짜 그리드가 이동 방향에서 미끄러져 들어오는 애니메이션의 기준(UX 라운드 2).
   const [direction, setDirection] = useState<"next" | "prev">("next");
-  // 달력에서 고른 날. 그 날에 걸린 일정을 왼쪽 목록에서 짚어 준다.
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  /**
+   * 지금 짚고 있는 것. **"날"과 "일정"은 다른 선택이다.**
+   *
+   * 달력 날짜를 누르면 그 **날**을 고른 것이라, 그 날에 겹친 일정 전부를 목록에서 짚어야 한다.
+   * 목록 카드를 누르면 그 **일정**을 고른 것이라, 그 일정이 걸친 모든 날의 선을 짚어야 하고
+   * 같은 날을 함께 쓰는 다른 일정은 건드리면 안 된다.
+   *
+   * 그래서 `selectedDay: number | null` 하나로는 부족하다. 카드 클릭을 "시작일 선택"으로
+   * 흉내내면, 겹친 날에서 내가 누르지도 않은 옆 일정까지 함께 켜진다.
+   *
+   * 한 번에 하나만 살아 있게 둔다 — 두 종류의 강조가 화면에 겹치면 무엇을 짚고 있는지 흐려진다.
+   */
+  const [selection, setSelection] = useState<Selection>(null);
   const lastWheelAt = useRef(0);
   const eventListRef = useRef<HTMLUListElement>(null);
   const [eventsCardRef, eventsCardRevealed] = useScrollReveal<HTMLDivElement>();
@@ -175,7 +192,7 @@ export function ScheduleCalendar() {
    */
   function stepMonth(delta: number) {
     setDirection(delta > 0 ? "next" : "prev");
-    setSelectedDay(null);
+    setSelection(null);
     setCursor((current) => monthCursor(current.year * 12 + current.monthIndex + delta));
   }
 
@@ -183,7 +200,7 @@ export function ScheduleCalendar() {
   function goToToday() {
     // 과거를 보고 있었으면 앞으로(next), 미래를 보고 있었으면 뒤로(prev) 미끄러진다.
     setDirection(year * 12 + monthIndex < now.getFullYear() * 12 + now.getMonth() ? "next" : "prev");
-    setSelectedDay(null);
+    setSelection(null);
     setCursor({ year: now.getFullYear(), monthIndex: now.getMonth() });
   }
 
@@ -194,7 +211,7 @@ export function ScheduleCalendar() {
    * 따라 스크롤해서, 목록 안만 움직이면 될 상황에 페이지 전체가 딸려 움직인다.
    */
   function selectDay(day: number) {
-    setSelectedDay(day);
+    setSelection({ kind: "day", day });
 
     // 겹친 날이면 목록에서 위에 오는(= `order`가 가장 작은) 일정으로 데려간다. 줄 순서는
     // 긴 일정을 위로 올리느라 목록 순서와 다를 수 있으니 `lane`이 아니라 `order`로 고른다.
@@ -205,6 +222,15 @@ export function ScheduleCalendar() {
 
     const top = target.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
     list.scrollTo({ top, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+  }
+
+  /**
+   * 목록 카드를 누르면 그 일정이 걸친 모든 날의 선을 짚어 준다 — 캘린더 → 목록의 반대 방향.
+   *
+   * 목록은 스크롤하지 않는다. 방금 누른 카드는 이미 눈앞에 있다.
+   */
+  function selectEvent(eventId: number) {
+    setSelection({ kind: "event", eventId });
   }
 
   function handleWheel(event: WheelEvent<HTMLDivElement>) {
@@ -226,10 +252,14 @@ export function ScheduleCalendar() {
   // 오늘 링 표시용 — 지금 보고 있는 달이 실제 오늘이 속한 달일 때만 날짜가 의미를 가진다.
   const isCurrentMonth = year === now.getFullYear() && monthIndex === now.getMonth();
 
-  /** 캘린더에서 고른 날에 이 일정이 걸려 있는지 — 목록에서도 그 줄들을 함께 짚어 준다. */
-  function isOnSelectedDay(eventId: number) {
-    if (selectedDay === null) return false;
-    return lanesByDay.get(selectedDay)?.some((lane) => lane.event.id === eventId) === true;
+  /**
+   * 목록에서 이 일정을 짚을지. 고른 것이 **날**이면 그 날에 걸린 일정 전부, 고른 것이
+   * **일정**이면 그 하나만이다.
+   */
+  function isEventPicked(eventId: number) {
+    if (selection === null) return false;
+    if (selection.kind === "event") return selection.eventId === eventId;
+    return lanesByDay.get(selection.day)?.some((lane) => lane.event.id === eventId) === true;
   }
 
   return (
@@ -264,9 +294,24 @@ export function ScheduleCalendar() {
                   key={event.id}
                   className={styles.eventItem}
                   data-event-id={event.id}
-                  data-selected={isOnSelectedDay(event.id) || undefined}
+                  data-selected={isEventPicked(event.id) || undefined}
                   style={{ "--reveal-index": index } as CSSProperties}
                 >
+                  {/*
+                    카드를 덮는 오버레이 버튼. 카드 안에 `h4`가 있어 `<button>`으로 감쌀 수 없다
+                    (`button`의 콘텐츠 모델은 phrasing content라 `h4`·`div`가 들어가지 못한다).
+                    그래서 카드 전체를 덮는 버튼을 따로 얹어 클릭 영역을 카드만큼 넓게 잡는다.
+
+                    WCAG 2.5.3: 이름에 화면에 보이는 제목을 그대로 담아, 음성 입력으로 제목을
+                    말해도 이 버튼이 잡힌다.
+                  */}
+                  <button
+                    type="button"
+                    className={styles.eventSelect}
+                    aria-label={`${event.title} 캘린더에서 보기`}
+                    aria-pressed={isEventPicked(event.id)}
+                    onClick={() => selectEvent(event.id)}
+                  />
                   <span className={styles.eventDay}>{dayOf(event.startDate)}</span>
                   <div>
                     <h4 className={styles.eventTitle}>{event.title}</h4>
@@ -327,7 +372,14 @@ export function ScheduleCalendar() {
 
             {/* key로 달마다 다시 그려 이동 방향에서 미끄러져 들어오게 한다 — 휠·버튼 어느 쪽으로
                 넘겨도 "어느 방향으로 이동했는지"가 눈에 남는다. */}
-            <div key={`${year}-${monthIndex}`} className={styles.dateGrid} data-direction={direction}>
+            {/* 일정을 고른 동안에는 짚지 않은 선을 흐리게 한다 — 스위치는 그리드에 달아야 한다.
+                그 일정이 없는 칸의 선까지 흐려져야 "이 일정"이 한눈에 드러나기 때문이다. */}
+            <div
+              key={`${year}-${monthIndex}`}
+              className={styles.dateGrid}
+              data-direction={direction}
+              data-selecting-event={selection?.kind === "event" || undefined}
+            >
               {calendarCells.map((date, index) => {
                 if (date === null) return <span key={`empty-${index}`} />;
 
@@ -349,7 +401,7 @@ export function ScheduleCalendar() {
                     className={styles.date}
                     data-active
                     data-today={today}
-                    data-selected={date === selectedDay || undefined}
+                    data-selected={(selection?.kind === "day" && selection.day === date) || undefined}
                     aria-label={`${month}월 ${date}일 일정 ${lanes.length}개 보기`}
                     onClick={() => selectDay(date)}
                   >
@@ -367,6 +419,9 @@ export function ScheduleCalendar() {
                             data-type={lane.event.type}
                             data-connect-left={lane.connectLeft || undefined}
                             data-connect-right={lane.connectRight || undefined}
+                            data-selected={
+                              (selection?.kind === "event" && selection.eventId === lane.event.id) || undefined
+                            }
                           />
                         ))}
                     </span>

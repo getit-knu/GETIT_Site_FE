@@ -156,6 +156,98 @@ describe("한 날에 여러 일정이 겹칠 때", () => {
     expect(screen.getByText("아이디어 컨설팅").closest("li")).not.toHaveAttribute("data-selected");
   });
 
+  describe("목록 카드로 캘린더의 선을 짚을 때", () => {
+    /** 목록 카드를 덮는 오버레이 버튼. 카드 안에 `h4`가 있어 `button`으로 감쌀 수 없다. */
+    function card(title: string) {
+      return screen.getByRole("button", { name: `${title} 캘린더에서 보기` });
+    }
+
+    /** 날짜 그리드. `data-direction`이 달 넘김 애니메이션용으로 늘 붙어 있어 잡는 손잡이로 쓴다. */
+    function dateGrid() {
+      const grid = document.querySelector("[data-direction]");
+      if (grid === null) throw new Error("날짜 그리드를 찾지 못했다");
+      return grid;
+    }
+
+    it("그 일정의 선만 짚고, 같은 날 겹친 다른 일정의 선은 건드리지 않는다", async () => {
+      renderCalendar();
+      await screen.findByText("팀별 빌드업 III");
+
+      await userEvent.click(card("팀별 빌드업 III"));
+
+      // 5일은 세 일정이 겹치는 날 — 누른 일정의 줄에만 표시가 붙어야 한다.
+      const day5 = screen.getByRole("button", { name: "10월 5일 일정 2개 보기" });
+      expect(lane(day5, 11)).toHaveAttribute("data-selected");
+      expect(lane(day5, 10)).not.toHaveAttribute("data-selected");
+      // 나머지 선을 흐리게 하는 것은 CSS가 하고, 그 스위치는 그리드에 달린다.
+      expect(dateGrid()).toHaveAttribute("data-selecting-event");
+    });
+
+    it("걸친 모든 날의 선을 짚는다", async () => {
+      renderCalendar();
+      await screen.findByText("팀별 빌드업 III");
+
+      await userEvent.click(card("팀별 빌드업 III"));
+
+      // 1~7일 전체가 이 일정이다 — 시작일만 짚으면 "이 일정"이 아니라 "이 날"을 짚는 셈이다.
+      for (const day of [1, 3, 4, 7]) {
+        const cell = screen.getByRole("button", { name: new RegExp(`^10월 ${day}일 `) });
+        expect(lane(cell, 11)).toHaveAttribute("data-selected");
+      }
+      // 8일부터는 이 일정이 없다.
+      const day8 = screen.getByRole("button", { name: "10월 8일 일정 2개 보기" });
+      expect(day8.querySelector('[data-event-id="11"]')).toBeNull();
+    });
+
+    it("그 카드만 강조하고, 같은 날 겹친 다른 일정 카드는 강조하지 않는다", async () => {
+      renderCalendar();
+      await screen.findByText("팀별 빌드업 III");
+
+      await userEvent.click(card("팀별 빌드업 III"));
+
+      expect(screen.getByText("팀별 빌드업 III").closest("li")).toHaveAttribute("data-selected");
+      // 5일을 함께 쓰는 일정이지만, 내가 누른 건 저쪽 카드가 아니다.
+      expect(screen.getByText("팀별 빌드업 I").closest("li")).not.toHaveAttribute("data-selected");
+      expect(card("팀별 빌드업 III")).toHaveAttribute("aria-pressed", "true");
+      expect(card("팀별 빌드업 I")).toHaveAttribute("aria-pressed", "false");
+    });
+
+    it("날짜 선택과 일정 선택은 한 번에 하나만 살아 있는다", async () => {
+      renderCalendar();
+      await screen.findByText("팀별 빌드업 III");
+      screen.getByRole("list").scrollTo = vi.fn();
+
+      // 날짜 → 카드: 칸 표시가 풀리고 선 표시로 넘어간다.
+      await userEvent.click(screen.getByRole("button", { name: "10월 5일 일정 2개 보기" }));
+      expect(screen.getByRole("button", { name: "10월 5일 일정 2개 보기" })).toHaveAttribute("data-selected");
+
+      await userEvent.click(card("팀별 빌드업 III"));
+      const day5 = screen.getByRole("button", { name: "10월 5일 일정 2개 보기" });
+      expect(day5).not.toHaveAttribute("data-selected");
+      expect(lane(day5, 11)).toHaveAttribute("data-selected");
+
+      // 카드 → 날짜: 반대로도 풀린다.
+      await userEvent.click(screen.getByRole("button", { name: "10월 5일 일정 2개 보기" }));
+      const again = screen.getByRole("button", { name: "10월 5일 일정 2개 보기" });
+      expect(again).toHaveAttribute("data-selected");
+      expect(lane(again, 11)).not.toHaveAttribute("data-selected");
+      expect(dateGrid()).not.toHaveAttribute("data-selecting-event");
+    });
+
+    it("달을 넘기면 골라 둔 일정도 풀린다", async () => {
+      renderCalendar();
+      await screen.findByText("팀별 빌드업 III");
+
+      await userEvent.click(card("팀별 빌드업 III"));
+      await userEvent.click(screen.getByRole("button", { name: "다음 달" }));
+      await userEvent.click(screen.getByRole("button", { name: "이전 달" }));
+      await screen.findByText("팀별 빌드업 III");
+
+      expect(screen.getByText("팀별 빌드업 III").closest("li")).not.toHaveAttribute("data-selected");
+      expect(dateGrid()).not.toHaveAttribute("data-selecting-event");
+    });
+  });
+
   it("줄 수 상한을 넘게 겹치면 선은 상한까지만 그리고 개수는 이름표로 알린다", async () => {
     // 48px 칸에 네 줄 이상을 밀어 넣으면 선끼리 붙어 오히려 한 덩어리로 보인다.
     vi.mocked(getEvents).mockImplementation((year, month) =>
