@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import type { PublicStaff } from "../../types/site";
@@ -74,6 +74,41 @@ describe("LeaderCard", () => {
     const { container } = render(<LeaderCard staff={STAFF} />);
 
     expect(container.querySelector("img")).not.toBeInTheDocument();
+  });
+
+  it("사진은 화면에 들어올 때까지 느긋하게(lazy) 불러온다", () => {
+    const { container } = render(
+      <LeaderCard staff={{ ...STAFF, profileImageUrl: "https://cdn.getit.com/staff/1.jpg" }} />,
+    );
+
+    expect(container.querySelector("img")).toHaveAttribute("loading", "lazy");
+  });
+
+  it("사진이 로드되기 전엔 스피너를 보여주다가, 로드되면 치운다", () => {
+    const { container } = render(
+      <LeaderCard staff={{ ...STAFF, profileImageUrl: "https://cdn.getit.com/staff/1.jpg" }} />,
+    );
+
+    expect(container.querySelector('[class*="spinner"]')).toBeInTheDocument();
+
+    const img = container.querySelector("img");
+    if (img === null) throw new Error("img not found");
+    fireEvent.load(img);
+
+    expect(container.querySelector('[class*="spinner"]')).not.toBeInTheDocument();
+  });
+
+  it("사진 로드에 실패하면(깨진 CDN 주소 등) 그라디언트로 되돌아간다", () => {
+    const { container } = render(
+      <LeaderCard staff={{ ...STAFF, profileImageUrl: "https://cdn.getit.com/broken.jpg" }} />,
+    );
+
+    const img = container.querySelector("img");
+    if (img === null) throw new Error("img not found");
+    fireEvent.error(img);
+
+    expect(container.querySelector("img")).not.toBeInTheDocument();
+    expect(container.querySelector('[class*="spinner"]')).not.toBeInTheDocument();
   });
 
   it("소개글이 있으면 보여준다", () => {
