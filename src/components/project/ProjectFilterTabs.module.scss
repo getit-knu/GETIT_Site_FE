@@ -1,4 +1,5 @@
 @use "../../styles/abstracts/variables" as *;
+@use "../../styles/abstracts/motion" as *;
 
 .tabs {
   display: flex;
@@ -16,16 +17,28 @@
   font-weight: 600;
   cursor: pointer;
   transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
+    background-color $duration-fast $ease-out,
+    color $duration-fast $ease-out,
+    transform $duration-fast $ease-out;
 
   &:hover {
     background-color: rgb(40 57 151 / 12%);
   }
 
+  // 눌리는 순간 살짝 움츠러드는 촉각 피드백 — 필터 전환이 "반응했다"고 느껴진다.
+  &:active {
+    transform: scale(0.96);
+  }
+
   &:focus-visible {
     outline: 2px solid $color-accent;
     outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &:active {
+      transform: none;
+    }
   }
 }
 
