@@ -2,12 +2,16 @@
 @use "../../styles/abstracts/breakpoints" as *;
 @use "../../styles/abstracts/container";
 
+// 배경 장식 실험(블롭 → 워시 2차 → 히어로 한정 오로라)을 세 차례 거쳤지만, 오로라가
+// "너무 어두워진다"는 사용자 피드백으로 최종 기각됐다 — 히어로는 장식 없는 밝은 상태로
+// 되돌린다. `overflow: hidden`도 필요 없다(번지는 절대 위치 장식이 더는 없다). Home 전체의
+// 좌우 여백 장식은 이제 히어로 내부가 아니라 `HomeBoundaryDecor`(`pages/HomePage.tsx`)가
+// `position: fixed`로 전담한다.
 .hero {
   @include container.full-viewport-section;
 
   position: relative;
   display: flex;
-  overflow: hidden;
   align-items: center;
   justify-content: center;
   padding: 9rem 2rem;
@@ -18,58 +22,7 @@
   }
 }
 
-// 히어로 한정 오로라. 2차례의 radial-gradient 워시(블롭 대체)가 "티가 안 난다"는 피드백에
-// 이어 "밋밋하다"는 사용자 판단을 받아, 이번엔 홈 전체가 아니라 히어로 하나에만 conic-gradient
-// 기반 오로라를 넣기로 방향을 바꿨다 — 그 대신 히어로 밖 섹션(커리큘럼 등)은 장식 없이 깔끔한
-// 단색 배경으로 되돌린다.
-//
-// 구조: 히어로보다 훨씬 큰 정사각형(140vmax, 뷰포트 대각선보다 크다)을 회전시켜 conic-gradient의
-// 3색(남색·보라·청록)이 흐르듯 섞이게 한다. 마스크는 처음엔 이 140vmax 박스 기준 퍼센트
-// (circle, 65%)로 잡았는데, 그러면 마스크의 "완전 투명" 반경이 박스 자신의 대각선 기준이라
-// 실제 히어로 크기보다 훨씬 커서 — 히어로 하단(다음 섹션과 만나는 경계)에서 여전히 꽤 진한
-// 색으로 하드 엣지가 잘렸다(스크린샷으로 확인, task-13 픽스 라운드 2 보고서의 전/후 비교 참고).
-// 그래서 마스크 크기 자체를 뷰포트 단위(vw/vh)로 못박아 히어로 자신의 절반 크기보다 확실히
-// 작게 잡았다 — 이제 마스크가 히어로 자기 자신의 경계에 닿기 전에 이미 완전히 투명해진다.
-.aurora {
-  position: absolute;
-  z-index: 0;
-  top: 50%;
-  left: 50%;
-  width: 140vmax;
-  height: 140vmax;
-  // 위치는 항상 정중앙 고정 — 아래 애니메이션은 `rotate`(개별 트랜스폼 속성)만 바꾸므로
-  // `translate`로 잡은 중앙 위치는 회전 내내 전혀 움직이지 않는다("떠다니는 원" 금지 제약).
-  translate: -50% -50%;
-  background: conic-gradient(
-    from 0deg,
-    rgb(40 57 151 / 40%) 0deg,
-    rgb(109 40 160 / 34%) 130deg,
-    rgb(13 148 136 / 30%) 250deg,
-    rgb(40 57 151 / 40%) 360deg
-  );
-  filter: blur(4.5rem);
-  mask-image: radial-gradient(ellipse 58vw 34vh at center, #000 0%, #000 38%, rgb(0 0 0 / 0%) 70%);
-  -webkit-mask-image: radial-gradient(ellipse 58vw 34vh at center, #000 0%, #000 38%, rgb(0 0 0 / 0%) 70%);
-  animation: aurora-rotate 70s linear infinite;
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-  }
-}
-
-@keyframes aurora-rotate {
-  from {
-    rotate: 0deg;
-  }
-
-  to {
-    rotate: 360deg;
-  }
-}
-
 .inner {
-  position: relative;
-  z-index: 1;
   display: flex;
   max-width: 43rem;
   flex-direction: column;

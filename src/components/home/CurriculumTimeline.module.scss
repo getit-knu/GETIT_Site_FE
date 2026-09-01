@@ -2,10 +2,10 @@
 @use "../../styles/abstracts/container";
 @use "../../styles/abstracts/breakpoints" as *;
 
-// 배경 장식(블롭 원 → radial-gradient 워시)을 두 차례 시도했지만 사용자가 최종적으로 "히어로
-// 한정 오로라"로 방향을 좁혔다(Hero.module.scss 참고) — 히어로 밖 섹션은 장식 없는 단색
-// 배경으로 되돌린다. `overflow: hidden`도 필요 없다(모서리 밖으로 번지는 절대 위치 요소가
-// 더는 없다).
+// 배경 장식(블롭 원 → radial-gradient 워시 → 히어로 한정 오로라)을 세 차례 시도했지만
+// 전부 기각됐다 — 이 섹션은 처음부터 끝까지 장식 없는 단색 배경이다. `overflow: hidden`도
+// 필요 없다(모서리 밖으로 번지는 절대 위치 요소가 없다). Home의 좌우 여백 장식은 이제
+// 섹션마다 개별로 두지 않고 `HomeBoundaryDecor`(`pages/HomePage.tsx`) 하나가 전담한다.
 .section {
   @include container.full-viewport-section;
 
@@ -19,8 +19,6 @@
 .inner {
   @include container.content-width;
 
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;

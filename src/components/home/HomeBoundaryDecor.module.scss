@@ -1,0 +1,37 @@
+@use "../../styles/abstracts/variables" as *;
+@use "../../styles/abstracts/breakpoints" as *;
+
+// Home 전용 좌우 여백 글로우. `position: fixed` + `top/bottom: 0`이라 스크롤 위치와 무관하게
+// 화면 세로 전체를 항상 채운다 — 섹션이 바뀌어도 잘리거나 다시 나타나는 깜빡임이 없다.
+// 폭은 8~14vw 사이로 두되 아주 넓은/좁은 화면에서 과하게 크거나 작아지지 않게 clamp로
+// 90px~180px 사이에 묶었다. z-index: 1은 각 Home 섹션의 불투명 배경(z-index 지정 없음,
+// 암묵적으로 0)보다 한 단만 높여 그 위에 드러나게 하되, Nav(z-index: 100)보다는 훨씬
+// 낮게 둬 스크롤 내내 Nav 아래로 자연스럽게 이어지게 한다. `pointer-events: none`이라
+// 아래 콘텐츠 클릭을 가로막지 않는다.
+//
+// 브리프는 "768px 미만에서 숨김"이라고 했지만, 이 프로젝트는 모바일 분기 기준을 전역
+// $breakpoint-mobile(40rem = 640px) 하나로 통일해 왔다(Hero·CurriculumTimeline 등 전부
+// 동일 토큰 사용) — 여기만 별도로 768px 매직 넘버를 새로 들여오면 브레이크포인트가
+// 두 갈래로 갈라진다. 기존 토큰을 그대로 재사용한다.
+.decor {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  width: clamp(5.625rem, 10vw, 11.25rem);
+  pointer-events: none;
+
+  @media (width <= $breakpoint-mobile) {
+    display: none;
+  }
+}
+
+.left {
+  left: 0;
+  background: linear-gradient(to right, rgb(40 57 151 / 18%) 0%, rgb(40 57 151 / 0%) 100%);
+}
+
+.right {
+  right: 0;
+  background: linear-gradient(to left, rgb(40 57 151 / 18%) 0%, rgb(40 57 151 / 0%) 100%);
+}

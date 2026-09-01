@@ -8,11 +8,15 @@
   padding-inline: 2rem;
 }
 
-// Home 섹션이 스크롤 한 번에 한 화면씩만 보이게 한다. Nav가 4rem 높이의 sticky라 그만큼
-// 빼고, scroll-margin-top으로 스냅 위치를 맞춰야 다음 섹션 시작부가 Nav에 가리지 않는다.
-// 콘텐츠가 한 화면보다 길면 min-height라 그 섹션 안에서는 그냥 스크롤된다.
+// Home 섹션이 최소 한 화면 높이는 채우게 한다(짧은 섹션이 화면 중간에서 어중간하게 끝나지
+// 않도록). Nav가 4rem 높이의 sticky라 그만큼 빼고, scroll-margin-top은 해시 링크 등으로
+// 섹션에 바로 스크롤될 때 Nav에 시작부가 가리지 않게 오프셋을 준다. 콘텐츠가 한 화면보다
+// 길면 min-height라 그 섹션 안에서는 그냥 스크롤된다.
+//
+// 스크롤 스냅(scroll-snap-align)은 걸어봤다가 "툭툭 걸리는 게 불편하다"는 사용자 피드백으로
+// 걷어냈다(`index.css`의 `html.home-scroll-snap`, `pages/HomePage.tsx`의 클래스 토글도 함께
+// 제거함) — 이제 Home도 일반 섹션들과 같은 부드러운 스크롤이다.
 @mixin full-viewport-section {
   min-height: calc(100vh - 4rem);
   scroll-margin-top: 4rem;
-  scroll-snap-align: start;
 }
