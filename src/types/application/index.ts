@@ -252,10 +252,17 @@ export interface MyApplicationResult {
   submittedAt: string | null;
 }
 
-/** `PUT /api/applications/me/draft` · `POST /api/applications/me/submit` 요청 본문 (3.3 · 3.4 공용). */
+/**
+ * `PUT /api/applications/me/draft` · `POST /api/applications/me/submit` 요청 본문 (3.3 · 3.4 공용).
+ *
+ * `privacyConsent`는 제출(3.4)에서만 `true`여야 한다(BE가 아니면 `PRIVACY_CONSENT_REQUIRED`로
+ * 막는다, `getit-knu/GETIT_Site_BE#203`) — 임시 저장(3.3)에서는 BE가 이 값을 보지 않으므로
+ * 아무 값이나 보내도 무방하다. 같은 DTO를 공용으로 쓰기 위해 두 상황 모두 이 필드를 채운다.
+ */
 export interface ApplicationDraftPayload {
   basicInfo: BasicInfo;
   answers: MyApplicationAnswer[];
+  privacyConsent: boolean;
 }
 
 export type DraftSaveResult = Required<components["schemas"]["DraftSaveResult"]>;
