@@ -69,7 +69,7 @@ export function DdayBadge() {
   }
 
   return (
-    <Link to="/apply" className={styles.badge}>
+    <Link viewTransition to="/apply" className={styles.badge}>
       {label}
       <span className={styles.applyCta}>
         지원하기

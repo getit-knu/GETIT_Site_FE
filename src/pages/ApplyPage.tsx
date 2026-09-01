@@ -66,7 +66,7 @@ function LoginGate() {
         <NoticePage
           message="지원서를 작성하려면 먼저 로그인해 주세요."
           action={
-            <Link to="/login" className={styles.loginCta}>
+            <Link viewTransition to="/login" className={styles.loginCta}>
               로그인하러 가기
             </Link>
           }

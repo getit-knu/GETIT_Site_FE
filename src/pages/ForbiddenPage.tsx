@@ -5,7 +5,9 @@ export default function ForbiddenPage() {
   return (
     <main>
       <h1>접근 권한이 없습니다</h1>
-      <Link to="/">홈으로</Link>
+      <Link viewTransition to="/">
+        홈으로
+      </Link>
     </main>
   );
 }

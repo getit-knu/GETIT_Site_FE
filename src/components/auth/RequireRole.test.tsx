@@ -126,4 +126,13 @@ describe("RequireRole", () => {
     expect(await screen.findByText("홈")).toBeInTheDocument();
     expect(screen.queryByText("어드민 화면")).not.toBeInTheDocument();
   });
+
+  it("판정이 끝나기 전에는 빈 화면 대신 대기 화면을 보여준다", async () => {
+    // 예전엔 `null` 을 그려서, 로그인 정보를 확인하는 동안 흰 화면만 남았다(TODO(A-3)).
+    mockedGetMe.mockImplementation(() => new Promise(() => {}));
+    renderAt("/admin");
+
+    expect(await screen.findByRole("status")).toHaveTextContent("로그인 정보를 확인하는 중이에요");
+    expect(screen.queryByText("어드민 화면")).not.toBeInTheDocument();
+  });
 });

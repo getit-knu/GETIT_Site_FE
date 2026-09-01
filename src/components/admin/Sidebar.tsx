@@ -29,7 +29,7 @@ export function Sidebar({ open, onClose, onLogout }: SidebarProps) {
       {open && <div className={styles.backdrop} aria-hidden="true" onClick={onClose} />}
 
       <nav className={clsx(styles.sidebar, open && styles.open)} aria-label="관리자 메뉴">
-        <NavLink to="/" className={styles.brand} onClick={onClose}>
+        <NavLink viewTransition to="/" className={styles.brand} onClick={onClose}>
           GET IT
         </NavLink>
 
@@ -46,6 +46,7 @@ export function Sidebar({ open, onClose, onLogout }: SidebarProps) {
                 </span>
               ) : (
                 <NavLink
+                  viewTransition
                   to={item.path}
                   // `/admin` 은 모든 어드민 경로의 접두사다. end 를 주지 않으면
                   // 어느 화면에 있든 대시보드가 활성으로 남는다.

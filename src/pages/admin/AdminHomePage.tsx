@@ -71,7 +71,7 @@ export default function AdminHomePage() {
         <DashboardCard
           title="미확인 Q&A"
           action={
-            <Link className={styles.more} to="/admin/questions?status=PENDING">
+            <Link viewTransition className={styles.more} to="/admin/questions?status=PENDING">
               전체 보기
             </Link>
           }
@@ -89,7 +89,7 @@ export default function AdminHomePage() {
                   meta={`${q.authorName}${q.lectureTitle ? ` · ${q.lectureTitle}` : ""} · ${q.elapsedLabel}`}
                   href={`/admin/questions?modal=answer&id=${q.id}`}
                   linkAs={({ to, className, children }) => (
-                    <Link to={to} className={className}>
+                    <Link viewTransition to={to} className={className}>
                       {children}
                     </Link>
                   )}
@@ -150,7 +150,7 @@ export default function AdminHomePage() {
         <DashboardCard
           title="진행 중 강의"
           action={
-            <Link className={styles.more} to="/admin/lectures">
+            <Link viewTransition className={styles.more} to="/admin/lectures">
               전체 보기
             </Link>
           }

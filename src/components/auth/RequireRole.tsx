@@ -3,6 +3,7 @@ import { Navigate, Outlet, useLocation } from "react-router";
 
 import { hasRole, useSession } from "../../hooks/auth/useSession";
 import type { Role } from "../../types/auth";
+import { FullScreenLoader } from "../ui/FullScreenLoader/FullScreenLoader";
 
 interface RequireRoleProps {
   /** 이 중 하나라도 가지고 있으면 통과한다. */
@@ -29,8 +30,7 @@ export function RequireRole({ allowed, children }: RequireRoleProps) {
   const location = useLocation();
 
   if (isLoading) {
-    // TODO(A-3): 전체 화면 로딩 컴포넌트로 교체한다.
-    return null;
+    return <FullScreenLoader label="로그인 정보를 확인하는 중이에요" />;
   }
 
   if (!isAuthenticated) {

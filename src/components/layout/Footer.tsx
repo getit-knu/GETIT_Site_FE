@@ -19,17 +19,17 @@ export function Footer() {
             <h4 className={styles.subheading}>바로가기</h4>
             <ul className={styles.linkList}>
               <li>
-                <Link to="/apply" className={styles.link}>
+                <Link viewTransition to="/apply" className={styles.link}>
                   지원하기
                 </Link>
               </li>
               <li>
-                <Link to="/projects" className={styles.link}>
+                <Link viewTransition to="/projects" className={styles.link}>
                   프로젝트
                 </Link>
               </li>
               <li>
-                <Link to="/leaders" className={styles.link}>
+                <Link viewTransition to="/leaders" className={styles.link}>
                   운영진
                 </Link>
               </li>

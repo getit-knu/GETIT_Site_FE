@@ -60,7 +60,7 @@ export function ProjectShowcase() {
         </ul>
 
         <div className={styles.footer}>
-          <Link to="/projects" className={styles.viewAllLink}>
+          <Link viewTransition to="/projects" className={styles.viewAllLink}>
             모든 프로젝트 보기
             <svg className={styles.viewAllIcon} viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
               <path
