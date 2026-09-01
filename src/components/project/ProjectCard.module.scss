@@ -27,17 +27,25 @@
   padding: 1.5rem;
 }
 
+// 내용 길이가 카드 높이를 흔들지 않도록, 줄 수가 달라질 수 있는 것은 전부 고정한다 (#274).
+// 팀 이름 · 학기가 길어도 한 줄로 둔다.
 .meta {
+  overflow: hidden;
   margin: 0;
   color: $color-text-secondary;
   font-size: 0.875rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .title {
+  overflow: hidden;
   margin: 0.75rem 0 0;
   color: $color-heading;
   font-size: 1.25rem;
   font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .description {
@@ -46,18 +54,23 @@
   font-size: 0.875rem;
   line-height: 1.5rem;
 
-  // 카드 높이를 맞추기 위해 설명은 2줄로 잘라낸다. 목업 설명 길이가 제각각이라
-  // Figma처럼 수동 줄바꿈을 넣는 대신 clamp로 처리한다.
+  // 설명은 2줄로 잘라낸다. 목업 설명 길이가 제각각이라 Figma처럼 수동 줄바꿈을 넣는
+  // 대신 clamp로 처리한다. 짧은 설명도 두 줄 자리를 차지해야 카드가 서로 어긋나지 않는다.
   display: -webkit-box;
+  height: 3rem;
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
 
+// 기술 스택 개수는 프로젝트마다 다르다. 여러 줄로 접히면 카드 높이가 그만큼 달라지므로
+// 한 줄만 남기고 넘치는 것은 감춘다 — 배지가 반쯤 잘려 보이지 않도록 줄째로 가린다.
 .techStack {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  height: 1.75rem;
+  overflow: hidden;
   padding: 0;
   margin: 1rem 0 0;
   list-style: none;
