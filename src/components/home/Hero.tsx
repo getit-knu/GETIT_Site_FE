@@ -55,9 +55,8 @@ export function Hero() {
 
   return (
     <section ref={sectionRef} className={styles.hero}>
-      <div className={styles.blobNavy} aria-hidden="true" />
-      <div className={styles.blobPeriwinkle} aria-hidden="true" />
-      <div className={styles.blobLavender} aria-hidden="true" />
+      <div className={styles.blobBlue} aria-hidden="true" />
+      <div className={styles.blobTeal} aria-hidden="true" />
 
       <div className={styles.inner}>
         <p className={styles.badge}>경북대학교 컴퓨터학부 SW&창업 동아리</p>

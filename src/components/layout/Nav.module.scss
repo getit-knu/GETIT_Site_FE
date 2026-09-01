@@ -21,22 +21,23 @@
   z-index: 20;
 
   /*
-    글래스모피즘(#273) — 헤더 전용 짙은 색(팀 피드백)에 투명도를 두고 블러를 얹어,
-    스크롤 중 본문이 헤더 뒤로 비치게 한다. `backdrop-filter` 미지원 브라우저는
-    블러 없이 반투명만 남으면 글자가 겹쳐 안 읽히므로, 그때는 불투명 배경으로 뗀다.
+    밝은 반투명 헤더(사용자 지시) — 뒤로 지나가는 Home 배경 블롭이 은은히 비치는 것이
+    목적이다. develop에는 짙은 남색 글래스모피즘(#273)이 들어와 있지만, 그 불투명도로는
+    블롭이 전혀 안 비쳐 이 화면의 의도와 맞지 않아 밝은 쪽을 유지한다.
 
-    0.9 밑으로 낮춰 비치게 하되, 너무 낮추면 밝은 배경이 블러로 크게 섞일 때 흰 글자
-    대비가 4.5:1 밑으로 떨어질 수 있어(가장 밝은 경우로 계산해 여유를 둠) 0.88로 둔다.
+    기본값은 0.9로 두고, 블러를 실제로 지원하는 브라우저에서만 0.72로 더 낮춘다 —
+    블러 없이 투명하기만 하면 뒤 글자와 겹쳐 읽히지 않기 때문에 @supports로 가른다.
   */
-  background-color: rgba($color-accent, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba($color-background, 0.9);
 
-  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    background-color: $color-accent;
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    background-color: rgba($color-background, 0.72);
+    backdrop-filter: blur(0.75rem);
+    -webkit-backdrop-filter: blur(0.75rem);
   }
 
-  // 배경 자체가 본문($color-background)과 색이 갈려서, 테두리 없이도 경계가 뚜렷하다.
+  // 배경이 본문과 같은 계열이라 경계가 흐려진다 — 옅은 테두리로 헤더 끝을 알린다.
+  border-bottom: 1px solid $color-placeholder-bg;
   transition: box-shadow $duration-base $ease-out;
 }
 
@@ -57,7 +58,7 @@
 }
 
 .logo {
-  color: $color-text-inverse;
+  color: $color-accent;
   font-size: 1.5rem;
   font-weight: 700;
   text-decoration: none;
@@ -72,7 +73,7 @@
   padding: 0;
   border: none;
   background: none;
-  color: $color-text-inverse;
+  color: $color-text-primary;
   cursor: pointer;
 
   svg {
@@ -102,9 +103,10 @@
     align-items: stretch;
     gap: 0;
     padding: 0.5rem 0;
-    // 헤더와 이어지는 패널로 보이도록 같은 색을 쓴다 — 흰 패널이 갑자기 튀어나오면 어색하다.
-    background-color: $color-accent;
-    box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 20%);
+    // 헤더와 이어지는 패널로 보이도록 같은 색을 쓴다 — 반투명 헤더 아래로 이어지는
+    // 드롭다운은 뒤 콘텐츠가 비치면 글자가 겹쳐 읽히지 않으므로 불투명하게 둔다.
+    background-color: $color-background;
+    box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 12%);
 
     &.open {
       display: flex;
@@ -133,17 +135,16 @@
   position: relative;
   border-radius: 9999px;
   padding: 0.5rem 0.875rem;
-  color: $color-text-inverse;
+  color: $color-text-primary;
   font-size: 1rem;
   font-weight: 500;
   text-decoration: none;
-  transition: background-color $duration-fast $ease-out;
+  transition:
+    color $duration-fast $ease-out,
+    background-color $duration-fast $ease-out;
 
   // hover 밑줄이 가운데에서 양쪽으로 자라난다 — 현재 페이지(.active)는 항상 펼쳐져 있어
   // "지금 여기"가 hover 피드백과 같은 언어로 표시된다.
-  //
-  // 밑줄 색은 $color-accent가 아니라 $color-text-inverse다 — 헤더가 글래스모피즘(#273)으로
-  // accent 배경이 되면서 accent 밑줄은 배경에 묻혀 보이지 않는다.
   &::after {
     position: absolute;
     right: 0.875rem;
@@ -151,14 +152,14 @@
     left: 0.875rem;
     height: 2px;
     border-radius: 1px;
-    background-color: $color-text-inverse;
+    background-color: $color-accent;
     content: "";
     transform: scaleX(0);
     transition: transform $duration-base $ease-out;
   }
 
   &:hover {
-    background-color: rgba($color-text-inverse, 0.12);
+    color: $color-accent;
 
     &::after {
       transform: scaleX(1);
@@ -184,7 +185,7 @@
 }
 
 .active {
-  background-color: rgba($color-text-inverse, 0.18);
+  color: $color-accent;
   font-weight: 600;
 
   &::after {
@@ -197,16 +198,15 @@
   border-radius: 9999px;
   background: none;
   padding: 0.5rem 0.875rem;
-  color: $color-text-inverse;
+  color: $color-text-primary;
   font: inherit;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color $duration-fast $ease-out;
+  transition: color $duration-fast $ease-out;
 
-  // 어두운 헤더에서는 hover에 accent 글자색을 쓰면 배경에 묻힌다 — 옅은 흰 필로 표시한다.
   &:hover {
-    background-color: rgba($color-text-inverse, 0.12);
+    color: $color-accent;
   }
 
   @media (width <= $breakpoint-mobile) {
@@ -217,15 +217,14 @@
 }
 
 .cta {
-  // 어두운 헤더 위에서 눈에 띄도록 배경·글자색을 뒤집는다 — 본문에서 쓰는 어두운 필
-  // 그대로 두면 헤더 배경에 묻힌다.
+  // 밝은 헤더 위에서는 어두운 필이 가장 눈에 띈다 — 본문 CTA와 같은 언어를 쓴다.
   border-radius: 9999px;
   padding: 0.625rem 1.5rem;
-  background-color: $color-text-inverse;
+  background-color: $color-heading;
   box-shadow:
     0 4px 3px rgb(0 0 0 / 10%),
     0 2px 2px rgb(0 0 0 / 10%);
-  color: $color-accent;
+  color: $color-text-inverse;
   font-size: 1rem;
   font-weight: 600;
   transition:
@@ -233,8 +232,9 @@
     box-shadow $duration-fast $ease-out,
     transform $duration-fast $ease-out;
 
+  // 기본이 이미 $color-heading이라 hover에도 같은 색을 두면 변화가 안 보인다 — accent로 옮긴다.
   &:hover {
-    background-color: $color-heading;
+    background-color: $color-accent;
     box-shadow:
       0 6px 6px rgb(0 0 0 / 12%),
       0 3px 3px rgb(0 0 0 / 10%);

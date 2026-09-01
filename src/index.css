@@ -28,14 +28,6 @@ body,
   height: 100%;
 }
 
-/* Home 배경 블롭(Hero·CurriculumTimeline)이 잘림 없이 보이도록 섹션 경계 밖으로도 둥글게
-   번지는데, 그중 일부는 뷰포트 폭보다 넓게 걸친다(음수 left/right 오프셋). 실제 스크롤 대상은
-   body가 아니라 html이라 여기 걸어야 가로 스크롤바가 확실히 안 생긴다 — 세로 스크롤은
-   그대로 둔다. */
-html {
-  overflow-x: hidden;
-}
-
 /*
  * 스크롤 스냅은 원래 html 전역에 걸어 두고 "자식이 scroll-snap-align을 선언한 화면에만
  * 실제로 영향을 준다"고 가정했는데 틀렸다. 다른 라우트로 이동한 직후 `<ScrollRestoration />`

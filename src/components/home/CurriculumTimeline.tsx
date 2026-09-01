@@ -29,9 +29,8 @@ export function CurriculumTimeline() {
 
   return (
     <section className={styles.section}>
-      <div className={styles.blobNavy} aria-hidden="true" />
+      <div className={styles.blobBlue} aria-hidden="true" />
       <div className={styles.blobTeal} aria-hidden="true" />
-      <div className={styles.blobLavender} aria-hidden="true" />
 
       <div className={styles.inner}>
         <div ref={headingRef} data-revealed={headingRevealed || undefined} className={styles.heading}>

@@ -1,7 +1,6 @@
 @use "../../styles/abstracts/variables" as *;
 @use "../../styles/abstracts/breakpoints" as *;
 @use "../../styles/abstracts/container";
-@use "../../styles/abstracts/blob-decor" as blob;
 @use "../../styles/abstracts/motion" as *;
 
 // 첫 진입 등장. 배지 → 제목 → 설명 → 버튼 순으로 살짝 떠오르며 나타난다(UX 라운드 2).
@@ -20,15 +19,12 @@
   transition: transform $duration-base $ease-out;
 }
 
-// 배경 장식은 블롭(원) → 워시 → 오로라 → 좌우 바운더리 데코까지 네 차례를 거쳐 다시 블롭으로
-// 롤백됐다(`blob-decor.scss` 히스토리 참고). 원래 블롭이 촌스러워 보인 핵심 원인은 섹션 경계의
-// `overflow: hidden`에 하드 엣지로 잘린 것이었다 — 이번엔 원 자체를 `radial-gradient`로 그려
-// 가장자리가 투명하게 소멸하므로 `overflow: hidden`이 필요 없다(잘려도 티가 안 난다).
 .hero {
   @include container.full-viewport-section;
 
   position: relative;
   display: flex;
+  overflow: hidden;
   align-items: center;
   justify-content: center;
   padding: 9rem 2rem;
@@ -39,58 +35,54 @@
   }
 }
 
-// 블롭 3개: accent 남색, 옅은 페리윙클, 옅은 보라. 서로 다른 이동 경로(a/b)·duration
-// (19s/25s/31s, 서로 나누어떨어지지 않아 패턴이 반복돼 보이지 않는다)·delay로 움직여
-// 겹치는 순간 mix-blend-mode: multiply가 색을 짙게 섞는다.
-.blobNavy {
-  @include blob.blob-base;
+// 장식용 블롭. 콘텐츠 흐름에 영향 없는 배경 장식이라 콘텐츠보다 먼저 두고 z-index로 뒤에 깐다.
+// 애니메이션은 이전 GETIT 프론트(jmespoir/GETIT_front, tailwind.config.js의 blob keyframes)를 그대로 이식했다.
+.blobBlue,
+.blobTeal {
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  animation: blob 7s infinite;
 
-  top: -6rem;
-  left: -7rem;
-  width: 26rem;
-  height: 26rem;
-  background: radial-gradient(circle, rgb(40 57 151 / 30%) 0%, transparent 70%);
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.blobBlue {
+  top: -3.75rem;
+  left: -5rem;
+  width: 31.25rem;
+  height: 30rem;
+  background-color: #dce4ff;
   opacity: 0.8;
-  animation: blob-drift-a 19s ease-in-out infinite;
-
-  @media (width <= $breakpoint-mobile) {
-    width: 16rem;
-    height: 16rem;
-  }
 }
 
-.blobPeriwinkle {
-  @include blob.blob-base;
-
-  top: -2rem;
-  right: -9rem;
-  width: 34rem;
-  height: 32rem;
-  background: radial-gradient(circle, rgb(220 228 255 / 75%) 0%, transparent 70%);
-  opacity: 0.85;
-  animation: blob-drift-b 25s ease-in-out infinite;
-  animation-delay: -6s;
-
-  @media (width <= $breakpoint-mobile) {
-    width: 20rem;
-    height: 20rem;
-  }
+.blobTeal {
+  top: 16.25rem;
+  right: -10rem;
+  width: 40.625rem;
+  height: 38.75rem;
+  background-color: #e8ecfb;
+  opacity: 0.9;
+  animation-delay: 2s;
 }
 
-.blobLavender {
-  @include blob.blob-base;
+@keyframes blob {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
 
-  bottom: -8rem;
-  left: 12%;
-  width: 20rem;
-  height: 20rem;
-  background: radial-gradient(circle, rgb(214 200 245 / 55%) 0%, transparent 70%);
-  opacity: 0.75;
-  animation: blob-drift-a 31s ease-in-out infinite;
-  animation-delay: -14s;
+  33% {
+    transform: translate(1.875rem, -3.125rem) scale(1.1);
+  }
 
-  @media (width <= $breakpoint-mobile) {
-    display: none;
+  66% {
+    transform: translate(-1.25rem, 1.25rem) scale(0.9);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
   }
 }
 

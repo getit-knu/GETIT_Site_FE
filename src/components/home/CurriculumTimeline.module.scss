@@ -1,74 +1,69 @@
 @use "../../styles/abstracts/variables" as *;
 @use "../../styles/abstracts/container";
 @use "../../styles/abstracts/breakpoints" as *;
-@use "../../styles/abstracts/blob-decor" as blob;
 @use "../../styles/abstracts/motion" as *;
 
-// 배경 장식은 블롭(원) → 워시 → 오로라 → 좌우 바운더리 데코까지 네 차례를 거쳐 다시 블롭으로
-// 롤백됐다(`blob-decor.scss` 히스토리 참고). `radial-gradient`로 그린 원이라 가장자리가 투명하게
-// 소멸해 섹션 경계에서 잘려도 티가 안 난다 — `overflow: hidden`이 필요 없다.
 .section {
   @include container.full-viewport-section;
 
   position: relative;
   display: flex;
+  overflow: hidden;
   align-items: center;
   padding: 8rem 0;
   background-color: $color-background;
 }
 
-// Hero와 톤을 맞추되 색조는 다르게(남색 + 청록 + 보라) 겹쳐서 Home 전체가 같은 시스템으로
-// 보이면서도 섹션마다 반복돼 보이지 않게 한다.
-.blobNavy {
-  @include blob.blob-base;
-
-  top: 10%;
-  right: -8rem;
-  width: 24rem;
-  height: 24rem;
-  background: radial-gradient(circle, rgb(40 57 151 / 26%) 0%, transparent 70%);
-  opacity: 0.8;
-  animation: blob-drift-b 22s ease-in-out infinite;
-  animation-delay: -4s;
-
-  @media (width <= $breakpoint-mobile) {
-    width: 16rem;
-    height: 16rem;
-  }
-}
-
+.blobBlue,
 .blobTeal {
-  @include blob.blob-base;
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  animation: blob 7s infinite;
 
-  bottom: -7rem;
-  left: -9rem;
-  width: 34rem;
-  height: 32rem;
-  background: radial-gradient(circle, rgb(196 232 230 / 65%) 0%, transparent 70%);
-  opacity: 0.85;
-  animation: blob-drift-a 29s ease-in-out infinite;
-  animation-delay: -11s;
-
-  @media (width <= $breakpoint-mobile) {
-    width: 20rem;
-    height: 20rem;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
   }
-}
-
-.blobLavender {
-  @include blob.blob-base;
-
-  top: -5rem;
-  left: 20%;
-  width: 18rem;
-  height: 18rem;
-  background: radial-gradient(circle, rgb(214 200 245 / 50%) 0%, transparent 70%);
-  opacity: 0.7;
-  animation: blob-drift-b 33s ease-in-out infinite;
-  animation-delay: -18s;
 
   @media (width <= $breakpoint-mobile) {
     display: none;
+  }
+}
+
+.blobBlue {
+  top: -3.75rem;
+  right: -7.5rem;
+  width: 32.5rem;
+  height: 30rem;
+  background-color: #dce4ff;
+  opacity: 0.45;
+}
+
+.blobTeal {
+  bottom: -6.25rem;
+  left: -8.75rem;
+  width: 35rem;
+  height: 32.5rem;
+  background-color: #e8ecfb;
+  opacity: 0.55;
+  animation-delay: 2s;
+}
+
+@keyframes blob {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(1.875rem, -3.125rem) scale(1.1);
+  }
+
+  66% {
+    transform: translate(-1.25rem, 1.25rem) scale(0.9);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
   }
 }
 
