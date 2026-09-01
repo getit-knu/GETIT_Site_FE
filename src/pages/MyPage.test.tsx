@@ -54,6 +54,44 @@ describe("MyPage", () => {
     expect(screen.getByText("김")).toBeInTheDocument();
   });
 
+  it("소속에 단과대와 학과를 함께 보여준다", async () => {
+    // 그동안 college 를 받아 놓고 화면에서 버려, 어드민 표와 같은 사람의 소속이 달라 보였다.
+    vi.mocked(getMe).mockResolvedValue(MEMBER);
+    renderPage();
+
+    expect(await screen.findByLabelText("소속")).toHaveTextContent(/^경영대학 경영학과$/);
+  });
+
+  it("소속이 한쪽만 있으면 있는 것만 보여준다", async () => {
+    vi.mocked(getMe).mockResolvedValue({ ...MEMBER, college: null });
+    renderPage();
+
+    expect(await screen.findByLabelText("소속")).toHaveTextContent(/^경영학과$/);
+  });
+
+  it("소속이 아예 없으면 - 로 보여준다", async () => {
+    /*
+      승격 때 지원서의 단과대·학과가 넘어오지 않아 지금은 이 경우가 흔하다
+      (getit-knu/GETIT_Site_BE#184). 화면이 깨지지 않아야 한다.
+
+      "- 가 화면에 있다" 로는 부족하다. 이 fixture 는 전화번호도 비어 있어 그쪽도 - 라,
+      엉뚱한 칸이 - 여도 통과해 버린다. 값에 aria-labelledby 로 레이블이 걸려 있으니
+      항목을 지목해 확인한다.
+    */
+    vi.mocked(getMe).mockResolvedValue({ ...MEMBER, college: null, major: null });
+    renderPage();
+
+    expect(await screen.findByLabelText("소속")).toHaveTextContent(/^-$/);
+  });
+
+  it("학과가 없어도 학번은 그대로 보여준다", async () => {
+    // 전에는 둘 다 있어야만 부제를 그려, 학과가 비면 학번까지 통째로 사라졌다.
+    vi.mocked(getMe).mockResolvedValue({ ...MEMBER, college: null, major: null });
+    renderPage();
+
+    expect(await screen.findByText("21학번")).toBeInTheDocument();
+  });
+
   it("세션 판정이 끝나기 전에는 아무것도 그리지 않는다", () => {
     vi.mocked(getMe).mockReturnValue(new Promise(() => {}));
     const { container } = renderPage();
