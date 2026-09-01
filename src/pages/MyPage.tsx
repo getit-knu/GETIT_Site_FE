@@ -1,11 +1,15 @@
+import { useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
 import type { ReactNode } from "react";
 
+import { getColleges, getMajors } from "../apis/public/publicApi";
+import { queryKeys } from "../apis/queryKeys";
 import { Button } from "../components/ui/Button/Button";
 import { Input } from "../components/ui/Input/Input";
 import { meSaveErrorMessage } from "../errors/auth/errorMessages";
 import { useSession, useUpdateMe } from "../hooks/auth/useSession";
 import type { Me, MeUpdatePayload } from "../types/auth";
+import type { College, Major } from "../types/college";
 
 import { ProfileImageField } from "./ProfileImageField";
 import styles from "./MyPage.module.scss";
@@ -45,6 +49,13 @@ interface Draft {
   phoneNumber: string;
   profileFileId: number | null;
   profileImageUrl: string | null;
+  /**
+   * `null`은 "아직 안 건드림"이다 — colleges/majors가 아직 안 왔을 수도 있어, 렌더링할 때마다
+   * 현재 소속(`user.college`/`major`)을 마스터 데이터에서 되짚어 기본값을 계산한다(아래
+   * `resolveAffiliation`). `0`은 실제로 "선택 안 함"을 고른 것이라 `null`과는 뜻이 다르다.
+   */
+  collegeId: number | null;
+  majorId: number | null;
 }
 
 function toDraft(user: Me): Draft {
@@ -53,13 +64,29 @@ function toDraft(user: Me): Draft {
     phoneNumber: user.phoneNumber ?? "",
     profileFileId: null,
     profileImageUrl: user.profileImageUrl,
+    collegeId: null,
+    majorId: null,
   };
 }
 
-function invalidReason(draft: Draft): string | null {
-  if (draft.name.trim() === "") return "이름을 입력해 주세요.";
-  if (draft.name.trim().length > 50) return "이름은 50자 이내로 입력해 주세요.";
-  if (draft.phoneNumber.trim().length > 20) return "전화번호는 20자 이내로 입력해 주세요.";
+/** 이름 문자열(`user.college`/`major`)을 마스터 데이터의 id로 되짚는다. 못 찾으면 0(미정). */
+function resolveAffiliation(user: Me, colleges: College[], majors: Major[]): { collegeId: number; majorId: number } {
+  const college = colleges.find((c) => c.name === user.college);
+  const major = college ? majors.find((m) => m.collegeId === college.id && m.name === user.major) : undefined;
+  return { collegeId: college?.id ?? 0, majorId: major?.id ?? 0 };
+}
+
+function invalidReason(input: {
+  name: string;
+  phoneNumber: string;
+  collegeId: number;
+  majorId: number;
+}): string | null {
+  if (input.name.trim() === "") return "이름을 입력해 주세요.";
+  if (input.name.trim().length > 50) return "이름은 50자 이내로 입력해 주세요.";
+  if (input.phoneNumber.trim().length > 20) return "전화번호는 20자 이내로 입력해 주세요.";
+  // BE가 둘 중 하나만 오면 AFFILIATION_INCOMPLETE로 막는다(#199) — 화면에서 미리 잡는다.
+  if ((input.collegeId === 0) !== (input.majorId === 0)) return "단과대학과 학과를 함께 선택해 주세요.";
   return null;
 }
 
@@ -68,12 +95,24 @@ interface EditFormProps {
   onClose: () => void;
 }
 
-/** 이름 · 전화번호 · 프로필 사진만 고칠 수 있다(#147) — 학과·학번·기수·권한은 자기 수정 대상이 아니다. */
+/**
+ * 이름 · 전화번호 · 프로필 사진 · 소속(#199)을 고칠 수 있다 — 학번·기수·권한은 여전히
+ * 자기 수정 대상이 아니다.
+ */
 function EditForm({ user, onClose }: EditFormProps) {
+  const { data: colleges = [] } = useQuery({ queryKey: queryKeys.public.colleges(), queryFn: getColleges });
+  const { data: majors = [] } = useQuery({ queryKey: queryKeys.public.majors(), queryFn: getMajors });
   const [draft, setDraft] = useState(toDraft(user));
   const save = useUpdateMe();
 
-  const reason = invalidReason(draft);
+  // draft가 아직 안 건드려졌으면(`null`) 매 렌더링마다 현재 소속을 다시 계산한다 — colleges/majors가
+  // 늦게 도착해도(쿼리라 비동기) setState 없이 자연스럽게 반영된다.
+  const defaultAffiliation = resolveAffiliation(user, colleges, majors);
+  const collegeId = draft.collegeId ?? defaultAffiliation.collegeId;
+  const majorId = draft.majorId ?? defaultAffiliation.majorId;
+
+  const majorOptions = majors.filter((major) => major.collegeId === collegeId);
+  const reason = invalidReason({ name: draft.name, phoneNumber: draft.phoneNumber, collegeId, majorId });
   const set = (patch: Partial<Draft>) => setDraft((prev) => ({ ...prev, ...patch }));
 
   function handleSave() {
@@ -81,6 +120,9 @@ function EditForm({ user, onClose }: EditFormProps) {
       name: draft.name.trim(),
       phoneNumber: draft.phoneNumber.trim() === "" ? null : draft.phoneNumber.trim(),
       profileFileId: draft.profileFileId,
+      // 0(미정)은 "건드리지 않는다"는 뜻이다 — BE가 둘 다 없으면 기존 소속을 그대로 둔다.
+      collegeId: collegeId === 0 ? undefined : collegeId,
+      majorId: majorId === 0 ? undefined : majorId,
     };
     save.mutate(payload, { onSuccess: onClose });
   }
@@ -96,6 +138,44 @@ function EditForm({ user, onClose }: EditFormProps) {
       <div className={styles.editGrid}>
         <Input label="이름 *" value={draft.name} onChange={(name) => set({ name })} />
         <Input label="전화번호" value={draft.phoneNumber} onChange={(phoneNumber) => set({ phoneNumber })} />
+
+        <div className={styles.selectField}>
+          <label htmlFor="mypage-college" className={styles.selectLabel}>
+            단과대학
+          </label>
+          <select
+            id="mypage-college"
+            className={styles.select}
+            value={collegeId}
+            onChange={(event) => set({ collegeId: Number(event.target.value), majorId: 0 })}
+          >
+            <option value={0}>선택 안 함</option>
+            {colleges.map((college) => (
+              <option key={college.id} value={college.id}>
+                {college.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className={styles.selectField}>
+          <label htmlFor="mypage-major" className={styles.selectLabel}>
+            학과
+          </label>
+          <select
+            id="mypage-major"
+            className={styles.select}
+            value={majorId}
+            disabled={collegeId === 0}
+            onChange={(event) => set({ majorId: Number(event.target.value) })}
+          >
+            <option value={0}>{collegeId === 0 ? "단과대학을 먼저 선택해주세요" : "선택 안 함"}</option>
+            {majorOptions.map((major) => (
+              <option key={major.id} value={major.id}>
+                {major.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className={styles.formFooter}>

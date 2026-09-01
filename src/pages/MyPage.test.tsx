@@ -5,11 +5,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getMe, updateMe } from "../apis/auth/authApi";
 import * as filesApi from "../apis/file/filesApi";
+import { getColleges, getMajors } from "../apis/public/publicApi";
 import type { Me } from "../types/auth";
+import type { College, Major } from "../types/college";
 
 import MyPage from "./MyPage";
 
 vi.mock("../apis/auth/authApi");
+vi.mock("../apis/public/publicApi");
 vi.mock("../apis/file/filesApi", async (importOriginal) => {
   const actual = await importOriginal<typeof filesApi>();
   return { ...actual, uploadFile: vi.fn() };
@@ -30,6 +33,16 @@ const MEMBER: Me = {
   status: "ACTIVE",
 };
 
+const COLLEGES: College[] = [
+  { id: 1, name: "경영대학" },
+  { id: 2, name: "IT대학" },
+];
+
+const MAJORS: Major[] = [
+  { id: 11, collegeId: 1, name: "경영학과" },
+  { id: 21, collegeId: 2, name: "컴퓨터학부" },
+];
+
 function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -42,6 +55,10 @@ function renderPage() {
 describe("MyPage", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    // 소속 select를 안 다루는 테스트가 기본값으로 안전하게 넘어가도록 빈 목록을 깔아 둔다 —
+    // 매칭될 게 없으니 collegeId·majorId는 항상 0(미정)으로 남는다.
+    vi.mocked(getColleges).mockResolvedValue([]);
+    vi.mocked(getMajors).mockResolvedValue([]);
   });
 
   it("로그인한 사용자의 프로필을 렌더링한다", async () => {
@@ -113,7 +130,7 @@ describe("MyPage", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("수정을 누르면 이름 · 전화번호 · 프로필 사진 입력칸이 나온다", async () => {
+  it("수정을 누르면 이름 · 전화번호 · 프로필 사진 · 소속 입력칸이 나온다", async () => {
     vi.mocked(getMe).mockResolvedValue(MEMBER);
     renderPage();
 
@@ -122,8 +139,70 @@ describe("MyPage", () => {
     expect(screen.getByLabelText("이름 *")).toHaveValue("김부원");
     expect(screen.getByLabelText("전화번호")).toHaveValue("");
     expect(screen.getByLabelText("프로필 사진 올리기")).toBeInTheDocument();
-    // 학과 · 학번 · 기수 · 권한은 자기 수정 대상이 아니다(BE 확인함) — 입력칸이 없어야 한다.
-    expect(screen.queryByLabelText(/학과|학번|기수/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText("단과대학")).toBeInTheDocument();
+    expect(screen.getByLabelText("학과")).toBeInTheDocument();
+    // 학번 · 기수 · 권한은 여전히 자기 수정 대상이 아니다(BE 확인함) — 입력칸이 없어야 한다.
+    expect(screen.queryByLabelText(/학번|기수|권한/)).not.toBeInTheDocument();
+  });
+
+  it("기존 소속이 마스터 목록에 있으면 select에 미리 채워 둔다", async () => {
+    vi.mocked(getMe).mockResolvedValue(MEMBER);
+    vi.mocked(getColleges).mockResolvedValue(COLLEGES);
+    vi.mocked(getMajors).mockResolvedValue(MAJORS);
+    renderPage();
+    await userEvent.click(await screen.findByRole("button", { name: "수정" }));
+
+    await waitFor(() => expect(screen.getByLabelText("단과대학")).toHaveValue("1"));
+    expect(screen.getByLabelText("학과")).toHaveValue("11");
+  });
+
+  it("소속이 없던 사용자는 select가 미정 상태로 시작한다", async () => {
+    vi.mocked(getMe).mockResolvedValue({ ...MEMBER, college: null, major: null });
+    vi.mocked(getColleges).mockResolvedValue(COLLEGES);
+    vi.mocked(getMajors).mockResolvedValue(MAJORS);
+    renderPage();
+    await userEvent.click(await screen.findByRole("button", { name: "수정" }));
+
+    await waitFor(() => expect(getColleges).toHaveBeenCalled());
+    expect(screen.getByLabelText("단과대학")).toHaveValue("0");
+    expect(screen.getByLabelText("학과")).toHaveValue("0");
+  });
+
+  it("단과대학만 고르고 학과를 안 고르면 저장을 막는다", async () => {
+    vi.mocked(getMe).mockResolvedValue({ ...MEMBER, college: null, major: null });
+    vi.mocked(getColleges).mockResolvedValue(COLLEGES);
+    vi.mocked(getMajors).mockResolvedValue(MAJORS);
+    renderPage();
+    await userEvent.click(await screen.findByRole("button", { name: "수정" }));
+
+    // 학과는 그대로 둔다 — 단과대학만 고른 상태(한쪽만 있는 상태)가 된다.
+    await userEvent.selectOptions(screen.getByLabelText("단과대학"), "IT대학");
+
+    expect(screen.getByText("단과대학과 학과를 함께 선택해 주세요.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "저장" })).toBeDisabled();
+  });
+
+  it("소속을 바꾸면 collegeId·majorId를 함께 실어 보낸다", async () => {
+    vi.mocked(getMe).mockResolvedValue({ ...MEMBER, college: null, major: null });
+    vi.mocked(getColleges).mockResolvedValue(COLLEGES);
+    vi.mocked(getMajors).mockResolvedValue(MAJORS);
+    vi.mocked(updateMe).mockResolvedValue(MEMBER);
+    renderPage();
+    await userEvent.click(await screen.findByRole("button", { name: "수정" }));
+
+    await userEvent.selectOptions(screen.getByLabelText("단과대학"), "IT대학");
+    await userEvent.selectOptions(screen.getByLabelText("학과"), "컴퓨터학부");
+    await userEvent.click(screen.getByRole("button", { name: "저장" }));
+
+    await waitFor(() =>
+      expect(updateMe).toHaveBeenCalledWith({
+        name: "김부원",
+        phoneNumber: null,
+        profileFileId: null,
+        collegeId: 2,
+        majorId: 21,
+      }),
+    );
   });
 
   it("이름이 비면 저장을 막는다", async () => {

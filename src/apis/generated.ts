@@ -2036,6 +2036,10 @@ export interface components {
             phoneNumber?: string;
             /** Format: int64 */
             profileFileId?: number;
+            /** Format: int64 */
+            collegeId?: number;
+            /** Format: int64 */
+            majorId?: number;
         };
         ApiResponseMeResponse: {
             success?: boolean;
