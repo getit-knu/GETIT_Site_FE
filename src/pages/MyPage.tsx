@@ -35,6 +35,11 @@ function affiliationOf(user: Me): string {
   return joined(user.college, user.major) ?? "-";
 }
 
+/** 기수. 승격 전 `GUEST`는 아직 기수가 없어 `null`이다. */
+function generationOf(user: Me): string {
+  return user.generationNo === null ? "-" : `${user.generationNo}기`;
+}
+
 interface Draft {
   name: string;
   phoneNumber: string;
@@ -218,6 +223,21 @@ export default function MyPage() {
                   </svg>
                 }
                 value={affiliationOf(user)}
+              />
+              <InfoItem
+                label="기수"
+                icon={
+                  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+                    <path
+                      d="M4 3.5v13M4 3.5h9.5l-1.75 3.25L13.5 10H4"
+                      stroke="currentColor"
+                      strokeWidth="1.3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                }
+                value={generationOf(user)}
               />
             </dl>
 

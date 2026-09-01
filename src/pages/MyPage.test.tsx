@@ -92,6 +92,20 @@ describe("MyPage", () => {
     expect(await screen.findByText("21학번")).toBeInTheDocument();
   });
 
+  it("기수를 보여준다", async () => {
+    vi.mocked(getMe).mockResolvedValue(MEMBER);
+    renderPage();
+
+    expect(await screen.findByLabelText("기수")).toHaveTextContent(/^9기$/);
+  });
+
+  it("승격 전이라 기수가 없으면 - 로 보여준다", async () => {
+    vi.mocked(getMe).mockResolvedValue({ ...MEMBER, role: "GUEST", generationNo: null });
+    renderPage();
+
+    expect(await screen.findByLabelText("기수")).toHaveTextContent(/^-$/);
+  });
+
   it("세션 판정이 끝나기 전에는 아무것도 그리지 않는다", () => {
     vi.mocked(getMe).mockReturnValue(new Promise(() => {}));
     const { container } = renderPage();
