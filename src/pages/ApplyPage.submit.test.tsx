@@ -188,7 +188,12 @@ describe("ApplyPage 최종 제출", () => {
         savedAt: "2026-09-01T00:00:00+09:00",
         submittedAt: "2026-09-02T00:00:00+09:00",
       });
-      return { id: 1, status: "SUBMITTED", submittedAt: "2026-09-02T00:00:00+09:00" };
+      return {
+        id: 1,
+        status: "SUBMITTED",
+        submittedAt: "2026-09-02T00:00:00+09:00",
+        privacyConsentedAt: "2026-09-02T00:00:00+09:00",
+      };
     });
     vi.mocked(getResult).mockResolvedValue(decision());
     await renderReadyPage();
@@ -202,6 +207,9 @@ describe("ApplyPage 최종 제출", () => {
     expect(payload?.basicInfo.collegeId).toBe(1);
     expect(payload?.basicInfo.majorId).toBe(1);
     expect(payload?.basicInfo.grade).toBe(2);
+    // #203 — 동의 없이는 애초에 여기까지 못 왔지만(제출을 눌렀다면 이미 체크된 것), 실제로
+    // 보내는 값에 실렸는지 직접 확인한다.
+    expect(payload?.privacyConsent).toBe(true);
 
     expect(await screen.findByRole("heading", { name: "심사 중" })).toBeInTheDocument();
   });

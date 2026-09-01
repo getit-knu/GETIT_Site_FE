@@ -112,8 +112,12 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
   const questions = [...form.questions].sort((a, b) => a.order - b.order);
   const blocker = submitBlocker(basicInfo, answers, questions, privacyConsent);
 
+  /**
+   * `privacyConsent`는 제출에서만 뜻이 있다(BE가 그때만 확인한다, `applyFormState.ts` 주석 참고) —
+   * 임시 저장 때도 그냥 지금 체크 상태를 함께 보낸다. 굳이 갈라 보낼 이유가 없다.
+   */
   function buildPayload(): ApplicationDraftPayload {
-    return { basicInfo: toBasicInfoPayload(basicInfo), answers: toAnswerPayloads(answers) };
+    return { basicInfo: toBasicInfoPayload(basicInfo), answers: toAnswerPayloads(answers), privacyConsent };
   }
 
   /** 저장 성공을 `editCount` 기준으로 못박는다. 그 뒤에 더 고친 게 있으면 여전히 "안 저장됨"이다. */
@@ -171,7 +175,7 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
     if (saveDraft.isPending) return;
 
     saveDraft.mutate(
-      { basicInfo: toBasicInfoPayload(basicInfo), answers: toAnswerPayloads(answers) },
+      { basicInfo: toBasicInfoPayload(basicInfo), answers: toAnswerPayloads(answers), privacyConsent },
       {
         onSuccess: () => {
           setLastSaveWasAuto(true);
@@ -179,7 +183,7 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
         },
       },
     );
-  }, [settledEditCount, savedEditCount, basicInfo, answers, saveDraft, submitApplication]);
+  }, [settledEditCount, savedEditCount, basicInfo, answers, privacyConsent, saveDraft, submitApplication]);
 
   // 아직 서버가 못 받은 변경이 있는 채로 창을 닫거나 새로고침하면 브라우저가 한 번 되묻는다.
   // (문구는 브라우저가 정한다 — 사이트가 마음대로 쓰지 못하게 막혀 있다.)
