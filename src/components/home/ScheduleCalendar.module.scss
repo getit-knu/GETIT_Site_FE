@@ -25,6 +25,12 @@ $event-row-height: $event-row-padding * 2 + $event-row-content;
 $event-rows-visible: 3;
 $event-list-height: $event-row-height * $event-rows-visible + $event-row-gap * ($event-rows-visible - 1);
 
+/*
+ * 날짜 칸 사이 간격. 여러 날 일정의 얇은 선은 이 간격만큼 이웃 칸으로 흘러나가 맞닿아야
+ * 하나의 긴 선으로 읽히므로, 그리드와 선이 같은 값을 보도록 여기서 한 번만 정한다.
+ */
+$date-grid-gap: 0.25rem;
+
 .section {
   @include container.full-viewport-section;
 
@@ -124,7 +130,18 @@ $event-list-height: $event-row-height * $event-rows-visible + $event-row-gap * (
   // 달을 넘겨 목록이 다시 그려질 때 항목이 하나씩 떠오른다(fill-mode backwards로 지연 동안 투명).
   animation: event-item-rise $duration-base $ease-out backwards;
   animation-delay: calc(var(--reveal-index, 0) * 60ms);
-  transition: transform $duration-fast $ease-out;
+  transition:
+    transform $duration-fast $ease-out,
+    box-shadow $duration-fast $ease-out;
+
+  /*
+    캘린더에서 고른 날에 걸린 일정. 겹침이 흔해서 한 날에 둘·셋이 함께 켜진다 — 달력의 선
+    두 줄이 "이 날 일정 둘"이라 말했으면 목록도 둘을 가리켜야 한다. 예전엔 첫 일정으로
+    스크롤만 하고 어느 줄인지는 짚어 주지 않았다.
+  */
+  &[data-selected] {
+    box-shadow: inset 0 0 0 0.125rem $color-accent;
+  }
 
   // 리스트 항목 hover — 살짝 오른쪽으로 밀리며 "짚고 있는 줄"을 표시한다.
   &:hover {
@@ -351,12 +368,32 @@ $event-list-height: $event-row-height * $event-rows-visible + $event-row-gap * (
 .weekdayRow,
 .dateGrid {
   display: grid;
-  gap: 0.25rem;
+  gap: $date-grid-gap;
   grid-template-columns: repeat(7, 1fr);
 }
 
-// 달 넘김 애니메이션 — key가 바뀌며 다시 마운트되는 그리드가 이동 방향에서 미끄러져 들어온다.
 .dateGrid {
+  /*
+    날짜 칸 아래에 눕는 얇은 선의 치수. 칸이 좁아지는 모바일에서는 선과 숫자가 겹치지 않게
+    함께 줄어들어야 하므로, 커스텀 속성으로 두고 미디어 쿼리에서 한 번에 갈아 끼운다.
+
+    줄 수(3)는 `ScheduleCalendar.tsx`의 `MAX_LANES`와 같은 수여야 한다 — 여기서는 선이 앉을
+    자리의 키를 정하고, 거기서는 몇 줄까지 그릴지를 정한다.
+  */
+  --lane-height: 0.1875rem;
+  --lane-gap: 0.125rem;
+  --lane-strip-height: calc(var(--lane-height) * 3 + var(--lane-gap) * 2);
+  --lane-strip-inset: 0.1875rem;
+  --date-number-size: 1.625rem;
+
+  @media (width <= $breakpoint-mobile) {
+    --lane-height: 0.125rem;
+    --lane-gap: 0.09375rem;
+    --lane-strip-inset: 0.125rem;
+    --date-number-size: 1.375rem;
+  }
+
+  // 달 넘김 애니메이션 — key가 바뀌며 다시 마운트되는 그리드가 이동 방향에서 미끄러져 들어온다.
   &[data-direction="next"] {
     animation: cal-slide-from-right $duration-base $ease-out;
   }
@@ -403,98 +440,143 @@ $event-list-height: $event-row-height * $event-rows-visible + $event-row-gap * (
   }
 }
 
-// 일정 있는 날은 진남색 꽉 찬 사각형 대신 accent 원형 배지로, 오늘 날짜는 별도로 accent
-// 테두리 링을 둘러 구분한다. 두 상태가 겹치면(오늘 + 일정) 링은 배지 바깥으로 밀려나 채워진
-// 배지 자체를 가리지 않는다.
+/*
+ * 날짜 칸.
+ *
+ * 예전엔 일정 있는 날을 진남색으로 꽉 채우고 이어지는 날끼리 붙여 하나의 긴 알약으로 만들었다.
+ * 프로덕션 10월처럼 20일에 걸친 일정이 깔린 달에서는 달력의 절반이 진남색 덩어리가 되어 날짜
+ * 숫자가 흰 글씨로 묻히고, 그 아래 겹친 일정 두 개는 그려질 자리조차 없었다.
+ *
+ * 이제 색칠은 칸 아래 얇은 선으로 내려가고 숫자는 제자리를 되찾는다. **클릭 타깃은 예전과
+ * 똑같이 칸 하나**(1280px 레이아웃에서 48px, WCAG 권장 44px 이상) — 줄어든 것은 색칠 면적뿐이고,
+ * hover 배경이 오히려 누를 수 있는 범위를 더 분명히 보여준다.
+ */
 .date {
+  position: relative;
+  // 전역 box-sizing 리셋이 없어서 여기서 직접 잡는다 — content-box면 아래 패딩만큼 칸이 세로로
+  // 길어져 aspect-ratio가 지키려는 정사각형이 깨진다.
+  box-sizing: border-box;
   display: flex;
   aspect-ratio: 1;
   align-items: center;
   justify-content: center;
+  /*
+    선이 앉을 자리를 칸 아래에 비워 둔다. 일정이 없는 날도 같은 만큼 비워야 — 그래서 이 패딩이
+    `.date` 전체에 걸려 있다 — 주마다 날짜 숫자 높이가 흔들리지 않는다.
+  */
+  padding: 0 0 calc(var(--lane-strip-height) + var(--lane-strip-inset));
   // 일정이 있는 날은 <button>, 없는 날은 <span>이다 — 같은 칸으로 보이도록 버튼 기본값을 지운다.
   border: none;
-  padding: 0;
-  border-radius: 50%;
+  border-radius: 0.625rem;
   background-color: transparent;
   color: $color-text-secondary;
   font: inherit;
   font-size: 0.75rem;
 
   &[data-active] {
-    background-color: $color-accent;
-    color: $color-background;
-    font-weight: 600;
-    cursor: pointer;
-    transition:
-      transform $duration-fast $ease-out,
-      box-shadow $duration-fast $ease-out;
-  }
-
-  &[data-today] {
-    outline: 0.125rem solid $color-accent;
-    outline-offset: 0.125rem;
     color: $color-accent;
     font-weight: 600;
+    cursor: pointer;
+    transition: background-color $duration-fast $ease-out;
+
+    // 선이 얇아진 만큼, 누를 수 있는 칸 전체를 hover 배경으로 드러낸다.
+    &:hover {
+      background-color: rgb(40 57 151 / 8%);
+    }
+
+    // 예전엔 날짜 버튼에 포커스 표시가 아예 없어서, 키보드로는 지금 어느 날에 서 있는지
+    // 알 수 없었다.
+    &:focus-visible {
+      outline: 0.125rem solid $color-accent;
+      outline-offset: 0.0625rem;
+    }
   }
 
-  &[data-active][data-today] {
+  // 오늘은 숫자 뒤 채움 원으로만 표시한다. 칸 전체를 쓰는 선택 표시와 모양이 달라, 둘이 겹쳐도
+  // 서로를 가리지 않는다 — 예전엔 둘 다 링이라 겹치면 어느 쪽인지 읽히지 않았다.
+  &[data-today] .dateNumber {
+    background-color: $color-accent;
     color: $color-background;
+    font-weight: 700;
   }
 
-  /*
-    이어지는 날은 하나의 긴 알약으로 붙인다.
-
-    칸 사이에는 `.dateGrid`의 `gap: 0.25rem`이 비어 있어서, 배경색만으로는 칸마다 끊긴 구슬처럼
-    보인다. 이어지는 쪽 모서리를 각지게 깎고, 그 방향으로 간격만큼 그림자를 깔아 빈틈을 메운다
-    (가로 그림자는 칸 높이를 그대로 따라가므로 알약의 허리가 정확히 이어진다).
-  */
-  &[data-connect-left] {
-    border-start-start-radius: 0;
-    border-end-start-radius: 0;
-    box-shadow: -0.25rem 0 0 $color-accent;
-  }
-
-  &[data-connect-right] {
-    border-start-end-radius: 0;
-    border-end-end-radius: 0;
-    box-shadow: 0.25rem 0 0 $color-accent;
-  }
-
-  &[data-connect-left][data-connect-right] {
-    box-shadow:
-      -0.25rem 0 0 $color-accent,
-      0.25rem 0 0 $color-accent;
-  }
-
-  // 지금 왼쪽 목록에서 짚고 있는 날. 알약이 이어진 가운데 칸이어도 눈에 띄도록 안쪽 링을 쓴다
-  // (바깥 outline은 이어진 이웃 칸에 가려 잘려 보인다).
+  // 지금 짚고 있는 날. 한 번에 하나뿐이라 칸을 채워도 달력이 파랗게 덮이지 않는다.
   &[data-selected] {
-    background-color: $color-accent-hover;
-    box-shadow: inset 0 0 0 0.125rem $color-background;
-  }
-
-  &[data-selected][data-connect-left] {
-    box-shadow:
-      inset 0 0 0 0.125rem $color-background,
-      -0.25rem 0 0 $color-accent;
-  }
-
-  &[data-selected][data-connect-right] {
-    box-shadow:
-      inset 0 0 0 0.125rem $color-background,
-      0.25rem 0 0 $color-accent;
-  }
-
-  &[data-selected][data-connect-left][data-connect-right] {
-    box-shadow:
-      inset 0 0 0 0.125rem $color-background,
-      -0.25rem 0 0 $color-accent,
-      0.25rem 0 0 $color-accent;
+    background-color: rgb(40 57 151 / 14%);
+    box-shadow: inset 0 0 0 0.09375rem $color-accent;
   }
 
   @media (prefers-reduced-motion: reduce) {
     &[data-active] {
       transition: none;
     }
+  }
+}
+
+.dateNumber {
+  display: flex;
+  width: var(--date-number-size);
+  height: var(--date-number-size);
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+/*
+  선이 앉는 자리. 각 선은 흐름에 맡기지 않고 `data-lane`에 따라 절대 위치를 잡는다 — 그래야
+  여러 날 일정이 날마다 같은 높이에 머물러 하나의 선으로 읽히고, 가운데 줄이 빈 날(앞 일정이
+  끝나고 아래 줄만 남은 날)에도 남은 줄이 위로 밀려 올라오지 않는다.
+*/
+.laneStrip {
+  position: absolute;
+  inset-inline: 0;
+  bottom: var(--lane-strip-inset);
+  height: var(--lane-strip-height);
+}
+
+.lane {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: var(--lane-height);
+  border-radius: 9999px;
+  /*
+    선 색은 왼쪽 목록의 종류 배지와 같은 계열이다 — 달력의 선과 목록의 배지가 같은 일정을
+    가리킨다는 걸 색으로 잇는다. 다만 겹침을 실제로 갈라 주는 건 색이 아니라 줄 위치다:
+    같은 종류끼리 겹치는 달이 흔하다(프로덕션 10월의 워크숍 두 개).
+    시맨틱 틴트라 팔레트 정렬 대상은 아니다(Badge와 같은 기준).
+  */
+  background-color: $color-accent;
+
+  &[data-type="WORKSHOP"] {
+    background-color: #1d4ed8;
+  }
+
+  &[data-type="EVENT"] {
+    background-color: $color-text-secondary;
+  }
+
+  &[data-lane="1"] {
+    top: calc(var(--lane-height) + var(--lane-gap));
+  }
+
+  &[data-lane="2"] {
+    top: calc((var(--lane-height) + var(--lane-gap)) * 2);
+  }
+
+  /*
+    이어지는 쪽은 칸 사이 간격만큼 흘러나가 이웃 칸의 선과 맞닿고, 그쪽 모서리를 각지게 깎는다.
+    주가 바뀌는 자리(일요일 왼쪽·토요일 오른쪽)는 애초에 이어지지 않으므로 카드 밖으로 새지 않는다.
+  */
+  &[data-connect-left] {
+    inset-inline-start: -$date-grid-gap;
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+  }
+
+  &[data-connect-right] {
+    inset-inline-end: -$date-grid-gap;
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
   }
 }

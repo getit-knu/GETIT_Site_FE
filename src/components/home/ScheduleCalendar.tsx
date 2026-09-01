@@ -6,12 +6,21 @@ import { getEvents } from "../../apis/public/publicApi";
 import { queryKeys } from "../../apis/queryKeys";
 import { useScrollReveal } from "../../hooks/ui/useScrollReveal";
 import { prefersReducedMotion } from "../../libs/prefersReducedMotion";
-import type { SiteEventType } from "../../types/site";
+import type { PublicEvent, SiteEventType } from "../../types/site";
 import { Badge } from "../ui/Badge/Badge";
 
 import styles from "./ScheduleCalendar.module.scss";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+
+/**
+ * 겹친 일정을 몇 줄까지 얇은 선으로 그릴지. 넘치는 만큼은 날짜 버튼의 `aria-label` 개수로만
+ * 알린다 — 48px 칸에 네 줄 이상을 밀어 넣으면 선끼리 붙어 오히려 한 덩어리로 보인다.
+ *
+ * `.module.scss`의 `--lane-*` 값들이 이 수를 전제로 칸 아래 자리를 비운다. 늘리려면 양쪽을
+ * 같이 고쳐야 한다.
+ */
+const MAX_LANES = 3;
 
 /** 불러오는 동안 세워 둘 뼈대 줄 수. 흔한 달의 일정 수에 맞춰 카드 높이가 크게 안 튀는 값. */
 const SKELETON_ROWS = [0, 1, 2];
@@ -45,6 +54,76 @@ function dayOf(dateStr: string): number {
  */
 function monthCursor(totalMonths: number) {
   return { year: Math.floor(totalMonths / 12), monthIndex: ((totalMonths % 12) + 12) % 12 };
+}
+
+/** 날짜 칸에 그릴 얇은 선 한 줄. 한 날에 일정이 겹치면 이런 줄이 여러 개 쌓인다. */
+type DayLane = {
+  event: PublicEvent;
+  /** 왼쪽 목록에서의 순서. 날을 눌렀을 때 어느 일정으로 데려갈지 고르는 기준. */
+  order: number;
+  /** 위에서 몇 번째 줄인지. 여러 날 일정이 날마다 같은 줄에 머물러야 하나의 긴 선으로 읽힌다. */
+  lane: number;
+  /** 이웃 칸의 **같은 일정** 선과 맞닿는가. 칸이 아니라 선마다 판단해야 거짓말을 안 한다. */
+  connectLeft: boolean;
+  connectRight: boolean;
+};
+
+/**
+ * 이 달에 걸치는 일정을 날짜별 "줄(lane)"로 눕힌다.
+ *
+ * 예전엔 한 날에 일정 하나만 남기고 나머지를 버려서(`if (!map.has(day))`), 프로덕션 10월처럼
+ * 9/14~10/20 워크숍이 달을 가로지르는 경우 그 아래 겹친 일정 두 개가 캘린더에 아예 나타나지
+ * 않았다. 게다가 켜진 20일이 두꺼운 알약 하나로 이어져 날짜 숫자까지 덮었다.
+ *
+ * 줄 배정은 구글·노션 캘린더와 같은 그리디 방식이다 — 시작일 순으로(같은 날 시작이면 긴 일정
+ * 먼저) 훑으며, 겹치는 일정이 차지하지 않은 **가장 위 줄**에 넣는다. 그래서 (1) 여러 날 일정이
+ * 날마다 같은 줄에 머물러 하나의 긴 선으로 읽히고, (2) 줄 수는 최대 동시 겹침 수만큼만 쓴다.
+ */
+function buildDayLanes(events: PublicEvent[], year: number, monthIndex: number) {
+  const lastDay = daysInMonth(year, monthIndex);
+  const month = String(monthIndex + 1).padStart(2, "0");
+  const monthStart = `${year}-${month}-01`;
+  const monthEnd = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
+
+  // 달 경계로 자른 구간. 지난달에 시작한 일정은 1일부터, 다음 달까지 가는 일정은 말일까지 걸친다.
+  const spans: Array<{ event: PublicEvent; order: number; start: number; end: number }> = [];
+  events.forEach((event, order) => {
+    const start = event.startDate < monthStart ? 1 : dayOf(event.startDate);
+    const end = event.endDate > monthEnd ? lastDay : dayOf(event.endDate);
+    if (Number.isNaN(start) || Number.isNaN(end) || end < start) return;
+    spans.push({ event, order, start, end });
+  });
+
+  // 같은 날 시작이면 긴 일정을 위 줄로 — 달을 통째로 가로지르는 일정이 맨 윗줄에 놓여야
+  // 아래 줄의 짧은 일정들이 그 위를 오르내리지 않는다.
+  spans.sort((a, b) => a.start - b.start || b.end - a.end || a.order - b.order);
+
+  // laneEnds[i] = i번째 줄이 지금까지 차지한 마지막 날. 시작일 순으로 훑으니, 그 날보다 앞에서
+  // 끝난 줄은 다시 비어 있는 셈이다.
+  const laneEnds: number[] = [];
+  const lanesByDay = new Map<number, DayLane[]>();
+
+  for (const span of spans) {
+    const reusable = laneEnds.findIndex((end) => end < span.start);
+    const lane = reusable === -1 ? laneEnds.length : reusable;
+    laneEnds[lane] = span.end;
+
+    for (let day = span.start; day <= span.end; day++) {
+      // 주가 바뀌면 줄이 갈리니 일요일의 왼쪽·토요일의 오른쪽은 잇지 않는다.
+      const weekday = new Date(year, monthIndex, day).getDay();
+      const lanes = lanesByDay.get(day) ?? [];
+      lanes.push({
+        event: span.event,
+        order: span.order,
+        lane,
+        connectLeft: day > span.start && weekday !== 0,
+        connectRight: day < span.end && weekday !== 6,
+      });
+      lanesByDay.set(day, lanes);
+    }
+  }
+
+  return lanesByDay;
 }
 
 /**
@@ -82,18 +161,10 @@ export function ScheduleCalendar() {
   });
   const events = data?.events ?? [];
 
-  // 하루짜리든 여러 날짜에 걸치든, 이 달 범위 안에 걸리는 날을 전부 켠다.
-  // 켜진 날은 눌러서 왼쪽 목록의 해당 일정으로 갈 수 있어야 하므로, 날짜 → 일정 id도 함께 만든다.
-  // 한 날에 여러 일정이 겹치면 먼저 시작한(= 목록에서 위에 오는) 쪽으로 보낸다.
-  const eventIdByDay = new Map<number, number>();
-  for (const event of events) {
-    const start = event.startDate < `${year}-${String(month).padStart(2, "0")}-01` ? 1 : dayOf(event.startDate);
-    const lastDay = daysInMonth(year, monthIndex);
-    const endCap = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-    const end = event.endDate > endCap ? lastDay : dayOf(event.endDate);
-    if (Number.isNaN(start) || Number.isNaN(end)) continue;
-    for (let d = start; d <= end; d++) if (!eventIdByDay.has(d)) eventIdByDay.set(d, event.id);
-  }
+  // 하루짜리든 여러 날짜에 걸치든, 이 달 범위 안에 걸리는 날을 전부 켠다. 한 날에 여러 일정이
+  // 겹치면 줄(lane)을 나눠 **전부** 들고 있는다 — 켜진 날은 눌러서 왼쪽 목록으로 갈 수 있어야
+  // 하므로 어느 일정인지도 함께 남는다.
+  const lanesByDay = buildDayLanes(events, year, monthIndex);
 
   /**
    * 함수형 업데이터를 쓴다 — 이전 달/다음 달 버튼을 빠르게 연달아 누르면 리렌더가 따라오기
@@ -125,8 +196,11 @@ export function ScheduleCalendar() {
   function selectDay(day: number) {
     setSelectedDay(day);
 
+    // 겹친 날이면 목록에서 위에 오는(= `order`가 가장 작은) 일정으로 데려간다. 줄 순서는
+    // 긴 일정을 위로 올리느라 목록 순서와 다를 수 있으니 `lane`이 아니라 `order`로 고른다.
+    const first = lanesByDay.get(day)?.reduce((top, lane) => (lane.order < top.order ? lane : top));
     const list = eventListRef.current;
-    const target = list?.querySelector<HTMLElement>(`[data-event-id="${eventIdByDay.get(day)}"]`);
+    const target = list?.querySelector<HTMLElement>(`[data-event-id="${first?.event.id}"]`);
     if (list === null || !target) return;
 
     const top = target.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
@@ -152,18 +226,10 @@ export function ScheduleCalendar() {
   // 오늘 링 표시용 — 지금 보고 있는 달이 실제 오늘이 속한 달일 때만 날짜가 의미를 가진다.
   const isCurrentMonth = year === now.getFullYear() && monthIndex === now.getMonth();
 
-  /**
-   * 이웃한 날이 **같은 일정**으로 이어지는지. 이어지면 두 칸의 강조가 하나의 긴 알약처럼 붙는다.
-   *
-   * 하루짜리 일정 두 개가 우연히 붙어 있는 경우까지 이으면 하나의 긴 일정처럼 보여 거짓말이 되므로,
-   * 같은 `id`일 때만 잇는다. 주가 바뀌면 줄이 갈리니 일요일의 왼쪽·토요일의 오른쪽은 잇지 않는다.
-   */
-  function connects(day: number, side: -1 | 1) {
-    const weekday = (leadingBlanks + day - 1) % 7;
-    if (side === -1 && weekday === 0) return false;
-    if (side === 1 && weekday === 6) return false;
-    const id = eventIdByDay.get(day);
-    return id !== undefined && eventIdByDay.get(day + side) === id;
+  /** 캘린더에서 고른 날에 이 일정이 걸려 있는지 — 목록에서도 그 줄들을 함께 짚어 준다. */
+  function isOnSelectedDay(eventId: number) {
+    if (selectedDay === null) return false;
+    return lanesByDay.get(selectedDay)?.some((lane) => lane.event.id === eventId) === true;
   }
 
   return (
@@ -198,6 +264,7 @@ export function ScheduleCalendar() {
                   key={event.id}
                   className={styles.eventItem}
                   data-event-id={event.id}
+                  data-selected={isOnSelectedDay(event.id) || undefined}
                   style={{ "--reveal-index": index } as CSSProperties}
                 >
                   <span className={styles.eventDay}>{dayOf(event.startDate)}</span>
@@ -265,10 +332,11 @@ export function ScheduleCalendar() {
                 if (date === null) return <span key={`empty-${index}`} />;
 
                 const today = (isCurrentMonth && date === now.getDate()) || undefined;
-                if (!eventIdByDay.has(date)) {
+                const lanes = lanesByDay.get(date);
+                if (lanes === undefined) {
                   return (
                     <span key={date} className={styles.date} data-today={today}>
-                      {date}
+                      <span className={styles.dateNumber}>{date}</span>
                     </span>
                   );
                 }
@@ -282,12 +350,26 @@ export function ScheduleCalendar() {
                     data-active
                     data-today={today}
                     data-selected={date === selectedDay || undefined}
-                    data-connect-left={connects(date, -1) || undefined}
-                    data-connect-right={connects(date, 1) || undefined}
-                    aria-label={`${month}월 ${date}일 일정 보기`}
+                    aria-label={`${month}월 ${date}일 일정 ${lanes.length}개 보기`}
                     onClick={() => selectDay(date)}
                   >
-                    {date}
+                    <span className={styles.dateNumber}>{date}</span>
+                    {/* 얇은 선 자체는 장식이다 — 몇 개 걸렸는지는 위 aria-label이 말한다. */}
+                    <span className={styles.laneStrip} aria-hidden="true">
+                      {lanes
+                        .filter((lane) => lane.lane < MAX_LANES)
+                        .map((lane) => (
+                          <span
+                            key={lane.event.id}
+                            className={styles.lane}
+                            data-lane={lane.lane}
+                            data-event-id={lane.event.id}
+                            data-type={lane.event.type}
+                            data-connect-left={lane.connectLeft || undefined}
+                            data-connect-right={lane.connectRight || undefined}
+                          />
+                        ))}
+                    </span>
                   </button>
                 );
               })}

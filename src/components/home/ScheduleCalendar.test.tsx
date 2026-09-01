@@ -16,6 +16,19 @@ function calendar(year: number, month: number, events: PublicEventCalendar["even
 }
 
 /**
+ * 날짜 칸 안에서 특정 일정의 얇은 선을 집는다.
+ *
+ * 이어짐(`data-connect-*`)은 칸이 아니라 **선마다** 붙는다 — 한 칸에 여러 일정이 겹치면
+ * 8일에 끝난 일정과 9일에 시작한 다른 일정이 칸 단위로는 구분되지 않아, 서로 다른 일정을
+ * 한 줄로 이어 붙이는 거짓말이 된다.
+ */
+function lane(cell: HTMLElement, eventId: number) {
+  const found = cell.querySelector(`[data-event-id="${eventId}"]`);
+  if (found === null) throw new Error(`날짜 칸에 일정 ${eventId}의 선이 없다`);
+  return found;
+}
+
+/**
  * `StrictMode` 로 감싸서 렌더한다 — 앱은 `main.tsx` 에서 StrictMode 안에 있는데 테스트만
  * 벗겨 놓으면, StrictMode 가 일부러 드러내는 부작용(상태 업데이터 이중 호출 등)을 테스트가
  * 통과시켜 버린다. 실제로 연도 경계에서 2년씩 뛰던 버그를 이 테스트들이 놓쳤다.
@@ -199,9 +212,9 @@ describe("ScheduleCalendar", () => {
     await screen.findByText("신년 모임");
 
     // 1월 5일에 일정이 있다 — 누를 수 있어야 한다.
-    expect(screen.getByRole("button", { name: "1월 5일 일정 보기" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "1월 5일 일정 1개 보기" })).toBeInTheDocument();
     // 6일은 비었다 — 눌러도 갈 곳이 없으니 버튼이 아니다.
-    expect(screen.queryByRole("button", { name: "1월 6일 일정 보기" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "1월 6일 일정 1개 보기" })).not.toBeInTheDocument();
   });
 
   it("일정이 있는 날을 누르면 그 일정으로 목록을 스크롤한다", async () => {
@@ -212,11 +225,11 @@ describe("ScheduleCalendar", () => {
     const scrollTo = vi.fn();
     list.scrollTo = scrollTo;
 
-    await userEvent.click(screen.getByRole("button", { name: "1월 5일 일정 보기" }));
+    await userEvent.click(screen.getByRole("button", { name: "1월 5일 일정 1개 보기" }));
 
     expect(scrollTo).toHaveBeenCalledOnce();
     // 고른 날은 달력에서도 짚어 준다.
-    expect(screen.getByRole("button", { name: "1월 5일 일정 보기" })).toHaveAttribute("data-selected");
+    expect(screen.getByRole("button", { name: "1월 5일 일정 1개 보기" })).toHaveAttribute("data-selected");
   });
 
   it("달을 넘기면 골라 둔 날은 풀린다", async () => {
@@ -224,15 +237,16 @@ describe("ScheduleCalendar", () => {
     await screen.findByText("신년 모임");
 
     screen.getByRole("list").scrollTo = vi.fn();
-    await userEvent.click(screen.getByRole("button", { name: "1월 5일 일정 보기" }));
+    await userEvent.click(screen.getByRole("button", { name: "1월 5일 일정 1개 보기" }));
     await userEvent.click(screen.getByRole("button", { name: "다음 달" }));
     await userEvent.click(screen.getByRole("button", { name: "이전 달" }));
 
-    expect(screen.getByRole("button", { name: "1월 5일 일정 보기" })).not.toHaveAttribute("data-selected");
+    expect(screen.getByRole("button", { name: "1월 5일 일정 1개 보기" })).not.toHaveAttribute("data-selected");
   });
 
-  it("여러 날에 걸친 일정은 달력에서 두 칸을 하나로 잇는다", async () => {
-    // 5월 20~21일 창업 해커톤. 20일은 오른쪽으로, 21일은 왼쪽으로 이어져 하나의 알약이 된다.
+  it("여러 날에 걸친 일정은 두 칸의 선을 하나로 잇는다", async () => {
+    // 5월 20~21일 창업 해커톤(수·목). 20일 선은 오른쪽으로, 21일 선은 왼쪽으로 흘러
+    // 칸 사이 간격을 메우고 한 줄이 된다.
     renderCalendar();
     await screen.findByRole("heading", { name: "2026년 1월" });
 
@@ -240,13 +254,13 @@ describe("ScheduleCalendar", () => {
     for (let i = 0; i < 4; i++) await userEvent.click(nextButton);
     await screen.findByText("창업 해커톤");
 
-    const start = screen.getByRole("button", { name: "5월 20일 일정 보기" });
-    const end = screen.getByRole("button", { name: "5월 21일 일정 보기" });
+    const start = screen.getByRole("button", { name: "5월 20일 일정 1개 보기" });
+    const end = screen.getByRole("button", { name: "5월 21일 일정 1개 보기" });
 
-    expect(start).toHaveAttribute("data-connect-right");
-    expect(start).not.toHaveAttribute("data-connect-left");
-    expect(end).toHaveAttribute("data-connect-left");
-    expect(end).not.toHaveAttribute("data-connect-right");
+    expect(lane(start, 2)).toHaveAttribute("data-connect-right");
+    expect(lane(start, 2)).not.toHaveAttribute("data-connect-left");
+    expect(lane(end, 2)).toHaveAttribute("data-connect-left");
+    expect(lane(end, 2)).not.toHaveAttribute("data-connect-right");
   });
 
   it("여러 날에 걸친 일정은 종료일까지 함께 보여준다", async () => {
@@ -258,5 +272,160 @@ describe("ScheduleCalendar", () => {
     expect(screen.getByRole("heading", { name: "2026년 5월" })).toBeInTheDocument();
 
     expect(await screen.findByText("2026-05-20 ~ 2026-05-21")).toBeInTheDocument();
+  });
+
+  describe("한 날에 여러 일정이 겹칠 때", () => {
+    beforeEach(() => {
+      // 프로덕션 2026년 10월 그대로다 — 9/14~10/20 워크숍이 달을 가로지르고, 그 아래로
+      // 10/1~10/7 워크숍과 10/8 하루 행사가 겹친다. 예전엔 한 날에 일정 하나만 남겨서
+      // 1~20일이 진남색 알약 하나로 덮이고 나머지 두 일정은 캘린더에 아예 없었다.
+      vi.setSystemTime(new Date(2026, 9, 5));
+      vi.mocked(getEvents).mockImplementation((year, month) =>
+        Promise.resolve(
+          year === 2026 && month === 10
+            ? calendar(2026, 10, [
+                {
+                  id: 10,
+                  title: "팀별 빌드업 I",
+                  startDate: "2026-09-14",
+                  endDate: "2026-10-20",
+                  type: "WORKSHOP",
+                  place: "공학관",
+                },
+                {
+                  id: 11,
+                  title: "팀별 빌드업 III",
+                  startDate: "2026-10-01",
+                  endDate: "2026-10-07",
+                  type: "WORKSHOP",
+                  place: "공학관",
+                },
+                {
+                  id: 12,
+                  title: "아이디어 컨설팅",
+                  startDate: "2026-10-08",
+                  endDate: "2026-10-08",
+                  type: "EVENT",
+                  place: "대강당",
+                },
+              ])
+            : calendar(year, month, []),
+        ),
+      );
+    });
+
+    it("겹친 일정을 버리지 않고 날마다 줄을 나눠 모두 보여준다", async () => {
+      renderCalendar();
+      await screen.findByText("팀별 빌드업 III");
+
+      // 5일 — 워크숍 두 개가 겹친다. 달을 가로지르는 긴 쪽이 윗줄이라, 아래 줄의 짧은
+      // 일정들이 긴 일정 위를 오르내리지 않는다.
+      const day5 = screen.getByRole("button", { name: "10월 5일 일정 2개 보기" });
+      expect(lane(day5, 10)).toHaveAttribute("data-lane", "0");
+      expect(lane(day5, 11)).toHaveAttribute("data-lane", "1");
+
+      // 8일 — 7일에 끝난 워크숍이 비운 줄로 하루짜리 행사가 들어온다.
+      const day8 = screen.getByRole("button", { name: "10월 8일 일정 2개 보기" });
+      expect(lane(day8, 10)).toHaveAttribute("data-lane", "0");
+      expect(lane(day8, 12)).toHaveAttribute("data-lane", "1");
+
+      // 20일에 마지막 일정이 끝나므로 25일은 누를 곳이 아니다.
+      expect(screen.queryByRole("button", { name: /10월 25일/ })).not.toBeInTheDocument();
+    });
+
+    it("끝난 일정과 다음 날 시작한 다른 일정은 한 줄로 잇지 않는다", async () => {
+      renderCalendar();
+      await screen.findByText("팀별 빌드업 III");
+
+      const day7 = screen.getByRole("button", { name: "10월 7일 일정 2개 보기" });
+      const day8 = screen.getByRole("button", { name: "10월 8일 일정 2개 보기" });
+
+      // 워크숍 III는 7일에서 끝난다 — 오른쪽으로 흘러나가면 8일 행사와 한 줄이 되어 버린다.
+      expect(lane(day7, 11)).toHaveAttribute("data-connect-left");
+      expect(lane(day7, 11)).not.toHaveAttribute("data-connect-right");
+      // 8일 행사는 하루짜리라 양쪽 어디로도 이어지지 않는다.
+      expect(lane(day8, 12)).not.toHaveAttribute("data-connect-left");
+      expect(lane(day8, 12)).not.toHaveAttribute("data-connect-right");
+    });
+
+    it("주가 바뀌는 자리에서는 선을 끊는다", async () => {
+      // 2026-10-03은 토, 10-04는 일 — 같은 일정이라도 줄이 갈리니 이어 붙이지 않는다.
+      renderCalendar();
+      await screen.findByText("팀별 빌드업 III");
+
+      const saturday = screen.getByRole("button", { name: "10월 3일 일정 2개 보기" });
+      const sunday = screen.getByRole("button", { name: "10월 4일 일정 2개 보기" });
+
+      expect(lane(saturday, 10)).toHaveAttribute("data-connect-left");
+      expect(lane(saturday, 10)).not.toHaveAttribute("data-connect-right");
+      expect(lane(sunday, 10)).not.toHaveAttribute("data-connect-left");
+      expect(lane(sunday, 10)).toHaveAttribute("data-connect-right");
+    });
+
+    it("겹친 날을 누르면 그 날에 걸린 일정을 목록에서 모두 짚어 준다", async () => {
+      // 선 두 줄이 "이 날 일정 둘"이라고 말했으면, 목록도 둘을 가리켜야 한다.
+      renderCalendar();
+      await screen.findByText("팀별 빌드업 III");
+      screen.getByRole("list").scrollTo = vi.fn();
+
+      await userEvent.click(screen.getByRole("button", { name: "10월 5일 일정 2개 보기" }));
+
+      expect(screen.getByText("팀별 빌드업 I").closest("li")).toHaveAttribute("data-selected");
+      expect(screen.getByText("팀별 빌드업 III").closest("li")).toHaveAttribute("data-selected");
+      expect(screen.getByText("아이디어 컨설팅").closest("li")).not.toHaveAttribute("data-selected");
+    });
+
+    it("줄 수 상한을 넘게 겹치면 선은 상한까지만 그리고 개수는 이름표로 알린다", async () => {
+      // 48px 칸에 네 줄 이상을 밀어 넣으면 선끼리 붙어 오히려 한 덩어리로 보인다.
+      vi.mocked(getEvents).mockImplementation((year, month) =>
+        Promise.resolve(
+          year === 2026 && month === 11
+            ? calendar(2026, 11, [
+                {
+                  id: 20,
+                  title: "긴 일정",
+                  startDate: "2026-11-01",
+                  endDate: "2026-11-30",
+                  type: "WORKSHOP",
+                  place: "공학관",
+                },
+                {
+                  id: 21,
+                  title: "겹침 둘",
+                  startDate: "2026-11-05",
+                  endDate: "2026-11-15",
+                  type: "WORKSHOP",
+                  place: "공학관",
+                },
+                {
+                  id: 22,
+                  title: "겹침 셋",
+                  startDate: "2026-11-08",
+                  endDate: "2026-11-12",
+                  type: "EVENT",
+                  place: "대강당",
+                },
+                {
+                  id: 23,
+                  title: "겹침 넷",
+                  startDate: "2026-11-09",
+                  endDate: "2026-11-11",
+                  type: "COMPETITION",
+                  place: "대강당",
+                },
+              ])
+            : calendar(year, month, []),
+        ),
+      );
+      renderCalendar();
+      await screen.findByRole("heading", { name: "2026년 10월" });
+
+      await userEvent.click(screen.getByRole("button", { name: "다음 달" }));
+      await screen.findByText("겹침 넷");
+
+      const day10 = screen.getByRole("button", { name: "11월 10일 일정 4개 보기" });
+      expect(day10.querySelectorAll("[data-lane]")).toHaveLength(3);
+      expect(day10.querySelector('[data-event-id="23"]')).toBeNull();
+    });
   });
 });
