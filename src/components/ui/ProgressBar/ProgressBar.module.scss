@@ -1,3 +1,5 @@
+@use "../../../styles/abstracts/motion" as *;
+
 .track {
   overflow: hidden;
   width: 100%;
@@ -10,7 +12,8 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  transition: width 0.3s ease;
+  // 값이 차오르는 것은 눈으로 따라가야 하는 변화라 기본 속도보다 한 박자 길게 둔다.
+  transition: width $duration-slow $ease-out;
 }
 
 .good {

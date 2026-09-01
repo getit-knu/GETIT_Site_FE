@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitForElementToBeRemoved } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -106,4 +106,32 @@ describe("Toast", () => {
 
     expect(onClose).not.toHaveBeenCalled();
   });
+});
+
+it("open 을 내리면 곧바로 사라지지 않고 내려가는 모습을 보여준다", async () => {
+  // 부모가 `{조건 && <Toast/>}` 로 조건부 마운트하면 퇴장을 보여줄 방법이 없다.
+  // `open` 을 내리는 호출부는 띠가 내려가는 동안 잠깐 남는다.
+  const { rerender } = render(<Toast open message="제출할까요?" onClose={vi.fn()} />);
+  expect(screen.getByRole("alert")).toBeInTheDocument();
+
+  rerender(<Toast open={false} message="제출할까요?" onClose={vi.fn()} />);
+
+  const toast = screen.getByText("제출할까요?").parentElement;
+  expect(toast).toHaveAttribute("data-exiting");
+  // 내려가는 중에는 스크린리더에서 즉시 뺀다 — 사용자에겐 이미 답이 끝난 알림이다.
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+  await waitForElementToBeRemoved(() => screen.queryByText("제출할까요?"));
+});
+
+it("내려가는 중에는 저절로 닫으라고 재촉하지 않는다", () => {
+  vi.useFakeTimers();
+  const onClose = vi.fn();
+  const { rerender } = render(<Toast open message="제출할까요?" onClose={onClose} duration={5000} />);
+
+  rerender(<Toast open={false} message="제출할까요?" onClose={onClose} duration={5000} />);
+  act(() => vi.advanceTimersByTime(6000));
+
+  expect(onClose).not.toHaveBeenCalled();
+  vi.useRealTimers();
 });

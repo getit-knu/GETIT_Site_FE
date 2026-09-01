@@ -44,9 +44,8 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
   const [answers, setAnswers] = useState<Answers>(() => initialAnswers(form.questions, existing?.answers ?? null));
 
   // 모든 입력칸 id를 한 뿌리에서 만든다 — 제출을 막는 칸을 `getElementById`로 바로 찾기 위해서다.
-  // 학번은 BE도 필수로 안 봐서 제출을 막지 않지만, 라벨을 잇기 위해 같은 규칙으로 id를 만든다.
   const fieldIdPrefix = useId();
-  const fieldId = (key: BlockedFieldKey | "studentId") => `${fieldIdPrefix}${key}`;
+  const fieldId = (key: BlockedFieldKey) => `${fieldIdPrefix}${key}`;
 
   const saveDraft = useSaveDraft();
   const submitApplication = useSubmitApplication();
@@ -303,13 +302,13 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
         </div>
       </div>
 
-      {confirming && (
-        <Toast
-          message="제출하면 더 이상 수정할 수 없습니다. 제출할까요?"
-          action={{ label: "제출", onClick: handleConfirmSubmit }}
-          onClose={() => setConfirming(false)}
-        />
-      )}
+      {/* 조건부 마운트가 아니라 `open`을 내린다 — 그래야 되묻는 띠가 내려가는 모습이 보인다. */}
+      <Toast
+        open={confirming}
+        message="제출하면 더 이상 수정할 수 없습니다. 제출할까요?"
+        action={{ label: "제출", onClick: handleConfirmSubmit }}
+        onClose={() => setConfirming(false)}
+      />
     </div>
   );
 }

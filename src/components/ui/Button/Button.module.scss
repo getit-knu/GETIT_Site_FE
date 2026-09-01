@@ -86,6 +86,11 @@
   border: 2px solid currentcolor;
   border-radius: 50%;
   border-right-color: transparent;
+  /*
+    여기만 모션 토큰을 안 쓴다. 토큰($duration-*·$ease-out)은 **상태가 바뀌는 데 걸리는
+    시간**을 맞추려는 것이고, 이건 끝없이 도는 주기라 성격이 다르다 — $duration-slow(400ms)
+    로는 어지럽게 빠르고, $ease-out을 무한 회전에 얹으면 한 바퀴마다 덜컹거린다.
+  */
   animation: spin 0.6s linear infinite;
 }
 

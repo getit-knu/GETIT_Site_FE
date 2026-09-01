@@ -311,7 +311,8 @@ describe("ApplyPage", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "제출하기" }));
 
-    expect(await screen.findByText('"지원 동기는 무엇인가요?"에 답변해 주세요.')).toBeInTheDocument();
+    // 문항 문구는 어드민이 자유롭게 쓰는 값이라 문장에 끼워 넣지 않고 콜론으로 끊어 붙인다.
+    expect(await screen.findByText("아직 답하지 않았어요: 지원 동기는 무엇인가요?")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByLabelText("지원 동기는 무엇인가요? *")).toHaveFocus());
   });
 

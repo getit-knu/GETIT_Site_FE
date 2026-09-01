@@ -127,7 +127,7 @@
   height: 1.5rem;
   flex-shrink: 0;
   color: $color-heading;
-  transition: transform 0.15s ease;
+  transition: transform $duration-fast $ease-out;
 }
 
 .iconOpen {
