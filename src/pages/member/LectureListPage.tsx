@@ -49,14 +49,16 @@ export default function LectureListPage() {
           /*
             격자가 데스크톱에서 4열이라 두 줄(8장)을 잡는다.
 
-            **높이는 실측이 아니라 스타일시트에서 계산한 값이다** — dev 목 API 에 부원
-            라우트가 없어(`role: GUEST`) 브라우저로 잴 수가 없다. 썸네일 10rem + 본문
-            패딩 1.25rem×2 + 배지 줄 + 제목 + 마감 줄 ≈ 320px.
+            **높이가 한 값으로 고정되지 않는 자리다.** `MemberLectureCard` 의 `.title` 은
+            `ProjectCard`(#274)와 달리 줄 수가 묶여 있지 않아, 제목이 두 줄로 접히면 카드가
+            24px(한 줄) 커진다. 열 폭에 따라 접히는 지점이 달라져 실측이 두 값으로 갈렸다 —
+            1920·1440·1280·768 에서 318px, 1024·900·600 에서 294px.
 
-            `MemberLectureCard` 의 `.title` 은 `ProjectCard` 와 달리 줄 수가 안 묶여 있어
-            (line-clamp 없음) 제목이 길면 카드가 그만큼 커진다. 320px 은 제목 두 줄 기준이다.
+            열이 4열인 데스크톱 폭에 맞춰 318px 을 쓴다. 실제 강의 제목은 목보다 길어서
+            좁은 폭에서도 두 줄이 될 가능성이 높다. `.title` 에 line-clamp 를 걸어 #274 처럼
+            높이를 묶으면 이 값이 정확해진다 — 디자인 결정이라 여기서 하지 않았다.
           */
-          <CardGridSkeleton className={styles.grid} count={8} height="20rem" label="강의 목록 불러오는 중" />
+          <CardGridSkeleton className={styles.grid} count={8} height="19.875rem" label="강의 목록 불러오는 중" />
         ) : lecturesQuery.isError ? (
           <ErrorState message={lectureErrorMessage(lecturesQuery.error)} onRetry={() => void lecturesQuery.refetch()} />
         ) : lecturesQuery.data.content.length === 0 ? (
