@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import type { PublicStaff } from "../../types/site";
 
 import styles from "./LeaderCard.module.scss";
@@ -17,15 +19,33 @@ interface LeaderCardProps {
 
 /** 계정이 없는 운영진은 `githubUrl`/`instagramUrl`이 `null`이라 아이콘 자체를 숨긴다. */
 export function LeaderCard({ staff, showRole = true }: LeaderCardProps) {
+  const { profileImageUrl } = staff;
   const gradient = PHOTO_GRADIENTS[(staff.order - 1) % PHOTO_GRADIENTS.length];
+  const [photoLoaded, setPhotoLoaded] = useState(false);
+  // 깨진 CDN 주소일 수 있다 — onError가 뜨면 그라디언트로 되돌아간다.
+  const [photoFailed, setPhotoFailed] = useState(false);
 
   return (
     <div className={styles.card}>
-      {staff.profileImageUrl ? (
-        <img className={styles.photo} src={staff.profileImageUrl} alt="" />
-      ) : (
-        <div className={styles.photo} style={{ backgroundImage: gradient }} aria-hidden="true" />
-      )}
+      {/*
+        그라디언트는 사진 유무와 무관하게 항상 배경으로 깔아 둔다. 사진이 로드되는 동안
+        빈칸 없이 자리를 채우고, 실제 사진은 로드가 끝나야 위에 올라온다(opacity 전환).
+      */}
+      <div className={styles.photo} style={{ backgroundImage: gradient }} aria-hidden="true">
+        {profileImageUrl !== null && profileImageUrl !== "" && !photoFailed && (
+          <>
+            <img
+              className={`${styles.photoImg} ${photoLoaded ? styles.photoImgLoaded : ""}`}
+              src={profileImageUrl}
+              alt=""
+              loading="lazy"
+              onLoad={() => setPhotoLoaded(true)}
+              onError={() => setPhotoFailed(true)}
+            />
+            {!photoLoaded && <span className={styles.spinner} aria-hidden="true" />}
+          </>
+        )}
+      </div>
 
       <div className={styles.content}>
         <div className={styles.nameRow}>
