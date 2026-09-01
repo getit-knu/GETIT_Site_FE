@@ -38,3 +38,9 @@ $color-warning-text: #92400e;
 // 어두운 배경(토스트 등) 위에 얹는 글자색. 값은 $color-surface 와 같지만 쓰임이 반대라
 // 이름을 따로 둔다 — 배경색 토큰을 글자색 자리에 쓰면 의도가 드러나지 않는다.
 $color-text-inverse: $color-surface;
+
+// hover는 opacity 대신 실제 색을 바꾼다 — opacity는 글자까지 흐려진다.
+$color-accent-hover: #1f2d78;
+
+// 키보드 포커스 링. outline 대신 box-shadow라 border-radius를 따라간다.
+$focus-ring: 0 0 0 3px rgb(40 57 151 / 30%);

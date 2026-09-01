@@ -1,4 +1,5 @@
 @use "../../../styles/abstracts/variables" as *;
+@use "../../../styles/abstracts/motion" as *;
 
 .button {
   display: inline-flex;
@@ -8,7 +9,16 @@
   border-radius: 0.5rem;
   cursor: pointer;
   font-weight: 600;
-  transition: opacity 0.15s ease;
+  transition:
+    background-color $duration-fast $ease-out,
+    border-color $duration-fast $ease-out,
+    color $duration-fast $ease-out,
+    box-shadow $duration-fast $ease-out;
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: $focus-ring;
+  }
 
   &:disabled {
     cursor: not-allowed;
@@ -21,7 +31,7 @@
   color: #fff;
 
   &:hover:not(:disabled) {
-    opacity: 0.9;
+    background-color: $color-accent-hover;
   }
 }
 

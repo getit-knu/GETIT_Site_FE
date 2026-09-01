@@ -1,0 +1,8 @@
+// 모션 토큰. 화면마다 duration을 하드코딩하지 않도록 한곳에 모은다.
+// fast: hover 등 즉각 피드백 / base: 모달·토스트 등장 / slow: 스크롤 등장(reveal)
+$duration-fast: 150ms;
+$duration-base: 250ms;
+$duration-slow: 400ms;
+
+// 감속 곡선 하나만 쓴다. 등장·퇴장이 같은 커브라야 한 시스템으로 느껴진다.
+$ease-out: cubic-bezier(0.16, 1, 0.3, 1);
