@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import { createBrowserRouter, Outlet, ScrollRestoration, type RouteObject } from "react-router";
 
 import { RequireRole } from "./components/auth/RequireRole";
+import { FullScreenLoader } from "./components/ui/FullScreenLoader/FullScreenLoader";
 import { ROLES } from "./types/auth";
 
 /**
@@ -120,8 +121,8 @@ const areaRoutes: RouteObject[] = [
  */
 const routes: RouteObject[] = [
   {
-    // TODO(A-3): 전체 화면 로딩 컴포넌트로 교체한다.
-    HydrateFallback: () => null,
+    // 첫 진입 청크를 받는 동안 보이는 화면. `null`이면 그동안 흰 화면만 남는다.
+    HydrateFallback: () => <FullScreenLoader label="GET IT을 여는 중이에요" />,
     Component: () => (
       <>
         <ScrollRestoration />

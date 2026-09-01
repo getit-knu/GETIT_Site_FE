@@ -1,4 +1,5 @@
 @use "../../styles/abstracts/variables" as *;
+@use "../../styles/abstracts/motion" as *;
 
 .badge {
   position: fixed;
@@ -10,6 +11,30 @@
   align-items: center;
   gap: 0.5rem;
   text-decoration: none;
+
+  // 접수 기간에만 나타나는 배지라 등장 자체가 정보다 — 아래에서 통통 떠오르며 시선을 끈다.
+  animation: dday-pop 500ms $ease-out backwards;
+  animation-delay: 400ms;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes dday-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(1rem) scale(0.9);
+  }
+
+  60% {
+    transform: translateY(-0.25rem) scale(1.02);
+  }
+
+  100% {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 // 카드 배경 없이 텍스트만 떠 있다. mix-blend-mode로 배경에 따라 자동으로 대비를
@@ -32,6 +57,37 @@
   color: #fff;
   font-size: 1.125rem;
   font-weight: 700;
+  transition:
+    background-color $duration-fast $ease-out,
+    box-shadow $duration-fast $ease-out,
+    transform $duration-fast $ease-out;
+
+  // 항상 화면에 떠 있는 버튼이라 hover 반응이 없으면 장식으로 오해받는다 — 확실히 눌러
+  // 달라는 신호를 준다.
+  .badge:hover & {
+    background-color: $color-accent-hover;
+    box-shadow: 0 8px 16px rgb(40 57 151 / 30%);
+    transform: translateY(-2px);
+
+    .applyIcon {
+      transform: translateX(0.1875rem);
+    }
+  }
+
+  .badge:active & {
+    transform: translateY(0) scale(0.97);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .badge:hover &,
+    .badge:active & {
+      transform: none;
+    }
+
+    .badge:hover & .applyIcon {
+      transform: none;
+    }
+  }
 }
 
 // 아직 낼 수 없는 동안. 누를 수 있는 것처럼 보이면 안 되므로 채우지 않고 테두리만 둔다.
@@ -50,4 +106,5 @@
 .applyIcon {
   width: 1.25rem;
   height: 1.25rem;
+  transition: transform $duration-fast $ease-out;
 }

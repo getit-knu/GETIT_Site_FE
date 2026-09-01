@@ -35,7 +35,7 @@ export function MyQuestionsCard() {
           {data.content.map((question) => (
             <li key={question.id} className={styles.item}>
               {/* 누르면 그 질문이 달린 강의로 간다. 목록만 봐선 어느 강의인지 알 수 없다. */}
-              <Link to={`/member/lectures/${question.lectureId}`} className={styles.link}>
+              <Link viewTransition to={`/member/lectures/${question.lectureId}`} className={styles.link}>
                 <span className={styles.lecture}>{question.lectureTitle}</span>
                 <span className={styles.content}>{question.content}</span>
                 <span className={styles.meta}>

@@ -1,4 +1,5 @@
 @use "../../../styles/abstracts/variables" as *;
+@use "../../../styles/abstracts/motion" as *;
 
 .button {
   display: inline-flex;
@@ -8,11 +9,38 @@
   border-radius: 0.5rem;
   cursor: pointer;
   font-weight: 600;
-  transition: opacity 0.15s ease;
+  transition:
+    background-color $duration-fast $ease-out,
+    border-color $duration-fast $ease-out,
+    color $duration-fast $ease-out,
+    box-shadow $duration-fast $ease-out,
+    transform $duration-fast $ease-out;
+
+  // 클릭이 "눌린다"고 느껴지는 촉각 피드백(UX 라운드 2). 색 변화만으로는 클릭 순간의
+  // 반응이 없어서, hover에서 1px 떠오르고 active에서 살짝 눌리게 한다.
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0) scale(0.97);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: $focus-ring;
+  }
 
   &:disabled {
     cursor: not-allowed;
     opacity: 0.5;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &:hover:not(:disabled),
+    &:active:not(:disabled) {
+      transform: none;
+    }
   }
 }
 
@@ -21,7 +49,7 @@
   color: #fff;
 
   &:hover:not(:disabled) {
-    opacity: 0.9;
+    background-color: $color-accent-hover;
   }
 }
 
@@ -58,6 +86,11 @@
   border: 2px solid currentcolor;
   border-radius: 50%;
   border-right-color: transparent;
+  /*
+    여기만 모션 토큰을 안 쓴다. 토큰($duration-*·$ease-out)은 **상태가 바뀌는 데 걸리는
+    시간**을 맞추려는 것이고, 이건 끝없이 도는 주기라 성격이 다르다 — $duration-slow(400ms)
+    로는 어지럽게 빠르고, $ease-out을 무한 회전에 얹으면 한 바퀴마다 덜컹거린다.
+  */
   animation: spin 0.6s linear infinite;
 }
 

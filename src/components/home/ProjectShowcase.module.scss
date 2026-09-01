@@ -1,6 +1,7 @@
 @use "../../styles/abstracts/variables" as *;
 @use "../../styles/abstracts/breakpoints" as *;
 @use "../../styles/abstracts/container";
+@use "../../styles/abstracts/motion" as *;
 
 .section {
   @include container.full-viewport-section;
@@ -16,6 +17,8 @@
 }
 
 .heading {
+  @include scroll-reveal;
+
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -51,6 +54,8 @@
 }
 
 .row {
+  @include scroll-reveal(translateY(2.5rem));
+
   display: flex;
   align-items: center;
   gap: 3rem;
@@ -77,10 +82,26 @@
   background-position: center;
   background-size: cover;
   box-shadow: 0 25px 50px rgb(0 0 0 / 25%);
+  transition:
+    transform $duration-base $ease-out,
+    box-shadow $duration-base $ease-out;
 
   @media (width <= $breakpoint-mobile) {
     width: 100%;
     flex: none;
+  }
+}
+
+// 행 어디에 커서를 올려도 스크린샷이 살짝 떠오른다 — 클릭 대상이 아니어도
+// "이 프로젝트를 보고 있다"는 시선 피드백이 된다.
+.row:hover .thumbnail {
+  box-shadow: 0 30px 55px rgb(0 0 0 / 28%);
+  transform: translateY(-0.375rem) scale(1.015);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row:hover .thumbnail {
+    transform: none;
   }
 }
 
@@ -124,9 +145,23 @@
   color: $color-accent;
   font-size: 1.125rem;
   font-weight: 600;
+  transition: color $duration-fast $ease-out;
+
+  &:hover {
+    color: $color-accent-hover;
+
+    .viewAllIcon {
+      transform: translateX(0.25rem);
+    }
+  }
 }
 
 .viewAllIcon {
   width: 1.5rem;
   height: 1.5rem;
+  transition: transform $duration-fast $ease-out;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }

@@ -1,6 +1,7 @@
 @use "../../styles/abstracts/variables" as *;
 @use "../../styles/abstracts/breakpoints" as *;
 @use "../../styles/abstracts/container";
+@use "../../styles/abstracts/motion" as *;
 
 .section {
   @include container.full-viewport-section;
@@ -19,6 +20,8 @@
 }
 
 .heading {
+  @include scroll-reveal;
+
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -57,33 +60,36 @@
 
 // section 자체엔 폭 제한이 없어(Figma 원본 그대로), 카드가 많아지면 배경 바깥으로
 // 넘쳤다. marquee가 그 폭만큼만 보여주고 넘치는 부분은 잘라낸다.
+
+// 이동 자체는 CSS 애니메이션이 아니라 `ActivityPhotos.tsx`의 rAF 루프가 transform으로
+// 굴린다(UX 라운드 2) — 드래그 스크럽·관성·hover 감속이 전부 한 속도 모델로 움직인다.
 .marquee {
   overflow: hidden;
   width: 100%;
 
-  &:hover .track {
-    animation-play-state: paused;
+  // 드래그 가능함을 커서로 암시하고, 드래그 중 텍스트·이미지 선택이 끼어들지 않게 한다.
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+
+  // 세로 스크롤 제스처는 브라우저에 남기고 가로 드래그만 우리가 받는다.
+  touch-action: pan-y;
+
+  // 좌우 끝을 살짝 흐려 무한 흐름이 "잘린 목록"이 아니라 "지나가는 흐름"으로 읽히게 한다.
+  mask-image: linear-gradient(to right, transparent, #000 3.5rem, #000 calc(100% - 3.5rem), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 3.5rem, #000 calc(100% - 3.5rem), transparent);
+
+  &[data-dragging] {
+    cursor: grabbing;
   }
 }
 
-// 두 목록(.grid) 폭이 정확히 같으므로 정확히 -50% 이동하면 복제본이 원본이 있던
-// 자리에 딱 맞게 와서 끊김 없이 반복된다.
+// 두 목록(.grid) 폭이 정확히 같으므로 정확히 절반 폭만큼 이동하면 복제본이 원본이 있던
+// 자리에 딱 맞게 와서 끊김 없이 반복된다(되감기는 JS가 절반 폭 기준 모듈러로 처리).
 .track {
   display: flex;
   width: max-content;
-  animation: activity-scroll 30s linear infinite;
-}
-
-@keyframes activity-scroll {
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .track {
-    animation: none;
-  }
+  will-change: transform;
 }
 
 .card {

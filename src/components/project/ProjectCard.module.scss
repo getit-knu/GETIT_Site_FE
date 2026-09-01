@@ -1,7 +1,11 @@
 @use "../../styles/abstracts/variables" as *;
+@use "../../styles/abstracts/motion" as *;
 
 .card {
   display: flex;
+
+  // 썸네일 hover 확대가 둥근 모서리 밖으로 비어져 나오지 않게 잘라낸다.
+  overflow: hidden;
   flex-direction: column;
   height: 100%;
   border: none;
@@ -10,6 +14,33 @@
   box-shadow:
     0 10px 15px -3px rgb(0 0 0 / 10%),
     0 4px 6px -4px rgb(0 0 0 / 10%);
+  transition:
+    transform $duration-fast $ease-out,
+    box-shadow $duration-fast $ease-out;
+
+  // 카드 어디를 보고 있는지 시선을 따라오는 리프트 + 썸네일이 은근히 확대된다.
+  &:hover {
+    box-shadow:
+      0 14px 20px -3px rgb(0 0 0 / 13%),
+      0 6px 8px -4px rgb(0 0 0 / 10%);
+    transform: translateY(-3px);
+
+    .thumbnail {
+      transform: scale(1.04);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:hover {
+      transform: none;
+
+      .thumbnail {
+        transform: none;
+      }
+    }
+  }
 }
 
 .thumbnail {
@@ -18,6 +49,7 @@
   background-color: $color-border;
   background-position: center;
   background-size: cover;
+  transition: transform $duration-slow $ease-out;
 }
 
 .content {
@@ -96,19 +128,40 @@
   font-size: 1rem;
   font-weight: 500;
   text-decoration: none;
+  transition:
+    background-color $duration-fast $ease-out,
+    transform $duration-fast $ease-out;
+
+  &:active {
+    transform: scale(0.97);
+  }
 
   svg {
     width: 1.125rem;
     height: 1.125rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &:active {
+      transform: none;
+    }
   }
 }
 
 .codeLink {
   background-color: $color-disabled-bg;
   color: $color-heading;
+
+  &:hover {
+    background-color: $color-placeholder-bg;
+  }
 }
 
 .demoLink {
   background-color: $color-accent;
   color: $color-background;
+
+  &:hover {
+    background-color: $color-accent-hover;
+  }
 }

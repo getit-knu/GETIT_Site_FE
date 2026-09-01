@@ -155,7 +155,7 @@ describe("ApplyPage", () => {
   it("지원서가 아직 없으면 양식 프리필로 폼을 채운다", async () => {
     await renderReadyPage();
 
-    expect(screen.getByRole("heading", { name: "GETIT 지원하기" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "GET IT 지원하기" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "지원서 작성" })).toBeInTheDocument();
     expect(screen.getByLabelText("이름 *")).toHaveValue("홍길동");
     expect(screen.getByLabelText("이메일 *")).toHaveValue("hong@getit.com");
@@ -236,7 +236,7 @@ describe("ApplyPage", () => {
     vi.mocked(getRecruitmentStatus).mockResolvedValue(recruitmentStatus({ applyEnabled: false }));
     renderPage();
 
-    expect(await screen.findByText("지금은 지원서 접수 기간이 아닙니다.")).toBeInTheDocument();
+    expect(await screen.findByText("지금은 지원서 접수 기간이 아니에요.")).toBeInTheDocument();
     expect(screen.queryByText("지원서를 작성하려면 먼저 로그인해 주세요.")).not.toBeInTheDocument();
     expect(getMyApplication).not.toHaveBeenCalled();
   });
@@ -245,7 +245,7 @@ describe("ApplyPage", () => {
     vi.mocked(getForm).mockResolvedValue(form({ phase: "BEFORE_OPEN" }));
     renderPage();
 
-    expect(await screen.findByText("지금은 지원서 접수 기간이 아닙니다.")).toBeInTheDocument();
+    expect(await screen.findByText("지금은 지원서 접수 기간이 아니에요.")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "지원서 작성" })).not.toBeInTheDocument();
   });
 
@@ -279,17 +279,68 @@ describe("ApplyPage", () => {
     const payload = vi.mocked(saveDraft).mock.lastCall?.[0];
     expect(payload?.basicInfo.name).toBe("홍길동");
     expect(payload?.answers.find((a) => a.questionId === 1)?.answerText).toBe("성장하고 싶어서 지원합니다.");
-    expect(await screen.findByText("임시 저장했습니다.")).toBeInTheDocument();
+    expect(await screen.findByText("임시 저장했어요.")).toBeInTheDocument();
   });
 
-  it("필수 정보 · 문항이 비어 있으면 제출을 막고 이유를 보여준다", async () => {
+  it("폼을 열자마자 못 채웠다고 먼저 지적하지 않는다", async () => {
+    // 예전엔 "이름 · 이메일 · … 을 모두 입력해 주세요"가 처음부터 떠 있었다 — 아직 아무것도
+    // 안 한 사람에게 잘못부터 말하는 꼴이었다. 이제 제출을 눌렀을 때만 답한다.
     await renderReadyPage();
 
-    const submitButton = screen.getByRole("button", { name: "제출하기" });
-    expect(submitButton).toBeDisabled();
-    expect(
-      screen.getByText("이름 · 이메일 · 전화번호 · 단과 대학 · 전공 · 학년을 모두 입력해 주세요."),
-    ).toBeInTheDocument();
+    expect(screen.queryByText(/입력해 주세요|선택해 주세요|답변해 주세요/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "제출하기" })).toBeEnabled();
+  });
+
+  it("제출을 누르면 못 채운 첫 칸을 짚어 주고 커서를 옮긴다", async () => {
+    // 프리필은 이름 · 이메일까지만 채워져 있다 — 첫 빈 칸은 전화번호다.
+    await renderReadyPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "제출하기" }));
+
+    expect(await screen.findByText("전화번호를 입력해 주세요.")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText("전화번호 *")).toHaveFocus());
+  });
+
+  it("기본 정보를 다 채우면 답 안 한 문항을 짚는다", async () => {
+    await renderReadyPage();
+
+    await userEvent.type(screen.getByLabelText("전화번호 *"), "010-1234-5678");
+    fireEvent.change(screen.getByLabelText("단과 대학 *"), { target: { value: "2" } });
+    fireEvent.change(screen.getByLabelText("전공 *"), { target: { value: "2" } });
+    await userEvent.type(screen.getByLabelText("학년 *"), "3");
+
+    await userEvent.click(screen.getByRole("button", { name: "제출하기" }));
+
+    // 문항 문구는 어드민이 자유롭게 쓰는 값이라 문장에 끼워 넣지 않고 콜론으로 끊어 붙인다.
+    expect(await screen.findByText("아직 답하지 않았어요: 지원 동기는 무엇인가요?")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText("지원 동기는 무엇인가요? *")).toHaveFocus());
+  });
+
+  it("고친 뒤 손이 멈추면 알아서 임시 저장한다", async () => {
+    vi.mocked(saveDraft).mockResolvedValue({ id: 1, status: "DRAFT", savedAt: "2026-09-01T00:00:00+09:00" });
+    await renderReadyPage();
+
+    await userEvent.type(screen.getByLabelText("지원 동기는 무엇인가요? *"), "성장하고 싶어서요.");
+    // 아직 손이 멈춘 지 얼마 안 됐다 — 타이핑 중에 요청이 나가면 안 된다.
+    expect(saveDraft).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(saveDraft).toHaveBeenCalledOnce(), { timeout: 4000 });
+    expect(await screen.findByText("자동으로 임시 저장했어요.")).toBeInTheDocument();
+  });
+
+  it("저장 안 된 변경이 있을 때만 창을 닫기 전에 되묻는다", async () => {
+    await renderReadyPage();
+
+    // 아직 아무것도 안 고쳤다 — 붙잡을 이유가 없다.
+    const before = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(before);
+    expect(before.defaultPrevented).toBe(false);
+
+    await userEvent.type(screen.getByLabelText("전화번호 *"), "010");
+
+    const after = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(after);
+    expect(after.defaultPrevented).toBe(true);
   });
 
   it("임시 저장이 실패하면 이유를 보여준다", async () => {
