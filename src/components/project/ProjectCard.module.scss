@@ -3,6 +3,7 @@
 
 .card {
   display: flex;
+
   // 썸네일 hover 확대가 둥근 모서리 밖으로 비어져 나오지 않게 잘라낸다.
   overflow: hidden;
   flex-direction: column;

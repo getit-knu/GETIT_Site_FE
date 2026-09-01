@@ -10,7 +10,7 @@ $ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 // 스크롤 등장(reveal) 공통 스타일. `useScrollReveal` 훅이 붙이는 `data-revealed`와 짝을 이룬다.
 // 훅이 못 도는 환경(JS 실패·jsdom)이나 동작 줄이기 사용자를 위해 CSS 쪽에서도
 // prefers-reduced-motion이면 처음부터 드러난 상태로 둔다 — 콘텐츠가 영영 안 보이는 일은 없어야 한다.
-//
+
 // $from: 등장 전 위치(예: translateY(1.5rem), translateX(-2rem)).
 // 형제끼리 시차를 주려면 인라인 스타일로 `--reveal-delay`를 넘긴다(예: calc 계단식 지연).
 @mixin scroll-reveal($from: translateY(1.5rem), $duration: $duration-slow) {

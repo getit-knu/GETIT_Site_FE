@@ -15,6 +15,9 @@ const AUTO_SPEED = 40;
 /** 드래그를 놓는 순간 관성으로 이어갈 속도의 상한(px/s) — 홱 던져도 날아가지 않게. */
 const MAX_FLING_SPEED = 1500;
 
+/** 이보다 느려지면 멎은 것으로 보고 rAF 루프를 세운다(px/s). 1프레임에 0.01px 미만. */
+const IDLE_SPEED = 0.5;
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
@@ -78,9 +81,10 @@ export function ActivityPhotos() {
       const dt = prevFrameTime === null ? 0 : Math.min((now - prevFrameTime) / 1000, 0.05);
       prevFrameTime = now;
 
+      // 관성(드래그 직후)과 자동 흐름을 하나의 속도로 다룬다 — 목표 속도로 지수 수렴.
+      // 드래그 중에는 handleMove가 offset을 직접 옮기므로 적분하지 않는다.
+      const target = paused ? 0 : -autoSpeed;
       if (!dragging) {
-        // 관성(드래그 직후)과 자동 흐름을 하나의 속도로 다룬다 — 목표 속도로 지수 수렴.
-        const target = paused ? 0 : -autoSpeed;
         velocity += (target - velocity) * Math.min(1, dt * 4);
         offset += velocity * dt;
       }
@@ -90,9 +94,26 @@ export function ActivityPhotos() {
         offset = -(((-offset % half) + half) % half);
         track.style.transform = `translate3d(${offset}px, 0, 0)`;
       }
+
+      // 더 움직일 이유가 없으면(정지가 목표이고 이미 멎었고 드래그도 아님) 루프를 세운다.
+      // 안 그러면 동작 줄이기(autoSpeed 0)나 hover 정지 상태에서 프레임 콜백이 영원히 돈다.
+      if (!dragging && target === 0 && Math.abs(velocity) < IDLE_SPEED) {
+        velocity = 0;
+        raf = 0;
+        prevFrameTime = null;
+        return;
+      }
       raf = requestAnimationFrame(frame);
     }
-    raf = requestAnimationFrame(frame);
+
+    /** 멈춰 있던 루프를 다시 돌린다. 이미 돌고 있으면 아무것도 하지 않는다. */
+    function start() {
+      if (raf !== 0) return;
+      // 멈춘 사이의 시간이 dt로 잡히지 않게 기준 시각을 지운다(첫 프레임 dt = 0).
+      prevFrameTime = null;
+      raf = requestAnimationFrame(frame);
+    }
+    start();
 
     function handleDown(event: PointerEvent) {
       dragging = true;
@@ -101,6 +122,7 @@ export function ActivityPhotos() {
       velocity = 0;
       marquee.setAttribute("data-dragging", "");
       marquee.setPointerCapture(event.pointerId);
+      start();
     }
 
     function handleMove(event: PointerEvent) {
@@ -117,6 +139,8 @@ export function ActivityPhotos() {
     function handleUp() {
       dragging = false;
       marquee.removeAttribute("data-dragging");
+      // 놓는 순간의 관성을 이어 재생한다 — 드래그 중 루프가 멎는 일은 없지만 방어적으로 둔다.
+      start();
     }
 
     function handleEnter(event: PointerEvent) {
@@ -124,7 +148,10 @@ export function ActivityPhotos() {
     }
 
     function handleLeave(event: PointerEvent) {
-      if (event.pointerType === "mouse") paused = false;
+      if (event.pointerType !== "mouse") return;
+      paused = false;
+      // hover로 멎어 있던 동안 루프가 정지했으므로 자동 흐름을 되살리려면 반드시 다시 돌려야 한다.
+      start();
     }
 
     marquee.addEventListener("pointerdown", handleDown);

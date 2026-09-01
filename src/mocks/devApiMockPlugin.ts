@@ -25,11 +25,25 @@ export function devApiMock(): Plugin {
           raw += chunk.toString();
         });
         req.on("end", () => {
+          // 본문이 비어 있는 건 정상(GET 등)이지만, JSON으로 못 읽는 본문은 resolver까지
+          // 보내지 않고 여기서 400으로 끊는다 — 예전엔 파싱 실패를 `undefined`로 뭉개서
+          // 넘기는 바람에 본문을 쓰는 resolver가 예외를 던지고 응답이 안 나갔다.
           let body: unknown;
-          try {
-            body = raw === "" ? undefined : JSON.parse(raw);
-          } catch {
-            body = undefined;
+          if (raw !== "") {
+            try {
+              body = JSON.parse(raw);
+            } catch {
+              res.statusCode = 400;
+              res.setHeader("Content-Type", "application/json");
+              res.end(
+                JSON.stringify({
+                  success: false,
+                  data: null,
+                  error: { code: "VALIDATION_FAILED", message: "요청 본문이 올바른 JSON이 아닙니다." },
+                }),
+              );
+              return;
+            }
           }
 
           const hit = api.resolve(req.method ?? "GET", url.pathname, url.searchParams, body);

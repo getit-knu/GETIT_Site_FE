@@ -169,12 +169,14 @@
 
 .calendarHeader {
   display: grid;
+
   // 좌우 열을 같은 폭(1fr)으로 잡아 가운데 열이 헤더의 진짜 중앙에 오게 한다.
   // flex + space-between 이던 이전 구조는 남은 폭 안에서만 가운데를 잡아,
   // 오른쪽 "오늘" 버튼이 차지한 만큼 월 표시가 왼쪽으로 밀려 보였다.
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   padding: 1rem 1.5rem;
+
   // 팔레트 기반 그라데이션 — 기존 보라빛(#155dfc → #4f39f6)이 팔레트 밖 색이라 차분하게 정리했다.
   background-image: linear-gradient(to right, $color-accent, #1a2560);
   text-align: center;

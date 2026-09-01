@@ -57,4 +57,28 @@ describe("createMockApi", () => {
     const mine = api.resolve("GET", "/api/applications/me", params);
     expect((mine?.body as { data: { status: string } }).data.status).toBe("SUBMITTED");
   });
+
+  // 미들웨어는 본문이 없거나 JSON 파싱에 실패하면 undefined를 넘긴다. 예전엔 그대로
+  // 단언해 넘기는 바람에 예외가 나서 응답 자체가 안 나갔다 — 이제 400 envelope으로 끊는다.
+  it.each([
+    ["본문 없음", undefined],
+    ["빈 객체", {}],
+    ["basicInfo 누락", { answers: [] }],
+    ["answers 누락", { basicInfo: {} }],
+    ["answers가 배열이 아님", { basicInfo: {}, answers: "nope" }],
+  ])("임시 저장 본문이 올바르지 않으면 400을 준다 — %s", (_label, body) => {
+    const api = createMockApi();
+    const res = api.resolve("PUT", "/api/applications/me/draft", params, body);
+
+    expect(res?.status).toBe(400);
+    expect(res?.body).toMatchObject({ success: false, error: { code: "VALIDATION_FAILED" } });
+  });
+
+  it("제출 본문이 올바르지 않아도 400을 주고 저장 상태를 건드리지 않는다", () => {
+    const api = createMockApi();
+    const res = api.resolve("POST", "/api/applications/me/submit", params, undefined);
+
+    expect(res?.status).toBe(400);
+    expect((api.resolve("GET", "/api/applications/me", params)?.body as { data: unknown }).data).toBeNull();
+  });
 });

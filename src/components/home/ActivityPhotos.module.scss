@@ -60,7 +60,7 @@
 
 // section 자체엔 폭 제한이 없어(Figma 원본 그대로), 카드가 많아지면 배경 바깥으로
 // 넘쳤다. marquee가 그 폭만큼만 보여주고 넘치는 부분은 잘라낸다.
-//
+
 // 이동 자체는 CSS 애니메이션이 아니라 `ActivityPhotos.tsx`의 rAF 루프가 transform으로
 // 굴린다(UX 라운드 2) — 드래그 스크럽·관성·hover 감속이 전부 한 속도 모델로 움직인다.
 .marquee {

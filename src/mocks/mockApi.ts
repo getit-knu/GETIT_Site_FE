@@ -28,6 +28,17 @@ export function createMockApi() {
     return saved;
   }
 
+  /**
+   * 임시 저장·제출 body가 최소한의 모양을 갖췄는지 본다. 미들웨어는 본문이 없거나 JSON
+   * 파싱에 실패하면 `undefined`를 넘기는데, 그대로 단언해서 넘기면 `upsertDraft`가
+   * `payload.basicInfo`에서 예외를 던져 응답이 아예 안 나간다(요청이 멈춘다).
+   */
+  function isDraftPayload(body: unknown): body is ApplicationDraftPayload {
+    if (typeof body !== "object" || body === null) return false;
+    const candidate = body as Partial<ApplicationDraftPayload>;
+    return typeof candidate.basicInfo === "object" && candidate.basicInfo !== null && Array.isArray(candidate.answers);
+  }
+
   function resolve(
     method: string,
     pathname: string,
@@ -65,11 +76,17 @@ export function createMockApi() {
       case "GET /api/applications/me":
         return ok(saved);
       case "PUT /api/applications/me/draft": {
-        const next = upsertDraft(body as ApplicationDraftPayload);
+        if (!isDraftPayload(body)) {
+          return fail(400, "VALIDATION_FAILED", "지원서 본문(basicInfo·answers)이 올바르지 않습니다.");
+        }
+        const next = upsertDraft(body);
         return ok({ id: next.id, status: next.status, savedAt: next.savedAt });
       }
       case "POST /api/applications/me/submit": {
-        const next = upsertDraft(body as ApplicationDraftPayload);
+        if (!isDraftPayload(body)) {
+          return fail(400, "VALIDATION_FAILED", "지원서 본문(basicInfo·answers)이 올바르지 않습니다.");
+        }
+        const next = upsertDraft(body);
         saved = { ...next, status: "SUBMITTED", submittedAt: new Date().toISOString() };
         return ok({ id: saved.id, status: saved.status, submittedAt: saved.submittedAt });
       }
