@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router";
 
 import { exportUsers } from "../../apis/user/usersApi";
+import { Badge } from "../../components/ui/Badge/Badge";
 import { Button } from "../../components/ui/Button/Button";
 import { DataTable, type Column } from "../../components/ui/DataTable/DataTable";
 import { Pagination } from "../../components/ui/Pagination/Pagination";
@@ -13,6 +15,7 @@ import { useDeleteUser, usePromoteApplicants, useUpdateUser, useUsers } from "..
 import { ROLES, type Role } from "../../types/auth";
 import type { AdminUser, PromotionResult } from "../../types/user";
 
+import { GenerationCell } from "./GenerationCell";
 import styles from "./MembersTab.module.scss";
 
 const PAGE_SIZE = 10;
@@ -26,50 +29,16 @@ const ROLE_TABS: { value: Role | undefined; label: string }[] = [
 
 const ROLE_OPTIONS = ROLES.map((role) => ({ value: role, label: ROLE_LABEL[role] }));
 
-interface GenerationCellProps {
-  user: AdminUser;
-  disabled: boolean;
-  onSave: (generationNo: number) => void;
-}
-
-/**
- * 기수 입력칸(0831 QA에서 발견). `LectureService.requireActiveMember`가 `generationNo`가
- * 없거나 활성 기수와 다르면 403을 던지는데, 권한만 바꾸는 옆 칸(`Select`)엔 기수를 넣을
- * 방법이 아예 없었다 — 그래서 권한만 올린 계정은 강좌·대시보드가 계속 막혀 있었다.
- *
- * 목록으로 고를 만한 "전체 기수" 조회 엔드포인트가 없어 자유 입력 칸으로 둔다. 값이
- * 바뀐 채로 포커스를 벗어나야만 저장한다 — `Select`처럼 즉시 반영하면 숫자를 한 자리씩
- * 지우는 중간에도 저장이 나간다.
- */
-function GenerationCell({ user, disabled, onSave }: GenerationCellProps) {
-  const [draft, setDraft] = useState(user.generationNo === null ? "" : String(user.generationNo));
-
-  function commit() {
-    const value = Number(draft);
-    if (draft.trim() === "" || !Number.isInteger(value) || value < 1) {
-      setDraft(user.generationNo === null ? "" : String(user.generationNo));
-      return;
-    }
-    if (value !== user.generationNo) onSave(value);
-  }
-
-  return (
-    <input
-      type="number"
-      className={styles.generationInput}
-      aria-label={`${user.name} 기수`}
-      value={draft}
-      disabled={disabled}
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={commit}
-    />
-  );
-}
-
 /** 와이어프레임 p8. `/admin/users` 의 사용자 관리 탭. */
 export function MembersTab() {
   const { page, filter: role, setPage, setFilter: setRole } = useTableParams("role", ROLES);
   const { data, isPending, isError, error, refetch } = useUsers({ role, page, size: PAGE_SIZE });
+
+  // 삭제는 소프트 삭제라 지운 사용자가 `WITHDRAWN` 으로 계속 내려온다(#277). 기본은 숨기되
+  // 이력을 봐야 할 때가 있어 아주 지우지는 않고 토글로 남긴다. 상태는 다른 표 상태와 같이
+  // 주소에 둔다 — 새로고침·링크 공유가 유지된다.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const showWithdrawn = searchParams.get("withdrawn") === "1";
 
   // 조 목록은 그룹 관리(#196)의 실제 조 편성을 그대로 쓴다. 못 받아도 사용자 목록 자체는 봐야 한다.
   const { data: groupBoard } = useGroupBoard();
@@ -79,19 +48,21 @@ export function MembersTab() {
   const [exportError, setExportError] = useState<string | null>(null);
   const [promoted, setPromoted] = useState<PromotionResult | null>(null);
 
+  /** 파일 응답이라 실패도 Blob 으로 온다 — 화면 문구는 BE `ErrorCode` 에서 가져온다. */
   async function handleExport() {
     setExportError(null);
     try {
       await exportUsers();
     } catch (caught) {
-      // 파일 응답이라 실패도 Blob 으로 온다. 문구는 BE ErrorCode 에서 가져온다.
       setExportError(userExportErrorMessage(caught));
     }
   }
 
+  /**
+   * 여러 명의 권한을 한 번에 올린다. 한 명 삭제보다 되돌리기 어렵다.
+   * 대상 수를 미리 알 수 없으므로 무엇이 일어나는지라도 분명히 말한다.
+   */
   function handlePromote() {
-    // 여러 명의 권한을 한 번에 올린다. 한 명 삭제보다 되돌리기 어렵다.
-    // 대상 수를 미리 알 수 없으므로 무엇이 일어나는지라도 분명히 말한다.
     const message = "서류 합격자를 모두 부원으로 올릴까요? 되돌리려면 한 명씩 권한을 되돌려야 합니다.";
     if (!window.confirm(message)) return;
 
@@ -99,11 +70,30 @@ export function MembersTab() {
     promote.mutate(undefined, { onSuccess: (result) => setPromoted(result) });
   }
 
+  /** 되돌릴 수 없다. 확인 문구에 이름을 넣어 다른 행을 지우는 실수를 줄인다. */
   function handleDelete(user: AdminUser) {
-    // 되돌릴 수 없다. 문구에 이름을 넣어 다른 행을 지우는 실수를 줄인다.
     if (!window.confirm(`${user.name}(${user.email}) 님을 삭제할까요? 되돌릴 수 없습니다.`)) return;
     removeUser.mutate(user.id);
   }
+
+  /**
+   * `useTableParams` 의 `setPage` 와 한 핸들러에서 같이 부르면 뒤엣것이 앞엣것을 덮는다
+   * (`useTableParams` 주석 참고). 한 번의 `setSearchParams` 안에서 page 까지 함께 지운다 —
+   * 숨김을 끄고 켜면 보이는 인원이 달라지므로 필터와 같은 이유로 첫 페이지로 되돌린다.
+   */
+  function toggleWithdrawn(next: boolean) {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      if (next) params.set("withdrawn", "1");
+      else params.delete("withdrawn");
+      params.delete("page");
+      return params;
+    });
+  }
+
+  const rows = data?.content ?? [];
+  const visibleRows = showWithdrawn ? rows : rows.filter((u) => u.status !== "WITHDRAWN");
+  const hiddenCount = rows.length - visibleRows.length;
 
   const groups = [
     { value: 0, label: "미배정" },
@@ -164,11 +154,15 @@ export function MembersTab() {
       header: "삭제",
       width: "4rem",
       align: "center",
-      render: (u) => (
-        <button type="button" className={styles.remove} aria-label={`${u.name} 삭제`} onClick={() => handleDelete(u)}>
-          🗑
-        </button>
-      ),
+      render: (u) =>
+        // 이미 탈퇴한 사용자는 다시 지울 것이 없다. 눌러도 아무 일이 없을 버튼을 두지 않는다.
+        u.status === "WITHDRAWN" ? (
+          <Badge>탈퇴</Badge>
+        ) : (
+          <button type="button" className={styles.remove} aria-label={`${u.name} 삭제`} onClick={() => handleDelete(u)}>
+            🗑
+          </button>
+        ),
     },
   ];
 
@@ -191,6 +185,10 @@ export function MembersTab() {
         </div>
 
         <div className={styles.actions}>
+          <label className={styles.toggle}>
+            <input type="checkbox" checked={showWithdrawn} onChange={(e) => toggleWithdrawn(e.target.checked)} />
+            탈퇴한 사용자 보기
+          </label>
           <Button variant="secondary" onClick={handlePromote} disabled={promote.isPending}>
             합격자 일괄 승격
           </Button>
@@ -216,11 +214,30 @@ export function MembersTab() {
 
       {isError && <ErrorState message={userErrorMessage(error)} onRetry={() => void refetch()} />}
 
-      {data && data.content.length === 0 && data.totalElements === 0 && (
+      {/* 페이지 수·전체 인원은 서버가 센 값이라 탈퇴자를 포함한다. 숨긴 만큼 표가 짧아 보이는
+          이유를 말해 두지 않으면 목록이 잘린 것처럼 읽힌다. */}
+      {hiddenCount > 0 && visibleRows.length > 0 && (
+        <p className={styles.notice} role="status">
+          탈퇴한 사용자 {hiddenCount}명을 숨겼습니다. 아래 페이지 수와 전체 인원에는 탈퇴자도 들어 있습니다.
+        </p>
+      )}
+
+      {data && visibleRows.length === 0 && hiddenCount > 0 && (
+        <EmptyState
+          message={`이 페이지의 사용자 ${hiddenCount}명은 모두 탈퇴했습니다.`}
+          action={
+            <button type="button" className={styles.backToFirst} onClick={() => toggleWithdrawn(true)}>
+              탈퇴한 사용자 보기
+            </button>
+          }
+        />
+      )}
+
+      {data && rows.length === 0 && data.totalElements === 0 && (
         <EmptyState message={role ? "해당 권한의 사용자가 없습니다." : "등록된 사용자가 없습니다."} />
       )}
 
-      {data && data.content.length === 0 && data.totalElements > 0 && (
+      {data && rows.length === 0 && data.totalElements > 0 && (
         <EmptyState
           message={`이 페이지에는 사용자가 없습니다. 전체 ${data.totalElements}명은 ${data.totalPages}페이지까지 있습니다.`}
           action={
@@ -231,9 +248,9 @@ export function MembersTab() {
         />
       )}
 
-      {data && data.content.length > 0 && (
+      {data && visibleRows.length > 0 && (
         <>
-          <DataTable columns={columns} rows={data.content} rowKey={(u) => u.id} caption="사용자 목록" />
+          <DataTable columns={columns} rows={visibleRows} rowKey={(u) => u.id} caption="사용자 목록" />
           <Pagination page={data.page} totalPages={data.totalPages} onChange={setPage} />
         </>
       )}
