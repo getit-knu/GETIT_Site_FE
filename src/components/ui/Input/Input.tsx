@@ -22,6 +22,15 @@ interface InputProps {
   type?: InputType;
   disabled?: boolean;
   maxLength?: number;
+  /**
+   * `type="number"` 일 때 받을 수 있는 범위.
+   *
+   * **타이핑을 막지는 않는다** — 브라우저는 범위 밖 값도 치게 놔둔다(스피너와 `:invalid`
+   * 상태에만 반영된다). 실제로 막는 것은 폼의 검증이고, 이건 스피너 경계를 맞추고
+   * 보조기기가 "1에서 6 사이"라고 미리 읽어 주게 하는 값이다.
+   */
+  min?: number;
+  max?: number;
 }
 
 export function Input({
@@ -36,6 +45,8 @@ export function Input({
   type = "text",
   disabled,
   maxLength,
+  min,
+  max,
 }: InputProps) {
   const generatedId = useId();
   const id = givenId ?? generatedId;
@@ -69,6 +80,8 @@ export function Input({
         placeholder={placeholder}
         disabled={disabled}
         maxLength={maxLength}
+        min={min}
+        max={max}
       />
       {error && (
         <p id={errorId} role="alert" className={styles.errorMessage}>

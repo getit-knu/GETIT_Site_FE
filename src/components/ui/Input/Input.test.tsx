@@ -65,3 +65,12 @@ it("여러 칸을 함께 그려도 각자의 error 문구를 가리킨다", () =
   expect(screen.getByRole("textbox", { name: "이메일" })).toHaveAccessibleDescription("이메일을 입력해 주세요.");
   expect(screen.getByRole("textbox", { name: "전화번호" })).toHaveAccessibleDescription("전화번호를 입력해 주세요.");
 });
+
+it("숫자 칸은 받을 수 있는 범위를 칸에 적어 둔다", () => {
+  // 범위를 검증에만 두면 스피너가 7, 8 로도 올라가고 보조기기는 경계를 알 길이 없다.
+  render(<Input label="학년" type="number" value="" onChange={() => {}} min={1} max={6} />);
+
+  const grade = screen.getByRole("spinbutton", { name: "학년" });
+  expect(grade).toHaveAttribute("min", "1");
+  expect(grade).toHaveAttribute("max", "6");
+});

@@ -131,6 +131,10 @@ export function BasicInfoFields({
         value={value.grade}
         onChange={onChange("grade")}
         placeholder="1"
+        // 학부는 6학년까지다(초과학기 포함). 검증과 같은 범위를 칸에도 적어 둔다 —
+        // 스피너가 여기서 멈추고, 보조기기가 칸에 들어갈 때 범위를 미리 읽어 준다.
+        min={1}
+        max={6}
       />
       <Input
         id={fieldId("studentId")}
