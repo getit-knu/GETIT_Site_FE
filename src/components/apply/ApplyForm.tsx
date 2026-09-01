@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { getColleges, getMajors } from "../../apis/public/publicApi";
 import { queryKeys } from "../../apis/queryKeys";
+import { Toast } from "../ui/Toast/Toast";
 import { applicationSaveErrorMessage, applicationSubmitErrorMessage } from "../../errors/application/errorMessages";
 import { useSaveDraft, useSubmitApplication } from "../../hooks/application/useMyApplication";
 import type { ApplicationDraftPayload, ApplicationFormResult, MyApplicationResult } from "../../types/application";
@@ -35,6 +36,8 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
 
   const saveDraft = useSaveDraft();
   const submitApplication = useSubmitApplication();
+  // 제출은 되돌릴 수 없다. 한 번 눌렀다고 바로 보내지 않고 되묻는다 (#275).
+  const [confirming, setConfirming] = useState(false);
 
   function edit(apply: () => void) {
     if (saveDraft.isSuccess || saveDraft.isError) saveDraft.reset();
@@ -74,7 +77,16 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
     saveDraft.mutate(buildPayload());
   }
 
+  /** 제출 버튼. 바로 보내지 않고 되묻는 토스트를 띄운다. */
   function handleSubmit() {
+    if (reason !== null) return;
+    setConfirming(true);
+  }
+
+  function handleConfirmSubmit() {
+    setConfirming(false);
+    // 되묻는 동안에도 폼은 고칠 수 있다. 그 사이에 다시 채워지지 않은 곳이 생겼으면 보내지 않는다 —
+    // 막는 이유는 아래 feedback 이 그대로 보여준다(값을 고치면 edit() 가 이전 결과를 지운다).
     if (reason !== null) return;
     submitApplication.mutate(buildPayload());
   }
@@ -223,6 +235,7 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
               {feedback.text}
             </p>
           )}
+          <p className={styles.notice}>제출하면 더 이상 수정할 수 없습니다.</p>
           <div className={styles.buttonsRow}>
             <button
               type="button"
@@ -243,6 +256,14 @@ export function ApplyForm({ form, existing }: ApplyFormProps) {
           </div>
         </div>
       </div>
+
+      {confirming && (
+        <Toast
+          message="제출하면 더 이상 수정할 수 없습니다. 제출할까요?"
+          action={{ label: "제출", onClick: handleConfirmSubmit }}
+          onClose={() => setConfirming(false)}
+        />
+      )}
     </div>
   );
 }

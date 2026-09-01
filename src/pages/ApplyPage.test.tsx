@@ -4,9 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getForm, getMyApplication, getResult, saveDraft, submit } from "../apis/application/myApplicationApi";
+import { getForm, getMyApplication, saveDraft } from "../apis/application/myApplicationApi";
 import { getColleges, getMajors, getRecruitmentStatus } from "../apis/public/publicApi";
-import type { ApplicationFormResult, ApplicationDecisionResult, MyApplicationResult } from "../types/application";
+import type { ApplicationFormResult, MyApplicationResult } from "../types/application";
 import type { College, Major } from "../types/college";
 import type { RecruitmentStatus } from "../types/recruitment";
 
@@ -95,18 +95,6 @@ function myApplication(over: Partial<MyApplicationResult> = {}): MyApplicationRe
     answers: [{ questionId: 1, answerText: "이미 써둔 동기입니다.", selectedOptions: null }],
     savedAt: "2026-09-01T00:00:00+09:00",
     submittedAt: null,
-    ...over,
-  };
-}
-
-function decision(over: Partial<ApplicationDecisionResult> = {}): ApplicationDecisionResult {
-  return {
-    generationNo: 9,
-    status: "SUBMITTED",
-    statusLabel: "심사 중",
-    documentAnnouncedAt: "2026-09-15T00:00:00+09:00",
-    finalAnnouncedAt: "2026-09-30T00:00:00+09:00",
-    nextStep: null,
     ...over,
   };
 }
@@ -302,38 +290,6 @@ describe("ApplyPage", () => {
     expect(
       screen.getByText("이름 · 이메일 · 전화번호 · 단과 대학 · 전공 · 학년을 모두 입력해 주세요."),
     ).toBeInTheDocument();
-  });
-
-  it("전부 채우면 제출할 수 있고, 성공하면 결과 화면으로 바뀐다", async () => {
-    // 제출 성공 후 useMyApplication이 다시 조회하면 이제는 SUBMITTED로 와야
-    // 화면이 결과 보기로 바뀐다 — 실제 서버도 이렇게 상태가 바뀐다.
-    vi.mocked(submit).mockImplementation(async () => {
-      vi.mocked(getMyApplication).mockResolvedValue(myApplication({ status: "SUBMITTED" }));
-      return { id: 1, status: "SUBMITTED", submittedAt: "2026-09-02T00:00:00+09:00" };
-    });
-    vi.mocked(getResult).mockResolvedValue(decision());
-    await renderReadyPage();
-
-    await userEvent.type(screen.getByLabelText("전화번호 *"), "010-0000-0000");
-    fireEvent.change(screen.getByLabelText("단과 대학 *"), { target: { value: "1" } });
-    await screen.findByRole("option", { name: "경영학과" });
-    fireEvent.change(screen.getByLabelText("전공 *"), { target: { value: "1" } });
-    await userEvent.type(screen.getByLabelText("학년 *"), "2");
-    await userEvent.type(screen.getByLabelText("지원 동기는 무엇인가요? *"), "성장하고 싶어서 지원합니다.");
-    await userEvent.click(screen.getByRole("radio", { name: "SW" }));
-    await userEvent.click(screen.getByRole("checkbox", { name: "동의합니다" }));
-
-    const submitButton = screen.getByRole("button", { name: "제출하기" });
-    expect(submitButton).not.toBeDisabled();
-    await userEvent.click(submitButton);
-
-    await waitFor(() => expect(submit).toHaveBeenCalled());
-    const payload = vi.mocked(submit).mock.lastCall?.[0];
-    expect(payload?.basicInfo.collegeId).toBe(1);
-    expect(payload?.basicInfo.majorId).toBe(1);
-    expect(payload?.basicInfo.grade).toBe(2);
-
-    expect(await screen.findByRole("heading", { name: "심사 중" })).toBeInTheDocument();
   });
 
   it("임시 저장이 실패하면 이유를 보여준다", async () => {

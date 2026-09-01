@@ -106,7 +106,90 @@ describe("ApplicantsTab", () => {
     renderPage();
 
     const table = await screen.findByRole("table");
-    expect(within(table).getAllByText("—")).toHaveLength(2);
+    // 개수로 세면 칼럼이 늘 때마다 깨진다. 그 칸을 짚는다 — 선택 · 이름 · 학번 · 소속 순.
+    const cells = within(table).getAllByRole("cell");
+    expect(cells[2]).toHaveTextContent("—");
+    expect(cells[3]).toHaveTextContent("—");
+  });
+
+  it("평가 점수와 평가자 수를 보여준다", async () => {
+    // 한 명만 매긴 90점과 다섯 명이 매긴 90점은 다르게 읽어야 한다.
+    vi.mocked(api.getApplicants).mockResolvedValue(page([applicant({ totalScore: 87.5, evaluatorCount: 3 })]));
+    renderPage();
+
+    const table = await screen.findByRole("table");
+    expect(within(table).getByText(/87\.5점/)).toBeInTheDocument();
+    expect(within(table).getByText(/3명/)).toBeInTheDocument();
+  });
+
+  it("아무도 평가하지 않았으면 미평가로 보여준다", async () => {
+    vi.mocked(api.getApplicants).mockResolvedValue(page([applicant({ totalScore: null, evaluatorCount: 0 })]));
+    renderPage();
+
+    const table = await screen.findByRole("table");
+    expect(within(table).getByText("미평가")).toBeInTheDocument();
+  });
+
+  it("서버가 점수를 주지 않으면 미평가라고 하지 않는다", async () => {
+    /*
+      BE#188 전에는 점수 필드 자체가 없다. 그걸 "미평가" 로 그리면 아무도 평가하지 않은
+      것처럼 보인다 — 실제로는 알 수 없는 상태다.
+    */
+    vi.mocked(api.getApplicants).mockResolvedValue(page([applicant()]));
+    renderPage();
+
+    const table = await screen.findByRole("table");
+    expect(within(table).queryByText("미평가")).not.toBeInTheDocument();
+  });
+
+  it("서버가 준 전체 평균을 보여준다", async () => {
+    vi.mocked(api.getApplicants).mockResolvedValue(
+      page([applicant({ totalScore: 90, evaluatorCount: 2 })], {
+        summary: { averageTotalScore: 82.375, evaluatedCount: 12 },
+      }),
+    );
+    renderPage();
+
+    expect(await screen.findByText("지원자 전체 평균 82.4점 (평가 완료 12명)")).toBeInTheDocument();
+  });
+
+  it("평가를 마친 지원자가 없으면 평균 대신 안내를 보여준다", async () => {
+    vi.mocked(api.getApplicants).mockResolvedValue(
+      page([applicant()], { summary: { averageTotalScore: null, evaluatedCount: 0 } }),
+    );
+    renderPage();
+
+    expect(await screen.findByText("아직 평가를 마친 지원자가 없습니다.")).toBeInTheDocument();
+  });
+
+  it("서버가 평균을 주지 않으면 화면에서 만들어 내지 않는다", async () => {
+    /*
+      목록이 페이징돼 있어 현재 페이지로만 평균을 내면 페이지를 넘길 때마다 기준이
+      달라진다. 틀린 기준을 보여주느니 없는 편이 낫다.
+    */
+    vi.mocked(api.getApplicants).mockResolvedValue(page([applicant({ totalScore: 90, evaluatorCount: 2 })]));
+    renderPage();
+
+    await screen.findByRole("table");
+    expect(screen.queryByText(/전체 평균/)).not.toBeInTheDocument();
+  });
+
+  it("서버가 summary 를 null 로 주면 화면이 터지지 않고 평균이 없다고 알린다", async () => {
+    /*
+      필드가 없는 것(`undefined`)과 값이 빈 것(`null`)은 서버 직렬화 설정에 따라 갈린다.
+      생성된 스키마엔 `summary` 자체가 아직 없어 `null` 이 안 온다는 근거가 없다.
+      `null` 이 가드를 통과하면 `averageTotalScore` 접근에서 목록 전체가 터진다.
+    */
+    vi.mocked(api.getApplicants).mockResolvedValue(
+      page([applicant({ totalScore: 90, evaluatorCount: 2 })], { summary: null }),
+    );
+    renderPage();
+
+    const table = await screen.findByRole("table");
+    expect(within(table).getByText("김지원")).toBeInTheDocument();
+    expect(screen.getByText("지원자 전체 평균 정보가 없습니다.")).toBeInTheDocument();
+    // 없는 평균을 지어내지 않는다. 숫자가 붙은 평균 문구가 나오면 안 된다.
+    expect(screen.queryByText(/평균 \d/)).not.toBeInTheDocument();
   });
 
   it("상태 탭이 URL 과 조회 조건에 함께 반영된다", async () => {
