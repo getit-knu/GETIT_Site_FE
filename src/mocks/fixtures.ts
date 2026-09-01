@@ -4,7 +4,7 @@ import type { College, Major } from "../types/college";
 import type { HomeResult, PublicActivityPhoto, PublicFaq } from "../types/home";
 import type { PublicProjectBoard } from "../types/project";
 import type { RecruitmentStatus } from "../types/recruitment";
-import type { PublicEventCalendar, StaffDirectory } from "../types/site";
+import type { StaffDirectory } from "../types/site";
 
 /**
  * 개발용 목 데이터. **dev 서버에서만 쓰인다** — `devApiMockPlugin`이 유일한 소비자라
@@ -199,40 +199,6 @@ export const projects: PublicProjectBoard = {
   last: true,
   semesters: ["2026-SPRING", "2025-FALL"],
 };
-
-export function eventsFor(year: number, month: number): PublicEventCalendar {
-  const mm = String(month).padStart(2, "0");
-  return {
-    year,
-    month,
-    events: [
-      {
-        id: 1,
-        title: "정기 세션",
-        startDate: `${year}-${mm}-05`,
-        endDate: `${year}-${mm}-05`,
-        type: "WORKSHOP",
-        place: "IT대 101호",
-      },
-      {
-        id: 2,
-        title: "교내 해커톤",
-        startDate: `${year}-${mm}-14`,
-        endDate: `${year}-${mm}-15`,
-        type: "COMPETITION",
-        place: "본관 대강당",
-      },
-      {
-        id: 3,
-        title: "번개 모임",
-        startDate: `${year}-${mm}-22`,
-        endDate: `${year}-${mm}-22`,
-        type: "EVENT",
-        place: "북문",
-      },
-    ],
-  };
-}
 
 export const applicationForm: ApplicationFormResult = {
   generationNo: 9,

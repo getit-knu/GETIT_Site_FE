@@ -1,5 +1,6 @@
 import type { ApplicationDraftPayload, MyApplicationResult } from "../types/application";
 
+import { eventsFor } from "./eventFixtures";
 import * as fx from "./fixtures";
 
 export interface MockResponse {
@@ -69,7 +70,7 @@ export function createMockApi() {
       case "GET /api/public/events": {
         const year = Number(searchParams.get("year") ?? new Date().getFullYear());
         const month = Number(searchParams.get("month") ?? new Date().getMonth() + 1);
-        return ok(fx.eventsFor(year, month));
+        return ok(eventsFor(year, month));
       }
       case "GET /api/applications/form":
         return ok(fx.applicationForm);
