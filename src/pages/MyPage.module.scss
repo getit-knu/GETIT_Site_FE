@@ -68,11 +68,12 @@ $card-shadow:
   font-size: 1rem;
 }
 
+// `<dl>` 이라 브라우저 기본 마진이 붙는다. margin-top 만 두려고 통째로 명시한다.
 .infoGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
-  margin-top: 2rem;
+  margin: 2rem 0 0;
 
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
@@ -86,11 +87,12 @@ $card-shadow:
   font-weight: 600;
 }
 
+// `<dd>` 는 기본으로 margin-inline-start: 40px 이 붙는다. 지우지 않으면 값 칸만 밀린다.
 .infoValue {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-top: 0.5rem;
+  margin: 0.5rem 0 0;
   border-radius: 0.625rem;
   padding: 0.75rem;
   background-color: $color-placeholder-bg;

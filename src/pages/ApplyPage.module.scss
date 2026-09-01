@@ -177,6 +177,14 @@
   gap: 1rem;
 }
 
+// 되돌릴 수 없다는 것은 누르기 전에 늘 보여야 한다. 되묻는 토스트는 누른 뒤에야 뜬다.
+.notice {
+  margin: 0;
+  color: $color-text-secondary;
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
 .reason {
   margin: 0;
   color: $color-danger;
