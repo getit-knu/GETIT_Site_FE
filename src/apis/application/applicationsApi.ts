@@ -3,8 +3,10 @@ import { downloadFile } from "../../libs/downloadFile";
 import { getQuestions } from "../recruitment/recruitmentApi";
 import type {
   AdjacentApplicants,
+  Applicant,
   ApplicantBoard,
   ApplicantListParams,
+  ApplicantScoreSummary,
   ApplicationAnswer,
   ApplicationDetail,
   BulkDecisionPayload,
@@ -12,6 +14,7 @@ import type {
   DocumentDecisionResult,
   EvaluationPayload,
   EvaluationSummary,
+  Page,
 } from "../../types/application";
 
 /**
@@ -20,10 +23,23 @@ import type {
 
 const BASE = "/api/admin/recruitment/applications";
 
+/**
+ * `GET /api/admin/recruitment/applications`의 실제 응답(`ApplicantListResult`).
+ *
+ * **페이지 필드가 최상위가 아니라 `applicants` 아래 감싸여 온다** — BE#188 스키마가 아직
+ * 없을 때 짐작으로 `ApplicantBoard`를 최상위 페이지 형태로 짜 둔 게 실제와 달랐다(생성된
+ * 스키마로 확인함, 프로덕션에서 지원자 관리 화면이 `data.content`를 못 읽어 그대로
+ * 터지고 있었다). 여기서 한 번 풀어서 화면엔 계속 평평한 형태(`ApplicantBoard`)로 준다.
+ */
+interface RawApplicantBoard {
+  applicants: Page<Applicant>;
+  summary?: ApplicantScoreSummary | null;
+}
+
 /** `GET /api/admin/recruitment/applications?generationId=&status=&page=&size=` */
 export async function getApplicants(params: ApplicantListParams): Promise<ApplicantBoard> {
-  const { data } = await client.get<ApplicantBoard>(BASE, { params });
-  return data;
+  const { data } = await client.get<RawApplicantBoard>(BASE, { params });
+  return { ...data.applicants, summary: data.summary };
 }
 
 interface RawAnswer {
