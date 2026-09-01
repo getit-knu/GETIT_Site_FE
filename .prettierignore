@@ -2,3 +2,5 @@ dist
 pnpm-lock.yaml
 pnpm-workspace.yaml
 src/apis/generated.ts
+# Claude Code worktree(.claude/worktrees/*)는 저장소 복사본 - 이중 검사 방지
+.claude

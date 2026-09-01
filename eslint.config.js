@@ -7,7 +7,8 @@ import importX from "eslint-plugin-import-x";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig([
-  globalIgnores(["dist", "**/generated.ts"]),
+  // .claude: Claude Code의 git worktree(.claude/worktrees/*)가 저장소 복사본이라 이중 린트된다.
+  globalIgnores(["dist", "**/generated.ts", ".claude"]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: [
