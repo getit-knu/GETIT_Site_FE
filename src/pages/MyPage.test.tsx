@@ -216,6 +216,39 @@ describe("MyPage", () => {
     expect(screen.getByRole("button", { name: "저장" })).toBeDisabled();
   });
 
+  it("전화번호는 숫자만 쳐도 010-1234-5678 꼴로 끊긴다", async () => {
+    vi.mocked(getMe).mockResolvedValue(MEMBER);
+    renderPage();
+    await userEvent.click(await screen.findByRole("button", { name: "수정" }));
+
+    await userEvent.type(screen.getByLabelText("전화번호"), "01012345678");
+
+    expect(screen.getByLabelText("전화번호")).toHaveValue("010-1234-5678");
+  });
+
+  it("전화번호 형식이 어긋나면 이유를 보여주고 저장을 막는다", async () => {
+    vi.mocked(getMe).mockResolvedValue(MEMBER);
+    renderPage();
+    await userEvent.click(await screen.findByRole("button", { name: "수정" }));
+
+    // 끝까지 못 친 상태. 자릿수를 채우기 전에는 저장이 막혀야 한다.
+    await userEvent.type(screen.getByLabelText("전화번호"), "0101234");
+
+    expect(screen.getByText("전화번호를 010-1234-5678 형식으로 입력해 주세요.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "저장" })).toBeDisabled();
+  });
+
+  it("전화번호를 비워 두는 것은 막지 않는다", async () => {
+    // 선택 항목이다. 안 적었다고 저장까지 막으면 이름만 고치러 온 사람이 갇힌다.
+    vi.mocked(getMe).mockResolvedValue({ ...MEMBER, phoneNumber: null });
+    renderPage();
+    await userEvent.click(await screen.findByRole("button", { name: "수정" }));
+
+    expect(screen.getByLabelText("전화번호")).toHaveValue("");
+    expect(screen.queryByText("전화번호를 010-1234-5678 형식으로 입력해 주세요.")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "저장" })).toBeEnabled();
+  });
+
   it("저장하면 이름 · 전화번호를 실어 보내고 조회 화면으로 돌아간다", async () => {
     vi.mocked(getMe).mockResolvedValue(MEMBER);
     vi.mocked(updateMe).mockResolvedValue({ ...MEMBER, name: "김부원2", phoneNumber: "010-1234-5678" });

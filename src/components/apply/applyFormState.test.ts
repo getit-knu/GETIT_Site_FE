@@ -3,36 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ApplicationFormQuestion } from "../../types/application";
 
 import type { BasicInfoState } from "./applyFormState";
-import { formatPhoneNumber, submitBlocker } from "./applyFormState";
-
-describe("formatPhoneNumber", () => {
-  it("숫자만 쭉 치면 010-1234-5678 꼴로 끊어 준다", () => {
-    expect(formatPhoneNumber("01012345678")).toBe("010-1234-5678");
-  });
-
-  it("다 치기 전 짧은 상태도 그대로 성립한다", () => {
-    // 입력하는 동안 매 글자마다 부르므로 중간 상태가 어색하면 안 된다.
-    expect(formatPhoneNumber("0")).toBe("0");
-    expect(formatPhoneNumber("010")).toBe("010");
-    expect(formatPhoneNumber("0101")).toBe("010-1");
-    expect(formatPhoneNumber("0101234")).toBe("010-1234");
-    expect(formatPhoneNumber("01012345")).toBe("010-1234-5");
-  });
-
-  it("이미 하이픈이 든 값을 다시 넣어도 같은 결과다", () => {
-    // 이어쓰기로 불러온 값이 그대로 통과해야 한다.
-    expect(formatPhoneNumber("010-1234-5678")).toBe("010-1234-5678");
-  });
-
-  it("숫자가 아닌 글자는 버린다", () => {
-    expect(formatPhoneNumber("010 1234 5678")).toBe("010-1234-5678");
-    expect(formatPhoneNumber("가010나1234")).toBe("010-1234");
-  });
-
-  it("11자리를 넘겨 쳐도 더 붙지 않는다", () => {
-    expect(formatPhoneNumber("010123456789999")).toBe("010-1234-5678");
-  });
-});
+import { submitBlocker } from "./applyFormState";
 
 describe("submitBlocker 문항 안내", () => {
   const question = (over: Partial<ApplicationFormQuestion>): ApplicationFormQuestion => ({
@@ -93,8 +64,10 @@ describe("submitBlocker 문항 안내", () => {
     expect(submitBlocker({ ...filled, grade: "4" }, {}, [])).toBeNull();
   });
 
-  it("전화번호는 11자리를 채워야 한다", () => {
+  it("전화번호는 010-1234-5678 형식만 받는다", () => {
+    // 자릿수만 보던 때는 `020-1234-5678` 처럼 11자리이기만 한 값도 통과했다(#334).
     expect(submitBlocker({ ...filled, phone: "010-1234" }, {}, [])?.field).toBe("phone");
+    expect(submitBlocker({ ...filled, phone: "020-1234-5678" }, {}, [])?.field).toBe("phone");
     expect(submitBlocker({ ...filled, phone: "010-1234-5678" }, {}, [])).toBeNull();
   });
 
