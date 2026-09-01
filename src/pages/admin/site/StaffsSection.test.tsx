@@ -33,6 +33,13 @@ const STAFFS: Staff[] = [
   staff({ id: 5, name: "정하늘", order: 3 }),
 ];
 
+/** 저장을 막지 않을 만큼만 채운다. 필수 항목이 늘어도 각 테스트를 고치지 않게 한 곳에 둔다. */
+async function fillRequired(name: string) {
+  await userEvent.type(screen.getByLabelText("이름 *"), name);
+  await userEvent.type(screen.getByLabelText("직책 *"), "SW 운영진");
+  await userEvent.type(screen.getByLabelText("학과 · 학번 *"), "컴퓨터공학과 21");
+}
+
 function renderSection() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
@@ -143,7 +150,8 @@ describe("StaffsSection", () => {
     expect(screen.getByRole("button", { name: "저장" })).toBeInTheDocument();
   });
 
-  it("이름이나 직책이 비면 저장을 막는다", async () => {
+  it("이름 · 직책 · 학과가 비면 저장을 막는다", async () => {
+    // 셋 다 공개 운영진 카드에 그대로 나가고, BE 도 `@NotBlank` 로 막는다.
     renderSection();
     await screen.findByText("이재민");
 
@@ -155,6 +163,37 @@ describe("StaffsSection", () => {
     await userEvent.type(screen.getByLabelText("이름 *"), "새 운영진");
     expect(screen.getByText("직책을 입력해 주세요.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "추가" })).toBeDisabled();
+
+    await userEvent.type(screen.getByLabelText("직책 *"), "SW 운영진");
+    expect(screen.getByText("학과 · 학번을 입력해 주세요.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "추가" })).toBeDisabled();
+
+    await userEvent.type(screen.getByLabelText("학과 · 학번 *"), "컴퓨터공학과 21");
+    expect(screen.getByRole("button", { name: "추가" })).toBeEnabled();
+  });
+
+  it("공백만 넣은 학과는 채운 것으로 보지 않는다", async () => {
+    // BE `@NotBlank` 는 공백만 있는 값도 거절한다.
+    renderSection();
+    await screen.findByText("이재민");
+
+    await userEvent.click(screen.getByRole("button", { name: "+ SW 운영진 추가" }));
+    await userEvent.type(screen.getByLabelText("이름 *"), "새 운영진");
+    await userEvent.type(screen.getByLabelText("직책 *"), "SW 운영진");
+    await userEvent.type(screen.getByLabelText("학과 · 학번 *"), "   ");
+
+    expect(screen.getByText("학과 · 학번을 입력해 주세요.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "추가" })).toBeDisabled();
+  });
+
+  it("구역은 고르는 값이라 비지 않지만 필수 표시는 붙는다", async () => {
+    // `Select` 에 "선택 안 함" 이 없어 검증할 것이 없다 — 표시만 맞으면 된다.
+    renderSection();
+    await screen.findByText("이재민");
+
+    await userEvent.click(screen.getByRole("button", { name: "+ SW 운영진 추가" }));
+
+    expect(screen.getByLabelText("구역 *")).toHaveValue("SW");
   });
 
   it("추가는 고른 구역으로 보낸다", async () => {
@@ -163,8 +202,7 @@ describe("StaffsSection", () => {
     await screen.findByText("이재민");
 
     await userEvent.click(screen.getByRole("button", { name: "+ SW 운영진 추가" }));
-    await userEvent.type(screen.getByLabelText("이름 *"), "새 운영진");
-    await userEvent.type(screen.getByLabelText("직책 *"), "SW 운영진");
+    await fillRequired("새 운영진");
     await userEvent.click(screen.getByRole("button", { name: "추가" }));
 
     await waitFor(() => expect(api.createStaff).toHaveBeenCalled());
@@ -183,8 +221,7 @@ describe("StaffsSection", () => {
     await screen.findByText("이재민");
 
     await userEvent.click(screen.getByRole("button", { name: "+ SW 운영진 추가" }));
-    await userEvent.type(screen.getByLabelText("이름 *"), "새 운영진");
-    await userEvent.type(screen.getByLabelText("직책 *"), "SW 운영진");
+    await fillRequired("새 운영진");
     await userEvent.type(screen.getByLabelText("GitHub 링크"), "https://github.com/new");
     await userEvent.type(screen.getByLabelText("Instagram 링크"), "https://instagram.com/new");
     await userEvent.click(screen.getByRole("button", { name: "추가" }));
@@ -202,8 +239,7 @@ describe("StaffsSection", () => {
     await screen.findByText("이재민");
 
     await userEvent.click(screen.getByRole("button", { name: "+ SW 운영진 추가" }));
-    await userEvent.type(screen.getByLabelText("이름 *"), "새 운영진");
-    await userEvent.type(screen.getByLabelText("직책 *"), "SW 운영진");
+    await fillRequired("새 운영진");
     await userEvent.type(screen.getByLabelText("GitHub 링크"), "github.com/new");
 
     expect(screen.getByText(/GitHub 링크은\(는\) http 또는 https로 시작하는 주소여야 합니다\./)).toBeInTheDocument();
