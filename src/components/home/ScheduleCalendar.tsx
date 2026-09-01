@@ -152,7 +152,10 @@ export function ScheduleCalendar() {
                 <ChevronRight aria-hidden="true" />
               </button>
             </div>
-            <button type="button" className={styles.todayButton} aria-label="이번 달로 이동" onClick={goToToday}>
+            {/* WCAG 2.5.3: aria-label은 화면에 보이는 텍스트("오늘")를 그대로 포함해야 한다 —
+                이전엔 "이번 달로 이동"이라 시각 라벨과 완전히 달라 음성 입력 사용자가 "오늘을
+                클릭"이라 말해도 매칭되지 않았다. */}
+            <button type="button" className={styles.todayButton} aria-label="오늘로 이동" onClick={goToToday}>
               오늘
             </button>
           </div>

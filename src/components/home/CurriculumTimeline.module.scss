@@ -18,14 +18,17 @@
   background-color: $color-background;
 }
 
-// 배경 워시. Hero와 같은 톤·모션으로 Home 섹션들끼리 통일감을 준다.
+// 배경 워시. Hero와 같은 톤·모션으로 Home 섹션들끼리 통일감을 준다(1차보다 알파를 올려 "티가
+// 안 난다"는 피드백에 맞췄다). 크기는 Hero만큼 키우지 않았다 — 이 섹션은 위아래로 옆 섹션과
+// 맞닿아 있고 `overflow: hidden`도 없앤 상태라(위 주석 참고), 너무 크게 번지면 옆 섹션까지
+// 짙게 새어 들어간다. 대신 색은 Hero와 같은 accent·보라 두 톤을 그대로 맞췄다.
 .washAccent,
-.washSlate {
+.washViolet {
   position: absolute;
   z-index: 0;
   border-radius: 50%;
   filter: blur(4.375rem);
-  animation: wash-drift 68s $ease-out infinite alternate;
+  animation: wash-drift 72s $ease-out infinite alternate;
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
@@ -41,25 +44,27 @@
   right: -7.5rem;
   width: 34rem;
   height: 34rem;
-  background: radial-gradient(circle, rgb(40 57 151 / 10%) 0%, rgb(40 57 151 / 0%) 70%);
+  background: radial-gradient(circle, rgb(40 57 151 / 16%) 0%, rgb(40 57 151 / 0%) 70%);
 }
 
-.washSlate {
+.washViolet {
   bottom: -6.25rem;
   left: -8.75rem;
   width: 36rem;
   height: 36rem;
-  background: radial-gradient(circle, rgb(100 116 150 / 9%) 0%, rgb(100 116 150 / 0%) 70%);
-  animation-delay: 12s;
+  background: radial-gradient(circle, rgb(109 40 160 / 13%) 0%, rgb(109 40 160 / 0%) 70%);
+  animation-delay: 24s;
 }
 
 @keyframes wash-drift {
   from {
-    opacity: 0.7;
+    opacity: 0.75;
+    scale: 1;
   }
 
   to {
     opacity: 1;
+    scale: 1.06;
   }
 }
 

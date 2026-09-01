@@ -19,17 +19,20 @@
   }
 }
 
-// 배경 워시. 예전엔 둥둥 떠다니는 블롭 원 2개였는데(사용자 피드백: "촌스러움") 시선을
-// 뺏지 않는 은은한 radial-gradient 번짐 2겹으로 교체했다 — 모서리에서 옅게 번지고 blur로
-// 경계를 지워 형태 자체가 안 보이게 한다. 움직임은 60s+ 의 아주 느린 opacity 드리프트뿐이라
-// "떠다닌다"는 인상을 주지 않는다.
+// 배경 워시. 예전엔 둥둥 떠다니는 블롭 원 2개였는데(사용자 피드백: "촌스러움") radial-gradient
+// 번짐으로 교체했다 — 1차 시도(8~12% 불투명도)는 "티가 안 난다"는 피드백을 받아 알파·크기를
+// 크게 올렸다(지금은 뷰포트 60~80% 크기, accent 기준 20%). 그래도 형태 자체는 gradient가
+// 가장자리(70%)에서 투명하게 사라지므로 블롭처럼 또렷한 원으로는 안 보인다. 움직임은 위치가
+// 눈에 띄게 이동하면 "떠다니는 원"으로 되돌아가 버리므로 opacity·scale 드리프트만 아주 느리게
+// (60s+) 준다.
 .washAccent,
-.washSlate {
+.washViolet,
+.washTeal {
   position: absolute;
   z-index: 0;
   border-radius: 50%;
   filter: blur(4.375rem);
-  animation: wash-drift 68s $ease-out infinite alternate;
+  animation: wash-drift 72s $ease-out infinite alternate;
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
@@ -37,31 +40,43 @@
 }
 
 .washAccent {
-  top: -12rem;
-  left: -10rem;
-  width: 40rem;
-  height: 40rem;
-  // $color-accent(#283997)를 8~12% 불투명도로 옅게 — 페이지 배경 위에 은은한 깊이감만 준다.
-  background: radial-gradient(circle, rgb(40 57 151 / 12%) 0%, rgb(40 57 151 / 0%) 70%);
+  top: -18vw;
+  left: -14vw;
+  width: min(70vw, 60rem);
+  height: min(70vw, 60rem);
+  // $color-accent(#283997) 20% — 1차보다 알파를 2배 가까이 올려 배경 워시가 확실히 보이게 했다.
+  background: radial-gradient(circle, rgb(40 57 151 / 20%) 0%, rgb(40 57 151 / 0%) 70%);
 }
 
-.washSlate {
-  top: 8rem;
-  right: -14rem;
-  width: 44rem;
-  height: 44rem;
-  // 차가운 회청색 톤 — 팔레트에 없는 보조색이라 여기서만 하드코딩한다.
-  background: radial-gradient(circle, rgb(100 116 150 / 10%) 0%, rgb(100 116 150 / 0%) 70%);
+.washViolet {
+  right: -14vw;
+  bottom: -20vw;
+  width: min(74vw, 62rem);
+  height: min(74vw, 62rem);
+  // 보라 계열 보조 톤 — 팔레트에 없어 여기서만 하드코딩. accent와 다른 모서리에 둬 깊이감을 준다.
+  background: radial-gradient(circle, rgb(109 40 160 / 16%) 0%, rgb(109 40 160 / 0%) 70%);
+  animation-delay: 24s;
+}
+
+.washTeal {
+  top: 4vw;
+  right: 2vw;
+  width: min(42vw, 34rem);
+  height: min(42vw, 34rem);
+  // 청록 계열 — 세 번째 겹으로 accent·보라 사이에 톤 변화를 하나 더 준다(크기는 가장 작게).
+  background: radial-gradient(circle, rgb(13 148 136 / 13%) 0%, rgb(13 148 136 / 0%) 70%);
   animation-delay: 12s;
 }
 
 @keyframes wash-drift {
   from {
-    opacity: 0.7;
+    opacity: 0.75;
+    scale: 1;
   }
 
   to {
     opacity: 1;
+    scale: 1.06;
   }
 }
 

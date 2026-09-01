@@ -133,7 +133,7 @@ describe("ScheduleCalendar", () => {
     await userEvent.click(nextButton);
     expect(screen.getByRole("heading", { name: "2026년 3월" })).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "이번 달로 이동" }));
+    await userEvent.click(screen.getByRole("button", { name: "오늘로 이동" }));
 
     expect(screen.getByRole("heading", { name: "2026년 1월" })).toBeInTheDocument();
   });
