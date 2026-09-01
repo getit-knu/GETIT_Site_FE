@@ -9,6 +9,7 @@ import { formatDateTime } from "../../libs/formatDate";
 import type { MemberAssignmentInfo, MemberMaterial, MemberMySubmission } from "../../types/lecture";
 import { Button } from "../ui/Button/Button";
 import { Input } from "../ui/Input/Input";
+import { Markdown } from "../ui/Markdown/Markdown";
 import { TextArea } from "../ui/TextArea/TextArea";
 // 강의 시청 페이지(`LectureDetailPage`)와 클래스를 공유한다 — 자료·과제 UI가 그 페이지
 // 레이아웃 안에서만 쓰이고 시각적으로 한 몸이라, 분리한 뒤에도 같은 스타일 모듈을 그대로 쓴다.
@@ -219,7 +220,7 @@ export function AssignmentSection({ lectureId, assignment, mySubmission }: Assig
         <>
           <div className={styles.assignmentInfo}>
             <h3 className={styles.assignmentTitle}>{assignment.title}</h3>
-            <p className={styles.assignmentDescription}>{assignment.description}</p>
+            <Markdown className={styles.assignmentDescription} content={assignment.description} />
             <p className={styles.assignmentDeadline}>마감: {formatDateTime(assignment.deadline)}</p>
           </div>
 
