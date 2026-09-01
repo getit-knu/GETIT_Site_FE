@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ScheduleSection } from "../../components/recruitment/ScheduleSection";
 import { Button } from "../../components/ui/Button/Button";
 import { Input } from "../../components/ui/Input/Input";
-import { ErrorState } from "../../components/ui/states/States";
+import { ErrorState, TextSkeleton } from "../../components/ui/states/States";
 import { isSiteErrorCode, siteErrorMessage, siteSaveErrorMessage } from "../../errors/site/errorMessages";
 import { useGeneration, useSaveGeneration, useSaveTracks, useTracks } from "../../hooks/site/useSiteSettings";
 import type { Generation } from "../../types/site";
@@ -91,8 +91,16 @@ function GenerationSection({ generation }: { generation: Generation | null }) {
       </p>
 
       <div className={styles.footer}>
-        {reason !== null && <p className={styles.reason}>{reason}</p>}
-        {save.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(save.error)}</p>}
+        {reason !== null && (
+          <p role="status" className={styles.reason}>
+            {reason}
+          </p>
+        )}
+        {save.error !== null && (
+          <p role="alert" className={styles.reason}>
+            {siteSaveErrorMessage(save.error)}
+          </p>
+        )}
         {save.isSuccess && save.error === null && (
           <p className={styles.saved} role="status">
             저장했습니다.
@@ -142,7 +150,7 @@ function TracksFormSection() {
     <section id="tracks" className={styles.section}>
       <h2 className={styles.sectionTitle}>강의 분류</h2>
 
-      {isPending && <p className={styles.hint}>불러오는 중…</p>}
+      {isPending && <TextSkeleton lines={3} label="강의 분류 불러오는 중" />}
       {isError && <ErrorState message={siteErrorMessage(error)} onRetry={() => void refetch()} />}
 
       {data && (
@@ -176,7 +184,7 @@ export default function SitePage() {
   const generationMissing = isSiteErrorCode(generationQuery.error, "ACTIVE_GENERATION_NOT_FOUND");
   const errorQuery = generationQuery.isError && !generationMissing ? generationQuery : null;
 
-  if (generationQuery.isPending) return <p className={styles.loading}>불러오는 중…</p>;
+  if (generationQuery.isPending) return <TextSkeleton lines={4} label="사이트 설정 불러오는 중" />;
   if (errorQuery) {
     return <ErrorState message={siteErrorMessage(errorQuery.error)} onRetry={() => void errorQuery.refetch()} />;
   }

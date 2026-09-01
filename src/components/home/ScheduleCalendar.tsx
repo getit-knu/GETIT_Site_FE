@@ -6,12 +6,21 @@ import { getEvents } from "../../apis/public/publicApi";
 import { queryKeys } from "../../apis/queryKeys";
 import { useScrollReveal } from "../../hooks/ui/useScrollReveal";
 import { prefersReducedMotion } from "../../libs/prefersReducedMotion";
-import type { SiteEventType } from "../../types/site";
+import type { PublicEvent, SiteEventType } from "../../types/site";
 import { Badge } from "../ui/Badge/Badge";
 
 import styles from "./ScheduleCalendar.module.scss";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+
+/**
+ * 겹친 일정을 몇 줄까지 얇은 선으로 그릴지. 넘치는 만큼은 날짜 버튼의 `aria-label` 개수로만
+ * 알린다 — 48px 칸에 네 줄 이상을 밀어 넣으면 선끼리 붙어 오히려 한 덩어리로 보인다.
+ *
+ * `.module.scss`의 `--lane-*` 값들이 이 수를 전제로 칸 아래 자리를 비운다. 늘리려면 양쪽을
+ * 같이 고쳐야 한다.
+ */
+const MAX_LANES = 3;
 
 /** 불러오는 동안 세워 둘 뼈대 줄 수. 흔한 달의 일정 수에 맞춰 카드 높이가 크게 안 튀는 값. */
 const SKELETON_ROWS = [0, 1, 2];
@@ -47,6 +56,82 @@ function monthCursor(totalMonths: number) {
   return { year: Math.floor(totalMonths / 12), monthIndex: ((totalMonths % 12) + 12) % 12 };
 }
 
+/** 날짜 칸에 그릴 얇은 선 한 줄. 한 날에 일정이 겹치면 이런 줄이 여러 개 쌓인다. */
+type DayLane = {
+  event: PublicEvent;
+  /** 왼쪽 목록에서의 순서. 날을 눌렀을 때 어느 일정으로 데려갈지 고르는 기준. */
+  order: number;
+  /** 위에서 몇 번째 줄인지. 여러 날 일정이 날마다 같은 줄에 머물러야 하나의 긴 선으로 읽힌다. */
+  lane: number;
+  /** 이웃 칸의 **같은 일정** 선과 맞닿는가. 칸이 아니라 선마다 판단해야 거짓말을 안 한다. */
+  connectLeft: boolean;
+  connectRight: boolean;
+};
+
+/**
+ * 지금 짚고 있는 대상. "날"과 "일정"은 강조 범위가 달라 한 필드로 뭉갤 수 없다 —
+ * 자세한 이유는 아래 `selection` 상태 주석에 있다.
+ */
+type Selection = { kind: "day"; day: number } | { kind: "event"; eventId: number } | null;
+
+/**
+ * 이 달에 걸치는 일정을 날짜별 "줄(lane)"로 눕힌다.
+ *
+ * 예전엔 한 날에 일정 하나만 남기고 나머지를 버려서(`if (!map.has(day))`), 프로덕션 10월처럼
+ * 9/14~10/20 워크숍이 달을 가로지르는 경우 그 아래 겹친 일정 두 개가 캘린더에 아예 나타나지
+ * 않았다. 게다가 켜진 20일이 두꺼운 알약 하나로 이어져 날짜 숫자까지 덮었다.
+ *
+ * 줄 배정은 구글·노션 캘린더와 같은 그리디 방식이다 — 시작일 순으로(같은 날 시작이면 긴 일정
+ * 먼저) 훑으며, 겹치는 일정이 차지하지 않은 **가장 위 줄**에 넣는다. 그래서 (1) 여러 날 일정이
+ * 날마다 같은 줄에 머물러 하나의 긴 선으로 읽히고, (2) 줄 수는 최대 동시 겹침 수만큼만 쓴다.
+ */
+function buildDayLanes(events: PublicEvent[], year: number, monthIndex: number) {
+  const lastDay = daysInMonth(year, monthIndex);
+  const month = String(monthIndex + 1).padStart(2, "0");
+  const monthStart = `${year}-${month}-01`;
+  const monthEnd = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
+
+  // 달 경계로 자른 구간. 지난달에 시작한 일정은 1일부터, 다음 달까지 가는 일정은 말일까지 걸친다.
+  const spans: Array<{ event: PublicEvent; order: number; start: number; end: number }> = [];
+  events.forEach((event, order) => {
+    const start = event.startDate < monthStart ? 1 : dayOf(event.startDate);
+    const end = event.endDate > monthEnd ? lastDay : dayOf(event.endDate);
+    if (Number.isNaN(start) || Number.isNaN(end) || end < start) return;
+    spans.push({ event, order, start, end });
+  });
+
+  // 같은 날 시작이면 긴 일정을 위 줄로 — 달을 통째로 가로지르는 일정이 맨 윗줄에 놓여야
+  // 아래 줄의 짧은 일정들이 그 위를 오르내리지 않는다.
+  spans.sort((a, b) => a.start - b.start || b.end - a.end || a.order - b.order);
+
+  // laneEnds[i] = i번째 줄이 지금까지 차지한 마지막 날. 시작일 순으로 훑으니, 그 날보다 앞에서
+  // 끝난 줄은 다시 비어 있는 셈이다.
+  const laneEnds: number[] = [];
+  const lanesByDay = new Map<number, DayLane[]>();
+
+  for (const span of spans) {
+    const reusable = laneEnds.findIndex((end) => end < span.start);
+    const lane = reusable === -1 ? laneEnds.length : reusable;
+    laneEnds[lane] = span.end;
+
+    for (let day = span.start; day <= span.end; day++) {
+      // 주가 바뀌면 줄이 갈리니 일요일의 왼쪽·토요일의 오른쪽은 잇지 않는다.
+      const weekday = new Date(year, monthIndex, day).getDay();
+      const lanes = lanesByDay.get(day) ?? [];
+      lanes.push({
+        event: span.event,
+        order: span.order,
+        lane,
+        connectLeft: day > span.start && weekday !== 0,
+        connectRight: day < span.end && weekday !== 6,
+      });
+      lanesByDay.set(day, lanes);
+    }
+  }
+
+  return lanesByDay;
+}
+
 /**
  * Home 일정 캘린더(#220). `GET /api/public/events?year=&month=`로 연동한다.
  *
@@ -68,8 +153,19 @@ export function ScheduleCalendar() {
   const { year, monthIndex } = cursor;
   // 달 넘김 방향. 날짜 그리드가 이동 방향에서 미끄러져 들어오는 애니메이션의 기준(UX 라운드 2).
   const [direction, setDirection] = useState<"next" | "prev">("next");
-  // 달력에서 고른 날. 그 날에 걸린 일정을 왼쪽 목록에서 짚어 준다.
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  /**
+   * 지금 짚고 있는 것. **"날"과 "일정"은 다른 선택이다.**
+   *
+   * 달력 날짜를 누르면 그 **날**을 고른 것이라, 그 날에 겹친 일정 전부를 목록에서 짚어야 한다.
+   * 목록 카드를 누르면 그 **일정**을 고른 것이라, 그 일정이 걸친 모든 날의 선을 짚어야 하고
+   * 같은 날을 함께 쓰는 다른 일정은 건드리면 안 된다.
+   *
+   * 그래서 `selectedDay: number | null` 하나로는 부족하다. 카드 클릭을 "시작일 선택"으로
+   * 흉내내면, 겹친 날에서 내가 누르지도 않은 옆 일정까지 함께 켜진다.
+   *
+   * 한 번에 하나만 살아 있게 둔다 — 두 종류의 강조가 화면에 겹치면 무엇을 짚고 있는지 흐려진다.
+   */
+  const [selection, setSelection] = useState<Selection>(null);
   const lastWheelAt = useRef(0);
   const eventListRef = useRef<HTMLUListElement>(null);
   const [eventsCardRef, eventsCardRevealed] = useScrollReveal<HTMLDivElement>();
@@ -82,18 +178,10 @@ export function ScheduleCalendar() {
   });
   const events = data?.events ?? [];
 
-  // 하루짜리든 여러 날짜에 걸치든, 이 달 범위 안에 걸리는 날을 전부 켠다.
-  // 켜진 날은 눌러서 왼쪽 목록의 해당 일정으로 갈 수 있어야 하므로, 날짜 → 일정 id도 함께 만든다.
-  // 한 날에 여러 일정이 겹치면 먼저 시작한(= 목록에서 위에 오는) 쪽으로 보낸다.
-  const eventIdByDay = new Map<number, number>();
-  for (const event of events) {
-    const start = event.startDate < `${year}-${String(month).padStart(2, "0")}-01` ? 1 : dayOf(event.startDate);
-    const lastDay = daysInMonth(year, monthIndex);
-    const endCap = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-    const end = event.endDate > endCap ? lastDay : dayOf(event.endDate);
-    if (Number.isNaN(start) || Number.isNaN(end)) continue;
-    for (let d = start; d <= end; d++) if (!eventIdByDay.has(d)) eventIdByDay.set(d, event.id);
-  }
+  // 하루짜리든 여러 날짜에 걸치든, 이 달 범위 안에 걸리는 날을 전부 켠다. 한 날에 여러 일정이
+  // 겹치면 줄(lane)을 나눠 **전부** 들고 있는다 — 켜진 날은 눌러서 왼쪽 목록으로 갈 수 있어야
+  // 하므로 어느 일정인지도 함께 남는다.
+  const lanesByDay = buildDayLanes(events, year, monthIndex);
 
   /**
    * 함수형 업데이터를 쓴다 — 이전 달/다음 달 버튼을 빠르게 연달아 누르면 리렌더가 따라오기
@@ -104,7 +192,7 @@ export function ScheduleCalendar() {
    */
   function stepMonth(delta: number) {
     setDirection(delta > 0 ? "next" : "prev");
-    setSelectedDay(null);
+    setSelection(null);
     setCursor((current) => monthCursor(current.year * 12 + current.monthIndex + delta));
   }
 
@@ -112,7 +200,7 @@ export function ScheduleCalendar() {
   function goToToday() {
     // 과거를 보고 있었으면 앞으로(next), 미래를 보고 있었으면 뒤로(prev) 미끄러진다.
     setDirection(year * 12 + monthIndex < now.getFullYear() * 12 + now.getMonth() ? "next" : "prev");
-    setSelectedDay(null);
+    setSelection(null);
     setCursor({ year: now.getFullYear(), monthIndex: now.getMonth() });
   }
 
@@ -123,14 +211,26 @@ export function ScheduleCalendar() {
    * 따라 스크롤해서, 목록 안만 움직이면 될 상황에 페이지 전체가 딸려 움직인다.
    */
   function selectDay(day: number) {
-    setSelectedDay(day);
+    setSelection({ kind: "day", day });
 
+    // 겹친 날이면 목록에서 위에 오는(= `order`가 가장 작은) 일정으로 데려간다. 줄 순서는
+    // 긴 일정을 위로 올리느라 목록 순서와 다를 수 있으니 `lane`이 아니라 `order`로 고른다.
+    const first = lanesByDay.get(day)?.reduce((top, lane) => (lane.order < top.order ? lane : top));
     const list = eventListRef.current;
-    const target = list?.querySelector<HTMLElement>(`[data-event-id="${eventIdByDay.get(day)}"]`);
+    const target = list?.querySelector<HTMLElement>(`[data-event-id="${first?.event.id}"]`);
     if (list === null || !target) return;
 
     const top = target.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
     list.scrollTo({ top, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+  }
+
+  /**
+   * 목록 카드를 누르면 그 일정이 걸친 모든 날의 선을 짚어 준다 — 캘린더 → 목록의 반대 방향.
+   *
+   * 목록은 스크롤하지 않는다. 방금 누른 카드는 이미 눈앞에 있다.
+   */
+  function selectEvent(eventId: number) {
+    setSelection({ kind: "event", eventId });
   }
 
   function handleWheel(event: WheelEvent<HTMLDivElement>) {
@@ -153,17 +253,13 @@ export function ScheduleCalendar() {
   const isCurrentMonth = year === now.getFullYear() && monthIndex === now.getMonth();
 
   /**
-   * 이웃한 날이 **같은 일정**으로 이어지는지. 이어지면 두 칸의 강조가 하나의 긴 알약처럼 붙는다.
-   *
-   * 하루짜리 일정 두 개가 우연히 붙어 있는 경우까지 이으면 하나의 긴 일정처럼 보여 거짓말이 되므로,
-   * 같은 `id`일 때만 잇는다. 주가 바뀌면 줄이 갈리니 일요일의 왼쪽·토요일의 오른쪽은 잇지 않는다.
+   * 목록에서 이 일정을 짚을지. 고른 것이 **날**이면 그 날에 걸린 일정 전부, 고른 것이
+   * **일정**이면 그 하나만이다.
    */
-  function connects(day: number, side: -1 | 1) {
-    const weekday = (leadingBlanks + day - 1) % 7;
-    if (side === -1 && weekday === 0) return false;
-    if (side === 1 && weekday === 6) return false;
-    const id = eventIdByDay.get(day);
-    return id !== undefined && eventIdByDay.get(day + side) === id;
+  function isEventPicked(eventId: number) {
+    if (selection === null) return false;
+    if (selection.kind === "event") return selection.eventId === eventId;
+    return lanesByDay.get(selection.day)?.some((lane) => lane.event.id === eventId) === true;
   }
 
   return (
@@ -198,8 +294,24 @@ export function ScheduleCalendar() {
                   key={event.id}
                   className={styles.eventItem}
                   data-event-id={event.id}
+                  data-selected={isEventPicked(event.id) || undefined}
                   style={{ "--reveal-index": index } as CSSProperties}
                 >
+                  {/*
+                    카드를 덮는 오버레이 버튼. 카드 안에 `h4`가 있어 `<button>`으로 감쌀 수 없다
+                    (`button`의 콘텐츠 모델은 phrasing content라 `h4`·`div`가 들어가지 못한다).
+                    그래서 카드 전체를 덮는 버튼을 따로 얹어 클릭 영역을 카드만큼 넓게 잡는다.
+
+                    WCAG 2.5.3: 이름에 화면에 보이는 제목을 그대로 담아, 음성 입력으로 제목을
+                    말해도 이 버튼이 잡힌다.
+                  */}
+                  <button
+                    type="button"
+                    className={styles.eventSelect}
+                    aria-label={`${event.title} 캘린더에서 보기`}
+                    aria-pressed={isEventPicked(event.id)}
+                    onClick={() => selectEvent(event.id)}
+                  />
                   <span className={styles.eventDay}>{dayOf(event.startDate)}</span>
                   <div>
                     <h4 className={styles.eventTitle}>{event.title}</h4>
@@ -260,15 +372,23 @@ export function ScheduleCalendar() {
 
             {/* key로 달마다 다시 그려 이동 방향에서 미끄러져 들어오게 한다 — 휠·버튼 어느 쪽으로
                 넘겨도 "어느 방향으로 이동했는지"가 눈에 남는다. */}
-            <div key={`${year}-${monthIndex}`} className={styles.dateGrid} data-direction={direction}>
+            {/* 일정을 고른 동안에는 짚지 않은 선을 흐리게 한다 — 스위치는 그리드에 달아야 한다.
+                그 일정이 없는 칸의 선까지 흐려져야 "이 일정"이 한눈에 드러나기 때문이다. */}
+            <div
+              key={`${year}-${monthIndex}`}
+              className={styles.dateGrid}
+              data-direction={direction}
+              data-selecting-event={selection?.kind === "event" || undefined}
+            >
               {calendarCells.map((date, index) => {
                 if (date === null) return <span key={`empty-${index}`} />;
 
                 const today = (isCurrentMonth && date === now.getDate()) || undefined;
-                if (!eventIdByDay.has(date)) {
+                const lanes = lanesByDay.get(date);
+                if (lanes === undefined) {
                   return (
                     <span key={date} className={styles.date} data-today={today}>
-                      {date}
+                      <span className={styles.dateNumber}>{date}</span>
                     </span>
                   );
                 }
@@ -281,13 +401,30 @@ export function ScheduleCalendar() {
                     className={styles.date}
                     data-active
                     data-today={today}
-                    data-selected={date === selectedDay || undefined}
-                    data-connect-left={connects(date, -1) || undefined}
-                    data-connect-right={connects(date, 1) || undefined}
-                    aria-label={`${month}월 ${date}일 일정 보기`}
+                    data-selected={(selection?.kind === "day" && selection.day === date) || undefined}
+                    aria-label={`${month}월 ${date}일 일정 ${lanes.length}개 보기`}
                     onClick={() => selectDay(date)}
                   >
-                    {date}
+                    <span className={styles.dateNumber}>{date}</span>
+                    {/* 얇은 선 자체는 장식이다 — 몇 개 걸렸는지는 위 aria-label이 말한다. */}
+                    <span className={styles.laneStrip} aria-hidden="true">
+                      {lanes
+                        .filter((lane) => lane.lane < MAX_LANES)
+                        .map((lane) => (
+                          <span
+                            key={lane.event.id}
+                            className={styles.lane}
+                            data-lane={lane.lane}
+                            data-event-id={lane.event.id}
+                            data-type={lane.event.type}
+                            data-connect-left={lane.connectLeft || undefined}
+                            data-connect-right={lane.connectRight || undefined}
+                            data-selected={
+                              (selection?.kind === "event" && selection.eventId === lane.event.id) || undefined
+                            }
+                          />
+                        ))}
+                    </span>
                   </button>
                 );
               })}

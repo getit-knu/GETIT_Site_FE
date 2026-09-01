@@ -33,6 +33,7 @@ export function TextArea({
 }: TextAreaProps) {
   const generatedId = useId();
   const id = givenId ?? generatedId;
+  const errorId = `${id}-error`;
 
   return (
     <div className={styles.wrapper}>
@@ -48,13 +49,16 @@ export function TextArea({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         onBlur={onBlur}
+        // 오류를 칸 자체에 붙이는 이유는 `Input` 의 같은 자리 주석 참고.
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
         placeholder={placeholder}
         rows={rows}
         maxLength={maxLength}
         disabled={disabled}
       />
       {error && (
-        <p role="alert" className={styles.errorMessage}>
+        <p id={errorId} role="alert" className={styles.errorMessage}>
           {error}
         </p>
       )}

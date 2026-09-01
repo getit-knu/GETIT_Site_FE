@@ -4,7 +4,49 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GET IT</title>
+
+    <!--
+      제목은 라우트마다 `routes.tsx` 의 `handle.title` 이 덮어쓴다. 여기 값은 그 전에
+      잠깐 보이는 것과, JS 를 돌리지 않는 크롤러가 읽는 것이다.
+    -->
+    <title>GET IT · 경북대학교 컴퓨터학부 SW&amp;창업 동아리</title>
+    <meta
+      name="description"
+      content="경북대학교 컴퓨터학부 SW&amp;창업 동아리 GET IT. 강의와 프로젝트로 상상을 현실로 만듭니다. 9기 지원 접수 중."
+    />
+
+    <!--
+      링크 미리보기(카카오톡 · 인스타 DM · 에브리타임 · 슬랙 · 디스코드).
+
+      **신입생이 이 사이트를 만나는 경로가 대부분 저기다.** 이 블록이 없을 때는 지원
+      링크를 붙여도 제목도 설명도 썸네일도 없이 파란 주소만 떴다.
+
+      절대 주소여야 한다 — 크롤러는 상대 경로를 제대로 풀어 주지 않는다. 그래서 배포
+      도메인을 여기 박아 둔다. **커스텀 도메인이 붙으면 이 세 줄을 같이 고쳐야 한다.**
+
+      이미지는 `public/og.png`(1200×630). SVG 는 어느 크롤러도 안 읽어서 PNG 로 뽑았고,
+      카카오처럼 가운데를 잘라내는 곳이 있어 글자를 가운데 모아 두었다.
+      **og.png 를 바꿔도 카카오는 옛 이미지를 한동안 캐시한다** — 카카오 디벨로퍼스의
+      캐시 초기화를 쓰거나 파일 이름을 바꿔야 한다.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="GET IT" />
+    <meta property="og:locale" content="ko_KR" />
+    <meta property="og:url" content="https://knugetit.pages.dev/" />
+    <meta property="og:title" content="GET IT · 경북대학교 컴퓨터학부 SW&amp;창업 동아리" />
+    <meta
+      property="og:description"
+      content="강의와 프로젝트로 상상을 현실로 만듭니다. 타과생도 부담 없이, 9기 지원 접수 중."
+    />
+    <meta property="og:image" content="https://knugetit.pages.dev/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="GET IT · LET'S MAKE ANYTHING." />
+
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- 모바일 브라우저 주소창 색. 히어로의 흰 배경과 이어져 경계가 덜 보인다. -->
+    <meta name="theme-color" content="#ffffff" />
   </head>
   <body>
     <div id="root"></div>

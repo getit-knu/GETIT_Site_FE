@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "../../../components/ui/Button/Button";
 import { Input } from "../../../components/ui/Input/Input";
 import { Select } from "../../../components/ui/Select/Select";
-import { ErrorState } from "../../../components/ui/states/States";
+import { ErrorState, TextSkeleton } from "../../../components/ui/states/States";
 import { siteErrorMessage, siteSaveErrorMessage } from "../../../errors/site/errorMessages";
 import { useDeleteEvent, useEvents, useSaveEvent } from "../../../hooks/site/useContent";
 import type { SiteEvent, SiteEventPayload, SiteEventType } from "../../../types/site";
@@ -102,8 +102,16 @@ function EventForm({ draft: initial, generationId, onClose }: FormProps) {
       </label>
 
       <div className={styles.formFooter}>
-        {reason !== null && <p className={styles.reason}>{reason}</p>}
-        {save.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(save.error)}</p>}
+        {reason !== null && (
+          <p role="status" className={styles.reason}>
+            {reason}
+          </p>
+        )}
+        {save.error !== null && (
+          <p role="alert" className={styles.reason}>
+            {siteSaveErrorMessage(save.error)}
+          </p>
+        )}
         <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
           취소
         </Button>
@@ -130,7 +138,7 @@ export function EventsSection({ generationId }: { generationId: number }) {
     <section id="events" className={styles.section}>
       <h2 className={styles.sectionTitle}>행사 일정</h2>
 
-      {isPending && <p className={styles.hint}>불러오는 중…</p>}
+      {isPending && <TextSkeleton lines={4} label="행사 일정 불러오는 중" />}
       {isError && <ErrorState message={siteErrorMessage(error)} onRetry={() => void refetch()} />}
 
       {data &&
@@ -165,7 +173,11 @@ export function EventsSection({ generationId }: { generationId: number }) {
         + 행사 추가
       </button>
 
-      {remove.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(remove.error)}</p>}
+      {remove.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {siteSaveErrorMessage(remove.error)}
+        </p>
+      )}
 
       {editing !== null && (
         <EventForm

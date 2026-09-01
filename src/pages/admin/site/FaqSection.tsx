@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "../../../components/ui/Button/Button";
 import { Input } from "../../../components/ui/Input/Input";
 import { TextArea } from "../../../components/ui/TextArea/TextArea";
-import { ErrorState } from "../../../components/ui/states/States";
+import { ErrorState, TextSkeleton } from "../../../components/ui/states/States";
 import { siteErrorMessage, siteSaveErrorMessage } from "../../../errors/site/errorMessages";
 import { useDeleteFaq, useFaqs, useSaveFaq } from "../../../hooks/site/useContent";
 import type { Faq, FaqPayload } from "../../../types/site";
@@ -73,8 +73,16 @@ function FaqForm({ draft: initial, onClose }: FormProps) {
       </label>
 
       <div className={styles.formFooter}>
-        {reason !== null && <p className={styles.reason}>{reason}</p>}
-        {save.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(save.error)}</p>}
+        {reason !== null && (
+          <p role="status" className={styles.reason}>
+            {reason}
+          </p>
+        )}
+        {save.error !== null && (
+          <p role="alert" className={styles.reason}>
+            {siteSaveErrorMessage(save.error)}
+          </p>
+        )}
         <Button variant="secondary" onClick={onClose} disabled={save.isPending}>
           취소
         </Button>
@@ -101,7 +109,7 @@ export function FaqSection() {
     <section id="faqs" className={styles.section}>
       <h2 className={styles.sectionTitle}>FAQ</h2>
 
-      {isPending && <p className={styles.hint}>불러오는 중…</p>}
+      {isPending && <TextSkeleton lines={4} label="FAQ 불러오는 중" />}
       {isError && <ErrorState message={siteErrorMessage(error)} onRetry={() => void refetch()} />}
 
       {data &&
@@ -133,7 +141,11 @@ export function FaqSection() {
         + FAQ 추가
       </button>
 
-      {remove.error !== null && <p className={styles.reason}>{siteSaveErrorMessage(remove.error)}</p>}
+      {remove.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {siteSaveErrorMessage(remove.error)}
+        </p>
+      )}
 
       {editing !== null && <FaqForm key={editing.id ?? "new"} draft={editing} onClose={() => setEditing(null)} />}
     </section>

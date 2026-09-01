@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { AdminProjectFormModal } from "../../components/project/AdminProjectFormModal";
 import { Button } from "../../components/ui/Button/Button";
 import { Pagination } from "../../components/ui/Pagination/Pagination";
-import { EmptyState, ErrorState } from "../../components/ui/states/States";
+import { CardGridSkeleton, EmptyState, ErrorState } from "../../components/ui/states/States";
 import { projectErrorMessage, projectSaveErrorMessage } from "../../errors/project/errorMessages";
 import {
   useApproveProject,
@@ -77,7 +77,12 @@ export default function AdminProjectsPage() {
         <Button onClick={() => openModal("project")}>+ 프로젝트 추가</Button>
       </div>
 
-      {isPending && <p className={styles.loading}>불러오는 중…</p>}
+      {isPending && (
+        // 높이는 스타일시트 계산값이다(썸네일 8rem + 본문 패딩 0.875rem×2 + 제목·배지·버튼).
+        // 어드민도 목 API 라우트가 없어 실측하지 못했다. 이 격자는 `align-items: start` 라
+        // 카드마다 높이가 달라, 애초에 한 값으로 정확히 맞출 수 없는 자리이기도 하다.
+        <CardGridSkeleton className={styles.grid} count={6} height="16rem" label="프로젝트 목록 불러오는 중" />
+      )}
       {isError && <ErrorState message={projectErrorMessage(error)} onRetry={() => void refetch()} />}
 
       {data && data.content.length === 0 && <EmptyState message="등록된 프로젝트가 없습니다." />}
@@ -141,9 +146,21 @@ export default function AdminProjectsPage() {
         </>
       )}
 
-      {remove.error !== null && <p className={styles.reason}>{projectSaveErrorMessage(remove.error)}</p>}
-      {approve.error !== null && <p className={styles.reason}>{projectSaveErrorMessage(approve.error)}</p>}
-      {reject.error !== null && <p className={styles.reason}>{projectSaveErrorMessage(reject.error)}</p>}
+      {remove.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {projectSaveErrorMessage(remove.error)}
+        </p>
+      )}
+      {approve.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {projectSaveErrorMessage(approve.error)}
+        </p>
+      )}
+      {reject.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {projectSaveErrorMessage(reject.error)}
+        </p>
+      )}
 
       {modal === "project" && <AdminProjectFormModal project={editing} onClose={closeModal} />}
     </div>

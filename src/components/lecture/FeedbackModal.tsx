@@ -9,7 +9,7 @@ import { Button } from "../ui/Button/Button";
 import { Modal, ModalBody, ModalHeader } from "../ui/Modal/Modal";
 import { PaginatedModal } from "../ui/PaginatedModal/PaginatedModal";
 import { TextArea } from "../ui/TextArea/TextArea";
-import { ErrorState } from "../ui/states/States";
+import { ErrorState, TextSkeleton } from "../ui/states/States";
 
 import { SubmissionFileView } from "./SubmissionFileView";
 import styles from "./FeedbackModal.module.scss";
@@ -96,7 +96,11 @@ function FeedbackForm({ submissionId, feedbacks, nextSubmissionId, onNavigate }:
         </button>
       )}
 
-      {save.error !== null && <p className={styles.error}>{feedbackErrorMessage(save.error)}</p>}
+      {save.error !== null && (
+        <p role="alert" className={styles.error}>
+          {feedbackErrorMessage(save.error)}
+        </p>
+      )}
 
       <div className={styles.actions}>
         <Button disabled={isBlank || save.isPending} onClick={() => submit()}>
@@ -170,7 +174,7 @@ export function FeedbackModal({ submissionId, onNavigate, onClose }: FeedbackMod
             강의 문구를 쓰면 표에 없는 코드가 되어 "강의 목록을 불러오지 못했습니다" 가 뜬다.
           */}
           {isPending ? (
-            <p className={styles.hint}>불러오는 중…</p>
+            <TextSkeleton lines={3} label="피드백 불러오는 중" />
           ) : (
             <ErrorState message={feedbackErrorMessage(error)} onRetry={() => void refetch()} />
           )}

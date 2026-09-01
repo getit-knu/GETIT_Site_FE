@@ -5,7 +5,7 @@ import { useCriteria, useSaveCriteria } from "../../hooks/recruitment/useRecruit
 import type { CriterionDraft } from "../../types/recruitment";
 import { Button } from "../ui/Button/Button";
 import { EditableListRow } from "../ui/EditableListRow/EditableListRow";
-import { ErrorState } from "../ui/states/States";
+import { ErrorState, FormSkeleton } from "../ui/states/States";
 
 import styles from "./Section.module.scss";
 
@@ -74,7 +74,7 @@ export function CriteriaSection() {
     );
   }
 
-  if (isPending) return <p className={styles.loading}>불러오는 중…</p>;
+  if (isPending) return <FormSkeleton fields={3} label="평가 기준 불러오는 중" />;
   if (isError) {
     return <ErrorState message={recruitmentErrorMessage(error)} onRetry={() => void refetch()} />;
   }
@@ -141,9 +141,17 @@ export function CriteriaSection() {
       </div>
 
       {/* 저장을 막는 이유를 미리 보여준다. 눌러 보고 알게 하지 않는다. */}
-      {reason !== null && <p className={styles.reason}>{reason}</p>}
+      {reason !== null && (
+        <p role="status" className={styles.reason}>
+          {reason}
+        </p>
+      )}
 
-      {save.error !== null && <p className={styles.reason}>{recruitmentErrorMessage(save.error)}</p>}
+      {save.error !== null && (
+        <p role="alert" className={styles.reason}>
+          {recruitmentErrorMessage(save.error)}
+        </p>
+      )}
     </section>
   );
 }
