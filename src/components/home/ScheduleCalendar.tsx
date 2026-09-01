@@ -37,8 +37,9 @@ function dayOf(dateStr: string): number {
 /**
  * Home 일정 캘린더(#220). `GET /api/public/events?year=&month=`로 연동한다.
  *
- * 좌우 버튼, 하단 점, 캘린더 위 휠 스크롤로 달을 넘길 수 있다 — 연말·연초를 넘기면
- * 연도도 함께 넘어간다(옛 목업은 2026년 한 해만 순환했다).
+ * 좌우 버튼, 헤더의 "오늘" 버튼, 캘린더 위 휠 스크롤로 달을 넘길 수 있다 — 연말·연초를
+ * 넘기면 연도도 함께 넘어간다(옛 목업은 2026년 한 해만 순환했다). 하단 12개월 점 페이지네이션은
+ * 좌우 화살표와 기능이 겹치고 시각 소음만 더해 제거했다(대신 "오늘" 버튼으로 복귀).
  */
 export function ScheduleCalendar() {
   const now = new Date();
@@ -75,8 +76,10 @@ export function ScheduleCalendar() {
     });
   }
 
-  function goToMonth(index: number) {
-    setMonthIndex(index);
+  /** 헤더의 "오늘" 버튼 — 몇 달을 넘겨봤든 오늘이 속한 달로 바로 돌아온다. */
+  function goToToday() {
+    setYear(now.getFullYear());
+    setMonthIndex(now.getMonth());
   }
 
   function handleWheel(event: WheelEvent<HTMLDivElement>) {
@@ -93,6 +96,9 @@ export function ScheduleCalendar() {
     ...Array.from({ length: firstWeekday(year, monthIndex) }, () => null),
     ...Array.from({ length: daysInMonth(year, monthIndex) }, (_, index) => index + 1),
   ];
+
+  // 오늘 링 표시용 — 지금 보고 있는 달이 실제 오늘이 속한 달일 때만 날짜가 의미를 가진다.
+  const isCurrentMonth = year === now.getFullYear() && monthIndex === now.getMonth();
 
   return (
     <section className={styles.section}>
@@ -134,15 +140,20 @@ export function ScheduleCalendar() {
 
         <div className={styles.calendarCard} onWheel={handleWheel}>
           <div className={styles.calendarHeader}>
-            <button type="button" className={styles.navButton} aria-label="이전 달" onClick={() => stepMonth(-1)}>
-              <ChevronLeft aria-hidden="true" />
-            </button>
-            <div>
-              <p className={styles.calendarMonth}>{month}월</p>
-              <p className={styles.calendarYear}>{year}</p>
+            <div className={styles.calendarNavGroup}>
+              <button type="button" className={styles.navButton} aria-label="이전 달" onClick={() => stepMonth(-1)}>
+                <ChevronLeft aria-hidden="true" />
+              </button>
+              <div>
+                <p className={styles.calendarMonth}>{month}월</p>
+                <p className={styles.calendarYear}>{year}</p>
+              </div>
+              <button type="button" className={styles.navButton} aria-label="다음 달" onClick={() => stepMonth(1)}>
+                <ChevronRight aria-hidden="true" />
+              </button>
             </div>
-            <button type="button" className={styles.navButton} aria-label="다음 달" onClick={() => stepMonth(1)}>
-              <ChevronRight aria-hidden="true" />
+            <button type="button" className={styles.todayButton} aria-label="이번 달로 이동" onClick={goToToday}>
+              오늘
             </button>
           </div>
 
@@ -165,25 +176,17 @@ export function ScheduleCalendar() {
                 date === null ? (
                   <span key={`empty-${index}`} />
                 ) : (
-                  <span key={date} className={highlightedDays.has(date) ? styles.dateActive : styles.date}>
+                  <span
+                    key={date}
+                    className={styles.date}
+                    data-active={highlightedDays.has(date) || undefined}
+                    data-today={(isCurrentMonth && date === now.getDate()) || undefined}
+                  >
                     {date}
                   </span>
                 ),
               )}
             </div>
-          </div>
-
-          <div className={styles.pagination}>
-            {Array.from({ length: 12 }, (_, index) => (
-              <button
-                key={index}
-                type="button"
-                className={index === monthIndex ? styles.dotActive : styles.dot}
-                aria-label={`${index + 1}월로 이동`}
-                aria-current={index === monthIndex}
-                onClick={() => goToMonth(index)}
-              />
-            ))}
           </div>
         </div>
       </div>

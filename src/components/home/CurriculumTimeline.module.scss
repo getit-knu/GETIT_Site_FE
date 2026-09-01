@@ -1,25 +1,31 @@
 @use "../../styles/abstracts/variables" as *;
 @use "../../styles/abstracts/container";
 @use "../../styles/abstracts/breakpoints" as *;
+@use "../../styles/abstracts/motion" as *;
 
+// `overflow: hidden`을 걷어냈다 — 예전엔 모서리 밖으로 번지는 블롭 원을 가리는 용도였는데,
+// 블롭이 스크롤 스냅으로 섹션이 부분 노출되는 타이밍에 이 섹션 자신의 경계에서 하드 엣지로
+// 잘려 옆 섹션(프로젝트 쇼케이스)으로 새어 들어간 것처럼 보이는 문제가 있었다(브라우저로 재현·
+// 확인함). 아래 워시는 블롭과 달리 radial-gradient가 가장자리에서 이미 투명하게 사라지므로
+// 클리핑이 필요 없다.
 .section {
   @include container.full-viewport-section;
 
   position: relative;
-  overflow: hidden;
   display: flex;
   align-items: center;
   padding: 8rem 0;
   background-color: $color-background;
 }
 
-// 장식용 블롭. Hero의 블롭과 같은 톤·애니메이션을 재사용해 Home 섹션들끼리 통일감을 준다.
-.blobBlue,
-.blobTeal {
+// 배경 워시. Hero와 같은 톤·모션으로 Home 섹션들끼리 통일감을 준다.
+.washAccent,
+.washSlate {
   position: absolute;
   z-index: 0;
   border-radius: 50%;
-  animation: blob 7s infinite;
+  filter: blur(4.375rem);
+  animation: wash-drift 68s $ease-out infinite alternate;
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
@@ -30,40 +36,30 @@
   }
 }
 
-.blobBlue {
+.washAccent {
   top: -3.75rem;
   right: -7.5rem;
-  width: 32.5rem;
-  height: 30rem;
-  background-color: #dce4ff;
-  opacity: 0.45;
+  width: 34rem;
+  height: 34rem;
+  background: radial-gradient(circle, rgb(40 57 151 / 10%) 0%, rgb(40 57 151 / 0%) 70%);
 }
 
-.blobTeal {
+.washSlate {
   bottom: -6.25rem;
   left: -8.75rem;
-  width: 35rem;
-  height: 32.5rem;
-  background-color: #e8ecfb;
-  opacity: 0.55;
-  animation-delay: 2s;
+  width: 36rem;
+  height: 36rem;
+  background: radial-gradient(circle, rgb(100 116 150 / 9%) 0%, rgb(100 116 150 / 0%) 70%);
+  animation-delay: 12s;
 }
 
-@keyframes blob {
-  0% {
-    transform: translate(0, 0) scale(1);
+@keyframes wash-drift {
+  from {
+    opacity: 0.7;
   }
 
-  33% {
-    transform: translate(1.875rem, -3.125rem) scale(1.1);
-  }
-
-  66% {
-    transform: translate(-1.25rem, 1.25rem) scale(0.9);
-  }
-
-  100% {
-    transform: translate(0, 0) scale(1);
+  to {
+    opacity: 1;
   }
 }
 

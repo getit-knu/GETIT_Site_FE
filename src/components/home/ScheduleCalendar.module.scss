@@ -138,8 +138,39 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  background-image: linear-gradient(to right, #155dfc, #4f39f6);
+  // 팔레트 기반 그라데이션 — 기존 보라빛(#155dfc → #4f39f6)이 팔레트 밖 색이라 차분하게 정리했다.
+  background-image: linear-gradient(to right, $color-accent, #1a2560);
   text-align: center;
+}
+
+// 이전 달/월표시/다음 달을 한 덩이로 묶어 헤더 안에서 가운데로 몰리게 한다 — "오늘" 버튼은
+// 그 바깥, 헤더 오른쪽 끝에 남는다.
+.calendarNavGroup {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+}
+
+.todayButton {
+  flex-shrink: 0;
+  border: 1px solid rgb(255 255 255 / 40%);
+  border-radius: 9999px;
+  padding: 0.375rem 0.875rem;
+  background: none;
+  color: $color-background;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background-color: rgb(255 255 255 / 15%);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-background;
+    outline-offset: 2px;
+  }
 }
 
 .navButton {
@@ -184,7 +215,8 @@
 }
 
 .calendarBody {
-  padding: 1rem;
+  // 하단 점 페이지네이션을 없애 캘린더 카드 아래에 빈 공간이 남지 않도록 아래쪽 패딩만 살짝 키웠다.
+  padding: 1rem 1rem 1.25rem;
 }
 
 .weekdayRow,
@@ -210,54 +242,33 @@
   }
 }
 
-.date,
-.dateActive {
+// 일정 있는 날은 진남색 꽉 찬 사각형 대신 accent 원형 배지로, 오늘 날짜는 별도로 accent
+// 테두리 링을 둘러 구분한다. 두 상태가 겹치면(오늘 + 일정) 링은 배지 바깥으로 밀려나 채워진
+// 배지 자체를 가리지 않는다.
+.date {
   display: flex;
   aspect-ratio: 1;
   align-items: center;
   justify-content: center;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-}
-
-.date {
-  background-color: $color-background;
+  border-radius: 50%;
+  background-color: transparent;
   color: $color-text-secondary;
-}
+  font-size: 0.75rem;
 
-.dateActive {
-  background-color: $color-accent;
-  color: $color-background;
-  font-weight: 600;
-}
-
-.pagination {
-  display: flex;
-  gap: 0.25rem;
-  justify-content: center;
-  padding: 0 1rem 1rem;
-}
-
-.dot,
-.dotActive {
-  height: 0.5rem;
-  border: none;
-  border-radius: 9999px;
-  padding: 0;
-  cursor: pointer;
-
-  &:focus-visible {
-    outline: 2px solid $color-accent;
-    outline-offset: 2px;
+  &[data-active] {
+    background-color: $color-accent;
+    color: $color-background;
+    font-weight: 600;
   }
-}
 
-.dot {
-  width: 0.5rem;
-  background-color: #8ec5ff;
-}
+  &[data-today] {
+    outline: 0.125rem solid $color-accent;
+    outline-offset: 0.125rem;
+    color: $color-accent;
+    font-weight: 600;
+  }
 
-.dotActive {
-  width: 1.5rem;
-  background-color: $color-accent;
+  &[data-active][data-today] {
+    color: $color-background;
+  }
 }
