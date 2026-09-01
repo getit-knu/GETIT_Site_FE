@@ -29,6 +29,12 @@ $color-status-rejected-text: #991b1b;
 $color-placeholder-bg: #e5e7eb;
 $color-placeholder-icon: #99a1af;
 
+// 상태 텍스트(완료·대기). 팔레트 4색만으로는 "답변 완료 / 답변 대기" 를 구분할 수 없어
+// 별도 섹션으로 둔다. $color-danger 와 마찬가지로 팔레트 정렬 대상이 아니다.
+// 대비 실측: 카드 배경 $color-background(#f8f8f8) 위에서 6.71:1 · 6.68:1 로 WCAG AA(4.5:1) 충족.
+$color-success-text: #166534;
+$color-warning-text: #92400e;
+
 // 어두운 배경(토스트 등) 위에 얹는 글자색. 값은 $color-surface 와 같지만 쓰임이 반대라
 // 이름을 따로 둔다 — 배경색 토큰을 글자색 자리에 쓰면 의도가 드러나지 않는다.
 $color-text-inverse: $color-surface;

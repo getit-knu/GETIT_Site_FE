@@ -130,6 +130,13 @@ export const queryKeys = {
   member: {
     all: ["member"] as const,
     summary: () => [...queryKeys.member.all, "summary"] as const,
+    /**
+     * 강의를 가로지르는 본인 질문 목록(#279).
+     *
+     * `size` 도 요청에 들어가므로 키에 함께 넣는다. 빼면 같은 페이지를 다른 개수로 볼 때
+     * 캐시가 겹쳐 개수가 다른 목록이 그대로 재사용된다.
+     */
+    myQuestions: (page: number, size: number) => [...queryKeys.member.all, "myQuestions", page, size] as const,
   },
 
   /** 부원 강의 조회(4.x, #193). 어드민 `lectures`와는 스키마·엔드포인트가 다른 별개 도메인이다. */
