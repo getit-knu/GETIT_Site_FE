@@ -26,6 +26,7 @@ function user(over: Partial<AdminUser> = {}): AdminUser {
     generationNo: 9,
     group: null,
     status: "ACTIVE",
+    phoneNumber: null,
     ...over,
   };
 }

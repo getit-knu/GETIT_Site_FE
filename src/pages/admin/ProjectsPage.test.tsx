@@ -27,6 +27,7 @@ function project(over: Partial<AdminProject> = {}): AdminProject {
     order: 1,
     status: "APPROVED",
     statusLabel: "공개",
+    rejectReason: null,
     ...over,
   };
 }

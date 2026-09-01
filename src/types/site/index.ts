@@ -114,22 +114,20 @@ export type StaffSection = NonNullable<components["schemas"]["StaffRequest"]["se
  */
 export type Staff = Omit<
   Required<components["schemas"]["StaffResult"]>,
-  "userId" | "profileImageUrl" | "githubUrl" | "instagramUrl"
+  "userId" | "profileImageUrl" | "githubUrl" | "instagramUrl" | "fileId"
 > & {
   userId: number | null;
   profileImageUrl: string | null;
   githubUrl: string | null;
   instagramUrl: string | null;
   /**
-   * 등록된 프로필 사진의 파일 id.
+   * 등록된 프로필 사진의 파일 id. 사진이 없으면 `null`.
    *
-   * **아직 서버가 주지 않는다**(`getit-knu/GETIT_Site_BE#187`) — 그래서 `undefined` 가
-   * 섞인다. 수정(10.21)은 `fileId` 를 통째로 덮어쓰므로, 이 값을 모르면 사진을 그대로 둔
-   * 채 다른 항목만 고칠 수 없다(보내지 않으면 서버가 지운다). 화면은 값을 모를 때 저장을
-   * 막고, 서버가 값을 주기 시작하면 그 검사가 저절로 통과한다.
-   *
-   * 프로젝트(`AdminProject`)·활동 사진(`ActivityPhoto`)은 이미 `fileId` 를 함께 준다 —
-   * 운영진만 빠져 있다.
+   * `getit-knu/GETIT_Site_BE#187`로 채워지기 시작했다 — 수정(10.21)은 `fileId`를 통째로
+   * 덮어쓰므로, 이 값을 모르면 사진을 그대로 둔 채 다른 항목만 고칠 수 없다(보내지 않으면
+   * 서버가 지운다). `StaffsSection`의 "값을 모르면 저장을 막는" 방어 로직은 이제
+   * 실제로는 걸릴 일이 없지만(항상 값이 오므로), 응답이 일시적으로 옛 형태로 오는
+   * 경우까지 대비해 `undefined`도 여전히 허용한다.
    */
   fileId?: number | null;
 };
