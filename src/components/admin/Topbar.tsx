@@ -36,7 +36,7 @@ export function Topbar({ title, user, onMenuClick }: TopbarProps) {
       <div className={styles.right}>
         {/* 이전엔 진입 링크 자체가 없었다(#240) — 계정 블록을 내 정보 화면으로 가는 링크로 쓴다. */}
         {user && (
-          <Link to="/me" className={styles.account}>
+          <Link viewTransition to="/me" className={styles.account}>
             <div className={styles.identity}>
               <span className={styles.name}>{user.name}</span>
               <span className={styles.role}>{ROLE_LABEL[user.role]}</span>

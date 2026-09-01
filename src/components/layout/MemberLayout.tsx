@@ -25,7 +25,7 @@ export function MemberLayout() {
     <div className={styles.layout}>
       <header className={styles.nav}>
         <nav className={styles.inner} aria-label="부원 메뉴">
-          <Link to="/" className={styles.logo} onClick={closeMenu}>
+          <Link viewTransition to="/" className={styles.logo} onClick={closeMenu}>
             GET IT
           </Link>
 
@@ -50,6 +50,7 @@ export function MemberLayout() {
 
           <div id={NAV_LINKS_ID} className={clsx(styles.links, menuOpen && styles.open)}>
             <NavLink
+              viewTransition
               to="/member"
               end
               className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
@@ -72,6 +73,7 @@ export function MemberLayout() {
               강좌 목록
             </NavLink>
             <NavLink
+              viewTransition
               to="/member/dashboard"
               className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
               onClick={closeMenu}
@@ -84,6 +86,7 @@ export function MemberLayout() {
               대시보드
             </NavLink>
             <NavLink
+              viewTransition
               to="/member/group"
               className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
               onClick={closeMenu}
@@ -101,6 +104,7 @@ export function MemberLayout() {
               내 그룹
             </NavLink>
             <NavLink
+              viewTransition
               to="/me"
               className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
               onClick={closeMenu}

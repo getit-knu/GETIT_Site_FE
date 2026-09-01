@@ -69,7 +69,7 @@ export function Hero() {
         <p className={styles.description}>상상을 현실로 만드는 IT 창업 동아리, GET IT입니다.</p>
 
         <div className={styles.actions}>
-          <Link to="/apply" className={styles.primaryCta}>
+          <Link viewTransition to="/apply" className={styles.primaryCta}>
             9기 지원하러 가기
             <svg className={styles.ctaIcon} viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
               <path
@@ -81,7 +81,7 @@ export function Hero() {
               />
             </svg>
           </Link>
-          <Link to="/projects" className={styles.secondaryCta}>
+          <Link viewTransition to="/projects" className={styles.secondaryCta}>
             프로젝트 구경하기
           </Link>
         </div>

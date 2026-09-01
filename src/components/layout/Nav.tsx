@@ -54,7 +54,7 @@ export function Nav() {
   return (
     <header className={clsx(styles.nav, scrolled && styles.scrolled)}>
       <nav className={styles.inner} aria-label="주요 메뉴">
-        <NavLink to="/" className={styles.logo} onClick={closeMenu}>
+        <NavLink viewTransition to="/" className={styles.logo} onClick={closeMenu}>
           GET IT
         </NavLink>
 
@@ -79,6 +79,7 @@ export function Nav() {
 
         <div id={NAV_LINKS_ID} className={clsx(styles.links, menuOpen && styles.open)}>
           <NavLink
+            viewTransition
             to="/"
             end
             className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
@@ -87,6 +88,7 @@ export function Nav() {
             홈
           </NavLink>
           <NavLink
+            viewTransition
             to="/projects"
             className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
             onClick={closeMenu}
@@ -94,6 +96,7 @@ export function Nav() {
             프로젝트
           </NavLink>
           <NavLink
+            viewTransition
             to="/leaders"
             className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
             onClick={closeMenu}
@@ -103,6 +106,7 @@ export function Nav() {
           {isAuthenticated ? (
             <>
               <NavLink
+                viewTransition
                 to="/me"
                 className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
                 onClick={closeMenu}
@@ -122,6 +126,7 @@ export function Nav() {
             </>
           ) : (
             <NavLink
+              viewTransition
               to="/login"
               className={({ isActive }) => clsx(styles.link, isActive && styles.active)}
               onClick={closeMenu}
@@ -129,7 +134,7 @@ export function Nav() {
               로그인
             </NavLink>
           )}
-          <NavLink to={cta.to} className={styles.cta} onClick={closeMenu}>
+          <NavLink viewTransition to={cta.to} className={styles.cta} onClick={closeMenu}>
             {cta.label}
           </NavLink>
         </div>

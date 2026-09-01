@@ -40,6 +40,47 @@ html.home-scroll-snap {
   scroll-snap-type: y mandatory;
 }
 
+/*
+ * 페이지 전환.
+ *
+ * react-router 의 `viewTransition` 이 붙은 링크를 누르면 라우터가 `document.startViewTransition`
+ * 을 부른다. 그러면 브라우저가 바뀌기 전 화면과 바뀐 뒤 화면을 스냅샷으로 떠서 아래 규칙대로
+ * 겹쳐 준다 — JS 로 붙잡고 있는 게 아니라 브라우저가 직접 그리므로 끊기지 않는다.
+ *
+ * View Transitions API 를 모르는 브라우저는 이 규칙을 통째로 무시하고 지금까지처럼 즉시
+ * 바뀐다(점진적 향상). 라이브러리도 폴리필도 쓰지 않는다.
+ *
+ * 나가는 화면을 들어오는 화면보다 짧게 끊는다. 둘을 같은 길이로 겹치면 글자끼리 포개져
+ * 잠깐 두 겹으로 읽힌다.
+ */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
+@keyframes page-leave {
+  to {
+    opacity: 0;
+  }
+}
+
+::view-transition-old(root) {
+  animation: page-leave 120ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+::view-transition-new(root) {
+  animation: page-enter 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
 :root {
   /* 이 프로젝트는 라이트 테마만 지원한다 — 네이티브 폼 컨트롤(input/textarea/select 등)이
      OS 다크 모드를 따라가지 않도록 전역에서 한 번만 고정한다(컴포넌트마다 개별 지정하지 않는다). */

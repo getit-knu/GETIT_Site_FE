@@ -23,7 +23,7 @@ function toYoutubeEmbedUrl(url: string): string {
 
 function BackLink() {
   return (
-    <Link to="/member" className={styles.backLink}>
+    <Link viewTransition to="/member" className={styles.backLink}>
       <svg className={styles.backIcon} viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
         <path
           d="M12.5 15L7.5 10L12.5 5"
