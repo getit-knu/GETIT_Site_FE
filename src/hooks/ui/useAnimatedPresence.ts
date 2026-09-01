@@ -10,17 +10,24 @@ import { useEffect, useRef, useState } from "react";
  */
 export function useAnimatedPresence(open: boolean, exitMs = 200) {
   const [mounted, setMounted] = useState(open);
+  const [prevOpen, setPrevOpen] = useState(open);
   const timer = useRef<number | undefined>(undefined);
+
+  // open이 변했을 때 렌더 중에 state를 조정 (React 공식 "prop 기반 state 조정" 패턴)
+  // open이 true가 되면 즉시 mounted도 true로 설정해 애니메이션 트리거 제거
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
+      setMounted(true);
+    }
+  }
 
   useEffect(() => {
     if (open) {
-      window.clearTimeout(timer.current);
-      // 열릴 때 즉시 마운트하기 위해 동기적으로 setState 호출
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setMounted(true);
       return;
     }
 
+    // open이 false일 때만 타이머 설정 및 cleanup 처리
     timer.current = window.setTimeout(() => setMounted(false), exitMs);
     return () => window.clearTimeout(timer.current);
   }, [open, exitMs]);
