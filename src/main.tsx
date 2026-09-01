@@ -7,6 +7,7 @@ import { setOnSessionEnded } from "./apis/client.ts";
 import { queryKeys } from "./apis/queryKeys.ts";
 import { createQueryClient } from "./apis/queryClient.ts";
 import { ErrorBoundary } from "./errors/ErrorBoundary.tsx";
+import { installViewTransitionGuard } from "./libs/viewTransitionGuard.ts";
 import { router } from "./routes.tsx";
 import "./index.css";
 import "./styles/main.scss";
@@ -15,6 +16,10 @@ import "./styles/main.scss";
 const ReactQueryDevtools = import.meta.env.DEV
   ? lazy(() => import("@tanstack/react-query-devtools").then((m) => ({ default: m.ReactQueryDevtools })))
   : null;
+
+// 페이지 전환이 건너뛰어질 때 react-router 가 흘리는 rejection 을 받아 준다(libs/viewTransitionGuard).
+// 라우터가 첫 이동을 하기 전에 걸어야 해서 render 보다 앞에 둔다.
+installViewTransitionGuard();
 
 /*
  * 새로고침하면 언제나 맨 위에서 시작한다.
