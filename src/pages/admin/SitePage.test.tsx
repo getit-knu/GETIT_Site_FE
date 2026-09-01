@@ -33,6 +33,7 @@ function schedule(over: Partial<RecruitmentSchedule> = {}): RecruitmentSchedule 
     documentEndAt: "2026-09-10T23:59:00+09:00",
     interviewStartAt: "2026-09-15T00:00:00+09:00",
     interviewEndAt: "2026-09-30T23:59:00+09:00",
+    applyEnabled: true,
     ...over,
   };
 }
