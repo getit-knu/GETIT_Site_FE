@@ -35,12 +35,27 @@ export function TextArea({
   const id = givenId ?? generatedId;
   const errorId = `${id}-error`;
 
+  // 90% 부터 눈에 띄게 한다 — 다 채우고서야 알리면 정작 줄일 시간이 없다.
+  const isOverLimit = maxLength !== undefined && value.length > maxLength;
+  const isNearLimit = maxLength !== undefined && !isOverLimit && value.length >= maxLength * 0.9;
+
   return (
     <div className={styles.wrapper}>
-      {label && (
-        <label htmlFor={id} className={styles.label}>
-          {label}
-        </label>
+      {(label || maxLength !== undefined) && (
+        <div className={styles.labelRow}>
+          {label && (
+            <label htmlFor={id} className={styles.label}>
+              {label}
+            </label>
+          )}
+          {maxLength !== undefined && (
+            <span
+              className={clsx(styles.counter, isNearLimit && styles.counterNear, isOverLimit && styles.counterOver)}
+            >
+              {value.length} / {maxLength}자
+            </span>
+          )}
+        </div>
       )}
       <textarea
         id={id}
