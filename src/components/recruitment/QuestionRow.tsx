@@ -109,6 +109,28 @@ export function QuestionRow({ question, index, disabled, onMoveUp, onMoveDown, o
         필수
       </label>
 
+      {question.type === "TEXT" && (
+        <span className={styles.maxLengthBox}>
+          <input
+            type="number"
+            min={1}
+            defaultValue={question.maxLength ?? 300}
+            aria-label={`${no}번 문항 글자 수 제한`}
+            disabled={disabled}
+            onBlur={(e) => {
+              const value = Number(e.target.value);
+              // 정수가 아니거나 1보다 작으면 원래 값으로 되돌린다.
+              if (!Number.isInteger(value) || value < 1) {
+                e.target.value = String(question.maxLength ?? 300);
+                return;
+              }
+              onChange({ ...question, maxLength: value });
+            }}
+          />
+          자
+        </span>
+      )}
+
       {(question.type === "CHOICE" || question.type === "CHECKBOX") && (
         <ul className={styles.options}>
           {options.map((option, at) => (
