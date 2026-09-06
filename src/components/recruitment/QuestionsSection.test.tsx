@@ -74,6 +74,32 @@ describe("QuestionsSection", () => {
     expect(screen.queryByLabelText("1번 문항 1번 선택지")).not.toBeInTheDocument();
   });
 
+  it("서술형 문항의 글자 수 제한을 보여주고 바꿀 수 있다", async () => {
+    renderSection();
+
+    expect(await screen.findByLabelText("1번 문항 글자 수 제한")).toHaveValue(300);
+    expect(screen.queryByLabelText("2번 문항 글자 수 제한")).not.toBeInTheDocument();
+
+    const input = screen.getByLabelText("1번 문항 글자 수 제한");
+    await userEvent.clear(input);
+    await userEvent.type(input, "500");
+    await userEvent.tab();
+
+    await waitFor(() => expect(api.updateQuestion).toHaveBeenCalled());
+    expect(lastUpdate()?.[1]).toMatchObject({ maxLength: 500 });
+  });
+
+  it("글자 수 제한에 0 이하나 빈 값을 넣으면 원래 값으로 되돌리고 저장하지 않는다", async () => {
+    renderSection();
+
+    const input = await screen.findByLabelText("1번 문항 글자 수 제한");
+    await userEvent.clear(input);
+    await userEvent.tab();
+
+    expect(input).toHaveValue(300);
+    expect(api.updateQuestion).not.toHaveBeenCalled();
+  });
+
   it("서술형을 객관식으로 바꾸면 선택지를 2개 만들고 maxLength 를 비운다", async () => {
     // 명세서 6.3 에서 maxLength 는 TEXT 만, options 는 CHOICE 만 쓴다.
     // BE가 선택형 질문에 옵션 2개 이상을 요구한다 — 1개만 만들면 타입을 고르자마자
