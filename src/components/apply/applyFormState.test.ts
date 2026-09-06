@@ -80,6 +80,20 @@ describe("submitBlocker 문항 안내", () => {
     expect(submitBlocker({ ...filled, studentId: "2021123456" }, {}, [], true)).toBeNull();
   });
 
+  it("서술형 답변이 글자 수 제한을 넘으면 그 문항을 짚는다", () => {
+    // 네이티브 textarea maxLength가 타이핑은 막아도, 붙여넣기나 제한이 나중에 줄어든
+    // 이어쓰기 답변까지는 못 막는다 — 제출 직전에 한 번 더 본다.
+    const q = question({ maxLength: 10 });
+    const over = { answerText: "가".repeat(11), selectedOptions: null };
+    expect(submitBlocker(filled, { 1: over }, [q], true)?.message).toBe("10자를 넘었어요: 지원 동기를 알려주세요");
+  });
+
+  it("서술형 답변이 글자 수 제한 이내면 막지 않는다", () => {
+    const q = question({ maxLength: 10 });
+    const ok = { answerText: "가".repeat(10), selectedOptions: null };
+    expect(submitBlocker(filled, { 1: ok }, [q], true)).toBeNull();
+  });
+
   it("개인정보 동의를 안 하면 다른 칸을 다 채워도 막는다", () => {
     expect(submitBlocker(filled, {}, [], false)).toEqual({
       field: "privacyConsent",

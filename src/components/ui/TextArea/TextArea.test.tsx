@@ -43,3 +43,28 @@ it("error가 없으면 잘못된 값 표시를 남기지 않는다", () => {
   expect(textarea).not.toHaveAttribute("aria-invalid");
   expect(textarea).not.toHaveAttribute("aria-describedby");
 });
+
+it("maxLength가 없으면 글자 수를 보여주지 않는다", () => {
+  render(<TextArea value="아무 값" onChange={() => {}} />);
+
+  expect(screen.queryByText(/\/ \d+자/)).not.toBeInTheDocument();
+});
+
+it("maxLength가 있으면 현재/최대 글자 수를 보여준다", () => {
+  render(<TextArea value="가나다" onChange={() => {}} maxLength={500} />);
+
+  expect(screen.getByText("3 / 500자")).toBeInTheDocument();
+});
+
+it("90% 이상 채우면 눈에 띄게 표시한다", () => {
+  render(<TextArea value={"가".repeat(450)} onChange={() => {}} maxLength={500} />);
+
+  expect(screen.getByText("450 / 500자").className).toMatch(/counterNear/);
+});
+
+it("제한을 넘으면 다른 스타일로 표시한다", () => {
+  // 붙여넣기 등으로 넘는 경우를 대비한다 — 실제 저장을 막는 건 화면단 검증(submitBlocker)의 몫이다.
+  render(<TextArea value={"가".repeat(501)} onChange={() => {}} maxLength={500} />);
+
+  expect(screen.getByText("501 / 500자").className).toMatch(/counterOver/);
+});
