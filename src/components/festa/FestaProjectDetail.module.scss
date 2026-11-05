@@ -112,6 +112,7 @@
 }
 
 .description {
+  word-break: keep-all;
   margin: 0;
   color: $color-text-primary;
   font-size: 0.875rem;
