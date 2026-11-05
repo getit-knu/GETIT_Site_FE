@@ -91,7 +91,11 @@ export const home: HomeResult = {
     },
     { id: 3, title: "동아리 회계 장부", description: "회비 정산 자동화 도구", thumbnailUrl: null },
   ],
-  features: { stockGame: false, mockInvestment: false },
+  /**
+   * 모의투자 FESTA(#359) 미리보기: `MOCK_FESTA=1 pnpm run dev` 로 띄우면 `/` 가 FESTA 쇼케이스로 바뀐다.
+   * 실제로는 어드민 기능 설정의 `MOCK_INVESTMENT` 토글이 이 값을 켠다.
+   */
+  features: { stockGame: false, mockInvestment: process.env.MOCK_FESTA === "1" },
 };
 
 export const faqs: PublicFaq[] = [
@@ -201,8 +205,8 @@ export const projects: PublicProjectBoard = {
     id: n,
     title: `프로젝트 ${n}`,
     teamName: `팀 ${n}`,
-    semester: n <= 3 ? "2026-SPRING" : "2025-FALL",
-    semesterLabel: n <= 3 ? "2026 1학기" : "2025 2학기",
+    semester: n <= 4 ? "2026-SPRING" : "2025-FALL",
+    semesterLabel: n <= 4 ? "2026 1학기" : "2025 2학기",
     description: "부원들이 한 학기 동안 만든 서비스입니다.",
     techStacks: ["React", "Spring Boot"],
     codeUrl: "https://github.com/getit-knu",
