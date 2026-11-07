@@ -48,6 +48,28 @@ describe("FestaProjectDetail", () => {
     expect(screen.queryByRole("link", { name: "코드 보기" })).not.toBeInTheDocument();
   });
 
+  it("http(s)가 아닌 링크는 걸지 않는다", () => {
+    render(
+      <FestaProjectDetail
+        project={project({ demoUrl: "ftp://polifit.example.com", codeUrl: "github.com/getit-knu/polifit" })}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole("link", { name: "사이트 바로가기" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "코드 보기" })).not.toBeInTheDocument();
+  });
+
+  it("닫히는 동안에도 마지막 프로젝트 내용을 그대로 보여준다", () => {
+    const { rerender } = render(<FestaProjectDetail project={project()} onClose={vi.fn()} />);
+
+    rerender(<FestaProjectDetail project={null} onClose={vi.fn()} />);
+
+    // 퇴장 애니메이션이 끝나기 전이라 껍데기가 남아 있고, 그 안의 내용도 비지 않는다.
+    expect(screen.getByText("폴리핏")).toBeInTheDocument();
+    expect(screen.getByText("나에게 맞는 청년 정책을 골라 주는 서비스")).toBeInTheDocument();
+  });
+
   it("닫기 버튼을 누르면 onClose가 불린다", () => {
     const onClose = vi.fn();
     render(<FestaProjectDetail project={project()} onClose={onClose} />);

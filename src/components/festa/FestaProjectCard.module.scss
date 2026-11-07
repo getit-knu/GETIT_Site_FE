@@ -14,40 +14,42 @@
 }
 
 .card {
+  // `::after` 클릭 영역도 같은 반경을 쓴다(#360 리뷰).
+  --card-radius: 1.125rem;
+
   position: relative;
   display: flex;
   height: 100%;
   flex-direction: column;
   gap: 0.75rem;
   padding: 1.125rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 1.125rem;
+  border: 1px solid rgb(0 0 0 / 8%);
+  border-radius: var(--card-radius);
   background-color: $color-surface;
   transform: rotate(var(--tilt));
   transition:
     transform $duration-base $ease-out,
     box-shadow $duration-base $ease-out;
 
-  &:hover,
-  &:focus-within {
-    box-shadow: 0 0.75rem 1.5rem rgb(40 57 151 / 12%);
-    transform: rotate(0) translateY(-4px);
+  @media (width <= $breakpoint-mobile) {
+    --card-radius: 1rem;
+    --tilt: 0deg;
+
+    padding: 0.875rem;
   }
 
-  @media (width <= $breakpoint-mobile) {
-    padding: 0.875rem;
-    border-radius: 1rem;
-    transform: none;
+  // 떠오르기는 마우스 기기만 — 터치 기기는 탭 뒤 hover/focus 가 남아 카드가 뜬 채 멈췄다(#360 리뷰).
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    &:hover,
+    &:focus-within {
+      box-shadow: 0 0.75rem 1.5rem rgb(40 57 151 / 12%);
+      transform: rotate(0) translateY(-4px);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
     transform: none;
     transition: none;
-
-    &:hover,
-    &:focus-within {
-      transform: none;
-    }
   }
 }
 
@@ -83,7 +85,7 @@
   padding: 0.375rem 0.75rem;
   border: none;
   border-radius: 9999px;
-  background-color: #eef1fb;
+  background-color: rgb(40 57 151 / 8%);
   color: $color-accent;
   cursor: pointer;
   font-size: 0.75rem;
@@ -93,7 +95,7 @@
   &::after {
     position: absolute;
     inset: 0;
-    border-radius: inherit;
+    border-radius: var(--card-radius);
     content: "";
   }
 
@@ -127,12 +129,4 @@
   @media (width <= $breakpoint-mobile) {
     display: none;
   }
-}
-
-.chip {
-  padding: 0.1875rem 0.5625rem;
-  border-radius: 9999px;
-  background-color: #eef1fb;
-  color: $color-accent;
-  font-size: 0.6875rem;
 }

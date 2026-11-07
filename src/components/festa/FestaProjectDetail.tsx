@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import type { PublicProject } from "../../types/project";
 import { Badge } from "../ui/Badge/Badge";
 import { Modal, ModalBody } from "../ui/Modal/Modal";
@@ -7,11 +9,11 @@ import { FestaProjectIcon } from "./FestaProjectIcon";
 import styles from "./FestaProjectDetail.module.scss";
 
 /**
- * 링크가 비었는지. 타입은 `string`이지만 BE가 URL을 안 넣은 프로젝트에서 빈 문자열이나
- * `null`이 올 수 있어(springdoc이 nullable을 못 잡는 다른 필드들과 같은 이유) 둘 다 막는다.
+ * 링크로 걸 수 있는 URL인지. 빈 문자열·`null`도 온다(springdoc이 nullable을 못 잡음). http(s)만 통과 —
+ * 부원 제출(`ProjectSubmitRequest`)엔 BE `@HttpUrl` 검증이 없어 아무 스킴이나 내려온다(#360 리뷰).
  */
-function hasUrl(url: string | null | undefined): url is string {
-  return typeof url === "string" && url.trim() !== "";
+function isLinkableUrl(url: string | null | undefined): url is string {
+  return typeof url === "string" && /^https?:\/\/\S+$/i.test(url.trim());
 }
 
 interface DetailHeaderProps {
@@ -33,7 +35,7 @@ function DetailHeader({ project, onClose }: DetailHeaderProps) {
         <p className={styles.meta}>
           {project.teamName} <span aria-hidden="true">·</span> {project.semesterLabel}
         </p>
-        {hasUrl(project.demoUrl) && (
+        {isLinkableUrl(project.demoUrl) && (
           <a className={styles.siteLink} href={project.demoUrl} target="_blank" rel="noreferrer">
             사이트 바로가기 <span aria-hidden="true">↗</span>
           </a>
@@ -59,26 +61,30 @@ interface FestaProjectDetailProps {
  * `/projects`의 `ProjectDetailModal`에 있는 "작동 사진" 자리는 아직 데이터가 없어 넣지 않았다(#356).
  */
 export function FestaProjectDetail({ project, onClose }: FestaProjectDetailProps) {
+  // 닫힐 때도 마지막 프로젝트를 그린다 — 퇴장 애니메이션 동안 빈 시트만 내려가던 문제(#360 리뷰).
+  const [shown, setShown] = useState(project);
+  if (project !== null && project !== shown) setShown(project);
+
   return (
     <Modal isOpen={project !== null} onClose={onClose} className={styles.dialog}>
-      {project && (
+      {shown && (
         <ModalBody>
           <span className={styles.handle} aria-hidden="true" />
-          <DetailHeader project={project} onClose={onClose} />
+          <DetailHeader project={shown} onClose={onClose} />
 
           <div className={styles.sections}>
-            {project.description && (
+            {shown.description && (
               <section>
                 <h3 className={styles.sectionTitle}>프로젝트 설명</h3>
-                <p className={styles.description}>{project.description}</p>
+                <p className={styles.description}>{shown.description}</p>
               </section>
             )}
 
-            {project.techStacks.length > 0 && (
+            {shown.techStacks.length > 0 && (
               <section>
                 <h3 className={styles.sectionTitle}>기술 스택</h3>
                 <ul className={styles.techStack}>
-                  {project.techStacks.map((tech) => (
+                  {shown.techStacks.map((tech) => (
                     <li key={tech}>
                       <Badge variant="accent">{tech}</Badge>
                     </li>
@@ -87,8 +93,8 @@ export function FestaProjectDetail({ project, onClose }: FestaProjectDetailProps
               </section>
             )}
 
-            {hasUrl(project.codeUrl) && (
-              <a className={styles.codeLink} href={project.codeUrl} target="_blank" rel="noreferrer">
+            {isLinkableUrl(shown.codeUrl) && (
+              <a className={styles.codeLink} href={shown.codeUrl} target="_blank" rel="noreferrer">
                 코드 보기 <span aria-hidden="true">↗</span>
               </a>
             )}

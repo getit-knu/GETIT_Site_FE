@@ -13,8 +13,10 @@
   @media (width <= $breakpoint-mobile) {
     width: 100%;
     max-width: none;
-    max-height: 88vh;
+    max-height: 88vh; // dvh 폴백
+    max-height: 88dvh;
     align-self: flex-end;
+    padding-bottom: env(safe-area-inset-bottom); // iPhone 홈 인디케이터
     border-radius: 1.25rem 1.25rem 0 0;
   }
 }
@@ -101,7 +103,7 @@
   gap: 1rem;
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #eceef2;
+  border-top: 1px solid rgb(0 0 0 / 8%);
 }
 
 .sectionTitle {

@@ -1,4 +1,5 @@
 import type { PublicProject } from "../../types/project";
+import { Badge } from "../ui/Badge/Badge";
 
 import { FestaProjectIcon } from "./FestaProjectIcon";
 import styles from "./FestaProjectCard.module.scss";
@@ -44,8 +45,8 @@ export function FestaProjectCard({ project, index, onSelect }: FestaProjectCardP
         {project.techStacks.length > 0 && (
           <ul className={styles.techStack}>
             {project.techStacks.map((tech) => (
-              <li key={tech} className={styles.chip}>
-                {tech}
+              <li key={tech}>
+                <Badge variant="accent">{tech}</Badge>
               </li>
             ))}
           </ul>
