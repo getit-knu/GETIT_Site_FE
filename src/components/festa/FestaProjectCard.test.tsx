@@ -72,13 +72,26 @@ describe("FestaProjectCard", () => {
     expect(icon?.style.backgroundImage).toContain("https://cdn.example.com/a.png");
   });
 
+  it("제목이 이모지로 시작해도 첫 글자를 반쪽으로 자르지 않는다", () => {
+    const { container } = render(
+      <ul>
+        <FestaProjectCard project={project({ title: "🚀 로켓" })} index={0} onSelect={vi.fn()} />
+      </ul>,
+    );
+
+    expect(container.querySelector("[aria-hidden='true']")?.textContent).toBe("🚀");
+  });
+
   it("설명·기술 스택이 비어 있으면 그 자리를 그리지 않는다", () => {
-    render(
+    const { container } = render(
       <ul>
         <FestaProjectCard project={project({ description: "", techStacks: [] })} index={0} onSelect={vi.fn()} />
       </ul>,
     );
 
+    // 카드 자신의 <li> 하나뿐 — 기술 스택 목록이 없다.
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    // 출전 번호 줄(<p>) 하나뿐 — 빈 설명 단락을 그리지 않는다.
+    expect(container.querySelectorAll("article p")).toHaveLength(1);
   });
 });
