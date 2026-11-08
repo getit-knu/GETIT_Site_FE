@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { entryNumber, pickLatestSemester } from "./festaConfig";
+import { pickLatestSemester } from "./festaConfig";
 
 describe("pickLatestSemester", () => {
   it("연도가 같으면 봄 < 여름 < 가을 < 겨울 순으로 가장 늦은 학기를 고른다", () => {
@@ -19,12 +19,5 @@ describe("pickLatestSemester", () => {
     expect(pickLatestSemester(["2026 Fall", "2025-SPRING"])).toBe("2025-SPRING");
     expect(pickLatestSemester([])).toBeNull();
     expect(pickLatestSemester(["unknown"])).toBeNull();
-  });
-});
-
-describe("entryNumber", () => {
-  it("0부터 센 순서를 두 자리 출전 번호로 만든다", () => {
-    expect(entryNumber(0)).toBe("01");
-    expect(entryNumber(9)).toBe("10");
   });
 });

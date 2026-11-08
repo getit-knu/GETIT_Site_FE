@@ -3,6 +3,10 @@
 @use "../../styles/abstracts/motion" as *;
 @use "../../styles/abstracts/blobs";
 
+// 행사 전용 포인트 색(노란 날짜 배지). 사이트 팔레트 밖의 한시 색이라 여기서만 이름을 붙여 쓴다.
+$festa-gold: #fac775;
+$festa-gold-text: #412402;
+
 // 홈 Hero의 `hero-rise`와 같은 등장 — 배지 → 제목 → 날짜 → 부제 순으로 떠오른다.
 @keyframes festa-rise {
   from {
@@ -96,8 +100,8 @@
   margin: 0.875rem 0 0;
   padding: 0.25rem 0.875rem;
   border-radius: 9999px;
-  background-color: #fac775;
-  color: #412402;
+  background-color: $festa-gold;
+  color: $festa-gold-text;
   font-size: 0.8125rem;
   font-weight: 600;
 }
@@ -133,4 +137,14 @@
   margin: 3rem 0 0;
   color: $color-text-secondary;
   text-align: center;
+}
+
+// 목록 제목(h2)은 화면에 안 보이지만 제목 단계(h1 → h2 → 카드 h3)를 잇는다(#361 리뷰).
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }

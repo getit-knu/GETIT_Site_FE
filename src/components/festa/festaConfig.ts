@@ -4,7 +4,7 @@
  */
 export const FESTA_EVENT = {
   dateLabel: "11.10 – 11.14",
-  subtitle: "네 팀, 네 개의 서비스. 직접 써 보고 마음에 드는 팀을 골라 주세요.",
+  subtitle: "부원들이 직접 만든 서비스를 써 보고, 마음에 드는 팀을 골라 주세요.",
 } as const;
 
 const SEASON_ORDER: Record<string, number> = { SPRING: 0, SUMMER: 1, FALL: 2, WINTER: 3 };
@@ -19,8 +19,8 @@ function semesterRank(semester: string): number | null {
 
 /**
  * `GET /api/public/projects`의 `semesters`(`2026-FALL` 꼴) 중 가장 최근 학기를 고른다.
- * **서버가 주는 순서는 보장되지 않는다**(BE `findDistinctSemestersByStatus`에 정렬 없음) —
- * 연도 → 계절(봄<여름<가을<겨울) 순으로 직접 비교한다. 형식이 어긋난 값은 건너뛴다.
+ * BE(`findDistinctSemestersByStatus`)가 `semester desc`로 주긴 하지만 **문자열 정렬**이라 같은 해 안에서
+ * 겨울>여름>봄>가을 순이 된다 — 연도 → 계절(봄<여름<가을<겨울) 순으로 직접 비교한다. 형식이 어긋난 값은 건너뛴다.
  */
 export function pickLatestSemester(semesters: readonly string[]): string | null {
   let latest: string | null = null;
@@ -33,9 +33,4 @@ export function pickLatestSemester(semesters: readonly string[]): string | null 
     }
   }
   return latest;
-}
-
-/** 카드·상세에 붙는 출전 번호(`01`, `02` …). */
-export function entryNumber(index: number): string {
-  return String(index + 1).padStart(2, "0");
 }

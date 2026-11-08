@@ -15,12 +15,16 @@ const FESTA_PAGE_SIZE = 20;
 
 /**
  * 가장 최근 학기의 공개 프로젝트 전부. 학기 목록(`semesters`)은 어느 페이지를 불러도 같이
- * 오니, 먼저 필터 없이 한 번 불러 학기를 고른 뒤 그 학기로 다시 부른다.
+ * 오니, 먼저 한 건만 불러 학기를 고른 뒤 그 학기로 다시 부른다.
+ *
+ * **임시 방식이다.** 출전 팀은 어드민에서 고르게 바뀐다(BE 선행 이슈) — 그때 이 훅을 교체한다.
  */
+const SEMESTER_PROBE = { size: 1 } as const;
+
 function useFestaProjects() {
   const boardQuery = useQuery({
-    queryKey: queryKeys.public.projects({}),
-    queryFn: () => getProjects({}),
+    queryKey: queryKeys.public.projects(SEMESTER_PROBE),
+    queryFn: () => getProjects(SEMESTER_PROBE),
   });
   const semester = boardQuery.data ? pickLatestSemester(boardQuery.data.semesters) : null;
   const params = { semester: semester ?? undefined, size: FESTA_PAGE_SIZE };
@@ -76,11 +80,14 @@ export function FestaShowcase() {
         ) : projects.length === 0 ? (
           <p className={styles.status}>출전 프로젝트를 준비하고 있어요.</p>
         ) : (
-          <ul className={styles.grid}>
-            {projects.map((project, index) => (
-              <FestaProjectCard key={project.id} project={project} index={index} onSelect={setSelected} />
-            ))}
-          </ul>
+          <>
+            <h2 className={styles.visuallyHidden}>출전 프로젝트</h2>
+            <ul className={styles.grid}>
+              {projects.map((project, index) => (
+                <FestaProjectCard key={project.id} project={project} index={index} onSelect={setSelected} />
+              ))}
+            </ul>
+          </>
         )}
       </div>
 

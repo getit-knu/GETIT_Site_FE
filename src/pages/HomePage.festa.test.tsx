@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -39,9 +39,13 @@ function mockOtherApis() {
   });
 }
 
-function renderHome() {
+/**
+ * `retry`를 넘기면 앱처럼 재시도를 켠다. 기본은 끔 — 대부분 테스트는 재시도와 무관하고, 켜 두면
+ * 실패 케이스가 재시도 대기 시간만큼 느려진다.
+ */
+function renderHome(retry: number | false = false) {
   mockOtherApis();
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry, retryDelay: 60_000 } } });
   return render(
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={createMemoryRouter([{ path: "/", Component: HomePage }], { initialEntries: ["/"] })} />
@@ -85,6 +89,34 @@ describe("HomePage — FESTA 전환", () => {
 
     expect(screen.queryByRole("heading", { name: "LET'S MAKEANYTHING." })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "모의투자 FESTA" })).not.toBeInTheDocument();
+  });
+
+  it("첫 시도가 실패하면 재시도를 기다리지 않고 바로 평소 홈을 그린다(#361 리뷰)", async () => {
+    // 앱처럼 재시도 2회를 켠다. 재시도 간격을 1분으로 둬서, 재시도를 기다렸다면 화면이 영영 안 나온다.
+    vi.mocked(getHome).mockRejectedValue(new Error("network"));
+    renderHome(2);
+
+    expect(await screen.findByRole("heading", { name: "LET'S MAKEANYTHING." })).toBeInTheDocument();
+  });
+
+  it("응답이 늦으면 대기 시간이 지난 뒤 평소 홈을 그리고, 늦게 온 응답이 행사 중이면 쇼케이스로 바꾼다", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    let resolveHome: (value: HomeResult) => void = () => {};
+    vi.mocked(getHome).mockReturnValue(new Promise((resolve) => (resolveHome = resolve)));
+    renderHome();
+
+    expect(screen.queryByRole("heading", { name: "LET'S MAKEANYTHING." })).not.toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
+    expect(await screen.findByRole("heading", { name: "LET'S MAKEANYTHING." })).toBeInTheDocument();
+
+    await act(async () => {
+      resolveHome(home(true));
+    });
+    expect(await screen.findByRole("heading", { level: 1, name: "모의투자 FESTA" })).toBeInTheDocument();
+
+    vi.useRealTimers();
   });
 
   it("홈 응답이 실패하면 평소 홈으로 돌아간다", async () => {
