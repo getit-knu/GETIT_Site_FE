@@ -3,7 +3,7 @@
  * 날짜·부제가 확정되면 이 값만 바꾸면 된다.
  */
 export const FESTA_EVENT = {
-  dateLabel: "11.10 – 11.14",
+  dateLabel: "11.23 – 11.29",
   subtitle: "부원들이 직접 만든 서비스를 써 보고, 마음에 드는 팀을 골라 주세요.",
 } as const;
 
