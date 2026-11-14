@@ -66,8 +66,13 @@ export function createMockApi() {
         return ok(fx.majors);
       case "GET /api/public/staffs":
         return ok(fx.staffs);
-      case "GET /api/public/projects":
-        return ok(fx.projects);
+      case "GET /api/public/projects": {
+        // 학기 필터를 실제로 걸어 준다 — FESTA 쇼케이스가 "최근 학기만" 가져오는지 dev 에서 보이게.
+        const semester = searchParams.get("semester");
+        if (semester === null) return ok(fx.projects);
+        const content = fx.projects.content.filter((p) => p.semester === semester);
+        return ok({ ...fx.projects, content, totalElements: content.length });
+      }
       case "GET /api/member/me/summary":
         return ok(mySummary);
       case "GET /api/member/projects":
