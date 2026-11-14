@@ -5,6 +5,7 @@ import { useNavigate, useSearchParams } from "react-router";
 import { getMe, refreshAccessToken } from "../apis/auth/authApi";
 import { queryKeys } from "../apis/queryKeys";
 import { setAccessToken } from "../libs/accessToken";
+import { takeReturnPath } from "../libs/loginReturn";
 import { destinationFor } from "../libs/roleDestination";
 import { FullScreenLoader } from "../components/ui/FullScreenLoader/FullScreenLoader";
 
@@ -39,8 +40,9 @@ export default function OAuthCallbackPage() {
         // 토큰이 생겼으니 세션을 다시 받는다 — 역할에 따라 갈 곳이 갈리므로 직접 기다린다.
         const me = await queryClient.fetchQuery({ queryKey: queryKeys.auth.me(), queryFn: getMe });
 
-        // 신규 유저는 온보딩(개인정보 동의)부터 거친다 — 기존 회원은 곧장 제 영역으로 간다.
-        navigate(isNewUser ? "/onboarding" : destinationFor(me.role), { replace: true });
+        // 신규 유저는 온보딩(개인정보 동의)부터 거친다 — 복귀 경로는 온보딩이 끝난 뒤 꺼낸다.
+        // 기존 회원은 로그인을 시작한 화면(#364)이 있으면 그리로, 없으면 곧장 제 영역으로 간다.
+        navigate(isNewUser ? "/onboarding" : (takeReturnPath() ?? destinationFor(me.role)), { replace: true });
       } catch {
         setFailed(true);
       }
