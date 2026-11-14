@@ -81,4 +81,35 @@ describe("createMockApi", () => {
     expect(res?.status).toBe(400);
     expect((api.resolve("GET", "/api/applications/me", params)?.body as { data: unknown }).data).toBeNull();
   });
+
+  it("FESTA 투자는 첫 저장에 번호를 요구하고, 저장하면 가린 번호와 남은 금액이 바뀐다(#364)", () => {
+    const api = createMockApi();
+    const investments = [{ projectId: 3, amount: 300_000 }];
+
+    expect(api.resolve("PUT", "/api/festa/portfolio", params, { investments })?.body).toMatchObject({
+      error: { code: "PHONE_NUMBER_REQUIRED" },
+    });
+
+    api.resolve("PUT", "/api/festa/portfolio", params, {
+      phoneNumber: "010-1234-5678",
+      privacyConsent: true,
+      investments,
+    });
+    expect(api.resolve("GET", "/api/festa/portfolio", params)?.body).toMatchObject({
+      data: { remaining: 9_700_000, maskedPhoneNumber: "010-****-5678", investments },
+    });
+  });
+
+  it("FESTA 투자는 단위가 안 맞거나 투자금을 넘기면 거절한다", () => {
+    const api = createMockApi();
+    const save = (amount: number) =>
+      api.resolve("PUT", "/api/festa/portfolio", params, {
+        phoneNumber: "010-1234-5678",
+        privacyConsent: true,
+        investments: [{ projectId: 3, amount }],
+      })?.body;
+
+    expect(save(150_000)).toMatchObject({ error: { code: "INVALID_AMOUNT" } });
+    expect(save(10_100_000)).toMatchObject({ error: { code: "BUDGET_EXCEEDED" } });
+  });
 });

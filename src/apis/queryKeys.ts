@@ -165,6 +165,10 @@ export const queryKeys = {
   },
 
   /** 로그인 없이 공개 라우트에서도 쓴다. 어드민 쪽(`site`/`recruitment`)과는 별개 키다. */
+  festa: {
+    all: ["festa"] as const,
+    portfolio: () => [...queryKeys.festa.all, "portfolio"] as const,
+  },
   public: {
     all: ["public"] as const,
     staffs: () => [...queryKeys.public.all, "staffs"] as const,

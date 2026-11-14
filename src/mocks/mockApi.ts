@@ -1,4 +1,5 @@
 import type { ApplicationDraftPayload, MyApplicationResult } from "../types/application";
+import type { FestaInvestment, FestaPortfolioPayload } from "../types/festa";
 
 import { eventsFor } from "./eventFixtures";
 import * as fx from "./fixtures";
@@ -41,6 +42,48 @@ export function createMockApi() {
     return typeof candidate.basicInfo === "object" && candidate.basicInfo !== null && Array.isArray(candidate.answers);
   }
 
+  // FESTA 가상 투자(#364). BE `FestaPortfolioService`의 검증 순서를 그대로 흉내 낸다.
+  const FESTA_BUDGET = 10_000_000;
+  const FESTA_UNIT = 100_000;
+  let festaPhone: string | null = null;
+  let festaInvestments: FestaInvestment[] = [];
+
+  function festaPortfolio() {
+    const invested = festaInvestments.reduce((sum, i) => sum + i.amount, 0);
+    const maskedPhoneNumber = festaPhone === null ? null : `${festaPhone.slice(0, 4)}****${festaPhone.slice(8)}`;
+    return {
+      budget: FESTA_BUDGET,
+      unit: FESTA_UNIT,
+      remaining: FESTA_BUDGET - invested,
+      maskedPhoneNumber,
+      investments: festaInvestments,
+    };
+  }
+
+  function saveFesta(body: unknown): MockResponse {
+    const payload = body as Partial<FestaPortfolioPayload> | undefined;
+    if (!Array.isArray(payload?.investments)) return fail(400, "VALIDATION_FAILED", "investments 가 없습니다.");
+    const investments = payload.investments;
+    const ids = investments.map((i) => i.projectId);
+    if (new Set(ids).size !== ids.length) return fail(400, "DUPLICATE_PROJECT", "중복 프로젝트");
+    if (investments.some((i) => i.amount < 0 || i.amount % FESTA_UNIT !== 0))
+      return fail(400, "INVALID_AMOUNT", "단위");
+    if (investments.reduce((sum, i) => sum + i.amount, 0) > FESTA_BUDGET) return fail(400, "BUDGET_EXCEEDED", "초과");
+    if (ids.some((id) => !fx.festaProjects.some((p) => p.id === id))) return fail(400, "PROJECT_NOT_ENTERED", "미출전");
+    const ownIds = fx.me.role === "MEMBER" ? myProjects.map((p) => p.id) : [];
+    if (ids.some((id) => ownIds.includes(id))) return fail(403, "OWN_GROUP_PROJECT", "우리 조");
+
+    const phone = payload.phoneNumber?.trim() ?? "";
+    if (phone === "" && festaPhone === null) return fail(400, "PHONE_NUMBER_REQUIRED", "번호 필요");
+    if (phone !== "") {
+      if (!/^010-\d{4}-\d{4}$/.test(phone)) return fail(400, "INVALID_PHONE_NUMBER", "번호 형식");
+      if (payload.privacyConsent !== true) return fail(400, "PRIVACY_CONSENT_REQUIRED", "동의 필요");
+      festaPhone = phone;
+    }
+    festaInvestments = investments.filter((i) => i.amount > 0).sort((a, b) => a.projectId - b.projectId);
+    return ok(festaPortfolio());
+  }
+
   function resolve(
     method: string,
     pathname: string,
@@ -68,6 +111,10 @@ export function createMockApi() {
         return ok(fx.staffs);
       case "GET /api/public/festa/projects":
         return ok(fx.festaProjects);
+      case "GET /api/festa/portfolio":
+        return ok(festaPortfolio());
+      case "PUT /api/festa/portfolio":
+        return saveFesta(body);
       case "GET /api/public/projects": {
         const semester = searchParams.get("semester");
         if (semester === null) return ok(fx.projects);
