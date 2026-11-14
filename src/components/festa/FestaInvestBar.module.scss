@@ -1,0 +1,74 @@
+@use "../../styles/abstracts/variables" as *;
+@use "../../styles/abstracts/breakpoints" as *;
+
+// 카드를 내려가는 동안 화면 아래에 붙어 따라온다.
+.bar {
+  position: sticky;
+  z-index: 2;
+  bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 0.875rem 1.125rem;
+  border: 1px solid rgb(0 0 0 / 8%);
+  border-radius: 1.125rem;
+  background-color: rgb(255 255 255 / 92%);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0.75rem 2rem rgb(40 57 151 / 14%);
+
+  @media (width <= $breakpoint-mobile) {
+    bottom: 0.75rem;
+    gap: 0.75rem;
+    padding: 0.75rem 0.875rem;
+  }
+}
+
+.summary {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.remaining {
+  margin: 0;
+  color: $color-text-primary;
+  font-size: 0.875rem;
+
+  strong {
+    color: $color-accent;
+    font-size: 1rem;
+  }
+}
+
+.budget {
+  color: $color-text-secondary;
+}
+
+.track {
+  overflow: hidden;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background-color: $color-placeholder-bg;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background-color: $color-accent;
+  transition: width 200ms ease-out;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.message {
+  margin: 0;
+  color: $color-text-secondary;
+  font-size: 0.75rem;
+  word-break: keep-all;
+}

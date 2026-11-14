@@ -130,3 +130,17 @@
     display: none;
   }
 }
+
+// 카드 전체를 덮는 "자세히 보기" 클릭 영역(`.more::after`) 위로 올려야 조절 버튼이 눌린다.
+.footer {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgb(0 0 0 / 6%);
+}
+
+// 기술 스택이 이미 `margin-top: auto`로 바닥에 붙어 있으면 그 바로 아래에 둔다(auto 두 개면 빈 공간을 나눠 가진다).
+.techStack + .footer {
+  margin-top: 0.75rem;
+}
