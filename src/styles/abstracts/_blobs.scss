@@ -1,0 +1,61 @@
+// 홈 히어로의 장식용 블롭 배경. 홈 Hero와 FESTA 쇼케이스(#359)가 같은 배경을 쓴다.
+// 콘텐츠 흐름에 영향 없는 장식이라, 쓰는 쪽은 부모에 `position: relative; overflow: hidden`을 두고
+// 블롭 요소를 콘텐츠보다 먼저 깐 뒤 콘텐츠에 z-index를 준다.
+// 애니메이션은 이전 GETIT 프론트(jmespoir/GETIT_front, tailwind.config.js의 blob keyframes)를 그대로 이식했다.
+//
+// CSS Modules는 `@keyframes` 이름을 파일마다 해시하므로, 쓰는 파일 최상위에서
+// `@include blob-keyframes;`도 함께 불러야 `animation: blob`이 제 키프레임을 찾는다.
+
+@mixin -blob-base {
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  animation: blob 7s infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@mixin blob-blue {
+  @include -blob-base;
+
+  top: -3.75rem;
+  left: -5rem;
+  width: 31.25rem;
+  height: 30rem;
+  background-color: #dce4ff;
+  opacity: 0.8;
+}
+
+@mixin blob-teal {
+  @include -blob-base;
+
+  top: 16.25rem;
+  right: -10rem;
+  width: 40.625rem;
+  height: 38.75rem;
+  background-color: #e8ecfb;
+  opacity: 0.9;
+  animation-delay: 2s;
+}
+
+@mixin blob-keyframes {
+  @keyframes blob {
+    0% {
+      transform: translate(0, 0) scale(1);
+    }
+
+    33% {
+      transform: translate(1.875rem, -3.125rem) scale(1.1);
+    }
+
+    66% {
+      transform: translate(-1.25rem, 1.25rem) scale(0.9);
+    }
+
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+  }
+}
