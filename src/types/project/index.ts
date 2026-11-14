@@ -35,9 +35,19 @@ export interface PublicProjectListParams {
  * `semester`는 자유 문자열이 아니라 `\d{4}-(SPRING|SUMMER|FALL|WINTER)` 패턴 고정값이다
  * (BE 확인함) — 화면은 연도 입력 + 계절 선택으로 만들어 이 문자열을 조립한다.
  */
-/** `rejectReason`은 반려된 적 없으면 `null`이다(BE 확인함) — springdoc이 이 nullable을 못 잡는다. */
-export type AdminProject = Omit<Required<components["schemas"]["ProjectResultItem"]>, "rejectReason"> & {
+/**
+ * `rejectReason`은 반려된 적 없으면, `fileId`는 썸네일이 없으면, `festaOrder`는 출전 순서를 안 정했으면
+ * `null`이다(BE 확인함) — springdoc이 이 nullable을 못 잡는다.
+ *
+ * `festaEntry`/`festaOrder`는 모의투자 FESTA 출전 여부와 순서다(BE#220). 홈 소개(`isFeatured`)와 별개다.
+ */
+export type AdminProject = Omit<
+  Required<components["schemas"]["ProjectResultItem"]>,
+  "rejectReason" | "fileId" | "festaOrder"
+> & {
   rejectReason: string | null;
+  fileId: number | null;
+  festaOrder: number | null;
 };
 
 /**
@@ -49,10 +59,16 @@ export type AdminProject = Omit<Required<components["schemas"]["ProjectResultIte
  *
  * **`fileId`는 생략하면 `null`이 되어 기존 썸네일이 지워진다**(BE `Project.update`가
  * 매번 통째로 덮어씀, `StaffPayload.fileId`와 같은 함정) — 손대지 않았어도 항상 현재
- * 값을 명시적으로 실어 보내야 한다. 스키마엔 optional이라 손으로 되돌린다.
+ * 값(목록 응답의 `fileId`, BE#139 이후 내려옴)을 명시적으로 실어 보내야 한다.
  */
-export type AdminProjectPayload = Omit<components["schemas"]["ProjectRequestWrite"], "fileId"> & {
+export type AdminProjectPayload = Omit<
+  components["schemas"]["ProjectRequestWrite"],
+  "fileId" | "festaEntry" | "festaOrder"
+> & {
   fileId: number | null;
+  /** BE는 `festaEntry`를 생략하면 출전 설정을 건드리지 않는다. 화면은 늘 현재 값을 명시해 보낸다. */
+  festaEntry: boolean;
+  festaOrder: number | null;
 };
 
 /**

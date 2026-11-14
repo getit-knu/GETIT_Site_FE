@@ -28,6 +28,8 @@ function project(over: Partial<AdminProject> = {}): AdminProject {
     status: "APPROVED",
     statusLabel: "공개",
     rejectReason: null,
+    festaEntry: false,
+    festaOrder: null,
     ...over,
   };
 }
@@ -151,14 +153,42 @@ describe("AdminProjectFormModal", () => {
     expect(vi.mocked(api.updateProject).mock.lastCall?.[1]).not.toHaveProperty("order");
   });
 
-  it("썸네일을 손대지 않고 저장하면 fileId 가 null 로 나간다 — BE 한계 안내를 함께 보여준다", async () => {
+  it("썸네일을 손대지 않고 저장하면 원래 fileId 를 그대로 보낸다 — 출전 체크만 바꿔도 썸네일이 지워지면 안 된다", async () => {
     renderModal(project());
-
-    expect(screen.getByText("썸네일을 다시 올리지 않고 저장하면 기존 썸네일이 사라집니다.")).toBeInTheDocument();
-
     await userEvent.click(submit());
 
     await waitFor(() => expect(api.updateProject).toHaveBeenCalled());
-    expect(vi.mocked(api.updateProject).mock.lastCall?.[1]).toMatchObject({ fileId: null });
+    expect(vi.mocked(api.updateProject).mock.lastCall?.[1]).toMatchObject({ fileId: 501 });
+  });
+
+  it("FESTA 출전을 체크하고 순서를 넣으면 festaEntry · festaOrder 로 보낸다", async () => {
+    renderModal(project());
+    expect(screen.queryByLabelText("출전 순서")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("checkbox", { name: "모의투자 FESTA 출전" }));
+    await userEvent.type(screen.getByLabelText("출전 순서"), "2");
+    await userEvent.click(submit());
+
+    await waitFor(() => expect(api.updateProject).toHaveBeenCalled());
+    expect(vi.mocked(api.updateProject).mock.lastCall?.[1]).toMatchObject({ festaEntry: true, festaOrder: 2 });
+  });
+
+  it("출전을 끄면 순서는 null 로, 출전 여부는 false 로 명시해 보낸다", async () => {
+    renderModal(project({ festaEntry: true, festaOrder: 4 }));
+    expect(screen.getByLabelText("출전 순서")).toHaveValue(4);
+
+    await userEvent.click(screen.getByRole("checkbox", { name: "모의투자 FESTA 출전" }));
+    await userEvent.click(submit());
+
+    await waitFor(() => expect(api.updateProject).toHaveBeenCalled());
+    expect(vi.mocked(api.updateProject).mock.lastCall?.[1]).toMatchObject({ festaEntry: false, festaOrder: null });
+  });
+
+  it("출전 순서가 1 이상의 정수가 아니면 저장을 막는다", async () => {
+    renderModal(project({ festaEntry: true }));
+    await userEvent.type(screen.getByLabelText("출전 순서"), "0");
+
+    expect(screen.getByText("출전 순서는 1 이상의 정수여야 합니다.")).toBeInTheDocument();
+    expect(submit()).toBeDisabled();
   });
 });

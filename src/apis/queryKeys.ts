@@ -173,6 +173,7 @@ export const queryKeys = {
     recruitmentStatus: () => [...queryKeys.public.all, "recruitment-status"] as const,
     faqs: () => [...queryKeys.public.all, "faqs"] as const,
     projects: (params: PublicProjectListParams) => [...queryKeys.public.all, "projects", params] as const,
+    festaProjects: () => [...queryKeys.public.all, "festa-projects"] as const,
     home: () => [...queryKeys.public.all, "home"] as const,
     events: (year: number, month: number) => [...queryKeys.public.all, "events", year, month] as const,
     activityPhotos: () => [...queryKeys.public.all, "activity-photos"] as const,

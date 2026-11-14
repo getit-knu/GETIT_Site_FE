@@ -7,6 +7,7 @@ import {
   getActivityPhotos,
   getEvents,
   getFaqs,
+  getFestaProjects,
   getHome,
   getProjects,
   getRecruitmentStatus,
@@ -25,6 +26,7 @@ function home(mockInvestment: boolean): HomeResult {
 function mockOtherApis() {
   vi.mocked(getRecruitmentStatus).mockReturnValue(new Promise(() => {}));
   vi.mocked(getFaqs).mockResolvedValue([]);
+  vi.mocked(getFestaProjects).mockResolvedValue([]);
   vi.mocked(getEvents).mockImplementation((year, month) => Promise.resolve({ year, month, events: [] }));
   vi.mocked(getActivityPhotos).mockResolvedValue([]);
   vi.mocked(getProjects).mockResolvedValue({
