@@ -28,6 +28,8 @@ function project(over: Partial<AdminProject> = {}): AdminProject {
     status: "APPROVED",
     statusLabel: "공개",
     rejectReason: null,
+    festaEntry: false,
+    festaOrder: null,
     ...over,
   };
 }
@@ -82,6 +84,13 @@ describe("AdminProjectsPage", () => {
     renderPage();
 
     expect(await screen.findByText("Home 소개")).toBeInTheDocument();
+  });
+
+  it("FESTA 출전 프로젝트는 출전 순서와 함께 배지를 보여준다", async () => {
+    vi.mocked(api.getProjects).mockResolvedValue(board({ content: [project({ festaEntry: true, festaOrder: 2 })] }));
+    renderPage();
+
+    expect(await screen.findByText("FESTA 2")).toBeInTheDocument();
   });
 
   it("빈 목록은 안내를 보여준다", async () => {

@@ -222,6 +222,9 @@ export const projects: PublicProjectBoard = {
   semesters: ["2026-SPRING", "2025-FALL"],
 };
 
+/** FESTA 출전 목록(BE#220) — 어드민이 고른 순서를 흉내 내 일부러 id 순서와 다르게 둔다. */
+export const festaProjects = [3, 1, 4, 2].flatMap((id) => projects.content.filter((p) => p.id === id));
+
 export const applicationForm: ApplicationFormResult = {
   generationNo: 9,
   phase: "DOCUMENT_OPEN",
