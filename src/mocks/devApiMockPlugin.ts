@@ -57,6 +57,11 @@ export function devApiMock(): Plugin {
           };
 
           res.statusCode = response.status;
+          if (response.contentType !== undefined) {
+            res.setHeader("Content-Type", response.contentType);
+            res.end(String(response.body));
+            return;
+          }
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify(response.body));
         });

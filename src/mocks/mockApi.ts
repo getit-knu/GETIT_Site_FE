@@ -8,6 +8,8 @@ import { memberLectures, memberTracks, myGroup, myProjects, myQuestions, mySumma
 export interface MockResponse {
   status: number;
   body: unknown;
+  /** 주면 `body`(문자열)를 JSON 으로 감싸지 않고 이 타입으로 그대로 보낸다. 파일 응답용. */
+  contentType?: string;
 }
 
 function ok(data: unknown): MockResponse {
@@ -84,6 +86,32 @@ export function createMockApi() {
     return ok(festaPortfolio());
   }
 
+  // FESTA 어드민(#365). 목에는 투자자가 나 하나뿐이다.
+  function festaResults() {
+    const projects = fx.festaProjects
+      .map((p) => {
+        const amount = festaInvestments.find((i) => i.projectId === p.id)?.amount ?? 0;
+        return {
+          projectId: p.id,
+          title: p.title,
+          teamName: p.teamName,
+          totalAmount: amount,
+          investorCount: amount > 0 ? 1 : 0,
+        };
+      })
+      .sort((a, b) => b.totalAmount - a.totalAmount);
+    return { investorCount: festaInvestments.length > 0 ? 1 : 0, projects };
+  }
+
+  function festaInvestorsCsv(): MockResponse {
+    const rows =
+      festaPhone !== null && festaInvestments.length > 0
+        ? [`"${fx.me.name}","${festaPhone}","2026-11-23 12:00:00"`]
+        : [];
+    const csv = ["\uFEFF이름,전화번호,마지막 투자 시각", ...rows].join("\r\n") + "\r\n";
+    return { status: 200, body: csv, contentType: "text/csv; charset=UTF-8" };
+  }
+
   function resolve(
     method: string,
     pathname: string,
@@ -115,6 +143,22 @@ export function createMockApi() {
         return ok(festaPortfolio());
       case "PUT /api/festa/portfolio":
         return saveFesta(body);
+      case "GET /api/admin/festa/results":
+        return ok(festaResults());
+      case "GET /api/admin/festa/investors.csv":
+        return festaInvestorsCsv();
+      case "DELETE /api/admin/festa/investors/phones": {
+        const destroyedCount = festaPhone === null ? 0 : 1;
+        festaPhone = null;
+        return ok({ destroyedCount });
+      }
+      case "DELETE /api/admin/festa/investments": {
+        if (fx.home.features.mockInvestment) return fail(409, "FESTA_RESET_WHILE_OPEN", "토글 켜짐");
+        const deletedInvestorCount = festaPhone === null && festaInvestments.length === 0 ? 0 : 1;
+        festaPhone = null;
+        festaInvestments = [];
+        return ok({ deletedInvestorCount });
+      }
       case "GET /api/public/projects": {
         const semester = searchParams.get("semester");
         if (semester === null) return ok(fx.projects);
