@@ -2,11 +2,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { getMe } from "../../apis/auth/authApi";
 import { getFestaProjects } from "../../apis/public/publicApi";
 import type { PublicProject } from "../../types/project";
 
 import { FestaShowcase } from "./FestaShowcase";
 
+vi.mock("../../apis/auth/authApi");
 vi.mock("../../apis/public/publicApi");
 
 function project(id: number, semester: string): PublicProject {
@@ -36,6 +38,8 @@ function renderShowcase() {
 describe("FestaShowcase", () => {
   beforeEach(() => {
     vi.mocked(getFestaProjects).mockReset();
+    // 투자 패널은 로그인 여부로 갈린다 — 여기 테스트는 비로그인으로 본다(투자는 FestaShowcase.invest.test).
+    vi.mocked(getMe).mockRejectedValue({ code: "UNAUTHORIZED", message: "" });
   });
 
   it("어드민이 고른 출전 프로젝트를 받은 순서대로 카드로 보여준다", async () => {

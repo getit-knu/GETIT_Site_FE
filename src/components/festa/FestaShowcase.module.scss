@@ -25,7 +25,9 @@ $festa-gold-text: #412402;
 
 .showcase {
   position: relative;
-  overflow: hidden;
+  // `hidden`은 스크롤 컨테이너가 되어 안쪽 투자 저장 바(`position: sticky`)가 화면에 붙지 않는다.
+  // `clip`은 블롭만 잘라 내고 스크롤 컨테이너는 만들지 않는다(#364).
+  overflow: clip;
   min-height: calc(100vh - 4rem);
   padding: 4.5rem 2rem 5rem;
   background-color: $color-background;

@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import type { PublicProject } from "../../types/project";
 import { Badge } from "../ui/Badge/Badge";
 
@@ -9,6 +11,8 @@ interface FestaProjectCardProps {
   /** 목록 안 순서(0부터). 출전 번호와 데스크톱 기울기 방향에 쓴다. */
   index: number;
   onSelect: (project: PublicProject) => void;
+  /** 카드 맨 아래에 붙는 영역. 쇼케이스가 투자금 조절(#364)을 넣는다. */
+  footer?: ReactNode;
 }
 
 /**
@@ -18,7 +22,7 @@ interface FestaProjectCardProps {
  * 눌러도 상세가 열린다 — 카드를 통째로 `<button>`으로 만들면 안의 제목·설명까지 전부
  * 버튼 이름으로 읽혀서 스크린리더 사용자에게 시끄럽다.
  */
-export function FestaProjectCard({ project, index, onSelect }: FestaProjectCardProps) {
+export function FestaProjectCard({ project, index, onSelect, footer }: FestaProjectCardProps) {
   return (
     <li className={styles.item}>
       <article className={styles.card}>
@@ -51,6 +55,8 @@ export function FestaProjectCard({ project, index, onSelect }: FestaProjectCardP
             ))}
           </ul>
         )}
+
+        {footer && <div className={styles.footer}>{footer}</div>}
       </article>
     </li>
   );

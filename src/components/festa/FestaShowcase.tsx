@@ -3,9 +3,13 @@ import { useState } from "react";
 
 import { getFestaProjects } from "../../apis/public/publicApi";
 import { queryKeys } from "../../apis/queryKeys";
+import { useFestaInvestment } from "../../hooks/festa/useFestaInvestment";
 import type { PublicProject } from "../../types/project";
 
 import { FESTA_EVENT } from "./festaConfig";
+import { FestaInvestBar } from "./FestaInvestBar";
+import { FestaInvestControl } from "./FestaInvestControl";
+import { FestaInvestPanel } from "./FestaInvestPanel";
 import { FestaProjectCard } from "./FestaProjectCard";
 import { FestaProjectDetail } from "./FestaProjectDetail";
 import styles from "./FestaShowcase.module.scss";
@@ -22,6 +26,7 @@ function useFestaProjects() {
  */
 export function FestaShowcase() {
   const { projects, isPending, isError } = useFestaProjects();
+  const invest = useFestaInvestment(projects);
   const [selected, setSelected] = useState<PublicProject | null>(null);
   const semesterLabel = projects[0]?.semesterLabel;
 
@@ -43,6 +48,8 @@ export function FestaShowcase() {
           <p className={styles.subtitle}>{FESTA_EVENT.subtitle}</p>
         </header>
 
+        {projects.length > 0 && <FestaInvestPanel invest={invest} />}
+
         {isError ? (
           <p className={styles.status} role="alert">
             프로젝트를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.
@@ -58,9 +65,27 @@ export function FestaShowcase() {
             <h2 className={styles.visuallyHidden}>출전 프로젝트</h2>
             <ul className={styles.grid}>
               {projects.map((project, index) => (
-                <FestaProjectCard key={project.id} project={project} index={index} onSelect={setSelected} />
+                <FestaProjectCard
+                  key={project.id}
+                  project={project}
+                  index={index}
+                  onSelect={setSelected}
+                  footer={
+                    invest.phase === "ready" && (
+                      <FestaInvestControl
+                        title={project.title}
+                        amount={invest.amountOf(project.id)}
+                        unit={invest.unit}
+                        remaining={invest.remaining}
+                        isOwn={invest.isOwn(project.id)}
+                        onChange={(amount) => invest.setAmount(project.id, amount)}
+                      />
+                    )
+                  }
+                />
               ))}
             </ul>
+            <FestaInvestBar invest={invest} />
           </>
         )}
       </div>
