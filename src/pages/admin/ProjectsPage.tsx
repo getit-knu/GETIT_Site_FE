@@ -108,6 +108,10 @@ export default function AdminProjectsPage() {
                           FESTA{project.festaOrder === null ? "" : ` ${project.festaOrder}`}
                         </span>
                       )}
+                      {/* 조가 없으면 그 팀 부원도 투자할 수 있다(#371). 리허설 전에 채워야 할 것을 바로 찾게 한다. */}
+                      {project.festaEntry && project.groupId === null && (
+                        <span className={clsx(styles.badge, styles.rejected)}>조 미지정</span>
+                      )}
                     </div>
                   </div>
                   <span className={styles.muted}>
