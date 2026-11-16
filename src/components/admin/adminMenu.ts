@@ -49,6 +49,13 @@ export const ADMIN_MENU: readonly AdminMenuItem[] = [
     icon: "M4 7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2z",
   },
   {
+    // 모의투자 FESTA(#365). 행사 뒤 추첨·번호 파기까지 여기서 한다.
+    path: "/admin/festa",
+    label: "FESTA 결과",
+    title: "FESTA 결과",
+    icon: "M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM17 6h3v2a3 3 0 01-3 3M7 6H4v2a3 3 0 003 3",
+  },
+  {
     path: "/admin/users",
     label: "사용자 관리",
     title: "사용자 관리",

@@ -168,6 +168,11 @@ const areaRoutes: RouteObject[] = [
             lazy: page(() => import("./pages/admin/ProjectsPage")),
           },
           {
+            path: "festa",
+            handle: { title: formatTitle("FESTA 결과", ADMIN) },
+            lazy: page(() => import("./pages/admin/FestaPage")),
+          },
+          {
             path: "users",
             handle: { title: formatTitle("사용자 관리", ADMIN) },
             lazy: page(() => import("./pages/admin/UsersPage")),
