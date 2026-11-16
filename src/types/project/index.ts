@@ -40,6 +40,9 @@ export interface PublicProjectListParams {
  * `null`이다(BE 확인함) — springdoc이 이 nullable을 못 잡는다.
  *
  * `festaEntry`/`festaOrder`는 모의투자 FESTA 출전 여부와 순서다(BE#220). 홈 소개(`isFeatured`)와 별개다.
+ *
+ * `groupId`는 소속 조다(BE#231, 생성본에 아직 없음). 부원이 낸 프로젝트는 그 조가, 어드민이 낸
+ * 프로젝트는 어드민이 정한 조가 들어간다. FESTA "우리 조 투자 금지"가 이 값으로 판단한다.
  */
 export type AdminProject = Omit<
   Required<components["schemas"]["ProjectResultItem"]>,
@@ -48,6 +51,7 @@ export type AdminProject = Omit<
   rejectReason: string | null;
   fileId: number | null;
   festaOrder: number | null;
+  groupId: number | null;
 };
 
 /**
@@ -69,6 +73,8 @@ export type AdminProjectPayload = Omit<
   /** BE는 `festaEntry`를 생략하면 출전 설정을 건드리지 않는다. 화면은 늘 현재 값을 명시해 보낸다. */
   festaEntry: boolean;
   festaOrder: number | null;
+  /** 생략하면 서버가 소속 조를 그대로 둔다. 조를 비우는 방법은 없다(BE#231). */
+  groupId?: number;
 };
 
 /**

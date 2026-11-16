@@ -3,13 +3,25 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { getGroups } from "../../apis/group/groupsApi";
 import * as api from "../../apis/project/projectsApi";
+import type { GroupBoard } from "../../types/group";
 import type { AdminProject } from "../../types/project";
 
 import { AdminProjectFormModal } from "./AdminProjectFormModal";
 
 vi.mock("../../apis/project/projectsApi");
 vi.mock("../../apis/file/filesApi");
+vi.mock("../../apis/group/groupsApi");
+
+const groupBoard: GroupBoard = {
+  generationNo: 9,
+  groups: [
+    { id: 1, name: "1조", memberCount: 0, members: [] },
+    { id: 2, name: "2조", memberCount: 0, members: [] },
+  ],
+  unassigned: [],
+};
 
 function project(over: Partial<AdminProject> = {}): AdminProject {
   return {
@@ -30,6 +42,7 @@ function project(over: Partial<AdminProject> = {}): AdminProject {
     rejectReason: null,
     festaEntry: false,
     festaOrder: null,
+    groupId: null,
     ...over,
   };
 }
@@ -51,6 +64,7 @@ describe("AdminProjectFormModal", () => {
     vi.resetAllMocks();
     vi.mocked(api.createProject).mockResolvedValue(project());
     vi.mocked(api.updateProject).mockResolvedValue(project());
+    vi.mocked(getGroups).mockResolvedValue(groupBoard);
   });
 
   it("추가 모드는 빈 폼을 보여준다", () => {
@@ -190,5 +204,49 @@ describe("AdminProjectFormModal", () => {
 
     expect(screen.getByText("출전 순서는 1 이상의 정수여야 합니다.")).toBeInTheDocument();
     expect(submit()).toBeDisabled();
+  });
+
+  describe("소속 조 (#371)", () => {
+    const groupBox = () => screen.getByRole("combobox", { name: "소속 조" });
+
+    it("조를 고르면 groupId 로 보낸다", async () => {
+      renderModal(project());
+      await screen.findByRole("option", { name: "2조" });
+
+      await userEvent.selectOptions(groupBox(), "2조");
+      await userEvent.click(submit());
+
+      await waitFor(() => expect(api.updateProject).toHaveBeenCalled());
+      expect(vi.mocked(api.updateProject).mock.lastCall?.[1]).toMatchObject({ groupId: 2 });
+    });
+
+    it("조를 정하지 않으면 groupId 를 보내지 않는다 — 생략해야 서버가 그대로 둔다", async () => {
+      renderModal(project());
+      await userEvent.click(submit());
+
+      await waitFor(() => expect(api.updateProject).toHaveBeenCalled());
+      expect(vi.mocked(api.updateProject).mock.lastCall?.[1]).not.toHaveProperty("groupId");
+    });
+
+    it("조가 이미 정해져 있으면 비울 수 없고, 현재 기수에 없는 조도 값을 지킨다", async () => {
+      renderModal(project({ groupId: 7 }));
+      await screen.findByRole("option", { name: "1조" });
+
+      expect(screen.queryByRole("option", { name: "선택 안 함" })).not.toBeInTheDocument();
+      expect(groupBox()).toHaveDisplayValue("현재 기수에 없는 조");
+
+      await userEvent.click(submit());
+      await waitFor(() => expect(api.updateProject).toHaveBeenCalled());
+      expect(vi.mocked(api.updateProject).mock.lastCall?.[1]).toMatchObject({ groupId: 7 });
+    });
+
+    it("FESTA 출전인데 조가 없으면 투자 금지가 안 걸린다고 안내한다", async () => {
+      renderModal(project({ festaEntry: true }));
+      expect(screen.getByRole("note")).toHaveTextContent("그 팀 부원도 이 프로젝트에 투자할 수 있습니다");
+
+      await screen.findByRole("option", { name: "1조" });
+      await userEvent.selectOptions(groupBox(), "1조");
+      expect(screen.queryByRole("note")).not.toBeInTheDocument();
+    });
   });
 });

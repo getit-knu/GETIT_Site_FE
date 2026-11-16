@@ -9,6 +9,7 @@ import { projectSaveErrorMessage } from "../../errors/project/errorMessages";
 import { useSaveProject } from "../../hooks/project/useProjects";
 import type { AdminProject, AdminProjectPayload } from "../../types/project";
 
+import { ProjectGroupField } from "./ProjectGroupField";
 import { ThumbnailField } from "./ThumbnailField";
 import styles from "./AdminProjectFormModal.module.scss";
 
@@ -37,6 +38,7 @@ interface Draft {
   order: string;
   festaEntry: boolean;
   festaOrder: string;
+  groupId: number | null;
 }
 
 /** `semester`는 `2026-FALL` 형태 고정값이다(BE 검증). 화면은 연도 + 계절로 나눠 받는다. */
@@ -65,6 +67,7 @@ function emptyDraft(): Draft {
     order: "",
     festaEntry: false,
     festaOrder: "",
+    groupId: null,
   };
 }
 
@@ -87,6 +90,7 @@ function toDraft(project: AdminProject): Draft {
     order: String(project.order),
     festaEntry: project.festaEntry,
     festaOrder: project.festaOrder === null ? "" : String(project.festaOrder),
+    groupId: project.groupId,
   };
 }
 
@@ -154,6 +158,8 @@ function toPayload(draft: Draft): AdminProjectPayload {
     ...(draft.order.trim() === "" ? {} : { order: Number(draft.order) }),
     festaEntry: draft.festaEntry,
     festaOrder: draft.festaEntry && draft.festaOrder.trim() !== "" ? Number(draft.festaOrder) : null,
+    // 생략하면 서버가 조를 그대로 둔다. 비울 수는 없으니 정해졌을 때만 보낸다.
+    ...(draft.groupId === null ? {} : { groupId: draft.groupId }),
   };
 }
 
@@ -200,6 +206,11 @@ export function AdminProjectFormModal({ project, onClose }: AdminProjectFormModa
           </div>
           {/* 별도 순서 변경 엔드포인트가 없다 — 비우면 수정 시 기존 순서를 유지한다. */}
           <Input label="순서" type="number" value={draft.order} onChange={(order) => set({ order })} />
+          <ProjectGroupField
+            value={draft.groupId}
+            initial={project?.groupId ?? null}
+            onChange={(groupId) => set({ groupId })}
+          />
         </div>
 
         <TextArea label="설명" rows={3} value={draft.description} onChange={(description) => set({ description })} />
@@ -237,6 +248,11 @@ export function AdminProjectFormModal({ project, onClose }: AdminProjectFormModa
             />
           )}
         </div>
+        {draft.festaEntry && draft.groupId === null && (
+          <p role="note" className={styles.hint}>
+            소속 조를 정하지 않으면 그 팀 부원도 이 프로젝트에 투자할 수 있습니다.
+          </p>
+        )}
 
         {reason !== null && (
           <p role="status" className={styles.reason}>
