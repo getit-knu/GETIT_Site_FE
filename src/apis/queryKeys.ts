@@ -168,6 +168,8 @@ export const queryKeys = {
   festa: {
     all: ["festa"] as const,
     portfolio: () => [...queryKeys.festa.all, "portfolio"] as const,
+    /** 어드민 집계(#365). */
+    results: () => [...queryKeys.festa.all, "results"] as const,
   },
   public: {
     all: ["public"] as const,

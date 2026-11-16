@@ -31,3 +31,19 @@ export interface FestaPortfolioPayload {
   privacyConsent?: boolean;
   investments: FestaInvestment[];
 }
+
+/** `GET /api/admin/festa/results` 의 프로젝트 한 줄(#365). 투자가 없는 출전 프로젝트도 0 으로 온다. */
+export interface FestaProjectResult {
+  projectId: number;
+  title: string;
+  teamName: string;
+  totalAmount: number;
+  investorCount: number;
+}
+
+/** 어드민 투자 집계. `projects`는 서버가 총액 내림차순으로 준다. */
+export interface FestaResults {
+  /** 한 곳이라도 투자한 사람 수. */
+  investorCount: number;
+  projects: FestaProjectResult[];
+}
