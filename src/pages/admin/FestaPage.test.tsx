@@ -23,7 +23,7 @@ function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <FestaPage />
+      <FestaPage mode="investment" />
     </QueryClientProvider>,
   );
 }
@@ -69,7 +69,7 @@ describe("FestaPage (#365)", () => {
     vi.mocked(api.downloadFestaInvestors).mockResolvedValue();
     renderPage();
 
-    await userEvent.click(await screen.findByRole("button", { name: "투자자 명단 내려받기 (CSV)" }));
+    await userEvent.click(await screen.findByRole("button", { name: "참여자 명단 내려받기 (CSV)" }));
     expect(api.downloadFestaInvestors).toHaveBeenCalledTimes(1);
   });
 
@@ -92,7 +92,52 @@ describe("FestaPage (#365)", () => {
     vi.mocked(api.resetFestaInvestments).mockRejectedValue({ code: "FESTA_RESET_WHILE_OPEN", message: "" });
     renderPage();
 
-    await userEvent.click(await screen.findByRole("button", { name: "투자 데이터 초기화" }));
+    await userEvent.click(await screen.findByRole("button", { name: "참여 데이터 초기화" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(/토글이 켜져 있어 초기화할 수 없습니다/);
+  });
+});
+
+describe("FestaPage 득표 집계 (#373)", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  function renderVotePage() {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <FestaPage mode="vote" />
+      </QueryClientProvider>,
+    );
+  }
+
+  it("득표수 순서대로 순위를 매기고 전체 투표자 수를 보여준다", async () => {
+    vi.mocked(api.getFestaVoteResults).mockResolvedValue({
+      voterCount: 7,
+      projects: [
+        { projectId: 1, title: "강의실 예약 봇", teamName: "1조", voteCount: 4 },
+        { projectId: 2, title: "동아리 회계 장부", teamName: "2조", voteCount: 3 },
+        { projectId: 3, title: "스터디 매칭", teamName: "3조", voteCount: 0 },
+      ],
+    });
+    renderVotePage();
+
+    const rows = within(await screen.findByRole("table"))
+      .getAllByRole("row")
+      .slice(1);
+    expect(rows.map((row) => within(row).getAllByRole("cell")[0].textContent)).toEqual(["1", "2", "3"]);
+    expect(within(rows[0]).getByText("4표")).toBeInTheDocument();
+    expect(screen.getByText("투표자 7명")).toBeInTheDocument();
+    expect(api.getFestaResults).not.toHaveBeenCalled();
+  });
+
+  it("투표자가 없으면 표 위에 안내를 띄운다", async () => {
+    vi.mocked(api.getFestaVoteResults).mockResolvedValue({
+      voterCount: 0,
+      projects: [{ projectId: 1, title: "강의실 예약 봇", teamName: "1조", voteCount: 0 }],
+    });
+    renderVotePage();
+
+    expect(await screen.findByText("아직 투표한 사람이 없습니다.")).toBeInTheDocument();
   });
 });
