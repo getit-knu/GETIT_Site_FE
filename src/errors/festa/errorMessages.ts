@@ -39,6 +39,14 @@ export function festaSaveErrorMessage(error: unknown): string {
   return messageFor(error, SAVE_FALLBACK);
 }
 
+export function festaVoteErrorMessage(error: unknown): string {
+  return messageFor(error, "내 투표를 불러오지 못했어요.");
+}
+
+export function festaVoteSaveErrorMessage(error: unknown): string {
+  return messageFor(error, "투표하지 못했어요. 잠시 후 다시 시도해 주세요.");
+}
+
 /** 어드민 결과 화면(#365)의 쓰기 동작. `fallback`은 동작마다 다르다. */
 export function festaAdminErrorMessage(error: unknown, fallback: string): string {
   return messageFor(error, fallback);

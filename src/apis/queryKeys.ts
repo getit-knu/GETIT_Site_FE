@@ -170,6 +170,9 @@ export const queryKeys = {
     portfolio: () => [...queryKeys.festa.all, "portfolio"] as const,
     /** 어드민 집계(#365). */
     results: () => [...queryKeys.festa.all, "results"] as const,
+    /** 1인 1팀 투표(#373). */
+    vote: () => [...queryKeys.festa.all, "vote"] as const,
+    voteResults: () => [...queryKeys.festa.all, "vote-results"] as const,
   },
   public: {
     all: ["public"] as const,

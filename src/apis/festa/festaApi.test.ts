@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { client } from "../client";
 
-import { getPortfolio, savePortfolio } from "./festaApi";
+import { getPortfolio, getVote, savePortfolio, saveVote } from "./festaApi";
 
 // 모양은 BE `FestaPortfolioResult` 기준. 스파이 대신 어댑터를 갈아 끼워 실제 envelope 인터셉터를 태운다.
 const portfolio = {
@@ -14,12 +14,15 @@ const portfolio = {
   investments: [{ projectId: 3, amount: 3_000_000 }],
 };
 
-async function withAdapter<T>(run: () => Promise<T>): Promise<{ result: T; config: InternalAxiosRequestConfig }> {
+async function withAdapter<T>(
+  run: () => Promise<T>,
+  data: unknown = portfolio,
+): Promise<{ result: T; config: InternalAxiosRequestConfig }> {
   let seen: InternalAxiosRequestConfig | undefined;
   const adapter: AxiosAdapter = (config) => {
     seen = config;
     return Promise.resolve({
-      data: { success: true, data: portfolio, error: null },
+      data: { success: true, data, error: null },
       status: 200,
       statusText: "OK",
       headers: {},
@@ -58,5 +61,23 @@ describe("festaApi (#364 wire-shape)", () => {
     expect(config.url).toBe("/api/festa/portfolio");
     expect(JSON.parse(config.data as string)).toEqual(payload);
     expect(result.remaining).toBe(7_000_000);
+  });
+
+  it("getVote 는 envelope 안의 내 투표를 돌려준다(#373)", async () => {
+    const vote = { projectId: 3, maskedPhoneNumber: "010-****-5678", ownProjectIds: [7] };
+    const { result, config } = await withAdapter(getVote, vote);
+
+    expect(config.method).toBe("get");
+    expect(config.url).toBe("/api/festa/vote");
+    expect(result).toEqual(vote);
+  });
+
+  it("saveVote 는 PUT 으로 팀 하나와 번호·동의를 보낸다", async () => {
+    const payload = { projectId: 3, phoneNumber: "010-1234-5678", privacyConsent: true };
+    const { config } = await withAdapter(() => saveVote(payload), { projectId: 3 });
+
+    expect(config.method).toBe("put");
+    expect(config.url).toBe("/api/festa/vote");
+    expect(JSON.parse(config.data as string)).toEqual(payload);
   });
 });

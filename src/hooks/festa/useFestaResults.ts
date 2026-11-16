@@ -4,12 +4,17 @@ import {
   destroyFestaPhoneNumbers,
   downloadFestaInvestors,
   getFestaResults,
+  getFestaVoteResults,
   resetFestaInvestments,
 } from "../../apis/festa/festaAdminApi";
 import { queryKeys } from "../../apis/queryKeys";
 
 export function useFestaResults() {
   return useQuery({ queryKey: queryKeys.festa.results(), queryFn: getFestaResults });
+}
+
+export function useFestaVoteResults() {
+  return useQuery({ queryKey: queryKeys.festa.voteResults(), queryFn: getFestaVoteResults });
 }
 
 export function useDownloadFestaInvestors() {

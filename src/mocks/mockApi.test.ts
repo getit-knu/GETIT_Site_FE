@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { FestaResults } from "../types/festa";
+import type { FestaResults, FestaVoteResults } from "../types/festa";
 
 import { createMockApi } from "./mockApi";
 
@@ -131,5 +131,24 @@ describe("createMockApi", () => {
     api.resolve("DELETE", "/api/admin/festa/investors/phones", params);
     expect(api.resolve("GET", "/api/admin/festa/investors.csv", params)?.body).not.toContain("010-1234-5678");
     expect(api.resolve("GET", "/api/admin/festa/results", params)?.body).toMatchObject({ data: { investorCount: 1 } });
+  });
+
+  it("FESTA 투표: 첫 투표에 번호를 요구하고, 다시 투표하면 표가 옮겨간다(#373)", () => {
+    const api = createMockApi();
+    expect(api.resolve("PUT", "/api/festa/vote", params, { projectId: 3 })?.body).toMatchObject({
+      error: { code: "PHONE_NUMBER_REQUIRED" },
+    });
+
+    api.resolve("PUT", "/api/festa/vote", params, { projectId: 3, phoneNumber: "010-1234-5678", privacyConsent: true });
+    api.resolve("PUT", "/api/festa/vote", params, { projectId: 1 });
+
+    expect(api.resolve("GET", "/api/festa/vote", params)?.body).toMatchObject({
+      data: { projectId: 1, maskedPhoneNumber: "010-****-5678" },
+    });
+    const results = (api.resolve("GET", "/api/admin/festa/vote-results", params)?.body as { data: FestaVoteResults })
+      .data;
+    expect(results.voterCount).toBe(1);
+    expect(results.projects[0]).toMatchObject({ projectId: 1, voteCount: 1 });
+    expect(api.resolve("GET", "/api/admin/festa/investors.csv", params)?.body).toContain("010-1234-5678");
   });
 });

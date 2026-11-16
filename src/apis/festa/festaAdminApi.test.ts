@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { client } from "../client";
 
-import { destroyFestaPhoneNumbers, getFestaResults, resetFestaInvestments } from "./festaAdminApi";
+import { destroyFestaPhoneNumbers, getFestaResults, getFestaVoteResults, resetFestaInvestments } from "./festaAdminApi";
 
 // 모양은 BE `FestaResultsResult`·`FestaPhoneDestroyResult`·`FestaResetResult` 기준.
 // 스파이 대신 어댑터를 갈아 끼워 실제 envelope 인터셉터를 태운다.
@@ -60,5 +60,17 @@ describe("festaAdminApi (#365 wire-shape)", () => {
     expect(config.method).toBe("delete");
     expect(config.url).toBe("/api/admin/festa/investments");
     expect(result.deletedInvestorCount).toBe(3);
+  });
+
+  it("getFestaVoteResults 는 envelope 안의 득표 집계를 돌려준다(#373)", async () => {
+    const results = {
+      voterCount: 9,
+      projects: [{ projectId: 3, title: "GETIT", teamName: "1조", voteCount: 5 }],
+    };
+    const { result, config } = await withAdapter(results, getFestaVoteResults);
+
+    expect(config.method).toBe("get");
+    expect(config.url).toBe("/api/admin/festa/vote-results");
+    expect(result).toEqual(results);
   });
 });
