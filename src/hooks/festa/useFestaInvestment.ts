@@ -4,11 +4,12 @@ import { useState } from "react";
 import { getPortfolio, savePortfolio } from "../../apis/festa/festaApi";
 import { queryKeys } from "../../apis/queryKeys";
 import { festaErrorMessage, festaSaveErrorMessage } from "../../errors/festa/errorMessages";
-import { formatPhoneNumber, isValidPhoneNumber, PHONE_NUMBER_FORMAT_MESSAGE } from "../../libs/phoneNumber";
 import type { FestaInvestment, FestaPortfolioPayload } from "../../types/festa";
 import type { PublicProject } from "../../types/project";
 import { useSession } from "../auth/useSession";
 import { useMyProjects } from "../project/useMemberProjects";
+
+import { useFestaContact } from "./useFestaContact";
 
 type Amounts = Record<number, number>;
 
@@ -39,18 +40,14 @@ export function useFestaInvestment(projects: PublicProject[]) {
   const ownIds = new Set(ownFromServer ?? myProjects.data?.map((p) => p.id) ?? []);
 
   const [draft, setDraft] = useState<Amounts | null>(null);
-  const [editingPhone, setEditingPhone] = useState(false);
-  const [phone, setPhone] = useState("");
-  const [consent, setConsent] = useState(false);
+  const contact = useFestaContact(portfolio.data?.maskedPhoneNumber ?? null);
 
   const save = useMutation({
     mutationFn: (payload: FestaPortfolioPayload) => savePortfolio(payload),
     onSuccess: (next) => {
       queryClient.setQueryData(queryKeys.festa.portfolio(), next);
       setDraft(null);
-      setEditingPhone(false);
-      setPhone("");
-      setConsent(false);
+      contact.reset();
     },
   });
 
@@ -65,9 +62,6 @@ export function useFestaInvestment(projects: PublicProject[]) {
   const remaining = budget - invested;
   const isDirty = targets.some((id) => (amounts[id] ?? 0) !== (saved[id] ?? 0));
 
-  const hasPhone = portfolio.data?.maskedPhoneNumber != null;
-  const needsPhone = !hasPhone || editingPhone;
-
   function setAmount(projectId: number, amount: number) {
     const max = (amounts[projectId] ?? 0) + remaining;
     const next = Math.min(Math.max(Math.floor(amount / unit) * unit, 0), max);
@@ -75,15 +69,14 @@ export function useFestaInvestment(projects: PublicProject[]) {
   }
 
   function blockReason(): string | null {
-    if (needsPhone && !isValidPhoneNumber(phone)) return PHONE_NUMBER_FORMAT_MESSAGE;
-    if (needsPhone && !consent) return "전화번호 수집·이용에 동의해 주세요.";
-    if (!isDirty && !needsPhone) return "바꾼 투자가 없어요.";
+    if (contact.blockReason !== null) return contact.blockReason;
+    if (!isDirty && !contact.needsPhone) return "바꾼 투자가 없어요.";
     return null;
   }
 
   function submit() {
     save.mutate({
-      ...(needsPhone ? { phoneNumber: phone.trim(), privacyConsent: consent } : {}),
+      ...contact.payload,
       investments: targets
         .map((projectId) => ({ projectId, amount: amounts[projectId] ?? 0 }))
         .filter((i) => i.amount > 0),
@@ -109,20 +102,7 @@ export function useFestaInvestment(projects: PublicProject[]) {
     amountOf: (projectId: number) => amounts[projectId] ?? 0,
     isOwn: (projectId: number) => ownIds.has(projectId),
     setAmount,
-    contact: {
-      maskedPhoneNumber: portfolio.data?.maskedPhoneNumber ?? null,
-      needsPhone,
-      phone,
-      setPhone: (value: string) => setPhone(formatPhoneNumber(value)),
-      consent,
-      setConsent,
-      startEditing: () => setEditingPhone(true),
-      cancelEditing: () => {
-        setEditingPhone(false);
-        setPhone("");
-        setConsent(false);
-      },
-    },
+    contact,
     blockReason: blockReason(),
     submit,
     isSaving: save.isPending,

@@ -1,10 +1,16 @@
 import { downloadFile } from "../../libs/downloadFile";
-import type { FestaResults } from "../../types/festa";
+import type { FestaResults, FestaVoteResults } from "../../types/festa";
 import { client } from "../client";
 
 /** 프로젝트별 투자 집계(#365). 행사 중에는 공개하지 않아 어드민만 본다. */
 export async function getFestaResults(): Promise<FestaResults> {
   const { data } = await client.get<FestaResults>("/api/admin/festa/results");
+  return data;
+}
+
+/** 프로젝트별 득표 집계(#373). */
+export async function getFestaVoteResults(): Promise<FestaVoteResults> {
+  const { data } = await client.get<FestaVoteResults>("/api/admin/festa/vote-results");
   return data;
 }
 
