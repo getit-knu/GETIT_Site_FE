@@ -65,7 +65,7 @@ function renderShowcase() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <FestaShowcase />
+      <FestaShowcase mode="investment" />
     </QueryClientProvider>,
   );
 }

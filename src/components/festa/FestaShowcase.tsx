@@ -3,16 +3,13 @@ import { useState } from "react";
 
 import { getFestaProjects } from "../../apis/public/publicApi";
 import { queryKeys } from "../../apis/queryKeys";
-import { useFestaInvestment } from "../../hooks/festa/useFestaInvestment";
 import type { PublicProject } from "../../types/project";
 
-import { FESTA_EVENT } from "./festaConfig";
-import { FestaInvestBar } from "./FestaInvestBar";
-import { FestaInvestControl } from "./FestaInvestControl";
-import { FestaInvestPanel } from "./FestaInvestPanel";
-import { FestaProjectCard } from "./FestaProjectCard";
+import { FESTA_COPY, FESTA_EVENT, FESTA_MODE, type FestaMode } from "./festaConfig";
+import { FestaInvestBoard } from "./FestaInvestBoard";
 import { FestaProjectDetail } from "./FestaProjectDetail";
 import styles from "./FestaShowcase.module.scss";
+import { FestaVoteBoard } from "./FestaVoteBoard";
 
 /** 어드민이 "FESTA 출전"으로 고른 프로젝트를 출전 순서대로(#362, BE#220). */
 function useFestaProjects() {
@@ -24,9 +21,8 @@ function useFestaProjects() {
  * 모의투자 FESTA 쇼케이스(#359). 행사 기간(`MOCK_INVESTMENT` 토글 on)에 `HomePage`가 기존 홈 대신
  * 그린다. 배경은 홈 히어로와 같은 블롭을 쓰고, 그 위에 출전 팀 카드를 앱스토어 목록처럼 깐다.
  */
-export function FestaShowcase() {
+export function FestaShowcase({ mode = FESTA_MODE }: { mode?: FestaMode }) {
   const { projects, isPending, isError } = useFestaProjects();
-  const invest = useFestaInvestment(projects);
   const [selected, setSelected] = useState<PublicProject | null>(null);
   const semesterLabel = projects[0]?.semesterLabel;
 
@@ -45,10 +41,8 @@ export function FestaShowcase() {
             {FESTA_EVENT.dateLabel}
             {projects.length > 0 && ` · ${projects.length}팀 출전`}
           </p>
-          <p className={styles.subtitle}>{FESTA_EVENT.subtitle}</p>
+          <p className={styles.subtitle}>{FESTA_COPY[mode].subtitle}</p>
         </header>
-
-        {projects.length > 0 && <FestaInvestPanel invest={invest} />}
 
         {isError ? (
           <p className={styles.status} role="alert">
@@ -60,33 +54,10 @@ export function FestaShowcase() {
           </p>
         ) : projects.length === 0 ? (
           <p className={styles.status}>출전 프로젝트를 준비하고 있어요.</p>
+        ) : mode === "vote" ? (
+          <FestaVoteBoard projects={projects} onSelect={setSelected} />
         ) : (
-          <>
-            <h2 className={styles.visuallyHidden}>출전 프로젝트</h2>
-            <ul className={styles.grid}>
-              {projects.map((project, index) => (
-                <FestaProjectCard
-                  key={project.id}
-                  project={project}
-                  index={index}
-                  onSelect={setSelected}
-                  footer={
-                    invest.phase === "ready" && (
-                      <FestaInvestControl
-                        title={project.title}
-                        amount={invest.amountOf(project.id)}
-                        unit={invest.unit}
-                        remaining={invest.remaining}
-                        isOwn={invest.isOwn(project.id)}
-                        onChange={(amount) => invest.setAmount(project.id, amount)}
-                      />
-                    )
-                  }
-                />
-              ))}
-            </ul>
-            <FestaInvestBar invest={invest} />
-          </>
+          <FestaInvestBoard projects={projects} onSelect={setSelected} />
         )}
       </div>
 
