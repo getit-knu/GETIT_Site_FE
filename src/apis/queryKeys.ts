@@ -165,6 +165,15 @@ export const queryKeys = {
   },
 
   /** 로그인 없이 공개 라우트에서도 쓴다. 어드민 쪽(`site`/`recruitment`)과는 별개 키다. */
+  festa: {
+    all: ["festa"] as const,
+    portfolio: () => [...queryKeys.festa.all, "portfolio"] as const,
+    /** 어드민 집계(#365). */
+    results: () => [...queryKeys.festa.all, "results"] as const,
+    /** 1인 1팀 투표(#373). */
+    vote: () => [...queryKeys.festa.all, "vote"] as const,
+    voteResults: () => [...queryKeys.festa.all, "vote-results"] as const,
+  },
   public: {
     all: ["public"] as const,
     staffs: () => [...queryKeys.public.all, "staffs"] as const,
@@ -173,6 +182,7 @@ export const queryKeys = {
     recruitmentStatus: () => [...queryKeys.public.all, "recruitment-status"] as const,
     faqs: () => [...queryKeys.public.all, "faqs"] as const,
     projects: (params: PublicProjectListParams) => [...queryKeys.public.all, "projects", params] as const,
+    festaProjects: () => [...queryKeys.public.all, "festa-projects"] as const,
     home: () => [...queryKeys.public.all, "home"] as const,
     events: (year: number, month: number) => [...queryKeys.public.all, "events", year, month] as const,
     activityPhotos: () => [...queryKeys.public.all, "activity-photos"] as const,

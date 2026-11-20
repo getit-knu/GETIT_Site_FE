@@ -10,6 +10,10 @@ import type { AdminProject, AdminProjectBoard } from "../../types/project";
 import AdminProjectsPage from "./ProjectsPage";
 
 vi.mock("../../apis/project/projectsApi");
+// 폼을 열면 소속 조 목록(#371)을 부른다.
+vi.mock("../../apis/group/groupsApi", () => ({
+  getGroups: () => Promise.resolve({ generationNo: 9, groups: [], unassigned: [] }),
+}));
 
 function project(over: Partial<AdminProject> = {}): AdminProject {
   return {
@@ -28,6 +32,9 @@ function project(over: Partial<AdminProject> = {}): AdminProject {
     status: "APPROVED",
     statusLabel: "공개",
     rejectReason: null,
+    festaEntry: false,
+    festaOrder: null,
+    groupId: null,
     ...over,
   };
 }
@@ -82,6 +89,29 @@ describe("AdminProjectsPage", () => {
     renderPage();
 
     expect(await screen.findByText("Home 소개")).toBeInTheDocument();
+  });
+
+  it("FESTA 출전 프로젝트는 출전 순서와 함께 배지를 보여준다", async () => {
+    vi.mocked(api.getProjects).mockResolvedValue(board({ content: [project({ festaEntry: true, festaOrder: 2 })] }));
+    renderPage();
+
+    expect(await screen.findByText("FESTA 2")).toBeInTheDocument();
+  });
+
+  it("FESTA 출전인데 소속 조가 없으면 '조 미지정' 배지를 단다(#371)", async () => {
+    vi.mocked(api.getProjects).mockResolvedValue(
+      board({
+        content: [
+          project({ id: 1, title: "조 없음", festaEntry: true }),
+          project({ id: 2, title: "조 있음", festaEntry: true, groupId: 3 }),
+          project({ id: 3, title: "출전 안 함" }),
+        ],
+      }),
+    );
+    renderPage();
+
+    await screen.findByText("조 없음");
+    expect(screen.getAllByText("조 미지정")).toHaveLength(1);
   });
 
   it("빈 목록은 안내를 보여준다", async () => {

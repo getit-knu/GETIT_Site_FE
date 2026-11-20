@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Navigate } from "react-router";
+import { Navigate, useNavigate } from "react-router";
 
 import { Button } from "../components/ui/Button/Button";
 import { PrivacyConsent } from "../components/ui/PrivacyConsent/PrivacyConsent";
 import { useConfirmPrivacyConsent, useSession } from "../hooks/auth/useSession";
+import { takeReturnPath } from "../libs/loginReturn";
 import { LOGIN_PRIVACY_NOTICE } from "../libs/privacyNotices";
 import { destinationFor } from "../libs/roleDestination";
 
@@ -24,8 +25,11 @@ export default function OnboardingPage() {
   const [consent, setConsent] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const confirmConsent = useConfirmPrivacyConsent();
+  const navigate = useNavigate();
 
-  if (!user) return null;
+  // 방금 동의했으면 `mutate`의 `onSuccess`가 보낸다. 캐시가 먼저 "동의함"으로 바뀌어도 아래
+  // 역할별 도착지로 새지 않게 여기서 멈춘다.
+  if (!user || confirmConsent.isSuccess) return null;
 
   // 직접 주소를 쳐서 다시 들어오는 등, 이미 동의한 사람은 여기 머물 이유가 없다.
   if (user.privacyConsentedAt) {
@@ -38,11 +42,11 @@ export default function OnboardingPage() {
       document.getElementById(CONSENT_ID)?.focus();
       return;
     }
-    confirmConsent.mutate();
-  }
-
-  if (confirmConsent.isSuccess) {
-    return <Navigate to={destinationFor(user.role)} replace />;
+    // 복귀 경로(#364)는 렌더 중이 아니라 여기서 꺼낸다 — 꺼내면 지워지는 값이라, 렌더를 두 번
+    // 도는 StrictMode 에서 두 번째 렌더가 빈손이 된다.
+    confirmConsent.mutate(undefined, {
+      onSuccess: (me) => navigate(takeReturnPath() ?? destinationFor(me.role), { replace: true }),
+    });
   }
 
   return (

@@ -2566,6 +2566,9 @@ export interface components {
             isFeatured: boolean;
             /** Format: int32 */
             order?: number;
+            festaEntry?: boolean;
+            /** Format: int32 */
+            festaOrder?: number;
         };
         ApiResponseProjectResultItem: {
             success?: boolean;
@@ -2588,6 +2591,9 @@ export interface components {
             isFeatured?: boolean;
             /** Format: int32 */
             order?: number;
+            festaEntry?: boolean;
+            /** Format: int32 */
+            festaOrder?: number;
             /** @enum {string} */
             status?: "PENDING" | "APPROVED" | "REJECTED";
             statusLabel?: string;

@@ -16,10 +16,10 @@ export type PublicFaq = Required<components["schemas"]["FaqPublicResult"]>;
  * `GET /api/public/home` 응답(2.1, #218). Home 화면의 커리큘럼 타임라인 · 프로젝트
  * 쇼케이스 미리보기가 이 안의 `curriculums`·`featuredProjects`를 쓴다.
  *
- * `generation`·`recruitment`·`faqs`·`features`도 이 응답에 들어 있지만, 각각
+ * `generation`·`recruitment`·`faqs`도 이 응답에 들어 있지만, 각각
  * `GET /api/public/recruitment/status`(D-Day 배지)·`GET /api/public/faqs`(#212)로
- * 이미 따로 연동돼 있어 여기서는 안 쓴다. `features`(스톡게임 등 기능 토글)는
- * 아직 이 화면에서 쓸 자리가 없어 타입만 잡아 둔다.
+ * 이미 따로 연동돼 있어 여기서는 안 쓴다. `features`(기능 토글)는
+ * `HomePage`가 FESTA 쇼케이스 전환에 쓴다(#359).
  */
 export interface HomeResult {
   curriculums: HomeCurriculum[];
@@ -48,5 +48,5 @@ export type HomeFeaturedProject = Omit<
   "thumbnailUrl"
 > & { thumbnailUrl: string | null };
 
-/** 기능 토글(#221) 공개 반영분. 아직 이 화면에서 게이팅에 쓰진 않는다. */
+/** 기능 토글(#221) 공개 반영분. `mockInvestment`가 켜지면 `HomePage`가 FESTA 쇼케이스로 바뀐다(#359). */
 export type HomeFeatures = Required<components["schemas"]["HomeResultFeaturesInfo"]>;

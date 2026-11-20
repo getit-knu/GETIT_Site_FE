@@ -2,6 +2,7 @@
 @use "../../styles/abstracts/breakpoints" as *;
 @use "../../styles/abstracts/container";
 @use "../../styles/abstracts/motion" as *;
+@use "../../styles/abstracts/blobs";
 
 // 첫 진입 등장. 배지 → 제목 → 설명 → 버튼 순으로 살짝 떠오르며 나타난다(UX 라운드 2).
 // fill-mode backwards라 delay 동안에도 from 상태(투명)로 대기한다.
@@ -35,56 +36,16 @@
   }
 }
 
-// 장식용 블롭. 콘텐츠 흐름에 영향 없는 배경 장식이라 콘텐츠보다 먼저 두고 z-index로 뒤에 깐다.
-// 애니메이션은 이전 GETIT 프론트(jmespoir/GETIT_front, tailwind.config.js의 blob keyframes)를 그대로 이식했다.
-.blobBlue,
-.blobTeal {
-  position: absolute;
-  z-index: 0;
-  border-radius: 50%;
-  animation: blob 7s infinite;
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-  }
-}
-
+// 장식용 블롭 배경(FESTA 쇼케이스와 공유, `abstracts/_blobs.scss`).
 .blobBlue {
-  top: -3.75rem;
-  left: -5rem;
-  width: 31.25rem;
-  height: 30rem;
-  background-color: #dce4ff;
-  opacity: 0.8;
+  @include blobs.blob-blue;
 }
 
 .blobTeal {
-  top: 16.25rem;
-  right: -10rem;
-  width: 40.625rem;
-  height: 38.75rem;
-  background-color: #e8ecfb;
-  opacity: 0.9;
-  animation-delay: 2s;
+  @include blobs.blob-teal;
 }
 
-@keyframes blob {
-  0% {
-    transform: translate(0, 0) scale(1);
-  }
-
-  33% {
-    transform: translate(1.875rem, -3.125rem) scale(1.1);
-  }
-
-  66% {
-    transform: translate(-1.25rem, 1.25rem) scale(0.9);
-  }
-
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-}
+@include blobs.blob-keyframes;
 
 .inner {
   position: relative;

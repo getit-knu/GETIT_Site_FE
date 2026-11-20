@@ -1,4 +1,5 @@
 import type { ApplicationDraftPayload, MyApplicationResult } from "../types/application";
+import type { FestaInvestment, FestaPortfolioPayload, FestaVotePayload } from "../types/festa";
 
 import { eventsFor } from "./eventFixtures";
 import * as fx from "./fixtures";
@@ -7,6 +8,8 @@ import { memberLectures, memberTracks, myGroup, myProjects, myQuestions, mySumma
 export interface MockResponse {
   status: number;
   body: unknown;
+  /** 주면 `body`(문자열)를 JSON 으로 감싸지 않고 이 타입으로 그대로 보낸다. 파일 응답용. */
+  contentType?: string;
 }
 
 function ok(data: unknown): MockResponse {
@@ -41,6 +44,100 @@ export function createMockApi() {
     return typeof candidate.basicInfo === "object" && candidate.basicInfo !== null && Array.isArray(candidate.answers);
   }
 
+  // FESTA 가상 투자(#364). BE `FestaPortfolioService`의 검증 순서를 그대로 흉내 낸다.
+  const FESTA_BUDGET = 10_000_000;
+  const FESTA_UNIT = 100_000;
+  let festaPhone: string | null = null;
+  let festaInvestments: FestaInvestment[] = [];
+  const festaOwnIds = () => (fx.me.role === "MEMBER" ? myProjects.map((p) => p.id) : []);
+
+  function festaPortfolio() {
+    const invested = festaInvestments.reduce((sum, i) => sum + i.amount, 0);
+    const maskedPhoneNumber = festaPhone === null ? null : `${festaPhone.slice(0, 4)}****${festaPhone.slice(8)}`;
+    return {
+      budget: FESTA_BUDGET,
+      unit: FESTA_UNIT,
+      remaining: FESTA_BUDGET - invested,
+      maskedPhoneNumber,
+      investments: festaInvestments,
+    };
+  }
+
+  function saveFesta(body: unknown): MockResponse {
+    const payload = body as Partial<FestaPortfolioPayload> | undefined;
+    if (!Array.isArray(payload?.investments)) return fail(400, "VALIDATION_FAILED", "investments 가 없습니다.");
+    const investments = payload.investments;
+    const ids = investments.map((i) => i.projectId);
+    if (new Set(ids).size !== ids.length) return fail(400, "DUPLICATE_PROJECT", "중복 프로젝트");
+    if (investments.some((i) => i.amount < 0 || i.amount % FESTA_UNIT !== 0))
+      return fail(400, "INVALID_AMOUNT", "단위");
+    if (investments.reduce((sum, i) => sum + i.amount, 0) > FESTA_BUDGET) return fail(400, "BUDGET_EXCEEDED", "초과");
+    if (ids.some((id) => !fx.festaProjects.some((p) => p.id === id))) return fail(400, "PROJECT_NOT_ENTERED", "미출전");
+    if (ids.some((id) => festaOwnIds().includes(id))) return fail(403, "OWN_GROUP_PROJECT", "우리 조");
+
+    const phone = payload.phoneNumber?.trim() ?? "";
+    if (phone === "" && festaPhone === null) return fail(400, "PHONE_NUMBER_REQUIRED", "번호 필요");
+    if (phone !== "") {
+      if (!/^010-\d{4}-\d{4}$/.test(phone)) return fail(400, "INVALID_PHONE_NUMBER", "번호 형식");
+      if (payload.privacyConsent !== true) return fail(400, "PRIVACY_CONSENT_REQUIRED", "동의 필요");
+      festaPhone = phone;
+    }
+    festaInvestments = investments.filter((i) => i.amount > 0).sort((a, b) => a.projectId - b.projectId);
+    return ok(festaPortfolio());
+  }
+
+  // FESTA 1인 1팀 투표(#373). 계약은 BE#232 이슈 기준. 번호는 투자와 같은 칸(`festaPhone`)을 쓴다.
+  let festaVote: number | null = null;
+
+  function festaVoteResult() {
+    const maskedPhoneNumber = festaPhone === null ? null : `${festaPhone.slice(0, 4)}****${festaPhone.slice(8)}`;
+    return { projectId: festaVote, maskedPhoneNumber, ownProjectIds: festaOwnIds() };
+  }
+
+  function saveVote(body: unknown): MockResponse {
+    const payload = (body ?? {}) as Partial<FestaVotePayload>;
+    const projectId = payload.projectId;
+    if (typeof projectId !== "number") return fail(400, "VALIDATION_FAILED", "projectId 가 없습니다.");
+    if (!fx.festaProjects.some((p) => p.id === projectId)) return fail(400, "PROJECT_NOT_ENTERED", "미출전");
+    if (festaOwnIds().includes(projectId)) return fail(403, "OWN_GROUP_PROJECT", "우리 조");
+
+    const phone = payload.phoneNumber?.trim() ?? "";
+    if (phone === "" && festaPhone === null) return fail(400, "PHONE_NUMBER_REQUIRED", "번호 필요");
+    if (phone !== "") {
+      if (!/^010-\d{4}-\d{4}$/.test(phone)) return fail(400, "INVALID_PHONE_NUMBER", "번호 형식");
+      if (payload.privacyConsent !== true) return fail(400, "PRIVACY_CONSENT_REQUIRED", "동의 필요");
+      festaPhone = phone;
+    }
+    festaVote = projectId;
+    return ok(festaVoteResult());
+  }
+
+  // FESTA 어드민(#365). 목에는 투자자가 나 하나뿐이다.
+  function festaResults() {
+    const projects = fx.festaProjects
+      .map((p) => {
+        const amount = festaInvestments.find((i) => i.projectId === p.id)?.amount ?? 0;
+        return {
+          projectId: p.id,
+          title: p.title,
+          teamName: p.teamName,
+          totalAmount: amount,
+          investorCount: amount > 0 ? 1 : 0,
+        };
+      })
+      .sort((a, b) => b.totalAmount - a.totalAmount);
+    return { investorCount: festaInvestments.length > 0 ? 1 : 0, projects };
+  }
+
+  function festaInvestorsCsv(): MockResponse {
+    const rows =
+      festaPhone !== null && (festaInvestments.length > 0 || festaVote !== null)
+        ? [`"${fx.me.name}","${festaPhone}","2026-11-23 12:00:00"`]
+        : [];
+    const csv = ["\uFEFF이름,전화번호,마지막 투자 시각", ...rows].join("\r\n") + "\r\n";
+    return { status: 200, body: csv, contentType: "text/csv; charset=UTF-8" };
+  }
+
   function resolve(
     method: string,
     pathname: string,
@@ -66,8 +163,50 @@ export function createMockApi() {
         return ok(fx.majors);
       case "GET /api/public/staffs":
         return ok(fx.staffs);
-      case "GET /api/public/projects":
-        return ok(fx.projects);
+      case "GET /api/public/festa/projects":
+        return ok(fx.festaProjects);
+      case "GET /api/festa/portfolio":
+        return ok(festaPortfolio());
+      case "PUT /api/festa/portfolio":
+        return saveFesta(body);
+      case "GET /api/festa/vote":
+        return ok(festaVoteResult());
+      case "PUT /api/festa/vote":
+        return saveVote(body);
+      case "GET /api/admin/festa/vote-results": {
+        const projects = fx.festaProjects
+          .map((p) => ({
+            projectId: p.id,
+            title: p.title,
+            teamName: p.teamName,
+            voteCount: festaVote === p.id ? 1 : 0,
+          }))
+          .sort((a, b) => b.voteCount - a.voteCount);
+        return ok({ voterCount: festaVote === null ? 0 : 1, projects });
+      }
+      case "GET /api/admin/festa/results":
+        return ok(festaResults());
+      case "GET /api/admin/festa/investors.csv":
+        return festaInvestorsCsv();
+      case "DELETE /api/admin/festa/investors/phones": {
+        const destroyedCount = festaPhone === null ? 0 : 1;
+        festaPhone = null;
+        return ok({ destroyedCount });
+      }
+      case "DELETE /api/admin/festa/investments": {
+        if (fx.home.features.mockInvestment) return fail(409, "FESTA_RESET_WHILE_OPEN", "토글 켜짐");
+        const deletedInvestorCount = festaPhone === null && festaInvestments.length === 0 && festaVote === null ? 0 : 1;
+        festaPhone = null;
+        festaInvestments = [];
+        festaVote = null;
+        return ok({ deletedInvestorCount });
+      }
+      case "GET /api/public/projects": {
+        const semester = searchParams.get("semester");
+        if (semester === null) return ok(fx.projects);
+        const content = fx.projects.content.filter((p) => p.semester === semester);
+        return ok({ ...fx.projects, content, totalElements: content.length });
+      }
       case "GET /api/member/me/summary":
         return ok(mySummary);
       case "GET /api/member/projects":

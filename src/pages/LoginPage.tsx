@@ -1,3 +1,5 @@
+import { clearReturnPath, googleLoginUrl } from "../libs/loginReturn";
+
 import styles from "./LoginPage.module.scss";
 
 /** Google 4색 로고. 브랜드 아이콘이라 원본 색상 그대로 직접 그린다(Figma 원격 asset은 7일 뒤 만료). */
@@ -31,8 +33,6 @@ function GoogleIcon() {
  * 신규 유저 전용 동의는 `OAuthCallbackPage`(정확히는 그 뒤 온보딩 화면)에서 받는다.
  */
 export default function LoginPage() {
-  const googleLoginUrl = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/google`;
-
   return (
     <div className={styles.page}>
       <div className={styles.inner}>
@@ -59,7 +59,8 @@ export default function LoginPage() {
         <p className={styles.subtitle}>GET IT에 오신 것을 환영합니다</p>
 
         <div className={styles.card}>
-          <a className={styles.googleButton} href={googleLoginUrl}>
+          {/* 여기서 직접 로그인하면 역할별 기본 도착지로 간다 — 다른 화면이 남겨 둔 복귀 경로는 버린다(#364). */}
+          <a className={styles.googleButton} href={googleLoginUrl()} onClick={clearReturnPath}>
             <GoogleIcon />
             Google로 로그인
           </a>

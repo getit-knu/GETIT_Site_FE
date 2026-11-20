@@ -1,6 +1,6 @@
 import type { HomeResult, PublicActivityPhoto, PublicFaq } from "../../types/home";
 import type { College, Major } from "../../types/college";
-import type { PublicProjectBoard, PublicProjectListParams } from "../../types/project";
+import type { PublicProject, PublicProjectBoard, PublicProjectListParams } from "../../types/project";
 import type { RecruitmentStatus } from "../../types/recruitment";
 import type { PublicEventCalendar, StaffDirectory } from "../../types/site";
 import { client } from "../client";
@@ -56,6 +56,15 @@ export async function getActivityPhotos(): Promise<PublicActivityPhoto[]> {
 /** `GET /api/public/projects?semester=&page=&size=` — 2.4. */
 export async function getProjects(params: PublicProjectListParams): Promise<PublicProjectBoard> {
   const { data } = await client.get<PublicProjectBoard>("/api/public/projects", { params });
+  return data;
+}
+
+/**
+ * `GET /api/public/festa/projects` — 명세 없음(BE#220). 어드민이 "FESTA 출전"으로 고른 승인된
+ * 프로젝트를 출전 순서대로 준다. 페이징 없이 배열이고, item 모양은 2.4와 같다.
+ */
+export async function getFestaProjects(): Promise<PublicProject[]> {
+  const { data } = await client.get<PublicProject[]>("/api/public/festa/projects");
   return data;
 }
 

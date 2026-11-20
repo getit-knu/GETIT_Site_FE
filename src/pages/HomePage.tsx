@@ -1,5 +1,9 @@
-import { useLayoutEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useLayoutEffect, useState } from "react";
 
+import { getHome } from "../apis/public/publicApi";
+import { queryKeys } from "../apis/queryKeys";
+import { FestaShowcase } from "../components/festa/FestaShowcase";
 import { ActivityPhotos } from "../components/home/ActivityPhotos";
 import { CurriculumTimeline } from "../components/home/CurriculumTimeline";
 import { DdayBadge } from "../components/home/DdayBadge";
@@ -8,8 +12,11 @@ import { Hero } from "../components/home/Hero";
 import { ProjectShowcase } from "../components/home/ProjectShowcase";
 import { ScheduleCalendar } from "../components/home/ScheduleCalendar";
 
-/** 공개 홈. Figma 와이어프레임(`1:326`) 순서대로 섹션을 배치한다. */
-export default function HomePage() {
+/** 홈 응답을 기다리며 첫 화면을 비워 두는 최대 시간. 행사 중이면 평소 홈이 번쩍하는 걸 막는 용도라 짧게. */
+const HOME_GATE_MS = 1500;
+
+/** 평소 공개 홈. Figma 와이어프레임(`1:326`) 순서대로 섹션을 배치한다. */
+function RegularHome() {
   /*
    * 섹션 스크롤 스냅(`index.css`)은 Home에만 필요하다. 전역에 걸어두면 다른 라우트로
    * 이동했을 때 <ScrollRestoration />의 스크롤-맨위-복귀가 씹혀서, Home이 떠 있는 동안만 켠다.
@@ -60,4 +67,42 @@ export default function HomePage() {
       <FAQSection />
     </>
   );
+}
+
+/**
+ * 공개 홈(`/`). 모의투자 FESTA 기간(어드민 기능 설정 `MOCK_INVESTMENT` 토글, `features.mockInvestment`)
+ * 에는 평소 홈 대신 FESTA 쇼케이스를 그린다(#359). 토글 기본값은 꺼짐이다(BE V21 시드).
+ *
+ * **응답이 오기 전에는 평소 홈도 그리지 않는다** — 먼저 그려 두면 행사 기간에 홈이 번쩍 보였다가
+ * 쇼케이스로 바뀐다. `ProjectShowcase`가 같은 쿼리 키로 이미 부르던 요청이라 추가 호출은 없다.
+ * 실패하면 평소 홈으로 돌아간다 — 홈 데이터 하나 때문에 첫 화면이 통째로 비면 안 된다.
+ */
+export default function HomePage() {
+  // 탭으로 돌아올 때 다시 읽는다 — 행사장 화면처럼 계속 켜 둔 탭에도 토글 변경이 닿게(#361 리뷰).
+  const { data, isPending, failureCount } = useQuery({
+    queryKey: queryKeys.public.home(),
+    queryFn: getHome,
+    refetchOnWindowFocus: true,
+  });
+
+  /*
+   * **빈 화면은 첫 결론 전까지만, 그것도 짧게.** 응답이 오거나, 첫 시도가 실패하거나,
+   * `HOME_GATE_MS`가 지나면 결론을 낸다 — 재시도(2회)·타임아웃(10초)까지 기다리면 실패 시
+   * 첫 화면이 최대 30초 넘게 비었다(#361 리뷰). 늦게 온 응답이 행사 중이면 그때 쇼케이스로 바뀐다.
+   *
+   * 한 번 결론이 나면 다시 빈 화면으로 돌아가지 않는다. 실패 후 평소 홈의 `ProjectShowcase`가 같은
+   * 쿼리를 다시 부르면(retryOnMount) 데이터 없는 쿼리는 `pending`으로 되돌아가는데, 그걸 빈 화면으로
+   * 받으면 언마운트·재실패·재마운트가 끝없이 반복된다.
+   */
+  const [timedOut, setTimedOut] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setTimedOut(true), HOME_GATE_MS);
+    return () => clearTimeout(timer);
+  }, []);
+  const [settled, setSettled] = useState(false);
+  if (!settled && (!isPending || failureCount > 0 || timedOut)) setSettled(true);
+
+  if (!settled) return <div style={{ minHeight: "calc(100vh - 4rem)" }} aria-busy="true" />;
+  if (data?.features.mockInvestment === true) return <FestaShowcase />;
+  return <RegularHome />;
 }

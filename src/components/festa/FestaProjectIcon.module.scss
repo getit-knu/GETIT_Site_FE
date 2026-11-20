@@ -1,0 +1,36 @@
+@use "../../styles/abstracts/variables" as *;
+@use "../../styles/abstracts/breakpoints" as *;
+
+// 앱 아이콘 모서리는 한 변의 22% — iOS 아이콘 비율에 가깝게 맞춘다.
+.icon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  border: 1px solid rgb(0 0 0 / 6%);
+  border-radius: 22%;
+  background-color: rgb(40 57 151 / 12%);
+  background-position: center;
+  background-size: cover;
+  color: $color-accent;
+  font-size: calc(var(--icon-size) * 0.42);
+  font-weight: 800;
+}
+
+.card {
+  --icon-size: 3.25rem;
+
+  @media (width <= $breakpoint-mobile) {
+    --icon-size: 2.75rem;
+  }
+}
+
+.detail {
+  --icon-size: 5rem;
+
+  @media (width <= $breakpoint-mobile) {
+    --icon-size: 4.5rem;
+  }
+}

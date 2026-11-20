@@ -91,6 +91,25 @@ describe("OAuthCallbackPage", () => {
     expect(await screen.findByText("부원 본문")).toBeInTheDocument();
   });
 
+  it("로그인을 시작한 화면이 복귀 경로를 남겼으면 역할과 무관하게 그리로 돌아간다(#364)", async () => {
+    sessionStorage.setItem("getit.loginReturnPath", "/");
+    vi.mocked(getMe).mockResolvedValue(meWithRole("MEMBER"));
+    renderAt("/oauth/callback");
+
+    expect(await screen.findByText("홈")).toBeInTheDocument();
+    expect(sessionStorage.getItem("getit.loginReturnPath")).toBeNull();
+  });
+
+  it("신규 유저는 복귀 경로가 있어도 온보딩부터 거치고, 경로는 남겨 둔다", async () => {
+    sessionStorage.setItem("getit.loginReturnPath", "/");
+    vi.mocked(getMe).mockResolvedValue(meWithRole("MEMBER"));
+    renderAt("/oauth/callback?isNewUser=true");
+
+    expect(await screen.findByText("온보딩 본문")).toBeInTheDocument();
+    expect(sessionStorage.getItem("getit.loginReturnPath")).toBe("/");
+    sessionStorage.clear();
+  });
+
   it("토큰 재발급에 실패하면 실패 화면을 보여주고, 홈으로 버튼이 동작한다", async () => {
     vi.mocked(refreshAccessToken).mockRejectedValue(new Error("network"));
     renderAt("/oauth/callback");

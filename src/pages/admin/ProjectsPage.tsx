@@ -103,6 +103,15 @@ export default function AdminProjectsPage() {
                     <div className={styles.badges}>
                       <span className={clsx(styles.badge, STATUS_STYLE[project.status])}>{project.statusLabel}</span>
                       {project.isFeatured && <span className={styles.badge}>Home 소개</span>}
+                      {project.festaEntry && (
+                        <span className={styles.badge}>
+                          FESTA{project.festaOrder === null ? "" : ` ${project.festaOrder}`}
+                        </span>
+                      )}
+                      {/* 조가 없으면 그 팀 부원도 투자할 수 있다(#371). 리허설 전에 채워야 할 것을 바로 찾게 한다. */}
+                      {project.festaEntry && project.groupId === null && (
+                        <span className={clsx(styles.badge, styles.rejected)}>조 미지정</span>
+                      )}
                     </div>
                   </div>
                   <span className={styles.muted}>

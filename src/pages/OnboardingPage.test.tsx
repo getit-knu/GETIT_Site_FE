@@ -84,6 +84,19 @@ describe("OnboardingPage", () => {
     expect(await screen.findByText("부원 본문")).toBeInTheDocument();
   });
 
+  it("로그인을 시작한 화면이 복귀 경로를 남겼으면 동의 뒤 그리로 돌아간다(#364)", async () => {
+    sessionStorage.setItem("getit.loginReturnPath", "/");
+    vi.mocked(getMe).mockResolvedValue(me({ role: "MEMBER" }));
+    vi.mocked(confirmPrivacyConsent).mockResolvedValue(me({ privacyConsentedAt: "2026-09-01T00:00:00+09:00" }));
+    renderAt("/onboarding");
+
+    await userEvent.click(await screen.findByLabelText(/개인정보 수집·이용에 동의합니다/));
+    await userEvent.click(screen.getByRole("button", { name: "동의하고 시작하기" }));
+
+    expect(await screen.findByText("홈")).toBeInTheDocument();
+    expect(sessionStorage.getItem("getit.loginReturnPath")).toBeNull();
+  });
+
   it("이미 동의한 사람이 다시 들어오면 곧장 제 영역으로 보낸다", async () => {
     // 주소를 직접 쳐서 재방문하는 경우 등의 안전망이다.
     vi.mocked(getMe).mockResolvedValue(me({ privacyConsentedAt: "2026-09-01T00:00:00+09:00" }));

@@ -9,6 +9,7 @@ import { projectSaveErrorMessage } from "../../errors/project/errorMessages";
 import { useSaveProject } from "../../hooks/project/useProjects";
 import type { AdminProject, AdminProjectPayload } from "../../types/project";
 
+import { ProjectGroupField } from "./ProjectGroupField";
 import { ThumbnailField } from "./ThumbnailField";
 import styles from "./AdminProjectFormModal.module.scss";
 
@@ -35,6 +36,9 @@ interface Draft {
   thumbnailUrl: string | null;
   isFeatured: boolean;
   order: string;
+  festaEntry: boolean;
+  festaOrder: string;
+  groupId: number | null;
 }
 
 /** `semester`는 `2026-FALL` 형태 고정값이다(BE 검증). 화면은 연도 + 계절로 나눠 받는다. */
@@ -61,6 +65,9 @@ function emptyDraft(): Draft {
     thumbnailUrl: null,
     isFeatured: false,
     order: "",
+    festaEntry: false,
+    festaOrder: "",
+    groupId: null,
   };
 }
 
@@ -76,10 +83,14 @@ function toDraft(project: AdminProject): Draft {
     techStacksText: project.techStacks.join(", "),
     codeUrl: project.codeUrl,
     demoUrl: project.demoUrl,
-    fileId: null,
+    // 원본 fileId 를 그대로 들고 있어야 손대지 않은 썸네일이 저장할 때 지워지지 않는다(BE#139 이후 응답에 있음).
+    fileId: project.fileId ?? null,
     thumbnailUrl: project.thumbnailUrl === "" ? null : project.thumbnailUrl,
     isFeatured: project.isFeatured,
     order: String(project.order),
+    festaEntry: project.festaEntry,
+    festaOrder: project.festaOrder === null ? "" : String(project.festaOrder),
+    groupId: project.groupId,
   };
 }
 
@@ -120,6 +131,11 @@ function invalidReason(draft: Draft): string | null {
     if (!Number.isInteger(order) || order < 1) return "순서는 1 이상의 정수여야 합니다.";
   }
 
+  if (draft.festaEntry && draft.festaOrder.trim() !== "") {
+    const festaOrder = Number(draft.festaOrder);
+    if (!Number.isInteger(festaOrder) || festaOrder < 1) return "출전 순서는 1 이상의 정수여야 합니다.";
+  }
+
   return null;
 }
 
@@ -140,6 +156,10 @@ function toPayload(draft: Draft): AdminProjectPayload {
     fileId: draft.fileId,
     isFeatured: draft.isFeatured,
     ...(draft.order.trim() === "" ? {} : { order: Number(draft.order) }),
+    festaEntry: draft.festaEntry,
+    festaOrder: draft.festaEntry && draft.festaOrder.trim() !== "" ? Number(draft.festaOrder) : null,
+    // 생략하면 서버가 조를 그대로 둔다. 비울 수는 없으니 정해졌을 때만 보낸다.
+    ...(draft.groupId === null ? {} : { groupId: draft.groupId }),
   };
 }
 
@@ -186,6 +206,11 @@ export function AdminProjectFormModal({ project, onClose }: AdminProjectFormModa
           </div>
           {/* 별도 순서 변경 엔드포인트가 없다 — 비우면 수정 시 기존 순서를 유지한다. */}
           <Input label="순서" type="number" value={draft.order} onChange={(order) => set({ order })} />
+          <ProjectGroupField
+            value={draft.groupId}
+            initial={project?.groupId ?? null}
+            onChange={(groupId) => set({ groupId })}
+          />
         </div>
 
         <TextArea label="설명" rows={3} value={draft.description} onChange={(description) => set({ description })} />
@@ -202,19 +227,32 @@ export function AdminProjectFormModal({ project, onClose }: AdminProjectFormModa
         </div>
 
         <ThumbnailField currentUrl={draft.thumbnailUrl} onFileIdChange={(fileId) => set({ fileId })} />
-        {/*
-          BE 한계(getit-knu/GETIT_Site_BE#139): 수정 요청은 fileId 를 항상 통째로
-          덮어써서, 목록 응답엔 없는 원본 fileId 를 화면이 다시 실어 보낼 방법이 없다.
-          손대지 않아도 저장하면 지워지므로 미리 알린다.
-        */}
-        {draft.id !== null && draft.thumbnailUrl !== null && draft.fileId === null && (
-          <p className={styles.hint}>썸네일을 다시 올리지 않고 저장하면 기존 썸네일이 사라집니다.</p>
-        )}
 
         <label className={styles.checkbox}>
           <input type="checkbox" checked={draft.isFeatured} onChange={(e) => set({ isFeatured: e.target.checked })} />
           Home 화면에 소개
         </label>
+
+        {/* 모의투자 FESTA 쇼케이스·투자 대상(BE#220). 순서를 비우면 같은 순서끼리는 등록 순이다. */}
+        <div className={styles.festa}>
+          <label className={styles.checkbox}>
+            <input type="checkbox" checked={draft.festaEntry} onChange={(e) => set({ festaEntry: e.target.checked })} />
+            모의투자 FESTA 출전
+          </label>
+          {draft.festaEntry && (
+            <Input
+              label="출전 순서"
+              type="number"
+              value={draft.festaOrder}
+              onChange={(festaOrder) => set({ festaOrder })}
+            />
+          )}
+        </div>
+        {draft.festaEntry && draft.groupId === null && (
+          <p role="note" className={styles.hint}>
+            소속 조를 정하지 않으면 그 팀 부원도 이 프로젝트에 투자할 수 있습니다.
+          </p>
+        )}
 
         {reason !== null && (
           <p role="status" className={styles.reason}>
