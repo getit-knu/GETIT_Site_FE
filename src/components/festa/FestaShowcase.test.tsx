@@ -26,11 +26,11 @@ function project(id: number, semester: string): PublicProject {
   };
 }
 
-function renderShowcase() {
+function renderShowcase(generationNo: number | null = 9) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <FestaShowcase />
+      <FestaShowcase generationNo={generationNo} />
     </QueryClientProvider>,
   );
 }
@@ -48,7 +48,8 @@ describe("FestaShowcase", () => {
 
     const headings = await screen.findAllByRole("heading", { level: 3 });
     expect(headings.map((h) => h.textContent)).toEqual(["프로젝트 2", "프로젝트 1"]);
-    expect(screen.getByText("GET IT 2026 Fall · 프로젝트 쇼케이스")).toBeInTheDocument();
+    // 계절 대신 기수를 띄운다(#377).
+    expect(screen.getByText("GET IT 9기 · 프로젝트 쇼케이스")).toBeInTheDocument();
     expect(screen.getByText(/2팀 출전/)).toBeInTheDocument();
   });
 
@@ -61,11 +62,18 @@ describe("FestaShowcase", () => {
     expect(screen.getByRole("dialog", { name: "프로젝트 1" })).toBeInTheDocument();
   });
 
-  it("출전 프로젝트가 없으면 준비 중 안내를 보여주고 학기 배지는 비운다", async () => {
+  it("출전 프로젝트가 없으면 준비 중 안내를 보여준다", async () => {
     vi.mocked(getFestaProjects).mockResolvedValue([]);
     renderShowcase();
 
     expect(await screen.findByText("출전 프로젝트를 준비하고 있어요.")).toBeInTheDocument();
+  });
+
+  it("활성 기수가 없으면 배지에서 기수를 뺀다", async () => {
+    vi.mocked(getFestaProjects).mockResolvedValue([]);
+    renderShowcase(null);
+
+    await screen.findByText("출전 프로젝트를 준비하고 있어요.");
     expect(screen.getByText("GET IT 프로젝트 쇼케이스")).toBeInTheDocument();
   });
 
