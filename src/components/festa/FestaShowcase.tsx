@@ -3,14 +3,17 @@ import { useState } from "react";
 
 import { getFestaProjects } from "../../apis/public/publicApi";
 import { queryKeys } from "../../apis/queryKeys";
+import type { FestaSchedule } from "../../types/festa";
 import type { PublicProject } from "../../types/project";
 
-import { FESTA_COPY, FESTA_EVENT, FESTA_MODE, type FestaMode } from "./festaConfig";
+import { FESTA_COPY, FESTA_MODE, type FestaMode } from "./festaConfig";
+import { toWindow } from "./festaDeadline";
 import { FestaDeadlineLabel } from "./FestaDeadlineLabel";
 import { FestaInvestBoard } from "./FestaInvestBoard";
 import { FestaProjectDetail } from "./FestaProjectDetail";
 import styles from "./FestaShowcase.module.scss";
 import { FestaVoteBoard } from "./FestaVoteBoard";
+import { useFestaPhase } from "./useFestaPhase";
 
 /** 어드민이 "FESTA 출전"으로 고른 프로젝트를 출전 순서대로(#362, BE#220). */
 function useFestaProjects() {
@@ -26,11 +29,16 @@ interface FestaShowcaseProps {
   mode?: FestaMode;
   /** 배지에 띄울 기수(홈 API의 활성 기수, #377). 없으면 숫자 없이 보여준다. */
   generationNo?: number | null;
+  /** 관리자가 정한 투표 기간(#379). 없으면 기간 표시 없이, 토글이 켜져 있는 동안 투표를 받는다. */
+  schedule?: FestaSchedule | null;
 }
 
-export function FestaShowcase({ mode = FESTA_MODE, generationNo = null }: FestaShowcaseProps) {
+export function FestaShowcase({ mode = FESTA_MODE, generationNo = null, schedule = null }: FestaShowcaseProps) {
   const { projects, isPending, isError } = useFestaProjects();
   const [selected, setSelected] = useState<PublicProject | null>(null);
+  const period = schedule === null ? null : toWindow(schedule);
+  const phase = useFestaPhase(period);
+  const boardProps = { projects, onSelect: setSelected, phase, period };
 
   return (
     <section className={styles.showcase}>
@@ -43,10 +51,13 @@ export function FestaShowcase({ mode = FESTA_MODE, generationNo = null }: FestaS
           <h1 className={styles.title}>
             모의투자 <span className={styles.titleAccent}>FESTA</span>
           </h1>
-          <p className={styles.date}>
-            <FestaDeadlineLabel endsAt={FESTA_EVENT.endsAt} action={FESTA_COPY[mode].action} />
-            {projects.length > 0 && ` · ${projects.length}팀 출전`}
-          </p>
+          {(period !== null || projects.length > 0) && (
+            <p className={styles.date}>
+              {period !== null && <FestaDeadlineLabel period={period} action={FESTA_COPY[mode].action} />}
+              {period !== null && projects.length > 0 && " · "}
+              {projects.length > 0 && `${projects.length}팀 출전`}
+            </p>
+          )}
           <p className={styles.subtitle}>{FESTA_COPY[mode].subtitle}</p>
         </header>
 
@@ -61,9 +72,9 @@ export function FestaShowcase({ mode = FESTA_MODE, generationNo = null }: FestaS
         ) : projects.length === 0 ? (
           <p className={styles.status}>출전 프로젝트를 준비하고 있어요.</p>
         ) : mode === "vote" ? (
-          <FestaVoteBoard projects={projects} onSelect={setSelected} />
+          <FestaVoteBoard {...boardProps} />
         ) : (
-          <FestaInvestBoard projects={projects} onSelect={setSelected} />
+          <FestaInvestBoard {...boardProps} />
         )}
       </div>
 

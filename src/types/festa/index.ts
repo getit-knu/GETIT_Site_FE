@@ -73,3 +73,18 @@ export interface FestaVoteResults {
   voterCount: number;
   projects: { projectId: number; title: string; teamName: string; voteCount: number }[];
 }
+
+/**
+ * FESTA 투표 기간(#379, BE#234). 오프셋 붙은 ISO 8601. 이 기간 밖에는 모의투자 토글이 켜져 있어도
+ * 투표(투자)를 받지 않는다. 토글은 쇼케이스를 띄우는 스위치로만 남는다.
+ */
+export interface FestaSchedule {
+  startAt: string;
+  endAt: string;
+}
+
+/** `GET /api/admin/festa/schedule`. 아직 정하지 않았으면 둘 다 `null`이다. */
+export interface FestaScheduleSetting {
+  startAt: string | null;
+  endAt: string | null;
+}

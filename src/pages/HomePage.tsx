@@ -104,7 +104,7 @@ export default function HomePage() {
 
   if (!settled) return <div style={{ minHeight: "calc(100vh - 4rem)" }} aria-busy="true" />;
   if (data?.features.mockInvestment === true) {
-    return <FestaShowcase generationNo={data.generation?.generationNo ?? null} />;
+    return <FestaShowcase generationNo={data.generation?.generationNo ?? null} schedule={data.festaSchedule ?? null} />;
   }
   return <RegularHome />;
 }

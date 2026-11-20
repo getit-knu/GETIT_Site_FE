@@ -32,6 +32,13 @@
   }
 }
 
+// 투표 기간(#379)의 시작·종료 입력. 좁은 화면에서는 한 줄씩 쌓는다.
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

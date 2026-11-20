@@ -7,7 +7,9 @@ import type { ApiErrorPayload } from "../../apis/client";
  * 화면이 모르는 이유로 서버가 거절할 수 있다.
  */
 const FESTA_ERROR_MESSAGES: Record<string, string> = {
-  FESTA_CLOSED: "모의투자가 마감되어 더는 바꿀 수 없어요.",
+  FESTA_CLOSED: "지금은 참여 기간이 아니에요.",
+  INVALID_FESTA_SCHEDULE: "종료 시각은 시작 시각보다 뒤여야 합니다.",
+  VALIDATION_FAILED: "입력값을 확인해 주세요.",
   FESTA_RESET_WHILE_OPEN: "모의투자 토글이 켜져 있어 초기화할 수 없습니다. 사이트 관리에서 먼저 꺼 주세요.",
   DUPLICATE_PROJECT: "같은 프로젝트가 두 번 담겼어요. 새로고침한 뒤 다시 시도해 주세요.",
   INVALID_AMOUNT: "투자금은 10만 원 단위로만 넣을 수 있어요.",
