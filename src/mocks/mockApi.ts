@@ -1,5 +1,11 @@
 import type { ApplicationDraftPayload, MyApplicationResult } from "../types/application";
-import type { FestaInvestment, FestaPortfolioPayload, FestaVotePayload } from "../types/festa";
+import type {
+  FestaInvestment,
+  FestaPortfolioPayload,
+  FestaSchedule,
+  FestaScheduleSetting,
+  FestaVotePayload,
+} from "../types/festa";
 
 import { eventsFor } from "./eventFixtures";
 import * as fx from "./fixtures";
@@ -84,6 +90,19 @@ export function createMockApi() {
     }
     festaInvestments = investments.filter((i) => i.amount > 0).sort((a, b) => a.projectId - b.projectId);
     return ok(festaPortfolio());
+  }
+
+  // FESTA 투표 기간(#379). 계약은 BE#234 이슈 기준. 처음엔 정하지 않은 상태다.
+  let festaSchedule: FestaScheduleSetting = { startAt: null, endAt: null };
+
+  function saveFestaSchedule(body: unknown): MockResponse {
+    const { startAt = "", endAt = "" } = (body ?? {}) as Partial<FestaSchedule>;
+    const start = Date.parse(startAt);
+    const end = Date.parse(endAt);
+    if (Number.isNaN(start) || Number.isNaN(end)) return fail(400, "VALIDATION_FAILED", "시각 필요");
+    if (start >= end) return fail(400, "INVALID_FESTA_SCHEDULE", "시작이 종료보다 늦음");
+    festaSchedule = { startAt, endAt };
+    return ok(festaSchedule);
   }
 
   // FESTA 1인 1팀 투표(#373). 계약은 BE#232 이슈 기준. 번호는 투자와 같은 칸(`festaPhone`)을 쓴다.
@@ -184,6 +203,10 @@ export function createMockApi() {
           .sort((a, b) => b.voteCount - a.voteCount);
         return ok({ voterCount: festaVote === null ? 0 : 1, projects });
       }
+      case "GET /api/admin/festa/schedule":
+        return ok(festaSchedule);
+      case "PUT /api/admin/festa/schedule":
+        return saveFestaSchedule(body);
       case "GET /api/admin/festa/results":
         return ok(festaResults());
       case "GET /api/admin/festa/investors.csv":

@@ -31,6 +31,8 @@ function renderPage() {
 describe("FestaPage (#365)", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    // 맨 위 투표 기간 카드(#379)는 FestaScheduleCard.test 에서 따로 본다.
+    vi.mocked(api.getFestaSchedule).mockResolvedValue({ startAt: null, endAt: null });
     vi.mocked(api.getFestaResults).mockResolvedValue(results);
   });
 
@@ -100,6 +102,8 @@ describe("FestaPage (#365)", () => {
 describe("FestaPage 득표 집계 (#373)", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    // 맨 위 투표 기간 카드(#379)는 FestaScheduleCard.test 에서 따로 본다.
+    vi.mocked(api.getFestaSchedule).mockResolvedValue({ startAt: null, endAt: null });
   });
 
   function renderVotePage() {
