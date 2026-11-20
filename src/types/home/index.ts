@@ -16,16 +16,24 @@ export type PublicFaq = Required<components["schemas"]["FaqPublicResult"]>;
  * `GET /api/public/home` 응답(2.1, #218). Home 화면의 커리큘럼 타임라인 · 프로젝트
  * 쇼케이스 미리보기가 이 안의 `curriculums`·`featuredProjects`를 쓴다.
  *
- * `generation`·`recruitment`·`faqs`도 이 응답에 들어 있지만, 각각
+ * `recruitment`·`faqs`도 이 응답에 들어 있지만, 각각
  * `GET /api/public/recruitment/status`(D-Day 배지)·`GET /api/public/faqs`(#212)로
  * 이미 따로 연동돼 있어 여기서는 안 쓴다. `features`(기능 토글)는
- * `HomePage`가 FESTA 쇼케이스 전환에 쓴다(#359).
+ * `HomePage`가 FESTA 쇼케이스 전환에 쓰고(#359), `generation`은 쇼케이스 배지의 기수로 쓴다(#377).
  */
 export interface HomeResult {
   curriculums: HomeCurriculum[];
   featuredProjects: HomeFeaturedProject[];
   features: HomeFeatures;
+  /**
+   * 활성 기수. BE는 활성 기수가 없으면 `null`을 준다(`HomeService`). 키 자체는 늘 오지만, 쇼케이스 배지
+   * 말고는 쓰는 곳이 없어 테스트 픽스처마다 채우지 않도록 선택 필드로 둔다.
+   */
+  generation?: HomeGeneration | null;
 }
+
+/** 활성 기수 요약(`generationNo`기, `year`년). */
+export type HomeGeneration = Required<components["schemas"]["HomeResultGenerationInfo"]>;
 
 /**
  * 커리큘럼 타임라인 항목. **학기(1학기/2학기) 구분이 없는 평평한 목록이다**(BE 확인함,

@@ -108,6 +108,11 @@ $festa-gold-text: #412402;
   font-weight: 600;
 }
 
+/* 마지막 날 카운트다운(#377). 숫자 폭을 고정해 1초마다 글자 폭이 흔들리지 않게 한다. */
+.timer {
+  font-variant-numeric: tabular-nums;
+}
+
 .subtitle {
   @include rise(270ms);
 
