@@ -6,17 +6,19 @@ import styles from "./FestaInvestBar.module.scss";
 
 interface FestaInvestBarProps {
   invest: FestaInvestState;
+  /** 투표 기간 밖이라 저장을 막는 이유(#379). 기간 안이면 `null`. */
+  lockReason: string | null;
 }
 
 /**
  * 화면 아래에 붙어 따라오는 남은 투자금과 저장 버튼(#364). 카드를 내려가며 금액을 고치는 동안
  * 얼마 남았는지 계속 보여야 해서 위쪽 패널과 떼어 놓았다.
  */
-export function FestaInvestBar({ invest }: FestaInvestBarProps) {
+export function FestaInvestBar({ invest, lockReason }: FestaInvestBarProps) {
   if (invest.phase !== "ready") return null;
 
   const usedRatio = invest.budget === 0 ? 0 : (invest.budget - invest.remaining) / invest.budget;
-  const message = invest.saveError ?? (invest.justSaved ? "저장했어요." : invest.blockReason);
+  const message = invest.saveError ?? lockReason ?? (invest.justSaved ? "저장했어요." : invest.blockReason);
 
   return (
     <div className={styles.bar}>
@@ -42,7 +44,7 @@ export function FestaInvestBar({ invest }: FestaInvestBarProps) {
           </p>
         )}
       </div>
-      <Button onClick={invest.submit} disabled={invest.blockReason !== null || invest.isSaving}>
+      <Button onClick={invest.submit} disabled={lockReason !== null || invest.blockReason !== null || invest.isSaving}>
         {invest.isSaving ? "저장하는 중…" : "투자 저장"}
       </Button>
     </div>

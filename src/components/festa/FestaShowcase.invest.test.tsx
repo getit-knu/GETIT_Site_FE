@@ -211,7 +211,7 @@ describe("FestaShowcase 가상 투자 (#364)", () => {
     await userEvent.click(card("프로젝트 1").getByRole("button", { name: "프로젝트 1 투자금 10만 원 더하기" }));
     await userEvent.click(screen.getByRole("button", { name: "투자 저장" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("모의투자가 마감되어 더는 바꿀 수 없어요.");
+    expect(await screen.findByRole("alert")).toHaveTextContent("지금은 참여 기간이 아니에요.");
   });
 
   it("번호 바꾸기를 누르면 새 번호와 동의를 다시 받는다", async () => {

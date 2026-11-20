@@ -1,19 +1,20 @@
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { toWindow } from "./festaDeadline";
 import { FestaDeadlineLabel } from "./FestaDeadlineLabel";
 
-const ENDS_AT = "2026-11-30T00:00:00+09:00";
+const PERIOD = toWindow({ startAt: "2026-11-23T10:00:00+09:00", endAt: "2026-11-30T00:00:00+09:00" });
 
 function renderLabel(action = "투표") {
   return render(
     <p data-testid="label">
-      <FestaDeadlineLabel endsAt={ENDS_AT} action={action} />
+      <FestaDeadlineLabel period={PERIOD} action={action} />
     </p>,
   );
 }
 
-describe("FestaDeadlineLabel (#377)", () => {
+describe("FestaDeadlineLabel (#377, #379)", () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -22,12 +23,24 @@ describe("FestaDeadlineLabel (#377)", () => {
     vi.useRealTimers();
   });
 
-  it("마지막 날 전에는 D-day를 보여준다", () => {
-    vi.setSystemTime(new Date("2026-11-26T10:00:00+09:00"));
+  it("시작 전에는 시작 D-day를, 시작 당일에는 시작까지 남은 시간을 보여준다", () => {
+    vi.setSystemTime(new Date("2026-11-22T23:59:30+09:00"));
     renderLabel();
+    expect(screen.getByTestId("label")).toHaveTextContent("투표 시작 D-1");
 
-    expect(screen.getByTestId("label")).toHaveTextContent("투표 마감 D-3");
-    expect(screen.queryByRole("timer")).not.toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(60_000));
+
+    expect(screen.getByTestId("label")).toHaveTextContent("투표 시작까지 09:59:30");
+  });
+
+  it("시작 시각이 되면 마감 D-day로 넘어간다", () => {
+    vi.setSystemTime(new Date("2026-11-23T09:59:59+09:00"));
+    renderLabel();
+    expect(screen.getByRole("timer")).toHaveTextContent("00:00:01");
+
+    act(() => vi.advanceTimersByTime(1_000));
+
+    expect(screen.getByTestId("label")).toHaveTextContent("투표 마감 D-6");
   });
 
   it("투자 방식이면 투자 마감으로 쓴다", () => {
@@ -44,7 +57,7 @@ describe("FestaDeadlineLabel (#377)", () => {
 
     act(() => vi.advanceTimersByTime(60_000));
 
-    expect(screen.getByRole("timer")).toHaveTextContent("23:59:30");
+    expect(screen.getByTestId("label")).toHaveTextContent("마감까지 23:59:30");
   });
 
   it("마지막 날에는 남은 시간을 1초마다 줄여 보여준다", () => {

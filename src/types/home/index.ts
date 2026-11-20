@@ -1,4 +1,5 @@
 import type { components } from "../../apis/generated";
+import type { FestaSchedule } from "../festa";
 
 /**
  * `GET /api/public/activity-photos` 응답(BE#146). 홈 "GETIT과 함께한 순간들" 마퀴가 쓴다.
@@ -30,6 +31,11 @@ export interface HomeResult {
    * 말고는 쓰는 곳이 없어 테스트 픽스처마다 채우지 않도록 선택 필드로 둔다.
    */
   generation?: HomeGeneration | null;
+  /**
+   * 관리자가 정한 FESTA 투표 기간(#379, BE#234). 정하지 않았으면 `null`이다. 쇼케이스 말고는 쓰지 않아
+   * `generation`처럼 선택 필드로 둔다.
+   */
+  festaSchedule?: FestaSchedule | null;
 }
 
 /** 활성 기수 요약(`generationNo`기, `year`년). */
