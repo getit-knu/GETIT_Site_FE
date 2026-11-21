@@ -4,13 +4,22 @@ import { Button } from "../ui/Button/Button";
 import { Input } from "../ui/Input/Input";
 import { Select } from "../ui/Select/Select";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "../ui/Modal/Modal";
-import { TextArea } from "../ui/TextArea/TextArea";
 import { projectSaveErrorMessage } from "../../errors/project/errorMessages";
 import { useSaveProject } from "../../hooks/project/useProjects";
 import type { AdminProject, AdminProjectPayload, ProjectPreservedPayload } from "../../types/project";
 
+import { DescriptionField } from "./DescriptionField";
 import { GalleryField } from "./GalleryField";
-import { galleryFileIds, isGalleryUploading, toGalleryItems, type GalleryItem } from "./projectImages";
+import {
+  DESCRIPTION_IMAGE_MAX,
+  DESCRIPTION_MAX_LENGTH,
+  descriptionImageFileIds,
+  galleryFileIds,
+  isGalleryUploading,
+  toGalleryItems,
+  type DescriptionImage,
+  type GalleryItem,
+} from "./projectImages";
 import { ProjectGroupField } from "./ProjectGroupField";
 import { ThumbnailField } from "./ThumbnailField";
 import styles from "./AdminProjectFormModal.module.scss";
@@ -42,6 +51,8 @@ interface Draft {
   festaOrder: string;
   groupId: number | null;
   gallery: GalleryItem[];
+  /** 에디터에서 이번에 올린 설명 속 이미지(#385). 예전 것은 `preserved.descriptionImageFileIds`에 있다. */
+  descriptionImages: DescriptionImage[];
   /** 이 폼이 아직 고치지 않는 항목(BE#227). 수정할 때 받은 값을 그대로 돌려보내야 지워지지 않는다. */
   preserved: Omit<ProjectPreservedPayload, "galleryFileIds">;
 }
@@ -82,6 +93,7 @@ function emptyDraft(): Draft {
     festaOrder: "",
     groupId: null,
     gallery: [],
+    descriptionImages: [],
     preserved: EMPTY_PRESERVED,
   };
 }
@@ -107,6 +119,7 @@ function toDraft(project: AdminProject): Draft {
     festaOrder: project.festaOrder === null ? "" : String(project.festaOrder),
     groupId: project.groupId,
     gallery: toGalleryItems(project.galleryFileIds, project.galleryImageUrls),
+    descriptionImages: [],
     preserved: {
       descriptionImageFileIds: project.descriptionImageFileIds,
       oneLiner: project.oneLiner,
@@ -138,6 +151,7 @@ function techStacks(draft: Draft): string[] {
 function invalidReason(draft: Draft): string | null {
   if (draft.title.trim() === "") return "제목을 입력해 주세요.";
   if (draft.teamName.trim() === "") return "팀 이름을 입력해 주세요.";
+  if (draft.description.length > DESCRIPTION_MAX_LENGTH) return "설명은 20,000자 이내로 입력해 주세요.";
 
   const year = Number(draft.year);
   if (!/^\d{4}$/.test(draft.year) || !Number.isInteger(year)) return "연도를 올바르게 입력해 주세요.";
@@ -169,6 +183,10 @@ function urlOrUndefined(value: string): string | undefined {
   return value.trim() === "" ? undefined : value.trim();
 }
 
+function descriptionImageIds(draft: Draft): number[] {
+  return descriptionImageFileIds(draft.preserved.descriptionImageFileIds, draft.descriptionImages, draft.description);
+}
+
 function toPayload(draft: Draft): AdminProjectPayload {
   return {
     title: draft.title.trim(),
@@ -188,6 +206,7 @@ function toPayload(draft: Draft): AdminProjectPayload {
     // BE 수정은 통째로 바꾼다 — 이미지 목록을 빼면 연결이 끊기고 한 줄 소개 등은 null 이 된다(BE#227).
     ...draft.preserved,
     galleryFileIds: galleryFileIds(draft.gallery),
+    descriptionImageFileIds: descriptionImageIds(draft),
   };
 }
 
@@ -241,7 +260,15 @@ export function AdminProjectFormModal({ project, onClose }: AdminProjectFormModa
           />
         </div>
 
-        <TextArea label="설명" rows={3} value={draft.description} onChange={(description) => set({ description })} />
+        <DescriptionField
+          initialValue={project?.description ?? ""}
+          length={draft.description.length}
+          onChange={(description) => set({ description })}
+          onImageUploaded={(image) =>
+            setDraft((prev) => ({ ...prev, descriptionImages: [...prev.descriptionImages, image] }))
+          }
+          canAddImage={descriptionImageIds(draft).length < DESCRIPTION_IMAGE_MAX}
+        />
 
         <Input
           label="기술 스택 (쉼표로 구분)"

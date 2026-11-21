@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import { uploadFile, uploadInvalidReason } from "../../apis/file/filesApi";
+import { getDownloadUrl, uploadFile, uploadInvalidReason } from "../../apis/file/filesApi";
 import { submitProject } from "../../apis/project/memberProjectsApi";
 import type { MemberProject } from "../../types/project";
 import { NO_PROJECT_DETAILS, noProjectImages } from "../../mocks/projectDetails";
@@ -124,5 +124,32 @@ describe("ProjectSubmitForm", () => {
     await waitFor(() => expect(submitProject).toHaveBeenCalled());
     expect(vi.mocked(uploadFile).mock.lastCall?.[1]).toBe("PROJECT_IMAGE");
     expect(vi.mocked(submitProject).mock.lastCall?.[0]).toMatchObject({ galleryFileIds: [77] });
+  });
+
+  it("설명에 이미지를 넣으면 마크다운과 descriptionImageFileIds 로 함께 등록한다 (#385)", async () => {
+    vi.mocked(submitProject).mockResolvedValue(RESULT);
+    vi.mocked(uploadInvalidReason).mockReturnValue(null);
+    vi.mocked(uploadFile).mockResolvedValue({ fileId: 88, fileName: "diagram.png", size: 1 });
+    vi.mocked(getDownloadUrl).mockResolvedValue({
+      downloadUrl: "https://api.getit.io.kr/api/public/files/public/d.png",
+      fileName: "diagram.png",
+      contentType: "image/png",
+      expiresIn: -1,
+    });
+    renderForm();
+
+    await userEvent.type(screen.getByLabelText("제목 *"), "AI 포트폴리오");
+    await userEvent.upload(
+      await screen.findByLabelText("설명에 넣을 이미지"),
+      new File(["x"], "diagram.png", { type: "image/png" }),
+    );
+    await waitFor(() => expect(getDownloadUrl).toHaveBeenCalledWith(88));
+    await userEvent.click(screen.getByRole("button", { name: "프로젝트 등록" }));
+
+    await waitFor(() => expect(submitProject).toHaveBeenCalled());
+    expect(vi.mocked(submitProject).mock.lastCall?.[0]).toMatchObject({
+      description: expect.stringContaining("![diagram](https://api.getit.io.kr/api/public/files/public/d.png)"),
+      descriptionImageFileIds: [88],
+    });
   });
 });

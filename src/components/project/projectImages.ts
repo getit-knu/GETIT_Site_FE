@@ -31,3 +31,27 @@ export function isGalleryUploading(items: GalleryItem[]): boolean {
 export function projectCoverUrl(project: { galleryImageUrls: string[]; thumbnailUrl: string | null }): string | null {
   return project.galleryImageUrls[0] ?? project.thumbnailUrl;
 }
+
+/** BE `@Size(max = 20000)`. 설명 마크다운 글자 수(한글 3바이트 기준 TEXT 컬럼 한도). */
+export const DESCRIPTION_MAX_LENGTH = 20000;
+
+/** BE `@Size(max = 10)`(BE#227). 설명 본문 속 이미지 수. */
+export const DESCRIPTION_IMAGE_MAX = 10;
+
+/** 에디터에서 이번에 올린 설명 속 이미지(#385). 본문에는 `url`이 `![](url)`로 들어간다. */
+export interface DescriptionImage {
+  fileId: number;
+  url: string;
+}
+
+/**
+ * 요청에 실을 `descriptionImageFileIds`(#385). 이번에 올린 것 중 본문에 아직 남은 것만 연결한다 — 올렸다가
+ * 지운 이미지는 연결하지 않아 24시간 뒤 정리된다.
+ *
+ * **예전에 넣은 이미지는 본문에서 지웠어도 그대로 둔다.** 응답이 id만 주고 주소를 주지 않아, 본문에 남았는지
+ * 알 수 없다. 빼 버리면 아직 본문에 있는 이미지까지 지워질 수 있어서 남기는 쪽을 택했다.
+ */
+export function descriptionImageFileIds(existing: number[], uploaded: DescriptionImage[], markdown: string): number[] {
+  const kept = uploaded.filter((image) => markdown.includes(image.url)).map((image) => image.fileId);
+  return [...new Set([...existing, ...kept])];
+}

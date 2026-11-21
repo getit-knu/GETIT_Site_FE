@@ -315,4 +315,27 @@ describe("AdminProjectFormModal", () => {
       expect(vi.mocked(api.updateProject).mock.lastCall?.[1]).toMatchObject({ galleryFileIds: [11, 12, 13] });
     });
   });
+
+  describe("설명 에디터 (#385)", () => {
+    it("설명을 블로그 에디터로 불러오고, 손대지 않고 저장하면 원래 글을 그대로 보낸다", async () => {
+      renderModal(project({ description: "첫 줄\n둘째 줄", descriptionImageFileIds: [21] }));
+
+      expect(await screen.findByRole("textbox", { name: "설명" })).toHaveTextContent("첫 줄");
+      await userEvent.click(submit());
+
+      await waitFor(() => expect(api.updateProject).toHaveBeenCalled());
+      expect(vi.mocked(api.updateProject).mock.lastCall?.[1]).toMatchObject({
+        description: "첫 줄\n둘째 줄",
+        descriptionImageFileIds: [21],
+      });
+    });
+
+    it("설명이 20,000자를 넘으면 저장을 막는다", async () => {
+      renderModal(project({ description: "가".repeat(20_001) }));
+      await screen.findByRole("textbox", { name: "설명" });
+
+      expect(submit()).toBeDisabled();
+      expect(screen.getByRole("status")).toHaveTextContent("설명은 20,000자 이내로 입력해 주세요.");
+    });
+  });
 });

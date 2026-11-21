@@ -22,4 +22,8 @@ describe("markdownToPlainText (#384)", () => {
   it("일반 글은 줄바꿈만 띄어쓰기로 바뀐다. 단어 속 밑줄은 그대로 둔다", () => {
     expect(markdownToPlainText("첫 줄\n둘째 줄 snake_case_name")).toBe("첫 줄 둘째 줄 snake_case_name");
   });
+
+  it("에디터가 이스케이프한 문법 글자는 역슬래시만 걷어낸다 (#385)", () => {
+    expect(markdownToPlainText("snake\\_case 와 \\* 별표")).toBe("snake_case 와 * 별표");
+  });
 });
