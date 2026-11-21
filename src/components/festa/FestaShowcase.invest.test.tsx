@@ -10,6 +10,7 @@ import { getFestaProjects } from "../../apis/public/publicApi";
 import type { Me, Role } from "../../types/auth";
 import type { FestaPortfolio } from "../../types/festa";
 import type { MemberProject, PublicProject } from "../../types/project";
+import { NO_PROJECT_DETAILS } from "../../mocks/projectDetails";
 
 import { FestaShowcase } from "./FestaShowcase";
 
@@ -30,6 +31,8 @@ function project(id: number): PublicProject {
     codeUrl: "",
     demoUrl: "",
     thumbnailUrl: null,
+    ...NO_PROJECT_DETAILS,
+    galleryImageUrls: [],
   };
 }
 

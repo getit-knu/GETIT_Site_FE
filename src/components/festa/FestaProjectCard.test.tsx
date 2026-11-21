@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { PublicProject } from "../../types/project";
+import { NO_PROJECT_DETAILS } from "../../mocks/projectDetails";
 
 import { FestaProjectCard } from "./FestaProjectCard";
 
@@ -17,6 +18,8 @@ function project(over: Partial<PublicProject> = {}): PublicProject {
     codeUrl: "https://github.com/getit-knu/polifit",
     demoUrl: "https://polifit.example.com",
     thumbnailUrl: null,
+    ...NO_PROJECT_DETAILS,
+    galleryImageUrls: [],
     ...over,
   };
 }
@@ -93,5 +96,30 @@ describe("FestaProjectCard", () => {
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
     // 출전 번호 줄(<p>) 하나뿐 — 빈 설명 단락을 그리지 않는다.
     expect(container.querySelectorAll("article p")).toHaveLength(1);
+  });
+
+  it("카드 설명은 마크다운 문법을 걷어낸 평문으로 보여준다 (#384)", () => {
+    render(
+      <ul>
+        <FestaProjectCard project={project({ description: "## 소개\n\n- 일정 공유" })} index={0} onSelect={vi.fn()} />
+      </ul>,
+    );
+
+    expect(screen.getByText("소개 일정 공유")).toBeInTheDocument();
+  });
+
+  it("한 줄 소개가 있으면 설명 대신 그것을 소개 문구로 쓴다 (#389)", () => {
+    render(
+      <ul>
+        <FestaProjectCard
+          project={project({ oneLiner: "한 줄로 소개", description: "## 긴 설명" })}
+          index={0}
+          onSelect={vi.fn()}
+        />
+      </ul>,
+    );
+
+    expect(screen.getByText("한 줄로 소개")).toBeInTheDocument();
+    expect(screen.queryByText("긴 설명")).not.toBeInTheDocument();
   });
 });

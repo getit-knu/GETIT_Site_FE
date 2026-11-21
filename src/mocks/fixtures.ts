@@ -6,6 +6,8 @@ import type { PublicProjectBoard } from "../types/project";
 import type { RecruitmentStatus } from "../types/recruitment";
 import type { StaffDirectory } from "../types/site";
 
+import { NO_PROJECT_DETAILS } from "./projectDetails";
+
 /**
  * 개발용 목 데이터. **dev 서버에서만 쓰인다** — `devApiMockPlugin`이 유일한 소비자라
  * `vite build` 산출물에 들어가지 않는다. 값은 실제 운영 데이터와 무관한 샘플이다.
@@ -201,6 +203,19 @@ export const staffs: StaffDirectory = {
   ],
 };
 
+/**
+ * 블로그 에디터로 쓴 설명(#384). 제목·목록·굵게가 상세에서 어떻게 보이는지 본다. 본문 속 이미지는 우리
+ * 저장소 주소가 아니라서(목은 `data:` 주소) 그리지 않고 대체 글자로 보인다 — 외부 이미지 차단 모양이다.
+ */
+const markdownDescription = (n: number) =>
+  [
+    `**프로젝트 ${n}**은 부원들이 한 학기 동안 만든 서비스입니다.`,
+    "## 주요 기능",
+    "- 일정 공유\n- 실시간 알림",
+    `![P${n} 구조도](${thumb(`P${n} 구조도`, "%23455a8f")})`,
+    "> 행사장에서 바로 써 볼 수 있어요.",
+  ].join("\n\n");
+
 export const projects: PublicProjectBoard = {
   content: [1, 2, 3, 4, 5, 6].map((n) => ({
     id: n,
@@ -208,11 +223,28 @@ export const projects: PublicProjectBoard = {
     teamName: `팀 ${n}`,
     semester: n <= 4 ? "2026-SPRING" : "2025-FALL",
     semesterLabel: n <= 4 ? "2026 1학기" : "2025 2학기",
-    description: "부원들이 한 학기 동안 만든 서비스입니다.",
+    description:
+      n <= 2 ? markdownDescription(n) : "부원들이 한 학기 동안 만든 서비스입니다.\n줄바꿈도 그대로 보여야 한다.",
     techStacks: ["React", "Spring Boot"],
     codeUrl: "https://github.com/getit-knu",
     demoUrl: "https://getit.example.com",
     thumbnailUrl: n % 3 === 0 ? null : thumb(`P${n}`, "%23283997"),
+    ...NO_PROJECT_DETAILS,
+    // 한 줄 소개·진행 상태·스토어 링크(#389)도 1·2번에만 넣는다.
+    ...(n === 1 && {
+      oneLiner: "나에게 맞는 청년 정책을 골라 주는 서비스",
+      progressStatus: "LIVE" as const,
+      progressStatusLabel: "서비스 중",
+      playStoreUrl: "https://play.google.com/store/apps/details?id=kr.getit.sample",
+      appStoreUrl: "https://apps.apple.com/kr/app/id0000000000",
+    }),
+    ...(n === 2 && {
+      oneLiner: "동아리 일정을 한눈에",
+      progressStatus: "IN_PROGRESS" as const,
+      progressStatusLabel: "개발 중",
+    }),
+    // 스크린샷(#382)은 1·2번에만 넣어 있을 때와 없을 때를 함께 본다.
+    galleryImageUrls: n <= 2 ? [1, 2, 3].map((shot) => thumb(`P${n} 화면 ${shot}`, "%23455a8f")) : [],
   })),
   page: 0,
   size: 12,

@@ -1,12 +1,14 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getGroups } from "../../apis/group/groupsApi";
+import * as filesApi from "../../apis/file/filesApi";
 import * as api from "../../apis/project/projectsApi";
 import type { GroupBoard } from "../../types/group";
 import type { AdminProject } from "../../types/project";
+import { NO_PROJECT_DETAILS, noProjectImages } from "../../mocks/projectDetails";
 
 import { AdminProjectFormModal } from "./AdminProjectFormModal";
 
@@ -35,6 +37,8 @@ function project(over: Partial<AdminProject> = {}): AdminProject {
     demoUrl: "https://ai-portfolio.getit-knu.dev",
     fileId: 501,
     thumbnailUrl: "https://cdn/thumb.png",
+    ...NO_PROJECT_DETAILS,
+    ...noProjectImages(),
     isFeatured: true,
     order: 3,
     status: "APPROVED",
@@ -232,7 +236,8 @@ describe("AdminProjectFormModal", () => {
       renderModal(project({ groupId: 7 }));
       await screen.findByRole("option", { name: "1조" });
 
-      expect(screen.queryByRole("option", { name: "선택 안 함" })).not.toBeInTheDocument();
+      // 진행 상태 칸(#389)에도 "선택 안 함"이 있어 조 칸 안에서만 찾는다.
+      expect(within(groupBox()).queryByRole("option", { name: "선택 안 함" })).not.toBeInTheDocument();
       expect(groupBox()).toHaveDisplayValue("현재 기수에 없는 조");
 
       await userEvent.click(submit());
@@ -247,6 +252,91 @@ describe("AdminProjectFormModal", () => {
       await screen.findByRole("option", { name: "1조" });
       await userEvent.selectOptions(groupBox(), "1조");
       expect(screen.queryByRole("note")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("프로젝트 이미지 (#382)", () => {
+    const withImages = () =>
+      project({
+        galleryFileIds: [11, 12],
+        galleryImageUrls: ["https://cdn/11.png", "https://cdn/12.png"],
+        descriptionImageFileIds: [21],
+        oneLiner: "한 줄 소개",
+        progressStatus: "LIVE",
+        progressStatusLabel: "서비스 중",
+        playStoreUrl: "https://play.google.com/store/apps/details?id=a",
+        appStoreUrl: null,
+      });
+
+    it("이미지에 손대지 않고 저장해도 이미지와 아직 못 고치는 항목을 그대로 보낸다 — 빼면 서버가 지운다", async () => {
+      renderModal(withImages());
+      await userEvent.click(submit());
+
+      await waitFor(() => expect(api.updateProject).toHaveBeenCalled());
+      expect(vi.mocked(api.updateProject).mock.lastCall?.[1]).toMatchObject({
+        galleryFileIds: [11, 12],
+        descriptionImageFileIds: [21],
+        oneLiner: "한 줄 소개",
+        progressStatus: "LIVE",
+        playStoreUrl: "https://play.google.com/store/apps/details?id=a",
+        appStoreUrl: null,
+      });
+    });
+
+    it("순서를 바꾸고 지운 결과를 galleryFileIds 로 보낸다", async () => {
+      renderModal(withImages());
+      await userEvent.click(screen.getByRole("button", { name: "1번째 이미지를 뒤로" }));
+      await userEvent.click(screen.getByRole("button", { name: "2번째 이미지 삭제" }));
+      await userEvent.click(submit());
+
+      await waitFor(() => expect(api.updateProject).toHaveBeenCalled());
+      expect(vi.mocked(api.updateProject).mock.lastCall?.[1]).toMatchObject({ galleryFileIds: [12] });
+    });
+
+    it("새 이미지를 올리는 동안은 저장을 막고, 다 올리면 뒤에 붙여 보낸다", async () => {
+      let finish: (value: { fileId: number; fileName: string; size: number }) => void = () => {};
+      vi.mocked(filesApi.uploadInvalidReason).mockReturnValue(null);
+      vi.mocked(filesApi.uploadFile).mockReturnValue(new Promise((resolve) => (finish = resolve)));
+      // URL 전체를 바꾸면 폼의 URL 형식 검사(new URL)가 깨진다 — 미리보기 함수만 붙인다(jsdom엔 없음).
+      Object.defineProperty(URL, "createObjectURL", { value: vi.fn(() => "blob:preview"), configurable: true });
+      renderModal(withImages());
+
+      await userEvent.upload(
+        screen.getByLabelText("프로젝트 이미지 올리기"),
+        new File(["x"], "c.png", { type: "image/png" }),
+      );
+      expect(submit()).toBeDisabled();
+      expect(screen.getByRole("status")).toHaveTextContent("프로젝트 이미지를 올리는 중입니다.");
+
+      finish({ fileId: 13, fileName: "c.png", size: 1 });
+      await waitFor(() => expect(submit()).toBeEnabled());
+      await userEvent.click(submit());
+
+      await waitFor(() => expect(api.updateProject).toHaveBeenCalled());
+      expect(vi.mocked(api.updateProject).mock.lastCall?.[1]).toMatchObject({ galleryFileIds: [11, 12, 13] });
+    });
+  });
+
+  describe("설명 에디터 (#385)", () => {
+    it("설명을 블로그 에디터로 불러오고, 손대지 않고 저장하면 원래 글을 그대로 보낸다", async () => {
+      renderModal(project({ description: "첫 줄\n둘째 줄", descriptionImageFileIds: [21] }));
+
+      expect(await screen.findByRole("textbox", { name: "설명" })).toHaveTextContent("첫 줄");
+      await userEvent.click(submit());
+
+      await waitFor(() => expect(api.updateProject).toHaveBeenCalled());
+      expect(vi.mocked(api.updateProject).mock.lastCall?.[1]).toMatchObject({
+        description: "첫 줄\n둘째 줄",
+        descriptionImageFileIds: [21],
+      });
+    });
+
+    it("설명이 20,000자를 넘으면 저장을 막는다", async () => {
+      renderModal(project({ description: "가".repeat(20_001) }));
+      await screen.findByRole("textbox", { name: "설명" });
+
+      expect(submit()).toBeDisabled();
+      expect(screen.getByRole("status")).toHaveTextContent("설명은 20,000자 이내로 입력해 주세요.");
     });
   });
 });

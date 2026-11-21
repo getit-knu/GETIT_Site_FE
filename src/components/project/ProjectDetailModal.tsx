@@ -1,8 +1,13 @@
+import { isOurPublicFileUrl } from "../../libs/publicFileUrl";
 import type { PublicProject } from "../../types/project";
 import { Badge } from "../ui/Badge/Badge";
+import { Markdown } from "../ui/Markdown/Markdown";
 import { Modal, ModalBody } from "../ui/Modal/Modal";
 import { useModalTitleId } from "../ui/Modal/modalTitleContext";
 
+import { ProjectStatusBadge, ProjectStoreLinks } from "./ProjectBadges";
+import { ProjectGallery } from "./ProjectGallery";
+import { projectCoverUrl } from "./projectImages";
 import styles from "./ProjectDetailModal.module.scss";
 
 interface DetailHeaderProps {
@@ -26,6 +31,8 @@ function DetailHeader({ project, onClose }: DetailHeaderProps) {
         </h2>
         <p className={styles.meta}>
           {project.teamName} <span aria-hidden="true">·</span> {project.semesterLabel}
+          {project.progressStatus !== null && " "}
+          <ProjectStatusBadge project={project} />
         </p>
       </div>
       <button type="button" className={styles.closeButton} onClick={onClose} aria-label="닫기">
@@ -51,7 +58,7 @@ export function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps
 
             <div
               className={styles.hero}
-              style={project.thumbnailUrl ? { backgroundImage: `url(${project.thumbnailUrl})` } : undefined}
+              style={projectCoverUrl(project) ? { backgroundImage: `url(${projectCoverUrl(project)})` } : undefined}
               aria-hidden="true"
             />
 
@@ -65,17 +72,20 @@ export function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps
 
             <section>
               <h3 className={styles.sectionTitle}>프로젝트 설명</h3>
-              <p className={styles.description}>{project.description}</p>
+              <Markdown
+                className={styles.description}
+                content={project.description}
+                keepLineBreaks
+                allowImage={isOurPublicFileUrl}
+              />
             </section>
 
-            <section>
-              <h3 className={styles.sectionTitle}>작동 사진</h3>
-              <div className={styles.photos}>
-                <div className={styles.photoPlaceholder} aria-hidden="true" />
-                <div className={styles.photoPlaceholder} aria-hidden="true" />
-                <div className={styles.photoPlaceholder} aria-hidden="true" />
-              </div>
-            </section>
+            {project.galleryImageUrls.length > 0 && (
+              <section>
+                <h3 className={styles.sectionTitle}>작동 사진</h3>
+                <ProjectGallery urls={project.galleryImageUrls} title={project.title} />
+              </section>
+            )}
 
             <div className={styles.actions}>
               <a className={styles.codeLink} href={project.codeUrl} target="_blank" rel="noreferrer">
@@ -84,6 +94,9 @@ export function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps
               <a className={styles.demoLink} href={project.demoUrl} target="_blank" rel="noreferrer">
                 데모 보기
               </a>
+            </div>
+            <div className={styles.storeLinks}>
+              <ProjectStoreLinks project={project} className={styles.storeLink} />
             </div>
           </div>
         </ModalBody>

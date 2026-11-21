@@ -1,9 +1,11 @@
 import type { MouseEvent } from "react";
 
+import { markdownToPlainText } from "../../libs/markdownToPlainText";
 import type { PublicProject } from "../../types/project";
 import { Badge } from "../ui/Badge/Badge";
 import { Card } from "../ui/Card/Card";
 
+import { projectCoverUrl } from "./projectImages";
 import styles from "./ProjectCard.module.scss";
 
 interface ProjectCardProps {
@@ -21,11 +23,13 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
     event.stopPropagation();
   }
 
+  const cover = projectCoverUrl(project);
+
   return (
     <Card className={styles.card} onClick={onClick}>
       <div
         className={styles.thumbnail}
-        style={project.thumbnailUrl ? { backgroundImage: `url(${project.thumbnailUrl})` } : undefined}
+        style={cover ? { backgroundImage: `url(${cover})` } : undefined}
         aria-hidden="true"
       />
 
@@ -34,7 +38,7 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
           {project.teamName} <span aria-hidden="true">·</span> {project.semesterLabel}
         </p>
         <h3 className={styles.title}>{project.title}</h3>
-        <p className={styles.description}>{project.description}</p>
+        <p className={styles.description}>{project.oneLiner || markdownToPlainText(project.description)}</p>
 
         <ul className={styles.techStack}>
           {project.techStacks.map((tech) => (

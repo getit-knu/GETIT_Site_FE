@@ -4,11 +4,30 @@ import { Button } from "../ui/Button/Button";
 import { Input } from "../ui/Input/Input";
 import { Select } from "../ui/Select/Select";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "../ui/Modal/Modal";
-import { TextArea } from "../ui/TextArea/TextArea";
 import { projectSaveErrorMessage } from "../../errors/project/errorMessages";
 import { useSaveProject } from "../../hooks/project/useProjects";
 import type { AdminProject, AdminProjectPayload } from "../../types/project";
 
+import { DescriptionField } from "./DescriptionField";
+import { GalleryField } from "./GalleryField";
+import {
+  DESCRIPTION_IMAGE_MAX,
+  DESCRIPTION_MAX_LENGTH,
+  descriptionImageFileIds,
+  galleryFileIds,
+  isGalleryUploading,
+  toGalleryItems,
+  type DescriptionImage,
+  type GalleryItem,
+} from "./projectImages";
+import {
+  detailsInvalidReason,
+  emptyDetailsDraft,
+  toDetailsDraft,
+  toDetailsPayload,
+  type ProjectDetailsDraft,
+} from "./projectDetailsDraft";
+import { ProjectDetailsFields } from "./ProjectDetailsFields";
 import { ProjectGroupField } from "./ProjectGroupField";
 import { ThumbnailField } from "./ThumbnailField";
 import styles from "./AdminProjectFormModal.module.scss";
@@ -39,6 +58,13 @@ interface Draft {
   festaEntry: boolean;
   festaOrder: string;
   groupId: number | null;
+  gallery: GalleryItem[];
+  /** 에디터에서 이번에 올린 설명 속 이미지(#385). */
+  descriptionImages: DescriptionImage[];
+  /** 예전에 넣은 설명 속 이미지 id. 주소를 몰라 본문에 남았는지 알 수 없어 그대로 돌려보낸다(#385). */
+  existingDescriptionImageIds: number[];
+  /** 한 줄 소개·진행 상태·스토어 링크(#389). */
+  details: ProjectDetailsDraft;
 }
 
 /** `semester`는 `2026-FALL` 형태 고정값이다(BE 검증). 화면은 연도 + 계절로 나눠 받는다. */
@@ -68,6 +94,10 @@ function emptyDraft(): Draft {
     festaEntry: false,
     festaOrder: "",
     groupId: null,
+    gallery: [],
+    descriptionImages: [],
+    existingDescriptionImageIds: [],
+    details: emptyDetailsDraft(),
   };
 }
 
@@ -91,6 +121,10 @@ function toDraft(project: AdminProject): Draft {
     festaEntry: project.festaEntry,
     festaOrder: project.festaOrder === null ? "" : String(project.festaOrder),
     groupId: project.groupId,
+    gallery: toGalleryItems(project.galleryFileIds, project.galleryImageUrls),
+    descriptionImages: [],
+    existingDescriptionImageIds: project.descriptionImageFileIds,
+    details: toDetailsDraft(project),
   };
 }
 
@@ -115,6 +149,7 @@ function techStacks(draft: Draft): string[] {
 function invalidReason(draft: Draft): string | null {
   if (draft.title.trim() === "") return "제목을 입력해 주세요.";
   if (draft.teamName.trim() === "") return "팀 이름을 입력해 주세요.";
+  if (draft.description.length > DESCRIPTION_MAX_LENGTH) return "설명은 20,000자 이내로 입력해 주세요.";
 
   const year = Number(draft.year);
   if (!/^\d{4}$/.test(draft.year) || !Number.isInteger(year)) return "연도를 올바르게 입력해 주세요.";
@@ -126,6 +161,9 @@ function invalidReason(draft: Draft): string | null {
   if (isBadUrl(draft.codeUrl)) return "코드 저장소 URL 형식이 올바르지 않습니다.";
   if (isBadUrl(draft.demoUrl)) return "데모 URL 형식이 올바르지 않습니다.";
 
+  const detailsReason = detailsInvalidReason(draft.details);
+  if (detailsReason !== null) return detailsReason;
+
   if (draft.order.trim() !== "") {
     const order = Number(draft.order);
     if (!Number.isInteger(order) || order < 1) return "순서는 1 이상의 정수여야 합니다.";
@@ -136,12 +174,18 @@ function invalidReason(draft: Draft): string | null {
     if (!Number.isInteger(festaOrder) || festaOrder < 1) return "출전 순서는 1 이상의 정수여야 합니다.";
   }
 
+  if (isGalleryUploading(draft.gallery)) return "프로젝트 이미지를 올리는 중입니다.";
+
   return null;
 }
 
 /** 빈 문자열은 BE `@HttpUrl`(선택값, `null`은 통과하지만 `""`는 형식 위반으로 400)에 걸린다. */
 function urlOrUndefined(value: string): string | undefined {
   return value.trim() === "" ? undefined : value.trim();
+}
+
+function descriptionImageIds(draft: Draft): number[] {
+  return descriptionImageFileIds(draft.existingDescriptionImageIds, draft.descriptionImages, draft.description);
 }
 
 function toPayload(draft: Draft): AdminProjectPayload {
@@ -160,6 +204,10 @@ function toPayload(draft: Draft): AdminProjectPayload {
     festaOrder: draft.festaEntry && draft.festaOrder.trim() !== "" ? Number(draft.festaOrder) : null,
     // 생략하면 서버가 조를 그대로 둔다. 비울 수는 없으니 정해졌을 때만 보낸다.
     ...(draft.groupId === null ? {} : { groupId: draft.groupId }),
+    // BE 수정은 통째로 바꾼다 — 이미지 목록을 빼면 연결이 끊기고 한 줄 소개 등은 null 이 된다(BE#227).
+    ...toDetailsPayload(draft.details),
+    galleryFileIds: galleryFileIds(draft.gallery),
+    descriptionImageFileIds: descriptionImageIds(draft),
   };
 }
 
@@ -213,7 +261,20 @@ export function AdminProjectFormModal({ project, onClose }: AdminProjectFormModa
           />
         </div>
 
-        <TextArea label="설명" rows={3} value={draft.description} onChange={(description) => set({ description })} />
+        <ProjectDetailsFields
+          value={draft.details}
+          onChange={(patch) => setDraft((prev) => ({ ...prev, details: { ...prev.details, ...patch } }))}
+        />
+
+        <DescriptionField
+          initialValue={project?.description ?? ""}
+          length={draft.description.length}
+          onChange={(description) => set({ description })}
+          onImageUploaded={(image) =>
+            setDraft((prev) => ({ ...prev, descriptionImages: [...prev.descriptionImages, image] }))
+          }
+          canAddImage={descriptionImageIds(draft).length < DESCRIPTION_IMAGE_MAX}
+        />
 
         <Input
           label="기술 스택 (쉼표로 구분)"
@@ -227,6 +288,10 @@ export function AdminProjectFormModal({ project, onClose }: AdminProjectFormModa
         </div>
 
         <ThumbnailField currentUrl={draft.thumbnailUrl} onFileIdChange={(fileId) => set({ fileId })} />
+        <GalleryField
+          items={draft.gallery}
+          onChange={(update) => setDraft((prev) => ({ ...prev, gallery: update(prev.gallery) }))}
+        />
 
         <label className={styles.checkbox}>
           <input type="checkbox" checked={draft.isFeatured} onChange={(e) => set({ isFeatured: e.target.checked })} />

@@ -11,9 +11,41 @@ import type { Page } from "../qna";
  * `thumbnailUrl`은 썸네일을 등록하지 않은 프로젝트에서 실제로 `null`이 온다(BE
  * 소스로 확인함, springdoc이 이 nullable을 못 잡음) — 손으로 되돌린다.
  */
-export type PublicProject = Omit<Required<components["schemas"]["ProjectShowcaseResultItem"]>, "thumbnailUrl"> & {
+export type PublicProject = Omit<
+  Required<components["schemas"]["ProjectShowcaseResultItem"]>,
+  "thumbnailUrl" | keyof ProjectDetailFields
+> & {
   thumbnailUrl: string | null;
-};
+} & ProjectDetailFields;
+
+/** 프로젝트 진행 상태(BE#227). 공개 여부인 `AdminProjectStatus`와는 별개다. */
+export type ProgressStatus = NonNullable<components["schemas"]["ProjectShowcaseResultItem"]["progressStatus"]>;
+
+/**
+ * 한 줄 소개·진행 상태·스토어 링크(BE#227). 정하지 않았으면 `null`이 온다 — springdoc이 이 nullable을
+ * 못 잡는다. 이미지 목록(`galleryFileIds` 등)은 비어 있으면 `[]`로 온다(BE `ProjectImages.EMPTY`).
+ */
+export interface ProjectDetailFields {
+  oneLiner: string | null;
+  progressStatus: ProgressStatus | null;
+  progressStatusLabel: string | null;
+  playStoreUrl: string | null;
+  appStoreUrl: string | null;
+}
+
+/**
+ * 수정 요청에 늘 실어 보내야 하는 값들(BE#227). **BE 프로젝트 수정은 통째로 바꾸는 요청이라, 생략하면
+ * 이미지 연결이 끊기고(24시간 뒤 파일 삭제) 한 줄 소개 등은 `null`로 덮인다.** 손대지 않은 값도 응답에서
+ * 받은 그대로 다시 보낸다.
+ */
+export interface ProjectPreservedPayload {
+  galleryFileIds: number[];
+  descriptionImageFileIds: number[];
+  oneLiner: string | null;
+  progressStatus: ProgressStatus | null;
+  playStoreUrl: string | null;
+  appStoreUrl: string | null;
+}
 
 /**
  * `GET /api/public/projects` 응답. `semesters`는 전체 프로젝트 기준 중복 없는 학기
@@ -46,13 +78,13 @@ export interface PublicProjectListParams {
  */
 export type AdminProject = Omit<
   Required<components["schemas"]["ProjectResultItem"]>,
-  "rejectReason" | "fileId" | "festaOrder"
+  "rejectReason" | "fileId" | "festaOrder" | keyof ProjectDetailFields
 > & {
   rejectReason: string | null;
   fileId: number | null;
   festaOrder: number | null;
   groupId: number | null;
-};
+} & ProjectDetailFields;
 
 /**
  * `POST`/`PUT /api/admin/projects` 요청 본문.
@@ -67,15 +99,16 @@ export type AdminProject = Omit<
  */
 export type AdminProjectPayload = Omit<
   components["schemas"]["ProjectRequestWrite"],
-  "fileId" | "festaEntry" | "festaOrder"
-> & {
-  fileId: number | null;
-  /** BE는 `festaEntry`를 생략하면 출전 설정을 건드리지 않는다. 화면은 늘 현재 값을 명시해 보낸다. */
-  festaEntry: boolean;
-  festaOrder: number | null;
-  /** 생략하면 서버가 소속 조를 그대로 둔다. 조를 비우는 방법은 없다(BE#231). */
-  groupId?: number;
-};
+  "fileId" | "festaEntry" | "festaOrder" | keyof ProjectPreservedPayload
+> &
+  ProjectPreservedPayload & {
+    fileId: number | null;
+    /** BE는 `festaEntry`를 생략하면 출전 설정을 건드리지 않는다. 화면은 늘 현재 값을 명시해 보낸다. */
+    festaEntry: boolean;
+    festaOrder: number | null;
+    /** 생략하면 서버가 소속 조를 그대로 둔다. 조를 비우는 방법은 없다(BE#231). */
+    groupId?: number;
+  };
 
 /**
  * 프로젝트 승인 상태(BE#148).
@@ -112,6 +145,9 @@ export type ProjectSubmitPayload = components["schemas"]["ProjectSubmitRequest"]
  * `GET`은 내 조가 낸 프로젝트 전체를 준다(#296) — 등록한 사람이 아니어도 같은 조원이면
  * 보인다. `rejectReason`은 반려된 적 없으면 `null`이다 — springdoc이 이 nullable을 못 잡는다.
  */
-export type MemberProject = Omit<Required<components["schemas"]["MemberProjectResult"]>, "rejectReason"> & {
+export type MemberProject = Omit<
+  Required<components["schemas"]["MemberProjectResult"]>,
+  "rejectReason" | keyof ProjectDetailFields
+> & {
   rejectReason: string | null;
-};
+} & ProjectDetailFields;

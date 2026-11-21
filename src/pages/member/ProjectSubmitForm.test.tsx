@@ -3,8 +3,10 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+import { getDownloadUrl, uploadFile, uploadInvalidReason } from "../../apis/file/filesApi";
 import { submitProject } from "../../apis/project/memberProjectsApi";
 import type { MemberProject } from "../../types/project";
+import { NO_PROJECT_DETAILS, noProjectImages } from "../../mocks/projectDetails";
 
 import { ProjectSubmitForm } from "./ProjectSubmitForm";
 
@@ -31,6 +33,8 @@ const RESULT: MemberProject = {
   demoUrl: "",
   fileId: 0,
   thumbnailUrl: "",
+  ...NO_PROJECT_DETAILS,
+  ...noProjectImages(),
   status: "PENDING",
   statusLabel: "승인 대기",
   rejectReason: null,
@@ -100,5 +104,69 @@ describe("ProjectSubmitForm", () => {
     await userEvent.click(screen.getByRole("button", { name: "프로젝트 등록" }));
 
     expect(await screen.findByText("소속된 조가 있어야 프로젝트를 등록할 수 있습니다.")).toBeInTheDocument();
+  });
+
+  it("프로젝트 이미지를 올리면 galleryFileIds 로 함께 등록한다 (#382)", async () => {
+    vi.mocked(submitProject).mockResolvedValue(RESULT);
+    vi.mocked(uploadInvalidReason).mockReturnValue(null);
+    vi.mocked(uploadFile).mockResolvedValue({ fileId: 77, fileName: "a.png", size: 1 });
+    Object.defineProperty(URL, "createObjectURL", { value: vi.fn(() => "blob:preview"), configurable: true });
+    renderForm();
+
+    await userEvent.type(screen.getByLabelText("제목 *"), "AI 포트폴리오");
+    await userEvent.upload(
+      screen.getByLabelText("프로젝트 이미지 올리기"),
+      new File(["x"], "a.png", { type: "image/png" }),
+    );
+    await waitFor(() => expect(screen.getByRole("button", { name: "프로젝트 등록" })).toBeEnabled());
+    await userEvent.click(screen.getByRole("button", { name: "프로젝트 등록" }));
+
+    await waitFor(() => expect(submitProject).toHaveBeenCalled());
+    expect(vi.mocked(uploadFile).mock.lastCall?.[1]).toBe("PROJECT_IMAGE");
+    expect(vi.mocked(submitProject).mock.lastCall?.[0]).toMatchObject({ galleryFileIds: [77] });
+  });
+
+  it("설명에 이미지를 넣으면 마크다운과 descriptionImageFileIds 로 함께 등록한다 (#385)", async () => {
+    vi.mocked(submitProject).mockResolvedValue(RESULT);
+    vi.mocked(uploadInvalidReason).mockReturnValue(null);
+    vi.mocked(uploadFile).mockResolvedValue({ fileId: 88, fileName: "diagram.png", size: 1 });
+    vi.mocked(getDownloadUrl).mockResolvedValue({
+      downloadUrl: "https://api.getit.io.kr/api/public/files/public/d.png",
+      fileName: "diagram.png",
+      contentType: "image/png",
+      expiresIn: -1,
+    });
+    renderForm();
+
+    await userEvent.type(screen.getByLabelText("제목 *"), "AI 포트폴리오");
+    await userEvent.upload(
+      await screen.findByLabelText("설명에 넣을 이미지"),
+      new File(["x"], "diagram.png", { type: "image/png" }),
+    );
+    await waitFor(() => expect(getDownloadUrl).toHaveBeenCalledWith(88));
+    await userEvent.click(screen.getByRole("button", { name: "프로젝트 등록" }));
+
+    await waitFor(() => expect(submitProject).toHaveBeenCalled());
+    expect(vi.mocked(submitProject).mock.lastCall?.[0]).toMatchObject({
+      description: expect.stringContaining("![diagram](https://api.getit.io.kr/api/public/files/public/d.png)"),
+      descriptionImageFileIds: [88],
+    });
+  });
+
+  it("한 줄 소개·진행 상태를 함께 등록하고, 비운 스토어 링크는 보내지 않는다 (#389)", async () => {
+    vi.mocked(submitProject).mockResolvedValue(RESULT);
+    renderForm();
+
+    await userEvent.type(screen.getByLabelText("제목 *"), "AI 포트폴리오");
+    await userEvent.type(screen.getByLabelText("한 줄 소개"), "포트폴리오를 추천해요");
+    await userEvent.selectOptions(screen.getByLabelText("진행 상태"), "개발 중");
+    await userEvent.click(screen.getByRole("button", { name: "프로젝트 등록" }));
+
+    await waitFor(() => expect(submitProject).toHaveBeenCalled());
+    const payload = vi.mocked(submitProject).mock.lastCall?.[0];
+    expect(payload).toMatchObject({ oneLiner: "포트폴리오를 추천해요", progressStatus: "IN_PROGRESS" });
+    // undefined 는 JSON 에서 빠진다 — 생략이 곧 null 이다.
+    expect(payload?.playStoreUrl).toBeUndefined();
+    expect(payload?.appStoreUrl).toBeUndefined();
   });
 });

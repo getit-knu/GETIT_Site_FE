@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { markdownToPlainText } from "../../libs/markdownToPlainText";
 import type { PublicProject } from "../../types/project";
 import { Badge } from "../ui/Badge/Badge";
 
@@ -44,7 +45,10 @@ export function FestaProjectCard({ project, index, onSelect, footer }: FestaProj
           </button>
         </div>
 
-        {project.description && <p className={styles.description}>{project.description}</p>}
+        {/* 한 줄 소개가 없으면 설명 앞부분을 쓴다(#389, BE 주석과 같은 약속). */}
+        {(project.oneLiner || project.description) && (
+          <p className={styles.description}>{project.oneLiner || markdownToPlainText(project.description)}</p>
+        )}
 
         {project.techStacks.length > 0 && (
           <ul className={styles.techStack}>

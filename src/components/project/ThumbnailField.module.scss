@@ -17,10 +17,11 @@
 }
 
 .image {
-  width: 6rem;
-  height: 3.5rem;
+  width: 4.5rem;
+  height: 4.5rem;
   object-fit: cover;
-  border-radius: 0.375rem;
+  // 쇼케이스의 앱 아이콘(`FestaProjectIcon`)과 같은 둥근 정사각형.
+  border-radius: 22%;
   background: var(--admin-surface-muted, #f1f5f9);
 }
 

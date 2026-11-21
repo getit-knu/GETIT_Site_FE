@@ -2,7 +2,24 @@ import { useId, useState } from "react";
 
 import { Button } from "../../components/ui/Button/Button";
 import { Input } from "../../components/ui/Input/Input";
-import { TextArea } from "../../components/ui/TextArea/TextArea";
+import { DescriptionField } from "../../components/project/DescriptionField";
+import { GalleryField } from "../../components/project/GalleryField";
+import {
+  detailsInvalidReason,
+  emptyDetailsDraft,
+  toDetailsPayload,
+  type ProjectDetailsDraft,
+} from "../../components/project/projectDetailsDraft";
+import { ProjectDetailsFields } from "../../components/project/ProjectDetailsFields";
+import {
+  DESCRIPTION_IMAGE_MAX,
+  DESCRIPTION_MAX_LENGTH,
+  descriptionImageFileIds,
+  galleryFileIds,
+  isGalleryUploading,
+  type DescriptionImage,
+  type GalleryItem,
+} from "../../components/project/projectImages";
 import { ThumbnailField } from "../../components/project/ThumbnailField";
 import { projectSaveErrorMessage } from "../../errors/project/errorMessages";
 import { useSubmitProject } from "../../hooks/project/useMemberProjects";
@@ -28,6 +45,9 @@ interface Draft {
   codeUrl: string;
   demoUrl: string;
   fileId: number | null;
+  gallery: GalleryItem[];
+  descriptionImages: DescriptionImage[];
+  details: ProjectDetailsDraft;
 }
 
 function emptyDraft(): Draft {
@@ -41,6 +61,9 @@ function emptyDraft(): Draft {
     codeUrl: "",
     demoUrl: "",
     fileId: null,
+    gallery: [],
+    descriptionImages: [],
+    details: emptyDetailsDraft(),
   };
 }
 
@@ -64,6 +87,7 @@ function techStacks(draft: Draft): string[] {
 
 function invalidReason(draft: Draft): string | null {
   if (draft.title.trim() === "") return "제목을 입력해 주세요.";
+  if (draft.description.length > DESCRIPTION_MAX_LENGTH) return "설명은 20,000자 이내로 입력해 주세요.";
 
   const year = Number(draft.year);
   if (!/^\d{4}$/.test(draft.year) || !Number.isInteger(year)) return "연도를 올바르게 입력해 주세요.";
@@ -74,6 +98,9 @@ function invalidReason(draft: Draft): string | null {
 
   if (isBadUrl(draft.codeUrl)) return "코드 저장소 URL 형식이 올바르지 않습니다.";
   if (isBadUrl(draft.demoUrl)) return "데모 URL 형식이 올바르지 않습니다.";
+  const detailsReason = detailsInvalidReason(draft.details);
+  if (detailsReason !== null) return detailsReason;
+  if (isGalleryUploading(draft.gallery)) return "프로젝트 이미지를 올리는 중입니다.";
 
   return null;
 }
@@ -84,7 +111,13 @@ function urlOrUndefined(value: string): string | undefined {
 }
 
 function toPayload(draft: Draft): ProjectSubmitPayload {
+  // 등록이라 비운 칸은 아예 보내지 않는다(생략 = null). 생성 스키마가 null 을 받지 않는다.
+  const details = toDetailsPayload(draft.details);
   return {
+    oneLiner: details.oneLiner ?? undefined,
+    progressStatus: details.progressStatus ?? undefined,
+    playStoreUrl: details.playStoreUrl ?? undefined,
+    appStoreUrl: details.appStoreUrl ?? undefined,
     title: draft.title.trim(),
     semester: `${draft.year}-${draft.season}`,
     description: draft.description,
@@ -92,6 +125,8 @@ function toPayload(draft: Draft): ProjectSubmitPayload {
     codeUrl: urlOrUndefined(draft.codeUrl),
     demoUrl: urlOrUndefined(draft.demoUrl),
     fileId: draft.fileId ?? undefined,
+    galleryFileIds: galleryFileIds(draft.gallery),
+    descriptionImageFileIds: descriptionImageFileIds([], draft.descriptionImages, draft.description),
   };
 }
 
@@ -152,7 +187,22 @@ export function ProjectSubmitForm() {
         </div>
       </div>
 
-      <TextArea label="설명" rows={3} value={draft.description} onChange={(description) => set({ description })} />
+      <ProjectDetailsFields
+        value={draft.details}
+        onChange={(patch) => setDraft((prev) => ({ ...prev, details: { ...prev.details, ...patch } }))}
+      />
+
+      <DescriptionField
+        initialValue=""
+        length={draft.description.length}
+        onChange={(description) => set({ description })}
+        onImageUploaded={(image) =>
+          setDraft((prev) => ({ ...prev, descriptionImages: [...prev.descriptionImages, image] }))
+        }
+        canAddImage={
+          descriptionImageFileIds([], draft.descriptionImages, draft.description).length < DESCRIPTION_IMAGE_MAX
+        }
+      />
 
       <Input
         label="기술 스택 (쉼표로 구분)"
@@ -166,6 +216,10 @@ export function ProjectSubmitForm() {
       </div>
 
       <ThumbnailField currentUrl={null} onFileIdChange={(fileId) => set({ fileId })} />
+      <GalleryField
+        items={draft.gallery}
+        onChange={(update) => setDraft((prev) => ({ ...prev, gallery: update(prev.gallery) }))}
+      />
 
       {reason !== null && (
         <p role="status" className={styles.reason}>
