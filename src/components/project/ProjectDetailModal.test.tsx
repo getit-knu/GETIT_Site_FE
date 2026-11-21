@@ -65,7 +65,10 @@ describe("ProjectDetailModal", () => {
       <ProjectDetailModal project={project({ galleryImageUrls: ["https://cdn/1.png"] })} onClose={vi.fn()} />,
     );
     expect(screen.getByRole("heading", { name: "작동 사진" })).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: /화면 1/ })).toHaveAttribute("src", "https://cdn/1.png");
+    expect(screen.getByRole("button", { name: /화면 1 크게 보기/ }).querySelector("img")).toHaveAttribute(
+      "src",
+      "https://cdn/1.png",
+    );
 
     rerender(<ProjectDetailModal project={project({ id: 2, galleryImageUrls: [] })} onClose={vi.fn()} />);
     expect(screen.queryByRole("heading", { name: "작동 사진" })).not.toBeInTheDocument();

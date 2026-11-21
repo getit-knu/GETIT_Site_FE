@@ -34,7 +34,8 @@
     "react-markdown": "^10.1.0",
     "react-router": "^8.3.0",
     "remark-breaks": "^4.0.0",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "yet-another-react-lightbox": "3.33.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
