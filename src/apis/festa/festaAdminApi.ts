@@ -1,10 +1,22 @@
 import { downloadFile } from "../../libs/downloadFile";
-import type { FestaResults, FestaVoteResults } from "../../types/festa";
+import type { FestaResults, FestaSchedule, FestaScheduleSetting, FestaVoteResults } from "../../types/festa";
 import { client } from "../client";
 
 /** 프로젝트별 투자 집계(#365). 행사 중에는 공개하지 않아 어드민만 본다. */
 export async function getFestaResults(): Promise<FestaResults> {
   const { data } = await client.get<FestaResults>("/api/admin/festa/results");
+  return data;
+}
+
+/** 투표 기간(#379, BE#234). 정하지 않았으면 둘 다 `null`이다. */
+export async function getFestaSchedule(): Promise<FestaScheduleSetting> {
+  const { data } = await client.get<FestaScheduleSetting>("/api/admin/festa/schedule");
+  return data;
+}
+
+/** 투표 기간 저장. 시작이 종료보다 늦거나 같으면 서버가 `INVALID_FESTA_SCHEDULE`로 거절한다. */
+export async function updateFestaSchedule(payload: FestaSchedule): Promise<FestaScheduleSetting> {
+  const { data } = await client.put<FestaScheduleSetting>("/api/admin/festa/schedule", payload);
   return data;
 }
 

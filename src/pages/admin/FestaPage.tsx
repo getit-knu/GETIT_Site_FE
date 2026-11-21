@@ -13,6 +13,7 @@ import {
 import type { FestaProjectResult, FestaVoteResults } from "../../types/festa";
 
 import styles from "./FestaPage.module.scss";
+import { FestaScheduleCard } from "./FestaScheduleCard";
 
 type Ranked<T> = T & { rank: number };
 type VoteResult = FestaVoteResults["projects"][number];
@@ -40,7 +41,7 @@ const COLUMNS: Column<Ranked<FestaProjectResult>>[] = [
 /**
  * 모의투자 FESTA 결과(#365). 행사 중에는 결과를 공개하지 않아 이 화면에서만 집계를 본다.
  * 집계는 참여 방식(`FESTA_MODE`)에 따라 득표수(#373) 또는 투자 총액으로 보여준다.
- * 추첨은 어드민이 명단 CSV 로 직접 하고, 끝나면 번호를 파기한다.
+ * 추첨은 어드민이 명단 CSV 로 직접 하고, 끝나면 번호를 파기한다. 맨 위에서 투표 기간(#379)을 정한다.
  */
 export default function FestaPage({ mode = FESTA_MODE }: { mode?: FestaMode }) {
   const download = useDownloadFestaInvestors();
@@ -59,6 +60,8 @@ export default function FestaPage({ mode = FESTA_MODE }: { mode?: FestaMode }) {
 
   return (
     <div className={styles.page}>
+      <FestaScheduleCard />
+
       {mode === "vote" ? <VoteResultsCard /> : <InvestResultsCard />}
 
       <section className={styles.panel} aria-labelledby="festa-raffle">

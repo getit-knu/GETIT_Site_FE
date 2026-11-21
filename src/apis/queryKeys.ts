@@ -173,6 +173,8 @@ export const queryKeys = {
     /** 1인 1팀 투표(#373). */
     vote: () => [...queryKeys.festa.all, "vote"] as const,
     voteResults: () => [...queryKeys.festa.all, "vote-results"] as const,
+    /** 어드민 투표 기간(#379). */
+    schedule: () => [...queryKeys.festa.all, "schedule"] as const,
   },
   public: {
     all: ["public"] as const,

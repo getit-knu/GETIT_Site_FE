@@ -2,6 +2,7 @@ import { useFestaInvestment } from "../../hooks/festa/useFestaInvestment";
 import type { PublicProject } from "../../types/project";
 
 import { FESTA_COPY } from "./festaConfig";
+import { phaseLockReason, type FestaPhase, type FestaWindow } from "./festaDeadline";
 import { FestaInvestBar } from "./FestaInvestBar";
 import { FestaInvestControl } from "./FestaInvestControl";
 import { FestaJoinPanel } from "./FestaJoinPanel";
@@ -11,11 +12,15 @@ import styles from "./FestaShowcase.module.scss";
 export interface FestaBoardProps {
   projects: PublicProject[];
   onSelect: (project: PublicProject) => void;
+  /** 투표 기간 단계(#379). 기간 밖이면 참여를 막는다. */
+  phase: FestaPhase;
+  period: FestaWindow | null;
 }
 
 /** 가상 투자금을 나눠 넣는 방식(#364). 지금은 `FESTA_MODE`가 `"investment"`일 때만 쓴다. */
-export function FestaInvestBoard({ projects, onSelect }: FestaBoardProps) {
+export function FestaInvestBoard({ projects, onSelect, phase, period }: FestaBoardProps) {
   const invest = useFestaInvestment(projects);
+  const lockReason = phaseLockReason(phase, period, FESTA_COPY.investment.action);
 
   return (
     <>
@@ -43,7 +48,7 @@ export function FestaInvestBoard({ projects, onSelect }: FestaBoardProps) {
           />
         ))}
       </ul>
-      <FestaInvestBar invest={invest} />
+      <FestaInvestBar invest={invest} lockReason={lockReason} />
     </>
   );
 }

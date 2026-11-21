@@ -57,14 +57,20 @@ describe("getRecruitmentStatus", () => {
 });
 
 describe("getHome", () => {
-  it("BE envelope 그대로의 응답에서 features.mockInvestment 를 읽는다(#359 wire-shape)", async () => {
+  it("BE envelope 그대로의 응답에서 features.mockInvestment·활성 기수·투표 기간을 읽는다(#359, #377, #379 wire-shape)", async () => {
     // 스파이로 client.get 을 바꿔 치우면 인터셉터(envelope 벗기기)를 건너뛰어 래퍼 불일치를 못 잡는다
     // (10번째 릴리즈 장애). 어댑터만 갈아 끼워 실제 인터셉터를 태운다. 모양은 BE `HomeControllerTest` 기준.
     const adapter: AxiosAdapter = (config) =>
       Promise.resolve({
         data: {
           success: true,
-          data: { curriculums: [], featuredProjects: [], features: { stockGame: false, mockInvestment: true } },
+          data: {
+            generation: { generationNo: 9, year: 2026 },
+            festaSchedule: { startAt: "2026-11-23T10:00:00+09:00", endAt: "2026-11-30T00:00:00+09:00" },
+            curriculums: [],
+            featuredProjects: [],
+            features: { stockGame: false, mockInvestment: true },
+          },
           error: null,
         },
         status: 200,
@@ -78,6 +84,11 @@ describe("getHome", () => {
     try {
       const result = await getHome();
       expect(result.features.mockInvestment).toBe(true);
+      expect(result.generation?.generationNo).toBe(9);
+      expect(result.festaSchedule).toEqual({
+        startAt: "2026-11-23T10:00:00+09:00",
+        endAt: "2026-11-30T00:00:00+09:00",
+      });
     } finally {
       client.defaults.adapter = original;
     }

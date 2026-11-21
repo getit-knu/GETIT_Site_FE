@@ -84,6 +84,38 @@ describe("createMockApi", () => {
     expect((api.resolve("GET", "/api/applications/me", params)?.body as { data: unknown }).data).toBeNull();
   });
 
+  it("FESTA 투표 기간은 처음엔 비어 있고, 시작이 종료보다 늦으면 거절하고, 저장하면 그대로 읽힌다(#379)", () => {
+    const api = createMockApi();
+    expect(api.resolve("GET", "/api/admin/festa/schedule", params)?.body).toMatchObject({
+      data: { startAt: null, endAt: null },
+    });
+
+    const reversed = { startAt: "2026-11-30T00:00:00+09:00", endAt: "2026-11-23T10:00:00+09:00" };
+    expect(api.resolve("PUT", "/api/admin/festa/schedule", params, reversed)?.body).toMatchObject({
+      error: { code: "INVALID_FESTA_SCHEDULE" },
+    });
+
+    const schedule = { startAt: "2026-11-23T10:00:00+09:00", endAt: "2026-11-30T00:00:00+09:00" };
+    api.resolve("PUT", "/api/admin/festa/schedule", params, schedule);
+    expect(api.resolve("GET", "/api/admin/festa/schedule", params)?.body).toMatchObject({ data: schedule });
+  });
+
+  it("FESTA 투표 기간을 정하면 홈에 내려주고, 기간 밖 투표는 FESTA_CLOSED 로 거절한다(#379)", () => {
+    const api = createMockApi();
+    expect(api.resolve("GET", "/api/public/home", params)?.body).toMatchObject({ data: { festaSchedule: null } });
+
+    const ended = { startAt: "2020-01-01T00:00:00+09:00", endAt: "2020-01-02T00:00:00+09:00" };
+    api.resolve("PUT", "/api/admin/festa/schedule", params, ended);
+    expect(api.resolve("GET", "/api/public/home", params)?.body).toMatchObject({ data: { festaSchedule: ended } });
+    expect(
+      api.resolve("PUT", "/api/festa/vote", params, {
+        projectId: 3,
+        phoneNumber: "010-1234-5678",
+        privacyConsent: true,
+      })?.body,
+    ).toMatchObject({ error: { code: "FESTA_CLOSED" } });
+  });
+
   it("FESTA 투자는 첫 저장에 번호를 요구하고, 저장하면 가린 번호와 남은 금액이 바뀐다(#364)", () => {
     const api = createMockApi();
     const investments = [{ projectId: 3, amount: 300_000 }];

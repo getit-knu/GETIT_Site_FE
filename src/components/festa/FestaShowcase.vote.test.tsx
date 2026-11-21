@@ -7,9 +7,10 @@ import { getMe } from "../../apis/auth/authApi";
 import { getPortfolio, getVote, saveVote } from "../../apis/festa/festaApi";
 import { getFestaProjects } from "../../apis/public/publicApi";
 import type { Me } from "../../types/auth";
-import type { FestaVote } from "../../types/festa";
+import type { FestaSchedule, FestaVote } from "../../types/festa";
 import type { PublicProject } from "../../types/project";
 
+import { formatKstDateTime } from "./festaDeadline";
 import { FestaShowcase } from "./FestaShowcase";
 
 vi.mock("../../apis/auth/authApi");
@@ -42,11 +43,11 @@ function card(title: string) {
   return within(article);
 }
 
-function renderShowcase() {
+function renderShowcase(schedule: FestaSchedule | null = null) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <FestaShowcase mode="vote" />
+      <FestaShowcase mode="vote" schedule={schedule} />
     </QueryClientProvider>,
   );
 }
@@ -136,6 +137,47 @@ describe("FestaShowcase 1인 1팀 투표 (#373)", () => {
     await userEvent.click(voteButton("프로젝트 2"));
     await userEvent.click(screen.getByRole("button", { name: "투표 바꾸기" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("모의투자가 마감되어 더는 바꿀 수 없어요.");
+    expect(await screen.findByRole("alert")).toHaveTextContent("지금은 참여 기간이 아니에요.");
+  });
+
+  describe("투표 기간(#379)", () => {
+    const HOUR = 3_600_000;
+    const iso = (offset: number) => new Date(Date.now() + offset).toISOString();
+
+    it("시작 전이면 투표 버튼과 카드 고르기를 잠그고 언제 시작하는지 알려준다", async () => {
+      const startAt = iso(50 * HOUR);
+      vi.mocked(getMe).mockResolvedValue({ role: "GUEST" } as Me);
+      vi.mocked(getVote).mockResolvedValue(vote({ maskedPhoneNumber: "010-****-5678" }));
+      renderShowcase({ startAt, endAt: iso(200 * HOUR) });
+
+      expect(
+        await screen.findByText(`투표는 ${formatKstDateTime(Date.parse(startAt))}에 시작해요.`),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/^투표 시작 D-/)).toBeInTheDocument();
+      expect(voteButton("프로젝트 1")).toBeDisabled();
+      expect(screen.getByRole("button", { name: "투표하기" })).toBeDisabled();
+    });
+
+    it("마감 뒤에는 잠그되 투표한 팀은 그대로 보여준다", async () => {
+      vi.mocked(getMe).mockResolvedValue({ role: "GUEST" } as Me);
+      vi.mocked(getVote).mockResolvedValue(vote({ projectId: 2, maskedPhoneNumber: "010-****-5678" }));
+      renderShowcase({ startAt: iso(-200 * HOUR), endAt: iso(-HOUR) });
+
+      expect(await screen.findByText("투표가 마감됐어요.")).toBeInTheDocument();
+      expect(screen.getByText(/^투표 마감 · 3팀 출전$/)).toBeInTheDocument();
+      expect(screen.getByText("투표한 팀")).toBeInTheDocument();
+      expect(voteButton("프로젝트 2")).toBeDisabled();
+      expect(screen.getByRole("button", { name: "투표 바꾸기" })).toBeDisabled();
+    });
+
+    it("기간 안이면 마감 D-day를 보여주고 투표할 수 있다", async () => {
+      vi.mocked(getMe).mockResolvedValue({ role: "GUEST" } as Me);
+      vi.mocked(getVote).mockResolvedValue(vote({ maskedPhoneNumber: "010-****-5678" }));
+      renderShowcase({ startAt: iso(-HOUR), endAt: iso(100 * HOUR) });
+
+      await userEvent.click(await screen.findByRole("button", { name: "프로젝트 1에 투표" }));
+      expect(screen.getByText(/^투표 마감 D-/)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "투표하기" })).toBeEnabled();
+    });
   });
 });

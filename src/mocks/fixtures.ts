@@ -68,6 +68,7 @@ const thumb = (label: string, bg: string) =>
   )}`;
 
 export const home: HomeResult = {
+  generation: { generationNo: 9, year: 2026 },
   curriculums: [
     { id: 1, order: 1, title: "OT · 팀 빌딩", subtitle: "동아리 소개와 한 학기 로드맵 공유" },
     { id: 2, order: 2, title: "웹 기초 세션", subtitle: "HTML/CSS/JS와 Git 협업 흐름" },

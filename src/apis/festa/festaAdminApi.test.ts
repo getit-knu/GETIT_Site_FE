@@ -3,7 +3,14 @@ import { describe, expect, it } from "vitest";
 
 import { client } from "../client";
 
-import { destroyFestaPhoneNumbers, getFestaResults, getFestaVoteResults, resetFestaInvestments } from "./festaAdminApi";
+import {
+  destroyFestaPhoneNumbers,
+  getFestaResults,
+  getFestaSchedule,
+  getFestaVoteResults,
+  resetFestaInvestments,
+  updateFestaSchedule,
+} from "./festaAdminApi";
 
 // 모양은 BE `FestaResultsResult`·`FestaPhoneDestroyResult`·`FestaResetResult` 기준.
 // 스파이 대신 어댑터를 갈아 끼워 실제 envelope 인터셉터를 태운다.
@@ -72,5 +79,28 @@ describe("festaAdminApi (#365 wire-shape)", () => {
     expect(config.method).toBe("get");
     expect(config.url).toBe("/api/admin/festa/vote-results");
     expect(result).toEqual(results);
+  });
+
+  it("getFestaSchedule 은 정하지 않은 기간을 null 그대로 돌려준다(#379)", async () => {
+    const { result, config } = await withAdapter({ startAt: null, endAt: null }, getFestaSchedule);
+
+    expect(config.method).toBe("get");
+    expect(config.url).toBe("/api/admin/festa/schedule");
+    expect(result).toEqual({ startAt: null, endAt: null });
+  });
+
+  it("updateFestaSchedule 은 기간을 PUT 본문으로 보내고 저장된 기간을 돌려준다(#379)", async () => {
+    const schedule = { startAt: "2026-11-23T10:00:00+09:00", endAt: "2026-11-30T00:00:00+09:00" };
+    const { result, config } = await withAdapter(schedule, () =>
+      updateFestaSchedule({ startAt: "2026-11-23T01:00:00.000Z", endAt: "2026-11-29T15:00:00.000Z" }),
+    );
+
+    expect(config.method).toBe("put");
+    expect(config.url).toBe("/api/admin/festa/schedule");
+    expect(JSON.parse(config.data as string)).toEqual({
+      startAt: "2026-11-23T01:00:00.000Z",
+      endAt: "2026-11-29T15:00:00.000Z",
+    });
+    expect(result).toEqual(schedule);
   });
 });
