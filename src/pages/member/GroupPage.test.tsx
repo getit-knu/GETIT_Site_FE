@@ -7,6 +7,7 @@ import { getMyGroup } from "../../apis/group/memberGroupApi";
 import { getMyProjects, submitProject } from "../../apis/project/memberProjectsApi";
 import type { Group } from "../../types/group";
 import type { MemberProject } from "../../types/project";
+import { NO_PROJECT_DETAILS, noProjectImages } from "../../mocks/projectDetails";
 
 import GroupPage from "./GroupPage";
 
@@ -25,6 +26,8 @@ function project(over: Partial<MemberProject> = {}): MemberProject {
     demoUrl: "",
     fileId: 0,
     thumbnailUrl: "",
+    ...NO_PROJECT_DETAILS,
+    ...noProjectImages(),
     status: "PENDING",
     statusLabel: "승인 대기",
     rejectReason: null,

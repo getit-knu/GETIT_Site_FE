@@ -3,6 +3,8 @@ import { Badge } from "../ui/Badge/Badge";
 import { Modal, ModalBody } from "../ui/Modal/Modal";
 import { useModalTitleId } from "../ui/Modal/modalTitleContext";
 
+import { ProjectGallery } from "./ProjectGallery";
+import { projectCoverUrl } from "./projectImages";
 import styles from "./ProjectDetailModal.module.scss";
 
 interface DetailHeaderProps {
@@ -51,7 +53,7 @@ export function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps
 
             <div
               className={styles.hero}
-              style={project.thumbnailUrl ? { backgroundImage: `url(${project.thumbnailUrl})` } : undefined}
+              style={projectCoverUrl(project) ? { backgroundImage: `url(${projectCoverUrl(project)})` } : undefined}
               aria-hidden="true"
             />
 
@@ -68,14 +70,12 @@ export function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps
               <p className={styles.description}>{project.description}</p>
             </section>
 
-            <section>
-              <h3 className={styles.sectionTitle}>작동 사진</h3>
-              <div className={styles.photos}>
-                <div className={styles.photoPlaceholder} aria-hidden="true" />
-                <div className={styles.photoPlaceholder} aria-hidden="true" />
-                <div className={styles.photoPlaceholder} aria-hidden="true" />
-              </div>
-            </section>
+            {project.galleryImageUrls.length > 0 && (
+              <section>
+                <h3 className={styles.sectionTitle}>작동 사진</h3>
+                <ProjectGallery urls={project.galleryImageUrls} title={project.title} />
+              </section>
+            )}
 
             <div className={styles.actions}>
               <a className={styles.codeLink} href={project.codeUrl} target="_blank" rel="noreferrer">

@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as api from "../../apis/project/projectsApi";
 import type { AdminProject, AdminProjectBoard } from "../../types/project";
+import { NO_PROJECT_DETAILS, noProjectImages } from "../../mocks/projectDetails";
 
 import AdminProjectsPage from "./ProjectsPage";
 
@@ -27,6 +28,8 @@ function project(over: Partial<AdminProject> = {}): AdminProject {
     demoUrl: "https://ai-portfolio.getit-knu.dev",
     fileId: 501,
     thumbnailUrl: "",
+    ...NO_PROJECT_DETAILS,
+    ...noProjectImages(),
     isFeatured: true,
     order: 1,
     status: "APPROVED",

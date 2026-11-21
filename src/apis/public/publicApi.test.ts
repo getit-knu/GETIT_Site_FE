@@ -109,6 +109,7 @@ describe("getFestaProjects", () => {
       codeUrl: "https://github.com/getit-knu",
       demoUrl: "https://polifit.example.com",
       thumbnailUrl: null,
+      galleryImageUrls: ["https://cdn/shot-1.png", "https://cdn/shot-2.png"],
     };
     let requestedUrl: string | undefined;
     const adapter: AxiosAdapter = (config) => {
@@ -128,6 +129,8 @@ describe("getFestaProjects", () => {
       const result = await getFestaProjects();
       expect(requestedUrl).toBe("/api/public/festa/projects");
       expect(result.map((p) => p.id)).toEqual([7, 3]);
+      // 스크린샷은 노출 순서 그대로 쓴다(#382).
+      expect(result[0].galleryImageUrls).toEqual(["https://cdn/shot-1.png", "https://cdn/shot-2.png"]);
     } finally {
       client.defaults.adapter = original;
     }

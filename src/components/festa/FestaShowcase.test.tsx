@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getMe } from "../../apis/auth/authApi";
 import { getFestaProjects } from "../../apis/public/publicApi";
 import type { PublicProject } from "../../types/project";
+import { NO_PROJECT_DETAILS } from "../../mocks/projectDetails";
 
 import { FestaShowcase } from "./FestaShowcase";
 
@@ -23,6 +24,8 @@ function project(id: number, semester: string): PublicProject {
     codeUrl: "https://github.com/getit-knu",
     demoUrl: "https://getit.example.com",
     thumbnailUrl: null,
+    ...NO_PROJECT_DETAILS,
+    galleryImageUrls: [],
   };
 }
 

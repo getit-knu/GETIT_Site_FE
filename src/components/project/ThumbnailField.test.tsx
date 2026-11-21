@@ -12,7 +12,7 @@ vi.mock("../../apis/file/filesApi", async (importOriginal) => {
   return { ...actual, uploadFile: vi.fn() };
 });
 
-const picker = () => screen.getByLabelText("썸네일 올리기");
+const picker = () => screen.getByLabelText("프로젝트 아이콘 올리기");
 
 function image(name: string, bytes = 1024): File {
   const f = new File(["x"], name, { type: "image/png" });
@@ -30,7 +30,7 @@ describe("ThumbnailField", () => {
   it("기존 썸네일이 없으면 안내를 보여준다", () => {
     render(<ThumbnailField currentUrl={null} onFileIdChange={vi.fn()} />);
 
-    expect(screen.getByText("등록된 썸네일이 없습니다.")).toBeInTheDocument();
+    expect(screen.getByText("등록된 아이콘이 없습니다.")).toBeInTheDocument();
   });
 
   it("기존 썸네일을 보여준다", () => {
@@ -56,7 +56,7 @@ describe("ThumbnailField", () => {
     await userEvent.click(screen.getByRole("button", { name: "제거" }));
 
     expect(onFileIdChange).toHaveBeenCalledWith(null);
-    expect(screen.getByText("등록된 썸네일이 없습니다.")).toBeInTheDocument();
+    expect(screen.getByText("등록된 아이콘이 없습니다.")).toBeInTheDocument();
   });
 
   it("허용하지 않는 형식은 올리지 않고 이유를 보여준다", async () => {

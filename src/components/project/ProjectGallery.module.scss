@@ -1,0 +1,27 @@
+@use "../../styles/abstracts/variables" as *;
+
+.strip {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0 0 0.25rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  list-style: none;
+  scroll-snap-type: x mandatory;
+}
+
+.item {
+  flex: none;
+  scroll-snap-align: start;
+}
+
+.shot {
+  display: block;
+  width: auto;
+  max-width: 17rem;
+  height: 9.5rem;
+  border-radius: 0.625rem;
+  object-fit: cover;
+  background-color: $color-placeholder-bg;
+}

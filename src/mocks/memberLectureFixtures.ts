@@ -4,6 +4,8 @@ import type { MemberProject } from "../types/project";
 import type { MySummary } from "../types/member";
 import type { Page } from "../types/qna";
 
+import { NO_PROJECT_DETAILS, noProjectImages } from "./projectDetails";
+
 /**
  * 개발용 부원 강의 목 데이터. **dev 서버에서만 쓰인다**(`fixtures.ts` 상단 설명 참고).
  *
@@ -221,6 +223,8 @@ export const myProjects: MemberProject[] = [
     demoUrl: "https://getit.example.com",
     fileId: 1,
     thumbnailUrl: "",
+    ...NO_PROJECT_DETAILS,
+    ...noProjectImages(),
     status: "APPROVED",
     statusLabel: "승인",
     rejectReason: null,
@@ -236,6 +240,8 @@ export const myProjects: MemberProject[] = [
     demoUrl: "",
     fileId: 2,
     thumbnailUrl: "",
+    ...NO_PROJECT_DETAILS,
+    ...noProjectImages(),
     status: "PENDING",
     statusLabel: "대기",
     rejectReason: null,
@@ -251,6 +257,8 @@ export const myProjects: MemberProject[] = [
     demoUrl: "",
     fileId: 3,
     thumbnailUrl: "",
+    ...NO_PROJECT_DETAILS,
+    ...noProjectImages(),
     status: "REJECTED",
     statusLabel: "반려",
     rejectReason: "데모 링크가 열리지 않습니다. 배포 후 다시 등록해 주세요.",

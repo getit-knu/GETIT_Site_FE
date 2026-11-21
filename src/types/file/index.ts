@@ -34,6 +34,8 @@ export const PURPOSE_LIMITS: Record<FilePurpose, PurposeLimit> = {
   },
   PROFILE_IMAGE: { maxBytes: 5 * 1024 * 1024, extensions: ["png", "jpg", "jpeg", "webp"] },
   PROJECT_THUMBNAIL: { maxBytes: 5 * 1024 * 1024, extensions: ["png", "jpg", "jpeg", "webp"] },
+  /** 프로젝트 스크린샷과 설명 속 이미지(BE#227). 권장 크기는 1600×900. */
+  PROJECT_IMAGE: { maxBytes: 5 * 1024 * 1024, extensions: ["png", "jpg", "jpeg", "webp"] },
   ACTIVITY_PHOTO: { maxBytes: 5 * 1024 * 1024, extensions: ["png", "jpg", "jpeg", "webp"] },
 };
 
