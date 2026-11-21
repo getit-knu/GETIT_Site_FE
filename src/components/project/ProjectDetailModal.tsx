@@ -7,6 +7,7 @@ import { useModalTitleId } from "../ui/Modal/modalTitleContext";
 
 import { ProjectStatusBadge, ProjectStoreLinks } from "./ProjectBadges";
 import { ProjectGallery } from "./ProjectGallery";
+import { ProjectCover } from "./ProjectCover";
 import { projectCoverUrl } from "./projectImages";
 import styles from "./ProjectDetailModal.module.scss";
 
@@ -56,11 +57,7 @@ export function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps
           <div className={styles.content}>
             <DetailHeader project={project} onClose={onClose} />
 
-            <div
-              className={styles.hero}
-              style={projectCoverUrl(project) ? { backgroundImage: `url(${projectCoverUrl(project)})` } : undefined}
-              aria-hidden="true"
-            />
+            <ProjectCover className={styles.hero} url={projectCoverUrl(project)} />
 
             <ul className={styles.techStack}>
               {project.techStacks.map((tech) => (

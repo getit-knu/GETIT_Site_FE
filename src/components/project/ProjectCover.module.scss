@@ -1,0 +1,22 @@
+.cover {
+  position: relative;
+  overflow: hidden;
+}
+
+// 흐림은 가장자리를 투명하게 번지게 해서, 칸 밖으로 충분히 키워 두지 않으면 칸 테두리에 배경색 띠가 생긴다.
+// 비율로 키우면 낮은 칸(어드민 8rem)에서 모자라서 흐림 반경의 두 배만큼 고정으로 넓힌다.
+.backdrop {
+  position: absolute;
+  inset: -2.5rem;
+  background-position: center;
+  background-size: cover;
+  filter: blur(1.25rem) saturate(1.1);
+}
+
+.image {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

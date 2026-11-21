@@ -5,6 +5,7 @@ import { getHome } from "../../apis/public/publicApi";
 import { queryKeys } from "../../apis/queryKeys";
 import { useScrollReveal } from "../../hooks/ui/useScrollReveal";
 import { markdownToPlainText } from "../../libs/markdownToPlainText";
+import { ProjectCover } from "../project/ProjectCover";
 import type { HomeFeaturedProject } from "../../types/home";
 
 import styles from "./ProjectShowcase.module.scss";
@@ -18,11 +19,7 @@ function ShowcaseRow({ project }: { project: HomeFeaturedProject }) {
 
   return (
     <li ref={rowRef} data-revealed={rowRevealed || undefined} className={styles.row}>
-      <div
-        className={styles.thumbnail}
-        style={project.thumbnailUrl ? { backgroundImage: `url(${project.thumbnailUrl})` } : undefined}
-        aria-hidden="true"
-      />
+      <ProjectCover className={styles.thumbnail} url={project.thumbnailUrl || null} />
       <div className={styles.content}>
         <h3 className={styles.projectTitle}>{project.title}</h3>
         <p className={styles.projectDescription}>{markdownToPlainText(project.description)}</p>
