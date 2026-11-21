@@ -98,4 +98,13 @@ describe("FestaProjectDetail", () => {
     rerender(<FestaProjectDetail project={project({ id: 2, galleryImageUrls: [] })} onClose={vi.fn()} />);
     expect(screen.queryByRole("heading", { name: "미리보기" })).not.toBeInTheDocument();
   });
+
+  it("설명은 마크다운으로 보여주고 줄바꿈을 살린다. 외부 주소 이미지는 그리지 않는다 (#384)", () => {
+    const description = "## 주요 기능\n\n첫 줄\n둘째 줄\n\n![추적](https://tracker.example.com/p.gif)";
+    render(<FestaProjectDetail project={project({ description })} onClose={vi.fn()} />);
+
+    expect(screen.getByRole("heading", { name: "주요 기능" })).toBeInTheDocument();
+    expect(screen.getByText(/첫 줄/).querySelector("br")).not.toBeNull();
+    expect(screen.queryByRole("img", { name: "추적" })).not.toBeInTheDocument();
+  });
 });

@@ -203,6 +203,19 @@ export const staffs: StaffDirectory = {
   ],
 };
 
+/**
+ * 블로그 에디터로 쓴 설명(#384). 제목·목록·굵게가 상세에서 어떻게 보이는지 본다. 본문 속 이미지는 우리
+ * 저장소 주소가 아니라서(목은 `data:` 주소) 그리지 않고 대체 글자로 보인다 — 외부 이미지 차단 모양이다.
+ */
+const markdownDescription = (n: number) =>
+  [
+    `**프로젝트 ${n}**은 부원들이 한 학기 동안 만든 서비스입니다.`,
+    "## 주요 기능",
+    "- 일정 공유\n- 실시간 알림",
+    `![P${n} 구조도](${thumb(`P${n} 구조도`, "%23455a8f")})`,
+    "> 행사장에서 바로 써 볼 수 있어요.",
+  ].join("\n\n");
+
 export const projects: PublicProjectBoard = {
   content: [1, 2, 3, 4, 5, 6].map((n) => ({
     id: n,
@@ -210,7 +223,8 @@ export const projects: PublicProjectBoard = {
     teamName: `팀 ${n}`,
     semester: n <= 4 ? "2026-SPRING" : "2025-FALL",
     semesterLabel: n <= 4 ? "2026 1학기" : "2025 2학기",
-    description: "부원들이 한 학기 동안 만든 서비스입니다.",
+    description:
+      n <= 2 ? markdownDescription(n) : "부원들이 한 학기 동안 만든 서비스입니다.\n줄바꿈도 그대로 보여야 한다.",
     techStacks: ["React", "Spring Boot"],
     codeUrl: "https://github.com/getit-knu",
     demoUrl: "https://getit.example.com",

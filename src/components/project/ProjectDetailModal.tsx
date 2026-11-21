@@ -1,5 +1,7 @@
+import { isOurPublicFileUrl } from "../../libs/publicFileUrl";
 import type { PublicProject } from "../../types/project";
 import { Badge } from "../ui/Badge/Badge";
+import { Markdown } from "../ui/Markdown/Markdown";
 import { Modal, ModalBody } from "../ui/Modal/Modal";
 import { useModalTitleId } from "../ui/Modal/modalTitleContext";
 
@@ -67,7 +69,12 @@ export function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps
 
             <section>
               <h3 className={styles.sectionTitle}>프로젝트 설명</h3>
-              <p className={styles.description}>{project.description}</p>
+              <Markdown
+                className={styles.description}
+                content={project.description}
+                keepLineBreaks
+                allowImage={isOurPublicFileUrl}
+              />
             </section>
 
             {project.galleryImageUrls.length > 0 && (

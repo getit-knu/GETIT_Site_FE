@@ -119,7 +119,7 @@
   color: $color-text-primary;
   font-size: 0.875rem;
   line-height: 1.7;
-  white-space: pre-line;
+  // 줄바꿈은 `Markdown keepLineBreaks`가 살린다(#384). pre-line을 남기면 블록 사이 개행까지 빈 줄이 된다.
 }
 
 .techStack {

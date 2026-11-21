@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { getHome } from "../../apis/public/publicApi";
 import { queryKeys } from "../../apis/queryKeys";
 import { useScrollReveal } from "../../hooks/ui/useScrollReveal";
+import { markdownToPlainText } from "../../libs/markdownToPlainText";
 import type { HomeFeaturedProject } from "../../types/home";
 
 import styles from "./ProjectShowcase.module.scss";
@@ -24,7 +25,7 @@ function ShowcaseRow({ project }: { project: HomeFeaturedProject }) {
       />
       <div className={styles.content}>
         <h3 className={styles.projectTitle}>{project.title}</h3>
-        <p className={styles.projectDescription}>{project.description}</p>
+        <p className={styles.projectDescription}>{markdownToPlainText(project.description)}</p>
       </div>
     </li>
   );

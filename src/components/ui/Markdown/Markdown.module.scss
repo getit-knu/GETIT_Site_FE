@@ -115,4 +115,10 @@
     max-width: 100%;
     border-radius: 0.5rem;
   }
+
+  // 허용하지 않은 주소의 이미지 자리(#384). 무엇이 빠졌는지만 알 수 있게 대체 글자를 옅게 보여준다.
+  .blockedImage {
+    color: $color-text-secondary;
+    font-size: 0.875em;
+  }
 }

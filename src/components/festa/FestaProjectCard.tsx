@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { markdownToPlainText } from "../../libs/markdownToPlainText";
 import type { PublicProject } from "../../types/project";
 import { Badge } from "../ui/Badge/Badge";
 
@@ -44,7 +45,7 @@ export function FestaProjectCard({ project, index, onSelect, footer }: FestaProj
           </button>
         </div>
 
-        {project.description && <p className={styles.description}>{project.description}</p>}
+        {project.description && <p className={styles.description}>{markdownToPlainText(project.description)}</p>}
 
         {project.techStacks.length > 0 && (
           <ul className={styles.techStack}>
