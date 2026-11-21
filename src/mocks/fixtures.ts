@@ -69,6 +69,13 @@ const thumb = (label: string, bg: string) =>
     `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360"><rect width="640" height="360" fill="${bg}"/><text x="320" y="190" font-family="sans-serif" font-size="36" fill="#fff" text-anchor="middle">${label}</text></svg>`,
   )}`;
 
+const svg = (width: number, height: number, label: string, bg: string) =>
+  `data:image/svg+xml;utf8,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="${width}" height="${height}" fill="${bg}"/><text x="${width / 2}" y="${height / 2 + 12}" font-family="sans-serif" font-size="36" fill="#fff" text-anchor="middle">${label}</text></svg>`,
+  )}`;
+const squareIcon = (label: string) => svg(512, 512, label, "#e2683c");
+const portraitShot = (label: string) => svg(360, 640, label, "#455a8f");
+
 export const home: HomeResult = {
   generation: { generationNo: 9, year: 2026 },
   curriculums: [
@@ -228,7 +235,8 @@ export const projects: PublicProjectBoard = {
     techStacks: ["React", "Spring Boot"],
     codeUrl: "https://github.com/getit-knu",
     demoUrl: "https://getit.example.com",
-    thumbnailUrl: n % 3 === 0 ? null : thumb(`P${n}`, "%23283997"),
+    // 4번은 정사각형 아이콘, 2번 첫 스크린샷은 세로 화면이다 — 썸네일 칸이 자르지 않는지 본다(#398).
+    thumbnailUrl: n % 3 === 0 ? null : n === 4 ? squareIcon("P4") : thumb(`P${n}`, "%23283997"),
     ...NO_PROJECT_DETAILS,
     // 한 줄 소개·진행 상태·스토어 링크(#389)도 1·2번에만 넣는다.
     ...(n === 1 && {
@@ -244,7 +252,12 @@ export const projects: PublicProjectBoard = {
       progressStatusLabel: "개발 중",
     }),
     // 스크린샷(#382)은 1·2번에만 넣어 있을 때와 없을 때를 함께 본다.
-    galleryImageUrls: n <= 2 ? [1, 2, 3].map((shot) => thumb(`P${n} 화면 ${shot}`, "%23455a8f")) : [],
+    galleryImageUrls:
+      n === 2
+        ? [portraitShot("P2 화면 1"), thumb("P2 화면 2", "%23455a8f")]
+        : n === 1
+          ? [1, 2, 3].map((shot) => thumb(`P1 화면 ${shot}`, "%23455a8f"))
+          : [],
   })),
   page: 0,
   size: 12,

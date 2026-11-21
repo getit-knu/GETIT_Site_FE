@@ -53,19 +53,19 @@ describe("ProjectCard", () => {
   });
 
   it("커버는 첫 스크린샷을 먼저 쓰고, 없으면 아이콘을 쓴다 (#382)", () => {
-    const cover = (container: HTMLElement) =>
-      (container.querySelector("[aria-hidden='true']") as HTMLElement).style.backgroundImage;
+    // 커버는 장식이라 이름 없는 이미지다(#398) — 첫 이미지의 주소를 본다.
+    const cover = (container: HTMLElement) => container.querySelector("img")?.getAttribute("src");
 
     const withShot = render(
       <ProjectCard
         project={project({ thumbnailUrl: "https://cdn/icon.png", galleryImageUrls: ["https://cdn/1.png"] })}
       />,
     );
-    expect(cover(withShot.container)).toContain("https://cdn/1.png");
+    expect(cover(withShot.container)).toBe("https://cdn/1.png");
     withShot.unmount();
 
     const iconOnly = render(<ProjectCard project={project({ thumbnailUrl: "https://cdn/icon.png" })} />);
-    expect(cover(iconOnly.container)).toContain("https://cdn/icon.png");
+    expect(cover(iconOnly.container)).toBe("https://cdn/icon.png");
   });
 
   it("카드 설명은 마크다운 문법을 걷어낸 평문으로 보여준다 (#384)", () => {
