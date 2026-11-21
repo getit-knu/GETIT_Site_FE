@@ -5,6 +5,13 @@ import { Input } from "../../components/ui/Input/Input";
 import { DescriptionField } from "../../components/project/DescriptionField";
 import { GalleryField } from "../../components/project/GalleryField";
 import {
+  detailsInvalidReason,
+  emptyDetailsDraft,
+  toDetailsPayload,
+  type ProjectDetailsDraft,
+} from "../../components/project/projectDetailsDraft";
+import { ProjectDetailsFields } from "../../components/project/ProjectDetailsFields";
+import {
   DESCRIPTION_IMAGE_MAX,
   DESCRIPTION_MAX_LENGTH,
   descriptionImageFileIds,
@@ -40,6 +47,7 @@ interface Draft {
   fileId: number | null;
   gallery: GalleryItem[];
   descriptionImages: DescriptionImage[];
+  details: ProjectDetailsDraft;
 }
 
 function emptyDraft(): Draft {
@@ -55,6 +63,7 @@ function emptyDraft(): Draft {
     fileId: null,
     gallery: [],
     descriptionImages: [],
+    details: emptyDetailsDraft(),
   };
 }
 
@@ -89,6 +98,8 @@ function invalidReason(draft: Draft): string | null {
 
   if (isBadUrl(draft.codeUrl)) return "코드 저장소 URL 형식이 올바르지 않습니다.";
   if (isBadUrl(draft.demoUrl)) return "데모 URL 형식이 올바르지 않습니다.";
+  const detailsReason = detailsInvalidReason(draft.details);
+  if (detailsReason !== null) return detailsReason;
   if (isGalleryUploading(draft.gallery)) return "프로젝트 이미지를 올리는 중입니다.";
 
   return null;
@@ -100,7 +111,13 @@ function urlOrUndefined(value: string): string | undefined {
 }
 
 function toPayload(draft: Draft): ProjectSubmitPayload {
+  // 등록이라 비운 칸은 아예 보내지 않는다(생략 = null). 생성 스키마가 null 을 받지 않는다.
+  const details = toDetailsPayload(draft.details);
   return {
+    oneLiner: details.oneLiner ?? undefined,
+    progressStatus: details.progressStatus ?? undefined,
+    playStoreUrl: details.playStoreUrl ?? undefined,
+    appStoreUrl: details.appStoreUrl ?? undefined,
     title: draft.title.trim(),
     semester: `${draft.year}-${draft.season}`,
     description: draft.description,
@@ -169,6 +186,11 @@ export function ProjectSubmitForm() {
           </select>
         </div>
       </div>
+
+      <ProjectDetailsFields
+        value={draft.details}
+        onChange={(patch) => setDraft((prev) => ({ ...prev, details: { ...prev.details, ...patch } }))}
+      />
 
       <DescriptionField
         initialValue=""

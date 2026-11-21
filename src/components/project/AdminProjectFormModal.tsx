@@ -6,7 +6,7 @@ import { Select } from "../ui/Select/Select";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "../ui/Modal/Modal";
 import { projectSaveErrorMessage } from "../../errors/project/errorMessages";
 import { useSaveProject } from "../../hooks/project/useProjects";
-import type { AdminProject, AdminProjectPayload, ProjectPreservedPayload } from "../../types/project";
+import type { AdminProject, AdminProjectPayload } from "../../types/project";
 
 import { DescriptionField } from "./DescriptionField";
 import { GalleryField } from "./GalleryField";
@@ -20,6 +20,14 @@ import {
   type DescriptionImage,
   type GalleryItem,
 } from "./projectImages";
+import {
+  detailsInvalidReason,
+  emptyDetailsDraft,
+  toDetailsDraft,
+  toDetailsPayload,
+  type ProjectDetailsDraft,
+} from "./projectDetailsDraft";
+import { ProjectDetailsFields } from "./ProjectDetailsFields";
 import { ProjectGroupField } from "./ProjectGroupField";
 import { ThumbnailField } from "./ThumbnailField";
 import styles from "./AdminProjectFormModal.module.scss";
@@ -51,19 +59,13 @@ interface Draft {
   festaOrder: string;
   groupId: number | null;
   gallery: GalleryItem[];
-  /** 에디터에서 이번에 올린 설명 속 이미지(#385). 예전 것은 `preserved.descriptionImageFileIds`에 있다. */
+  /** 에디터에서 이번에 올린 설명 속 이미지(#385). */
   descriptionImages: DescriptionImage[];
-  /** 이 폼이 아직 고치지 않는 항목(BE#227). 수정할 때 받은 값을 그대로 돌려보내야 지워지지 않는다. */
-  preserved: Omit<ProjectPreservedPayload, "galleryFileIds">;
+  /** 예전에 넣은 설명 속 이미지 id. 주소를 몰라 본문에 남았는지 알 수 없어 그대로 돌려보낸다(#385). */
+  existingDescriptionImageIds: number[];
+  /** 한 줄 소개·진행 상태·스토어 링크(#389). */
+  details: ProjectDetailsDraft;
 }
-
-const EMPTY_PRESERVED: Draft["preserved"] = {
-  descriptionImageFileIds: [],
-  oneLiner: null,
-  progressStatus: null,
-  playStoreUrl: null,
-  appStoreUrl: null,
-};
 
 /** `semester`는 `2026-FALL` 형태 고정값이다(BE 검증). 화면은 연도 + 계절로 나눠 받는다. */
 function parseSemester(semester: string): { year: string; season: Season } {
@@ -94,7 +96,8 @@ function emptyDraft(): Draft {
     groupId: null,
     gallery: [],
     descriptionImages: [],
-    preserved: EMPTY_PRESERVED,
+    existingDescriptionImageIds: [],
+    details: emptyDetailsDraft(),
   };
 }
 
@@ -120,13 +123,8 @@ function toDraft(project: AdminProject): Draft {
     groupId: project.groupId,
     gallery: toGalleryItems(project.galleryFileIds, project.galleryImageUrls),
     descriptionImages: [],
-    preserved: {
-      descriptionImageFileIds: project.descriptionImageFileIds,
-      oneLiner: project.oneLiner,
-      progressStatus: project.progressStatus,
-      playStoreUrl: project.playStoreUrl,
-      appStoreUrl: project.appStoreUrl,
-    },
+    existingDescriptionImageIds: project.descriptionImageFileIds,
+    details: toDetailsDraft(project),
   };
 }
 
@@ -163,6 +161,9 @@ function invalidReason(draft: Draft): string | null {
   if (isBadUrl(draft.codeUrl)) return "코드 저장소 URL 형식이 올바르지 않습니다.";
   if (isBadUrl(draft.demoUrl)) return "데모 URL 형식이 올바르지 않습니다.";
 
+  const detailsReason = detailsInvalidReason(draft.details);
+  if (detailsReason !== null) return detailsReason;
+
   if (draft.order.trim() !== "") {
     const order = Number(draft.order);
     if (!Number.isInteger(order) || order < 1) return "순서는 1 이상의 정수여야 합니다.";
@@ -184,7 +185,7 @@ function urlOrUndefined(value: string): string | undefined {
 }
 
 function descriptionImageIds(draft: Draft): number[] {
-  return descriptionImageFileIds(draft.preserved.descriptionImageFileIds, draft.descriptionImages, draft.description);
+  return descriptionImageFileIds(draft.existingDescriptionImageIds, draft.descriptionImages, draft.description);
 }
 
 function toPayload(draft: Draft): AdminProjectPayload {
@@ -204,7 +205,7 @@ function toPayload(draft: Draft): AdminProjectPayload {
     // 생략하면 서버가 조를 그대로 둔다. 비울 수는 없으니 정해졌을 때만 보낸다.
     ...(draft.groupId === null ? {} : { groupId: draft.groupId }),
     // BE 수정은 통째로 바꾼다 — 이미지 목록을 빼면 연결이 끊기고 한 줄 소개 등은 null 이 된다(BE#227).
-    ...draft.preserved,
+    ...toDetailsPayload(draft.details),
     galleryFileIds: galleryFileIds(draft.gallery),
     descriptionImageFileIds: descriptionImageIds(draft),
   };
@@ -259,6 +260,11 @@ export function AdminProjectFormModal({ project, onClose }: AdminProjectFormModa
             onChange={(groupId) => set({ groupId })}
           />
         </div>
+
+        <ProjectDetailsFields
+          value={draft.details}
+          onChange={(patch) => setDraft((prev) => ({ ...prev, details: { ...prev.details, ...patch } }))}
+        />
 
         <DescriptionField
           initialValue={project?.description ?? ""}

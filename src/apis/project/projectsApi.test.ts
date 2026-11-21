@@ -78,11 +78,17 @@ describe("updateProject (#382)", () => {
 
 describe("submitProject (#382)", () => {
   it("부원 등록에 galleryFileIds 를 순서대로 싣는다", async () => {
-    const payload: ProjectSubmitPayload = { title: "폴리핏", semester: "2026-FALL", galleryFileIds: [31, 30] };
+    const payload: ProjectSubmitPayload = {
+      title: "폴리핏",
+      semester: "2026-FALL",
+      galleryFileIds: [31, 30],
+      oneLiner: "한 줄",
+      progressStatus: "IN_PROGRESS",
+    };
 
     const { config } = await withAdapter({ id: 9 }, () => submitProject(payload));
 
     expect(config.url).toBe("/api/member/projects");
-    expect(body(config)).toMatchObject({ galleryFileIds: [31, 30] });
+    expect(body(config)).toMatchObject({ galleryFileIds: [31, 30], oneLiner: "한 줄", progressStatus: "IN_PROGRESS" });
   });
 });

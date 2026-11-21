@@ -230,6 +230,19 @@ export const projects: PublicProjectBoard = {
     demoUrl: "https://getit.example.com",
     thumbnailUrl: n % 3 === 0 ? null : thumb(`P${n}`, "%23283997"),
     ...NO_PROJECT_DETAILS,
+    // 한 줄 소개·진행 상태·스토어 링크(#389)도 1·2번에만 넣는다.
+    ...(n === 1 && {
+      oneLiner: "나에게 맞는 청년 정책을 골라 주는 서비스",
+      progressStatus: "LIVE" as const,
+      progressStatusLabel: "서비스 중",
+      playStoreUrl: "https://play.google.com/store/apps/details?id=kr.getit.sample",
+      appStoreUrl: "https://apps.apple.com/kr/app/id0000000000",
+    }),
+    ...(n === 2 && {
+      oneLiner: "동아리 일정을 한눈에",
+      progressStatus: "IN_PROGRESS" as const,
+      progressStatusLabel: "개발 중",
+    }),
     // 스크린샷(#382)은 1·2번에만 넣어 있을 때와 없을 때를 함께 본다.
     galleryImageUrls: n <= 2 ? [1, 2, 3].map((shot) => thumb(`P${n} 화면 ${shot}`, "%23455a8f")) : [],
   })),
