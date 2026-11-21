@@ -107,4 +107,25 @@ describe("FestaProjectDetail", () => {
     expect(screen.getByText(/첫 줄/).querySelector("br")).not.toBeNull();
     expect(screen.queryByRole("img", { name: "추적" })).not.toBeInTheDocument();
   });
+
+  it("진행 상태 배지와 http(s) 스토어 링크만 보여준다 (#389)", () => {
+    render(
+      <FestaProjectDetail
+        project={project({
+          progressStatus: "LIVE",
+          progressStatusLabel: "서비스 중",
+          playStoreUrl: "https://play.google.com/store/apps/details?id=a",
+          appStoreUrl: "javascript:alert(1)",
+        })}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("서비스 중")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Google Play/ })).toHaveAttribute(
+      "href",
+      "https://play.google.com/store/apps/details?id=a",
+    );
+    expect(screen.queryByRole("link", { name: /App Store/ })).not.toBeInTheDocument();
+  });
 });

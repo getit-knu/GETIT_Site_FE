@@ -70,4 +70,23 @@ describe("ProjectDetailModal", () => {
     rerender(<ProjectDetailModal project={project({ id: 2, galleryImageUrls: [] })} onClose={vi.fn()} />);
     expect(screen.queryByRole("heading", { name: "작동 사진" })).not.toBeInTheDocument();
   });
+
+  it("진행 상태 배지와 스토어 링크를 보여준다 (#389)", () => {
+    render(
+      <ProjectDetailModal
+        project={project({
+          progressStatus: "ENDED",
+          progressStatusLabel: "서비스 종료",
+          appStoreUrl: "https://apps.apple.com/kr/app/id1",
+        })}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("서비스 종료")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /App Store/ })).toHaveAttribute(
+      "href",
+      "https://apps.apple.com/kr/app/id1",
+    );
+  });
 });

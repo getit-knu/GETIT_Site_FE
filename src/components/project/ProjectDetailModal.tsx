@@ -5,7 +5,9 @@ import { Markdown } from "../ui/Markdown/Markdown";
 import { Modal, ModalBody } from "../ui/Modal/Modal";
 import { useModalTitleId } from "../ui/Modal/modalTitleContext";
 
+import { ProjectStatusBadge, ProjectStoreLinks } from "./ProjectBadges";
 import { ProjectGallery } from "./ProjectGallery";
+import { ProjectCover } from "./ProjectCover";
 import { projectCoverUrl } from "./projectImages";
 import styles from "./ProjectDetailModal.module.scss";
 
@@ -30,6 +32,8 @@ function DetailHeader({ project, onClose }: DetailHeaderProps) {
         </h2>
         <p className={styles.meta}>
           {project.teamName} <span aria-hidden="true">·</span> {project.semesterLabel}
+          {project.progressStatus !== null && " "}
+          <ProjectStatusBadge project={project} />
         </p>
       </div>
       <button type="button" className={styles.closeButton} onClick={onClose} aria-label="닫기">
@@ -53,11 +57,7 @@ export function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps
           <div className={styles.content}>
             <DetailHeader project={project} onClose={onClose} />
 
-            <div
-              className={styles.hero}
-              style={projectCoverUrl(project) ? { backgroundImage: `url(${projectCoverUrl(project)})` } : undefined}
-              aria-hidden="true"
-            />
+            <ProjectCover className={styles.hero} url={projectCoverUrl(project)} />
 
             <ul className={styles.techStack}>
               {project.techStacks.map((tech) => (
@@ -91,6 +91,9 @@ export function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps
               <a className={styles.demoLink} href={project.demoUrl} target="_blank" rel="noreferrer">
                 데모 보기
               </a>
+            </div>
+            <div className={styles.storeLinks}>
+              <ProjectStoreLinks project={project} className={styles.storeLink} />
             </div>
           </div>
         </ModalBody>

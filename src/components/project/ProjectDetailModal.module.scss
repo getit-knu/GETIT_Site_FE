@@ -107,3 +107,25 @@
   background-color: $color-accent;
   color: $color-background;
 }
+
+// 스토어 링크(#389). 링크가 없으면 줄째 숨긴다.
+.storeLinks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+
+  &:empty {
+    display: none;
+  }
+}
+
+.storeLink {
+  padding: 0.5rem 1rem;
+  border: 1px solid $color-border;
+  border-radius: 9999px;
+  color: $color-text-primary;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}

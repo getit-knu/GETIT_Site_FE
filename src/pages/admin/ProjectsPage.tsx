@@ -1,6 +1,8 @@
 import clsx from "clsx";
 
 import { AdminProjectFormModal } from "../../components/project/AdminProjectFormModal";
+import { ProjectCover } from "../../components/project/ProjectCover";
+import { projectCoverUrl } from "../../components/project/projectImages";
 import { Button } from "../../components/ui/Button/Button";
 import { Pagination } from "../../components/ui/Pagination/Pagination";
 import { CardGridSkeleton, EmptyState, ErrorState } from "../../components/ui/states/States";
@@ -92,11 +94,7 @@ export default function AdminProjectsPage() {
           <div className={styles.grid}>
             {data.content.map((project) => (
               <div key={project.id} className={styles.card}>
-                <div
-                  className={styles.thumbnail}
-                  style={project.thumbnailUrl ? { backgroundImage: `url(${project.thumbnailUrl})` } : undefined}
-                  aria-hidden="true"
-                />
+                <ProjectCover className={styles.thumbnail} url={projectCoverUrl(project)} />
                 <div className={styles.body}>
                   <div className={styles.head}>
                     <strong>{project.title}</strong>

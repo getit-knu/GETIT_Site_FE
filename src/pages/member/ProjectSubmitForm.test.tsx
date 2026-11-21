@@ -152,4 +152,21 @@ describe("ProjectSubmitForm", () => {
       descriptionImageFileIds: [88],
     });
   });
+
+  it("한 줄 소개·진행 상태를 함께 등록하고, 비운 스토어 링크는 보내지 않는다 (#389)", async () => {
+    vi.mocked(submitProject).mockResolvedValue(RESULT);
+    renderForm();
+
+    await userEvent.type(screen.getByLabelText("제목 *"), "AI 포트폴리오");
+    await userEvent.type(screen.getByLabelText("한 줄 소개"), "포트폴리오를 추천해요");
+    await userEvent.selectOptions(screen.getByLabelText("진행 상태"), "개발 중");
+    await userEvent.click(screen.getByRole("button", { name: "프로젝트 등록" }));
+
+    await waitFor(() => expect(submitProject).toHaveBeenCalled());
+    const payload = vi.mocked(submitProject).mock.lastCall?.[0];
+    expect(payload).toMatchObject({ oneLiner: "포트폴리오를 추천해요", progressStatus: "IN_PROGRESS" });
+    // undefined 는 JSON 에서 빠진다 — 생략이 곧 null 이다.
+    expect(payload?.playStoreUrl).toBeUndefined();
+    expect(payload?.appStoreUrl).toBeUndefined();
+  });
 });

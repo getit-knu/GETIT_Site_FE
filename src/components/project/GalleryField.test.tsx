@@ -115,6 +115,8 @@ describe("GalleryField (#382)", () => {
     await userEvent.click(screen.getByRole("button", { name: "1번째 이미지 삭제" }));
     expect(galleryFileIds(items())).toEqual([102, 100]);
     expect(screen.getByRole("img", { name: "프로젝트 이미지 1" })).toHaveAttribute("src", "https://cdn/shot-2.png");
+    // 첫 장이 목록 썸네일이다(#398). 순서를 바꾸면 표시도 따라간다.
+    expect(screen.getAllByText("썸네일")).toHaveLength(1);
   });
 });
 

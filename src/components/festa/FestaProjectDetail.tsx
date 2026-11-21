@@ -1,7 +1,9 @@
 import { useState } from "react";
 
+import { isLinkableUrl } from "../../libs/linkableUrl";
 import { isOurPublicFileUrl } from "../../libs/publicFileUrl";
 import type { PublicProject } from "../../types/project";
+import { ProjectStatusBadge, ProjectStoreLinks } from "../project/ProjectBadges";
 import { ProjectGallery } from "../project/ProjectGallery";
 import { Badge } from "../ui/Badge/Badge";
 import { Markdown } from "../ui/Markdown/Markdown";
@@ -10,14 +12,6 @@ import { useModalTitleId } from "../ui/Modal/modalTitleContext";
 
 import { FestaProjectIcon } from "./FestaProjectIcon";
 import styles from "./FestaProjectDetail.module.scss";
-
-/**
- * 링크로 걸 수 있는 URL인지. 빈 문자열·`null`도 온다(springdoc이 nullable을 못 잡음). http(s)만 통과 —
- * 부원 제출(`ProjectSubmitRequest`)엔 BE `@HttpUrl` 검증이 없어 아무 스킴이나 내려온다(#360 리뷰).
- */
-function isLinkableUrl(url: string | null | undefined): url is string {
-  return typeof url === "string" && /^https?:\/\/\S+$/i.test(url.trim());
-}
 
 interface DetailHeaderProps {
   project: PublicProject;
@@ -37,12 +31,17 @@ function DetailHeader({ project, onClose }: DetailHeaderProps) {
         </h2>
         <p className={styles.meta}>
           {project.teamName} <span aria-hidden="true">·</span> {project.semesterLabel}
+          {project.progressStatus !== null && " "}
+          <ProjectStatusBadge project={project} />
         </p>
-        {isLinkableUrl(project.demoUrl) && (
-          <a className={styles.siteLink} href={project.demoUrl} target="_blank" rel="noreferrer">
-            사이트 바로가기 <span aria-hidden="true">↗</span>
-          </a>
-        )}
+        <div className={styles.links}>
+          {isLinkableUrl(project.demoUrl) && (
+            <a className={styles.siteLink} href={project.demoUrl} target="_blank" rel="noreferrer">
+              사이트 바로가기 <span aria-hidden="true">↗</span>
+            </a>
+          )}
+          <ProjectStoreLinks project={project} className={styles.storeLink} />
+        </div>
       </div>
       <button type="button" className={styles.closeButton} onClick={onClose} aria-label="닫기">
         ✕

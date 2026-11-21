@@ -5,6 +5,7 @@ import type { PublicProject } from "../../types/project";
 import { Badge } from "../ui/Badge/Badge";
 import { Card } from "../ui/Card/Card";
 
+import { ProjectCover } from "./ProjectCover";
 import { projectCoverUrl } from "./projectImages";
 import styles from "./ProjectCard.module.scss";
 
@@ -27,18 +28,14 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
 
   return (
     <Card className={styles.card} onClick={onClick}>
-      <div
-        className={styles.thumbnail}
-        style={cover ? { backgroundImage: `url(${cover})` } : undefined}
-        aria-hidden="true"
-      />
+      <ProjectCover className={styles.thumbnail} url={cover} />
 
       <div className={styles.content}>
         <p className={styles.meta}>
           {project.teamName} <span aria-hidden="true">·</span> {project.semesterLabel}
         </p>
         <h3 className={styles.title}>{project.title}</h3>
-        <p className={styles.description}>{markdownToPlainText(project.description)}</p>
+        <p className={styles.description}>{project.oneLiner || markdownToPlainText(project.description)}</p>
 
         <ul className={styles.techStack}>
           {project.techStacks.map((tech) => (
