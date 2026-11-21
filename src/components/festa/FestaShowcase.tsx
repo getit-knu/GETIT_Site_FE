@@ -47,7 +47,7 @@ export function FestaShowcase({ mode = FESTA_MODE, generationNo = null, schedule
 
       <div className={styles.inner}>
         <header className={styles.hero}>
-          <p className={styles.badge}>GET IT {generationNo === null ? "" : `${generationNo}기 · `}프로젝트 쇼케이스</p>
+          <p className={styles.badge}>GET IT {generationNo === null ? "" : `${generationNo}기 `}프로젝트 쇼케이스</p>
           <h1 className={styles.title}>
             모의투자 <span className={styles.titleAccent}>FESTA</span>
           </h1>

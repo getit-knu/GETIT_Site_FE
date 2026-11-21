@@ -72,7 +72,7 @@ describe("HomePage — FESTA 전환", () => {
     vi.mocked(getHome).mockResolvedValue({ ...home(true), generation: { generationNo: 9, year: 2026 } });
     renderHome();
 
-    expect(await screen.findByText("GET IT 9기 · 프로젝트 쇼케이스")).toBeInTheDocument();
+    expect(await screen.findByText("GET IT 9기 프로젝트 쇼케이스")).toBeInTheDocument();
   });
 
   it("FESTA 화면에서는 홈 스크롤 스냅을 켜지 않는다", async () => {
