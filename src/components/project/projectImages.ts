@@ -27,9 +27,13 @@ export function isGalleryUploading(items: GalleryItem[]): boolean {
   return items.some((item) => item.fileId === null);
 }
 
-/** 목록 카드·상세 상단 커버. 아이콘은 정사각형이라 가로 칸에서 크게 잘리므로 첫 스크린샷을 먼저 쓴다. */
-export function projectCoverUrl(project: { galleryImageUrls: string[]; thumbnailUrl: string | null }): string | null {
-  return project.galleryImageUrls[0] ?? project.thumbnailUrl;
+/**
+ * 목록 카드·상세 상단 썸네일. **항상 프로젝트 아이콘**이다(#403) — 어느 화면에서든 같은 아이콘으로 프로젝트를
+ * 알아보게 한다. 정사각형이라 `ProjectCover`가 자르지 않고 가운데 두고 흐린 같은 그림으로 채운다.
+ * BE는 아이콘이 없으면 `null`, 어드민 응답은 `""`를 줄 수 있다.
+ */
+export function projectCoverUrl(project: { thumbnailUrl: string | null }): string | null {
+  return project.thumbnailUrl || null;
 }
 
 /** BE `@Size(max = 20000)`. 설명 마크다운 글자 수(한글 3바이트 기준 TEXT 컬럼 한도). */
