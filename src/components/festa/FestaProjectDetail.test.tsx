@@ -91,9 +91,13 @@ describe("FestaProjectDetail", () => {
     );
 
     expect(screen.getByRole("heading", { name: "미리보기" })).toBeInTheDocument();
-    const shots = screen.getAllByRole("img", { name: /폴리핏 화면/ });
-    expect(shots.map((img) => img.getAttribute("src"))).toEqual(["https://cdn/1.png", "https://cdn/2.png"]);
-    expect(shots[0]).toHaveAttribute("loading", "lazy");
+    // 사진마다 누르면 크게 보는 버튼이다(#404). 사진 자체는 버튼 이름에 맡기고 대체 글자를 비운다.
+    const shots = screen.getAllByRole("button", { name: /폴리핏 화면 \d 크게 보기/ });
+    expect(shots.map((button) => button.querySelector("img")?.getAttribute("src"))).toEqual([
+      "https://cdn/1.png",
+      "https://cdn/2.png",
+    ]);
+    expect(shots[0].querySelector("img")).toHaveAttribute("loading", "lazy");
 
     rerender(<FestaProjectDetail project={project({ id: 2, galleryImageUrls: [] })} onClose={vi.fn()} />);
     expect(screen.queryByRole("heading", { name: "미리보기" })).not.toBeInTheDocument();

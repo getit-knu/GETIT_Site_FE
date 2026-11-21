@@ -84,7 +84,7 @@ export function ThumbnailField({ currentUrl, onFileIdChange }: ThumbnailFieldPro
         }}
       />
 
-      <p className={styles.hint}>정사각형 이미지(512×512 이상)를 권장합니다.</p>
+      <p className={styles.hint}>목록과 쇼케이스의 썸네일로 쓰입니다. 정사각형 이미지(512×512 이상)를 권장합니다.</p>
       {uploading && <p className={styles.hint}>올리는 중…</p>}
       {error !== null && (
         <p role="alert" className={styles.reason}>

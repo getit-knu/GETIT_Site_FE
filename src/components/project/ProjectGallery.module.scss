@@ -16,6 +16,21 @@
   scroll-snap-align: start;
 }
 
+// 누르면 전체화면으로 연다(#404). 버튼 기본 모양을 지우고 사진만 보이게 한다.
+.shotButton {
+  display: block;
+  padding: 0;
+  border: none;
+  border-radius: 0.625rem;
+  background: none;
+  cursor: zoom-in;
+
+  &:focus-visible {
+    box-shadow: $focus-ring;
+    outline: none;
+  }
+}
+
 .shot {
   display: block;
   width: auto;
