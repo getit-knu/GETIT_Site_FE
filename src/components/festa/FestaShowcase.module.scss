@@ -63,14 +63,19 @@ $festa-gold-text: #412402;
   word-break: keep-all;
 }
 
+// 작은 알약 배지(#392). 넓은 자간을 준 강조색 글자는 한글에서 글자가 흩어져 보여 뺐다.
+// 배경은 공용 `Badge`의 accent와 같은 색이다.
 .badge {
   @include rise(0ms);
 
+  display: inline-block;
   margin: 0;
+  padding: 0.3125rem 0.75rem;
+  border-radius: 9999px;
+  background-color: rgb(40 57 151 / 12%);
   color: $color-accent;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
-  letter-spacing: 0.09375rem;
 
   @media (width <= $breakpoint-mobile) {
     font-size: 0.75rem;

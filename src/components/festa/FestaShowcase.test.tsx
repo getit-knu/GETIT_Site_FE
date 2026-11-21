@@ -52,7 +52,7 @@ describe("FestaShowcase", () => {
     const headings = await screen.findAllByRole("heading", { level: 3 });
     expect(headings.map((h) => h.textContent)).toEqual(["프로젝트 2", "프로젝트 1"]);
     // 계절 대신 기수를 띄운다(#377).
-    expect(screen.getByText("GET IT 9기 · 프로젝트 쇼케이스")).toBeInTheDocument();
+    expect(screen.getByText("GET IT 9기 프로젝트 쇼케이스")).toBeInTheDocument();
     expect(screen.getByText(/2팀 출전/)).toBeInTheDocument();
   });
 
