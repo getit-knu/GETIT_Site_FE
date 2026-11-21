@@ -16,6 +16,8 @@ export function markdownToPlainText(markdown: string): string {
       .replace(/(^|[^\w*])\*(\S(?:.*?\S)?)\*(?![\w*])/g, "$1$2")
       .replace(/(^|\W)_(\S(?:.*?\S)?)_(?!\w)/g, "$1$2")
       .replace(/`([^`]*)`/g, "$1")
+      // 에디터는 문법 글자를 이스케이프해 저장한다(`snake\_case`). 역슬래시만 걷어낸다.
+      .replace(/\\([\\`*_{}[\]()#+\-.!>~|])/g, "$1")
       .replace(/\s+/g, " ")
       .trim()
   );

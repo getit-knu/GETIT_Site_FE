@@ -2,9 +2,17 @@ import { useId, useState } from "react";
 
 import { Button } from "../../components/ui/Button/Button";
 import { Input } from "../../components/ui/Input/Input";
-import { TextArea } from "../../components/ui/TextArea/TextArea";
+import { DescriptionField } from "../../components/project/DescriptionField";
 import { GalleryField } from "../../components/project/GalleryField";
-import { galleryFileIds, isGalleryUploading, type GalleryItem } from "../../components/project/projectImages";
+import {
+  DESCRIPTION_IMAGE_MAX,
+  DESCRIPTION_MAX_LENGTH,
+  descriptionImageFileIds,
+  galleryFileIds,
+  isGalleryUploading,
+  type DescriptionImage,
+  type GalleryItem,
+} from "../../components/project/projectImages";
 import { ThumbnailField } from "../../components/project/ThumbnailField";
 import { projectSaveErrorMessage } from "../../errors/project/errorMessages";
 import { useSubmitProject } from "../../hooks/project/useMemberProjects";
@@ -31,6 +39,7 @@ interface Draft {
   demoUrl: string;
   fileId: number | null;
   gallery: GalleryItem[];
+  descriptionImages: DescriptionImage[];
 }
 
 function emptyDraft(): Draft {
@@ -45,6 +54,7 @@ function emptyDraft(): Draft {
     demoUrl: "",
     fileId: null,
     gallery: [],
+    descriptionImages: [],
   };
 }
 
@@ -68,6 +78,7 @@ function techStacks(draft: Draft): string[] {
 
 function invalidReason(draft: Draft): string | null {
   if (draft.title.trim() === "") return "제목을 입력해 주세요.";
+  if (draft.description.length > DESCRIPTION_MAX_LENGTH) return "설명은 20,000자 이내로 입력해 주세요.";
 
   const year = Number(draft.year);
   if (!/^\d{4}$/.test(draft.year) || !Number.isInteger(year)) return "연도를 올바르게 입력해 주세요.";
@@ -98,6 +109,7 @@ function toPayload(draft: Draft): ProjectSubmitPayload {
     demoUrl: urlOrUndefined(draft.demoUrl),
     fileId: draft.fileId ?? undefined,
     galleryFileIds: galleryFileIds(draft.gallery),
+    descriptionImageFileIds: descriptionImageFileIds([], draft.descriptionImages, draft.description),
   };
 }
 
@@ -158,7 +170,17 @@ export function ProjectSubmitForm() {
         </div>
       </div>
 
-      <TextArea label="설명" rows={3} value={draft.description} onChange={(description) => set({ description })} />
+      <DescriptionField
+        initialValue=""
+        length={draft.description.length}
+        onChange={(description) => set({ description })}
+        onImageUploaded={(image) =>
+          setDraft((prev) => ({ ...prev, descriptionImages: [...prev.descriptionImages, image] }))
+        }
+        canAddImage={
+          descriptionImageFileIds([], draft.descriptionImages, draft.description).length < DESCRIPTION_IMAGE_MAX
+        }
+      />
 
       <Input
         label="기술 스택 (쉼표로 구분)"
