@@ -67,4 +67,12 @@ describe("ProjectCard", () => {
     const iconOnly = render(<ProjectCard project={project({ thumbnailUrl: "https://cdn/icon.png" })} />);
     expect(cover(iconOnly.container)).toContain("https://cdn/icon.png");
   });
+
+  it("카드 설명은 마크다운 문법을 걷어낸 평문으로 보여준다 (#384)", () => {
+    render(
+      <ProjectCard project={project({ description: "## 소개\n\n**굵게** 쓴 설명 ![화면](https://cdn/1.png)" })} />,
+    );
+
+    expect(screen.getByText("소개 굵게 쓴 설명")).toBeInTheDocument();
+  });
 });

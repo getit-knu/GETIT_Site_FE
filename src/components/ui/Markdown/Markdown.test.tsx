@@ -33,4 +33,27 @@ describe("Markdown", () => {
 
     expect(screen.getByText("특수 문법 없는 그냥 설명입니다.")).toBeInTheDocument();
   });
+
+  it("keepLineBreaks 면 줄바꿈 하나도 줄바꿈으로 보여준다 — 일반 글로 쓴 예전 설명이 한 덩어리가 되지 않는다 (#384)", () => {
+    const { container, rerender } = render(<Markdown content={"첫 줄\n둘째 줄"} />);
+    expect(container.querySelector("br")).toBeNull();
+
+    rerender(<Markdown content={"첫 줄\n둘째 줄"} keepLineBreaks />);
+    expect(container.querySelector("br")).not.toBeNull();
+  });
+
+  it("allowImage 를 주면 통과한 주소만 이미지로 그리고 나머지는 대체 글자로 보여준다 (#384)", () => {
+    const allowImage = (src: string) => src.startsWith("https://ours.example.com/");
+    render(
+      <Markdown
+        content={"![화면](https://ours.example.com/a.png)\n\n![추적](https://tracker.example.com/p.gif)"}
+        allowImage={allowImage}
+      />,
+    );
+
+    const image = screen.getByRole("img", { name: "화면" });
+    expect(image).toHaveAttribute("loading", "lazy");
+    expect(screen.queryByRole("img", { name: "추적" })).not.toBeInTheDocument();
+    expect(screen.getByText("추적")).toBeInTheDocument();
+  });
 });

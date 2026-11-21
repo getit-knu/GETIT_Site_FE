@@ -1,5 +1,6 @@
 import type { MouseEvent } from "react";
 
+import { markdownToPlainText } from "../../libs/markdownToPlainText";
 import type { PublicProject } from "../../types/project";
 import { Badge } from "../ui/Badge/Badge";
 import { Card } from "../ui/Card/Card";
@@ -37,7 +38,7 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
           {project.teamName} <span aria-hidden="true">·</span> {project.semesterLabel}
         </p>
         <h3 className={styles.title}>{project.title}</h3>
-        <p className={styles.description}>{project.description}</p>
+        <p className={styles.description}>{markdownToPlainText(project.description)}</p>
 
         <ul className={styles.techStack}>
           {project.techStacks.map((tech) => (
