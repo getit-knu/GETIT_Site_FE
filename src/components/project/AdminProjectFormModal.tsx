@@ -109,10 +109,11 @@ function toDraft(project: AdminProject): Draft {
     teamName: project.teamName,
     year,
     season,
-    description: project.description,
+    description: project.description ?? "",
     techStacksText: project.techStacks.join(", "),
-    codeUrl: project.codeUrl,
-    demoUrl: project.demoUrl,
+    // 비어 있으면 BE가 null을 준다(#395). 그대로 두면 URL 검사의 `.trim()`에서 화면이 멈춘다.
+    codeUrl: project.codeUrl ?? "",
+    demoUrl: project.demoUrl ?? "",
     // 원본 fileId 를 그대로 들고 있어야 손대지 않은 썸네일이 저장할 때 지워지지 않는다(BE#139 이후 응답에 있음).
     fileId: project.fileId ?? null,
     thumbnailUrl: project.thumbnailUrl === "" ? null : project.thumbnailUrl,
