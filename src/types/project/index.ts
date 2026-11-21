@@ -78,8 +78,12 @@ export interface PublicProjectListParams {
  */
 export type AdminProject = Omit<
   Required<components["schemas"]["ProjectResultItem"]>,
-  "rejectReason" | "fileId" | "festaOrder" | keyof ProjectDetailFields
+  "rejectReason" | "fileId" | "festaOrder" | "codeUrl" | "demoUrl" | "description" | keyof ProjectDetailFields
 > & {
+  /** 비워 두면 `null`이 온다(#395, 운영 응답으로 확인). springdoc이 이 nullable을 못 잡는다. */
+  codeUrl: string | null;
+  demoUrl: string | null;
+  description: string | null;
   rejectReason: string | null;
   fileId: number | null;
   festaOrder: number | null;

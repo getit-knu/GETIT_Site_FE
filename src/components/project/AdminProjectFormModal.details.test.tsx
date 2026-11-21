@@ -97,4 +97,18 @@ describe("AdminProjectFormModal", () => {
       );
     });
   });
+
+  it("코드·데모 URL과 설명이 비어 있는(null) 프로젝트도 수정 창이 열리고 저장된다 (#395)", async () => {
+    renderModal(project({ codeUrl: null, demoUrl: null, description: null }));
+
+    expect(screen.getByLabelText("코드 저장소 URL")).toHaveValue("");
+    expect(screen.getByLabelText("데모 URL")).toHaveValue("");
+    await userEvent.click(submit());
+
+    await waitFor(() => expect(api.updateProject).toHaveBeenCalled());
+    const payload = vi.mocked(api.updateProject).mock.lastCall?.[1];
+    expect(payload?.codeUrl).toBeUndefined();
+    expect(payload?.demoUrl).toBeUndefined();
+    expect(payload?.description).toBe("");
+  });
 });
