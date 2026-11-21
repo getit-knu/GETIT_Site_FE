@@ -2569,6 +2569,13 @@ export interface components {
             festaEntry?: boolean;
             /** Format: int32 */
             festaOrder?: number;
+            oneLiner?: string;
+            /** @enum {string} */
+            progressStatus?: "IN_PROGRESS" | "LIVE" | "ENDED";
+            playStoreUrl?: string;
+            appStoreUrl?: string;
+            galleryFileIds?: number[];
+            descriptionImageFileIds?: number[];
         };
         ApiResponseProjectResultItem: {
             success?: boolean;
@@ -2598,6 +2605,15 @@ export interface components {
             status?: "PENDING" | "APPROVED" | "REJECTED";
             statusLabel?: string;
             rejectReason?: string;
+            oneLiner?: string;
+            /** @enum {string} */
+            progressStatus?: "IN_PROGRESS" | "LIVE" | "ENDED";
+            progressStatusLabel?: string;
+            playStoreUrl?: string;
+            appStoreUrl?: string;
+            galleryFileIds?: number[];
+            galleryImageUrls?: string[];
+            descriptionImageFileIds?: number[];
         };
         LectureRequestAssignmentPart: {
             title: string;
@@ -2712,6 +2728,13 @@ export interface components {
             demoUrl?: string;
             /** Format: int64 */
             fileId?: number;
+            oneLiner?: string;
+            /** @enum {string} */
+            progressStatus?: "IN_PROGRESS" | "LIVE" | "ENDED";
+            playStoreUrl?: string;
+            appStoreUrl?: string;
+            galleryFileIds?: number[];
+            descriptionImageFileIds?: number[];
         };
         ApiResponseMemberProjectResult: {
             success?: boolean;
@@ -2735,6 +2758,15 @@ export interface components {
             status?: "PENDING" | "APPROVED" | "REJECTED";
             statusLabel?: string;
             rejectReason?: string;
+            oneLiner?: string;
+            /** @enum {string} */
+            progressStatus?: "IN_PROGRESS" | "LIVE" | "ENDED";
+            progressStatusLabel?: string;
+            playStoreUrl?: string;
+            appStoreUrl?: string;
+            galleryFileIds?: number[];
+            galleryImageUrls?: string[];
+            descriptionImageFileIds?: number[];
         };
         MemberQuestionRequestCreate: {
             content: string;
@@ -2773,7 +2805,7 @@ export interface components {
             /** Format: int64 */
             size: number;
             /** @enum {string} */
-            purpose: "LECTURE_MATERIAL" | "ASSIGNMENT" | "PROFILE_IMAGE" | "PROJECT_THUMBNAIL" | "ACTIVITY_PHOTO";
+            purpose: "LECTURE_MATERIAL" | "ASSIGNMENT" | "PROFILE_IMAGE" | "PROJECT_THUMBNAIL" | "PROJECT_IMAGE" | "ACTIVITY_PHOTO";
         };
         ApiResponsePresignedUploadResponse: {
             success?: boolean;
@@ -3125,6 +3157,13 @@ export interface components {
             codeUrl?: string;
             demoUrl?: string;
             thumbnailUrl?: string;
+            oneLiner?: string;
+            /** @enum {string} */
+            progressStatus?: "IN_PROGRESS" | "LIVE" | "ENDED";
+            progressStatusLabel?: string;
+            playStoreUrl?: string;
+            appStoreUrl?: string;
+            galleryImageUrls?: string[];
         };
         ApiResponseListMajorResult: {
             success?: boolean;
@@ -5305,7 +5344,7 @@ export interface operations {
     upload: {
         parameters: {
             query: {
-                purpose: "LECTURE_MATERIAL" | "ASSIGNMENT" | "PROFILE_IMAGE" | "PROJECT_THUMBNAIL" | "ACTIVITY_PHOTO";
+                purpose: "LECTURE_MATERIAL" | "ASSIGNMENT" | "PROFILE_IMAGE" | "PROJECT_THUMBNAIL" | "PROJECT_IMAGE" | "ACTIVITY_PHOTO";
             };
             header?: never;
             path?: never;

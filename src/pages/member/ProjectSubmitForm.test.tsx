@@ -3,8 +3,10 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+import { uploadFile, uploadInvalidReason } from "../../apis/file/filesApi";
 import { submitProject } from "../../apis/project/memberProjectsApi";
 import type { MemberProject } from "../../types/project";
+import { NO_PROJECT_DETAILS, noProjectImages } from "../../mocks/projectDetails";
 
 import { ProjectSubmitForm } from "./ProjectSubmitForm";
 
@@ -31,6 +33,8 @@ const RESULT: MemberProject = {
   demoUrl: "",
   fileId: 0,
   thumbnailUrl: "",
+  ...NO_PROJECT_DETAILS,
+  ...noProjectImages(),
   status: "PENDING",
   statusLabel: "승인 대기",
   rejectReason: null,
@@ -100,5 +104,25 @@ describe("ProjectSubmitForm", () => {
     await userEvent.click(screen.getByRole("button", { name: "프로젝트 등록" }));
 
     expect(await screen.findByText("소속된 조가 있어야 프로젝트를 등록할 수 있습니다.")).toBeInTheDocument();
+  });
+
+  it("프로젝트 이미지를 올리면 galleryFileIds 로 함께 등록한다 (#382)", async () => {
+    vi.mocked(submitProject).mockResolvedValue(RESULT);
+    vi.mocked(uploadInvalidReason).mockReturnValue(null);
+    vi.mocked(uploadFile).mockResolvedValue({ fileId: 77, fileName: "a.png", size: 1 });
+    Object.defineProperty(URL, "createObjectURL", { value: vi.fn(() => "blob:preview"), configurable: true });
+    renderForm();
+
+    await userEvent.type(screen.getByLabelText("제목 *"), "AI 포트폴리오");
+    await userEvent.upload(
+      screen.getByLabelText("프로젝트 이미지 올리기"),
+      new File(["x"], "a.png", { type: "image/png" }),
+    );
+    await waitFor(() => expect(screen.getByRole("button", { name: "프로젝트 등록" })).toBeEnabled());
+    await userEvent.click(screen.getByRole("button", { name: "프로젝트 등록" }));
+
+    await waitFor(() => expect(submitProject).toHaveBeenCalled());
+    expect(vi.mocked(uploadFile).mock.lastCall?.[1]).toBe("PROJECT_IMAGE");
+    expect(vi.mocked(submitProject).mock.lastCall?.[0]).toMatchObject({ galleryFileIds: [77] });
   });
 });

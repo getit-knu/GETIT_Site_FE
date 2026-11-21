@@ -12,10 +12,11 @@ interface ThumbnailFieldProps {
 }
 
 /**
- * 프로젝트 썸네일. 명세서 13.1 업로드 흐름 1·2단계까지만 한다(`AttachmentsField`와 같은
- * 전제) — 저장을 눌러야 `fileId`로 프로젝트에 연결된다.
+ * 프로젝트 아이콘(API 필드명은 그대로 썸네일 `fileId`). 명세서 13.1 업로드 흐름 1·2단계까지만 한다
+ * (`AttachmentsField`와 같은 전제) — 저장을 눌러야 `fileId`로 프로젝트에 연결된다.
  *
- * **한 장만 허용한다** — 여러 장을 다루는 `AttachmentsField`와 달리 미리보기 하나만 보여준다.
+ * **한 장만 허용한다.** FESTA 쇼케이스가 앱 아이콘처럼 정사각형으로 그리므로 미리보기도 정사각형이다.
+ * 스크린샷은 `GalleryField`(프로젝트 이미지)로 따로 올린다(#382).
  */
 export function ThumbnailField({ currentUrl, onFileIdChange }: ThumbnailFieldProps) {
   // `null` = 아직 손대지 않음(기존 `currentUrl`을 보여준다). "제거"를 누르면 `undefined`로
@@ -58,22 +59,22 @@ export function ThumbnailField({ currentUrl, onFileIdChange }: ThumbnailFieldPro
 
   return (
     <div className={styles.field}>
-      <span className={styles.label}>썸네일</span>
+      <span className={styles.label}>프로젝트 아이콘</span>
 
       {displayUrl !== null ? (
         <div className={styles.preview}>
-          <img src={displayUrl} alt="프로젝트 썸네일" className={styles.image} />
+          <img src={displayUrl} alt="프로젝트 아이콘" className={styles.image} />
           <button type="button" onClick={handleClear} disabled={uploading}>
             제거
           </button>
         </div>
       ) : (
-        <p className={styles.hint}>등록된 썸네일이 없습니다.</p>
+        <p className={styles.hint}>등록된 아이콘이 없습니다.</p>
       )}
 
       <input
         type="file"
-        aria-label="썸네일 올리기"
+        aria-label="프로젝트 아이콘 올리기"
         disabled={uploading}
         onChange={(e) => {
           const file = e.target.files?.[0];
@@ -83,6 +84,7 @@ export function ThumbnailField({ currentUrl, onFileIdChange }: ThumbnailFieldPro
         }}
       />
 
+      <p className={styles.hint}>정사각형 이미지(512×512 이상)를 권장합니다.</p>
       {uploading && <p className={styles.hint}>올리는 중…</p>}
       {error !== null && (
         <p role="alert" className={styles.reason}>

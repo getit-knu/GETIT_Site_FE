@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { PublicProject } from "../../types/project";
+import { NO_PROJECT_DETAILS } from "../../mocks/projectDetails";
 
 import { ProjectDetailModal } from "./ProjectDetailModal";
 
@@ -17,6 +18,8 @@ function project(over: Partial<PublicProject> = {}): PublicProject {
     codeUrl: "https://github.com/getit-knu/ai-portfolio-recommender",
     demoUrl: "https://ai-portfolio-recommender.getit-knu.dev",
     thumbnailUrl: null,
+    ...NO_PROJECT_DETAILS,
+    galleryImageUrls: [],
     ...over,
   };
 }
@@ -55,5 +58,16 @@ describe("ProjectDetailModal", () => {
     fireEvent.click(screen.getByRole("button", { name: "닫기" }));
 
     expect(handleClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("작동 사진은 실제 스크린샷으로 보여주고, 없으면 그 칸을 숨긴다 (#382)", () => {
+    const { rerender } = render(
+      <ProjectDetailModal project={project({ galleryImageUrls: ["https://cdn/1.png"] })} onClose={vi.fn()} />,
+    );
+    expect(screen.getByRole("heading", { name: "작동 사진" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /화면 1/ })).toHaveAttribute("src", "https://cdn/1.png");
+
+    rerender(<ProjectDetailModal project={project({ id: 2, galleryImageUrls: [] })} onClose={vi.fn()} />);
+    expect(screen.queryByRole("heading", { name: "작동 사진" })).not.toBeInTheDocument();
   });
 });

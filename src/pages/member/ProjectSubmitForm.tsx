@@ -3,6 +3,8 @@ import { useId, useState } from "react";
 import { Button } from "../../components/ui/Button/Button";
 import { Input } from "../../components/ui/Input/Input";
 import { TextArea } from "../../components/ui/TextArea/TextArea";
+import { GalleryField } from "../../components/project/GalleryField";
+import { galleryFileIds, isGalleryUploading, type GalleryItem } from "../../components/project/projectImages";
 import { ThumbnailField } from "../../components/project/ThumbnailField";
 import { projectSaveErrorMessage } from "../../errors/project/errorMessages";
 import { useSubmitProject } from "../../hooks/project/useMemberProjects";
@@ -28,6 +30,7 @@ interface Draft {
   codeUrl: string;
   demoUrl: string;
   fileId: number | null;
+  gallery: GalleryItem[];
 }
 
 function emptyDraft(): Draft {
@@ -41,6 +44,7 @@ function emptyDraft(): Draft {
     codeUrl: "",
     demoUrl: "",
     fileId: null,
+    gallery: [],
   };
 }
 
@@ -74,6 +78,7 @@ function invalidReason(draft: Draft): string | null {
 
   if (isBadUrl(draft.codeUrl)) return "코드 저장소 URL 형식이 올바르지 않습니다.";
   if (isBadUrl(draft.demoUrl)) return "데모 URL 형식이 올바르지 않습니다.";
+  if (isGalleryUploading(draft.gallery)) return "프로젝트 이미지를 올리는 중입니다.";
 
   return null;
 }
@@ -92,6 +97,7 @@ function toPayload(draft: Draft): ProjectSubmitPayload {
     codeUrl: urlOrUndefined(draft.codeUrl),
     demoUrl: urlOrUndefined(draft.demoUrl),
     fileId: draft.fileId ?? undefined,
+    galleryFileIds: galleryFileIds(draft.gallery),
   };
 }
 
@@ -166,6 +172,10 @@ export function ProjectSubmitForm() {
       </div>
 
       <ThumbnailField currentUrl={null} onFileIdChange={(fileId) => set({ fileId })} />
+      <GalleryField
+        items={draft.gallery}
+        onChange={(update) => setDraft((prev) => ({ ...prev, gallery: update(prev.gallery) }))}
+      />
 
       {reason !== null && (
         <p role="status" className={styles.reason}>

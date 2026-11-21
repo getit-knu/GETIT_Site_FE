@@ -7,8 +7,10 @@ import { Modal, ModalBody, ModalFooter, ModalHeader } from "../ui/Modal/Modal";
 import { TextArea } from "../ui/TextArea/TextArea";
 import { projectSaveErrorMessage } from "../../errors/project/errorMessages";
 import { useSaveProject } from "../../hooks/project/useProjects";
-import type { AdminProject, AdminProjectPayload } from "../../types/project";
+import type { AdminProject, AdminProjectPayload, ProjectPreservedPayload } from "../../types/project";
 
+import { GalleryField } from "./GalleryField";
+import { galleryFileIds, isGalleryUploading, toGalleryItems, type GalleryItem } from "./projectImages";
 import { ProjectGroupField } from "./ProjectGroupField";
 import { ThumbnailField } from "./ThumbnailField";
 import styles from "./AdminProjectFormModal.module.scss";
@@ -39,7 +41,18 @@ interface Draft {
   festaEntry: boolean;
   festaOrder: string;
   groupId: number | null;
+  gallery: GalleryItem[];
+  /** 이 폼이 아직 고치지 않는 항목(BE#227). 수정할 때 받은 값을 그대로 돌려보내야 지워지지 않는다. */
+  preserved: Omit<ProjectPreservedPayload, "galleryFileIds">;
 }
+
+const EMPTY_PRESERVED: Draft["preserved"] = {
+  descriptionImageFileIds: [],
+  oneLiner: null,
+  progressStatus: null,
+  playStoreUrl: null,
+  appStoreUrl: null,
+};
 
 /** `semester`는 `2026-FALL` 형태 고정값이다(BE 검증). 화면은 연도 + 계절로 나눠 받는다. */
 function parseSemester(semester: string): { year: string; season: Season } {
@@ -68,6 +81,8 @@ function emptyDraft(): Draft {
     festaEntry: false,
     festaOrder: "",
     groupId: null,
+    gallery: [],
+    preserved: EMPTY_PRESERVED,
   };
 }
 
@@ -91,6 +106,14 @@ function toDraft(project: AdminProject): Draft {
     festaEntry: project.festaEntry,
     festaOrder: project.festaOrder === null ? "" : String(project.festaOrder),
     groupId: project.groupId,
+    gallery: toGalleryItems(project.galleryFileIds, project.galleryImageUrls),
+    preserved: {
+      descriptionImageFileIds: project.descriptionImageFileIds,
+      oneLiner: project.oneLiner,
+      progressStatus: project.progressStatus,
+      playStoreUrl: project.playStoreUrl,
+      appStoreUrl: project.appStoreUrl,
+    },
   };
 }
 
@@ -136,6 +159,8 @@ function invalidReason(draft: Draft): string | null {
     if (!Number.isInteger(festaOrder) || festaOrder < 1) return "출전 순서는 1 이상의 정수여야 합니다.";
   }
 
+  if (isGalleryUploading(draft.gallery)) return "프로젝트 이미지를 올리는 중입니다.";
+
   return null;
 }
 
@@ -160,6 +185,9 @@ function toPayload(draft: Draft): AdminProjectPayload {
     festaOrder: draft.festaEntry && draft.festaOrder.trim() !== "" ? Number(draft.festaOrder) : null,
     // 생략하면 서버가 조를 그대로 둔다. 비울 수는 없으니 정해졌을 때만 보낸다.
     ...(draft.groupId === null ? {} : { groupId: draft.groupId }),
+    // BE 수정은 통째로 바꾼다 — 이미지 목록을 빼면 연결이 끊기고 한 줄 소개 등은 null 이 된다(BE#227).
+    ...draft.preserved,
+    galleryFileIds: galleryFileIds(draft.gallery),
   };
 }
 
@@ -227,6 +255,10 @@ export function AdminProjectFormModal({ project, onClose }: AdminProjectFormModa
         </div>
 
         <ThumbnailField currentUrl={draft.thumbnailUrl} onFileIdChange={(fileId) => set({ fileId })} />
+        <GalleryField
+          items={draft.gallery}
+          onChange={(update) => setDraft((prev) => ({ ...prev, gallery: update(prev.gallery) }))}
+        />
 
         <label className={styles.checkbox}>
           <input type="checkbox" checked={draft.isFeatured} onChange={(e) => set({ isFeatured: e.target.checked })} />

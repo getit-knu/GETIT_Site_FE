@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { PublicProject } from "../../types/project";
+import { NO_PROJECT_DETAILS } from "../../mocks/projectDetails";
 
 import { FestaProjectDetail } from "./FestaProjectDetail";
 
@@ -17,6 +18,8 @@ function project(over: Partial<PublicProject> = {}): PublicProject {
     codeUrl: "https://github.com/getit-knu/polifit",
     demoUrl: "https://polifit.example.com",
     thumbnailUrl: null,
+    ...NO_PROJECT_DETAILS,
+    galleryImageUrls: [],
     ...over,
   };
 }
@@ -77,5 +80,22 @@ describe("FestaProjectDetail", () => {
     fireEvent.click(screen.getByRole("button", { name: "닫기" }));
 
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("스크린샷이 있으면 미리보기로 순서대로 보여주고, 없으면 그 칸을 숨긴다 (#382)", () => {
+    const { rerender } = render(
+      <FestaProjectDetail
+        project={project({ galleryImageUrls: ["https://cdn/1.png", "https://cdn/2.png"] })}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "미리보기" })).toBeInTheDocument();
+    const shots = screen.getAllByRole("img", { name: /폴리핏 화면/ });
+    expect(shots.map((img) => img.getAttribute("src"))).toEqual(["https://cdn/1.png", "https://cdn/2.png"]);
+    expect(shots[0]).toHaveAttribute("loading", "lazy");
+
+    rerender(<FestaProjectDetail project={project({ id: 2, galleryImageUrls: [] })} onClose={vi.fn()} />);
+    expect(screen.queryByRole("heading", { name: "미리보기" })).not.toBeInTheDocument();
   });
 });

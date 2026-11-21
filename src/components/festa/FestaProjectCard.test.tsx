@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { PublicProject } from "../../types/project";
+import { NO_PROJECT_DETAILS } from "../../mocks/projectDetails";
 
 import { FestaProjectCard } from "./FestaProjectCard";
 
@@ -17,6 +18,8 @@ function project(over: Partial<PublicProject> = {}): PublicProject {
     codeUrl: "https://github.com/getit-knu/polifit",
     demoUrl: "https://polifit.example.com",
     thumbnailUrl: null,
+    ...NO_PROJECT_DETAILS,
+    galleryImageUrls: [],
     ...over,
   };
 }

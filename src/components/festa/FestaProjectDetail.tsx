@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import type { PublicProject } from "../../types/project";
+import { ProjectGallery } from "../project/ProjectGallery";
 import { Badge } from "../ui/Badge/Badge";
 import { Modal, ModalBody } from "../ui/Modal/Modal";
 import { useModalTitleId } from "../ui/Modal/modalTitleContext";
@@ -58,7 +59,7 @@ interface FestaProjectDetailProps {
  * 행사장에서 학생이 가장 먼저 할 행동이 실제 서비스를 써 보는 것이라서다.
  *
  * 모바일은 아래에서 올라오는 바텀시트, 데스크톱은 가운데 모달이다(스타일 파일 참고).
- * `/projects`의 `ProjectDetailModal`에 있는 "작동 사진" 자리는 아직 데이터가 없어 넣지 않았다(#356).
+ * 스크린샷(#382)은 설명보다 먼저 둔다 — 글보다 화면을 보고 써 볼지 정하는 경우가 많다.
  */
 export function FestaProjectDetail({ project, onClose }: FestaProjectDetailProps) {
   // 닫힐 때도 마지막 프로젝트를 그린다 — 퇴장 애니메이션 동안 빈 시트만 내려가던 문제(#360 리뷰).
@@ -73,6 +74,13 @@ export function FestaProjectDetail({ project, onClose }: FestaProjectDetailProps
           <DetailHeader project={shown} onClose={onClose} />
 
           <div className={styles.sections}>
+            {shown.galleryImageUrls.length > 0 && (
+              <section>
+                <h3 className={styles.sectionTitle}>미리보기</h3>
+                <ProjectGallery urls={shown.galleryImageUrls} title={shown.title} />
+              </section>
+            )}
+
             {shown.description && (
               <section>
                 <h3 className={styles.sectionTitle}>프로젝트 설명</h3>

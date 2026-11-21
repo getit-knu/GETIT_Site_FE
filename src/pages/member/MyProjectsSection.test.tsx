@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getMyProjects } from "../../apis/project/memberProjectsApi";
 import type { MemberProject } from "../../types/project";
+import { NO_PROJECT_DETAILS, noProjectImages } from "../../mocks/projectDetails";
 
 import { MyProjectsSection } from "./MyProjectsSection";
 
@@ -21,6 +22,8 @@ function project(over: Partial<MemberProject> = {}): MemberProject {
     demoUrl: "",
     fileId: 501,
     thumbnailUrl: "",
+    ...NO_PROJECT_DETAILS,
+    ...noProjectImages(),
     status: "PENDING",
     statusLabel: "승인 대기",
     rejectReason: null,

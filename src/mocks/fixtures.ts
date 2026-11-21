@@ -6,6 +6,8 @@ import type { PublicProjectBoard } from "../types/project";
 import type { RecruitmentStatus } from "../types/recruitment";
 import type { StaffDirectory } from "../types/site";
 
+import { NO_PROJECT_DETAILS } from "./projectDetails";
+
 /**
  * 개발용 목 데이터. **dev 서버에서만 쓰인다** — `devApiMockPlugin`이 유일한 소비자라
  * `vite build` 산출물에 들어가지 않는다. 값은 실제 운영 데이터와 무관한 샘플이다.
@@ -213,6 +215,9 @@ export const projects: PublicProjectBoard = {
     codeUrl: "https://github.com/getit-knu",
     demoUrl: "https://getit.example.com",
     thumbnailUrl: n % 3 === 0 ? null : thumb(`P${n}`, "%23283997"),
+    ...NO_PROJECT_DETAILS,
+    // 스크린샷(#382)은 1·2번에만 넣어 있을 때와 없을 때를 함께 본다.
+    galleryImageUrls: n <= 2 ? [1, 2, 3].map((shot) => thumb(`P${n} 화면 ${shot}`, "%23455a8f")) : [],
   })),
   page: 0,
   size: 12,

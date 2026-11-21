@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import type { PublicProject } from "../../types/project";
+import { NO_PROJECT_DETAILS } from "../../mocks/projectDetails";
 
 import { ProjectCard } from "./ProjectCard";
 
@@ -17,6 +18,8 @@ function project(over: Partial<PublicProject> = {}): PublicProject {
     codeUrl: "https://github.com/getit-knu/ai-portfolio-recommender",
     demoUrl: "https://ai-portfolio-recommender.getit-knu.dev",
     thumbnailUrl: null,
+    ...NO_PROJECT_DETAILS,
+    galleryImageUrls: [],
     ...over,
   };
 }
@@ -47,5 +50,21 @@ describe("ProjectCard", () => {
     expect(codeLink).toHaveAttribute("target", "_blank");
     expect(demoLink).toHaveAttribute("href", p.demoUrl);
     expect(demoLink).toHaveAttribute("target", "_blank");
+  });
+
+  it("커버는 첫 스크린샷을 먼저 쓰고, 없으면 아이콘을 쓴다 (#382)", () => {
+    const cover = (container: HTMLElement) =>
+      (container.querySelector("[aria-hidden='true']") as HTMLElement).style.backgroundImage;
+
+    const withShot = render(
+      <ProjectCard
+        project={project({ thumbnailUrl: "https://cdn/icon.png", galleryImageUrls: ["https://cdn/1.png"] })}
+      />,
+    );
+    expect(cover(withShot.container)).toContain("https://cdn/1.png");
+    withShot.unmount();
+
+    const iconOnly = render(<ProjectCard project={project({ thumbnailUrl: "https://cdn/icon.png" })} />);
+    expect(cover(iconOnly.container)).toContain("https://cdn/icon.png");
   });
 });

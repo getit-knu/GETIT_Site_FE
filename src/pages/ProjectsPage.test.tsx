@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getProjects } from "../apis/public/publicApi";
 import type { PublicProject, PublicProjectBoard } from "../types/project";
+import { NO_PROJECT_DETAILS } from "../mocks/projectDetails";
 
 import ProjectsPage from "./ProjectsPage";
 
@@ -22,6 +23,8 @@ function project(over: Partial<PublicProject> = {}): PublicProject {
     codeUrl: "https://github.com/getit-knu/ai-portfolio",
     demoUrl: "https://ai-portfolio.getit-knu.dev",
     thumbnailUrl: null,
+    ...NO_PROJECT_DETAILS,
+    galleryImageUrls: [],
     ...over,
   };
 }

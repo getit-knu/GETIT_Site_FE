@@ -9,6 +9,7 @@ import { getFestaProjects } from "../../apis/public/publicApi";
 import type { Me } from "../../types/auth";
 import type { FestaSchedule, FestaVote } from "../../types/festa";
 import type { PublicProject } from "../../types/project";
+import { NO_PROJECT_DETAILS } from "../../mocks/projectDetails";
 
 import { formatKstDateTime } from "./festaDeadline";
 import { FestaShowcase } from "./FestaShowcase";
@@ -29,6 +30,8 @@ function project(id: number): PublicProject {
     codeUrl: "",
     demoUrl: "",
     thumbnailUrl: null,
+    ...NO_PROJECT_DETAILS,
+    galleryImageUrls: [],
   };
 }
 
