@@ -72,8 +72,8 @@ export function GalleryField({ items, onChange }: GalleryFieldProps) {
     <div className={fieldStyles.field}>
       <span className={fieldStyles.label}>프로젝트 이미지</span>
       <p className={fieldStyles.hint}>
-        서비스 화면을 최대 {GALLERY_MAX}장 올려 주세요. 가로 이미지(1600×900)를 권장하며, 앞에 둔 이미지가 먼저
-        보입니다.
+        서비스 화면을 최대 {GALLERY_MAX}장 올려 주세요. 가로 이미지(1600×900)를 권장하며, 앞에 둔 이미지가 먼저 보이고
+        첫 장은 프로젝트 목록의 썸네일로 쓰입니다.
       </p>
 
       {items.length > 0 && (
@@ -88,6 +88,8 @@ export function GalleryField({ items, onChange }: GalleryFieldProps) {
                   <img src={item.url} alt={`프로젝트 이미지 ${index + 1}`} className={styles.image} />
                 )}
                 {item.fileId === null && <span className={styles.uploading}>올리는 중…</span>}
+                {/* 첫 장이 `/projects` 카드 썸네일이 된다(#398, `projectCoverUrl`). */}
+                {index === 0 && <span className={styles.coverBadge}>썸네일</span>}
                 <div className={styles.controls}>
                   <button
                     type="button"
