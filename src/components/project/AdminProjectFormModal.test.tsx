@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -236,7 +236,8 @@ describe("AdminProjectFormModal", () => {
       renderModal(project({ groupId: 7 }));
       await screen.findByRole("option", { name: "1조" });
 
-      expect(screen.queryByRole("option", { name: "선택 안 함" })).not.toBeInTheDocument();
+      // 진행 상태 칸(#389)에도 "선택 안 함"이 있어 조 칸 안에서만 찾는다.
+      expect(within(groupBox()).queryByRole("option", { name: "선택 안 함" })).not.toBeInTheDocument();
       expect(groupBox()).toHaveDisplayValue("현재 기수에 없는 조");
 
       await userEvent.click(submit());

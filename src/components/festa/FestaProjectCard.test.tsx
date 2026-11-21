@@ -107,4 +107,19 @@ describe("FestaProjectCard", () => {
 
     expect(screen.getByText("소개 일정 공유")).toBeInTheDocument();
   });
+
+  it("한 줄 소개가 있으면 설명 대신 그것을 소개 문구로 쓴다 (#389)", () => {
+    render(
+      <ul>
+        <FestaProjectCard
+          project={project({ oneLiner: "한 줄로 소개", description: "## 긴 설명" })}
+          index={0}
+          onSelect={vi.fn()}
+        />
+      </ul>,
+    );
+
+    expect(screen.getByText("한 줄로 소개")).toBeInTheDocument();
+    expect(screen.queryByText("긴 설명")).not.toBeInTheDocument();
+  });
 });
