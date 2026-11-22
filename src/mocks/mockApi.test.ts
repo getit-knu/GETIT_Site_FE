@@ -116,6 +116,32 @@ describe("createMockApi", () => {
     ).toMatchObject({ error: { code: "FESTA_CLOSED" } });
   });
 
+  it("FESTA 추첨과 명단은 투표가 끝난 뒤에만 되고, 다시 뽑기는 막는다(#412)", () => {
+    const api = createMockApi();
+    const open = { startAt: "2020-01-01T00:00:00+09:00", endAt: "2999-01-01T00:00:00+09:00" };
+    api.resolve("PUT", "/api/admin/festa/schedule", params, open);
+    api.resolve("PUT", "/api/festa/vote", params, { projectId: 3, phoneNumber: "010-1234-5678", privacyConsent: true });
+
+    expect(api.resolve("POST", "/api/admin/festa/draw", params, {})?.body).toMatchObject({
+      error: { code: "FESTA_DRAW_BEFORE_END" },
+    });
+    expect(api.resolve("GET", "/api/admin/festa/investors.csv", params)?.body).toMatchObject({
+      error: { code: "FESTA_EXPORT_BEFORE_END" },
+    });
+
+    api.resolve("PUT", "/api/admin/festa/schedule", params, { ...open, endAt: "2020-01-02T00:00:00+09:00" });
+    expect(api.resolve("POST", "/api/admin/festa/draw", params, {})?.body).toMatchObject({
+      data: { winners: [{ drawOrder: 1, phoneNumber: "010-1234-5678" }] },
+    });
+    expect(api.resolve("POST", "/api/admin/festa/draw", params, {})?.body).toMatchObject({
+      error: { code: "FESTA_ALREADY_DRAWN" },
+    });
+    expect(api.resolve("POST", "/api/admin/festa/draw", params, { count: 1, additional: true })?.body).toMatchObject({
+      error: { code: "FESTA_NO_DRAW_CANDIDATES" },
+    });
+    expect(api.resolve("GET", "/api/admin/festa/investors.csv", params)?.body).toContain("010-****-5678");
+  });
+
   it("FESTA 투자는 첫 저장에 번호를 요구하고, 저장하면 가린 번호와 남은 금액이 바뀐다(#364)", () => {
     const api = createMockApi();
     const investments = [{ projectId: 3, amount: 300_000 }];
@@ -158,10 +184,10 @@ describe("createMockApi", () => {
     const results = (api.resolve("GET", "/api/admin/festa/results", params)?.body as { data: FestaResults }).data;
     expect(results.investorCount).toBe(1);
     expect(results.projects[0]).toMatchObject({ projectId: 1, totalAmount: 500_000, investorCount: 1 });
-    expect(api.resolve("GET", "/api/admin/festa/investors.csv", params)?.body).toContain("010-1234-5678");
+    expect(api.resolve("GET", "/api/admin/festa/investors.csv", params)?.body).toContain("010-****-5678");
 
     api.resolve("DELETE", "/api/admin/festa/investors/phones", params);
-    expect(api.resolve("GET", "/api/admin/festa/investors.csv", params)?.body).not.toContain("010-1234-5678");
+    expect(api.resolve("GET", "/api/admin/festa/investors.csv", params)?.body).not.toContain("010-****-5678");
     expect(api.resolve("GET", "/api/admin/festa/results", params)?.body).toMatchObject({ data: { investorCount: 1 } });
   });
 
@@ -181,6 +207,6 @@ describe("createMockApi", () => {
       .data;
     expect(results.voterCount).toBe(1);
     expect(results.projects[0]).toMatchObject({ projectId: 1, voteCount: 1 });
-    expect(api.resolve("GET", "/api/admin/festa/investors.csv", params)?.body).toContain("010-1234-5678");
+    expect(api.resolve("GET", "/api/admin/festa/investors.csv", params)?.body).toContain("010-****-5678");
   });
 });

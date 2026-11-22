@@ -1,5 +1,12 @@
 import { downloadFile } from "../../libs/downloadFile";
-import type { FestaResults, FestaSchedule, FestaScheduleSetting, FestaVoteResults } from "../../types/festa";
+import type {
+  FestaDrawPayload,
+  FestaResults,
+  FestaSchedule,
+  FestaScheduleSetting,
+  FestaVoteResults,
+  FestaWinners,
+} from "../../types/festa";
 import { client } from "../client";
 
 /** 프로젝트별 투자 집계(#365). 행사 중에는 공개하지 않아 어드민만 본다. */
@@ -27,8 +34,24 @@ export async function getFestaVoteResults(): Promise<FestaVoteResults> {
 }
 
 /**
- * 추첨용 투자자 명단(이름·전체 전화번호·마지막 투자 시각). 파일 응답이라 `ApiResponse`로 감싸지
- * 않는다 — `client`의 blob 예외 처리를 그대로 탄다.
+ * 경품 추첨(#412, BE#238). 투표가 끝난 뒤에만 된다(`FESTA_DRAW_BEFORE_END`). 이미 뽑았으면
+ * `additional` 없이는 거절된다(`FESTA_ALREADY_DRAWN`) — 두 번 눌러 당첨자가 늘어나는 것을 막는다.
+ */
+export async function drawFestaWinners(payload: FestaDrawPayload): Promise<FestaWinners> {
+  const { data } = await client.post<FestaWinners>("/api/admin/festa/draw", payload);
+  return data;
+}
+
+/** 당첨자와 전체 번호. 부를 때마다 서버에 열람 기록이 남는다. */
+export async function getFestaWinners(): Promise<FestaWinners> {
+  const { data } = await client.get<FestaWinners>("/api/admin/festa/winners");
+  return data;
+}
+
+/**
+ * 참여자 명단(이름·가린 번호·마지막 참여 시각, BE#238). 투표가 끝난 뒤에만 받을 수 있다
+ * (`FESTA_EXPORT_BEFORE_END`). 파일 응답이라 `ApiResponse`로 감싸지 않는다 — `client`의 blob
+ * 예외 처리를 그대로 탄다.
  */
 export const downloadFestaInvestors = (): Promise<void> =>
   downloadFile("/api/admin/festa/investors.csv", "festa-investors.csv");

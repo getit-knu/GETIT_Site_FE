@@ -12,6 +12,7 @@ import {
 } from "../../hooks/festa/useFestaResults";
 import type { FestaProjectResult, FestaVoteResults } from "../../types/festa";
 
+import { FestaDrawCard } from "./FestaDrawCard";
 import styles from "./FestaPage.module.scss";
 import { FestaScheduleCard } from "./FestaScheduleCard";
 
@@ -41,7 +42,7 @@ const COLUMNS: Column<Ranked<FestaProjectResult>>[] = [
 /**
  * 모의투자 FESTA 결과(#365). 행사 중에는 결과를 공개하지 않아 이 화면에서만 집계를 본다.
  * 집계는 참여 방식(`FESTA_MODE`)에 따라 득표수(#373) 또는 투자 총액으로 보여준다.
- * 추첨은 어드민이 명단 CSV 로 직접 하고, 끝나면 번호를 파기한다. 맨 위에서 투표 기간(#379)을 정한다.
+ * 추첨은 서버가 하고(#412) 당첨자 번호만 본다. 끝나면 번호를 파기한다. 맨 위에서 투표 기간(#379)을 정한다.
  */
 export default function FestaPage({ mode = FESTA_MODE }: { mode?: FestaMode }) {
   const download = useDownloadFestaInvestors();
@@ -64,13 +65,15 @@ export default function FestaPage({ mode = FESTA_MODE }: { mode?: FestaMode }) {
 
       {mode === "vote" ? <VoteResultsCard /> : <InvestResultsCard />}
 
+      <FestaDrawCard />
+
       <section className={styles.panel} aria-labelledby="festa-raffle">
         <h2 id="festa-raffle" className={styles.title}>
-          추첨 명단
+          참여자 명단 · 번호 파기
         </h2>
         <p className={styles.muted}>
-          명단 파일에는 참여자 이름과 <strong>전체 전화번호</strong>가 들어 있습니다. 추첨과 경품 발송이 끝나면 내려받은
-          파일을 지우고, 서버에 남은 번호도 파기해 주세요. 늦어도 행사 종료 후 30일 안에 파기해야 합니다.
+          명단 파일의 전화번호는 <strong>가려져</strong> 있고, 투표가 끝난 뒤에만 받을 수 있습니다. 경품 발송이 끝나면
+          서버에 남은 번호를 파기해 주세요. 잊어도 투표 종료 30일 뒤에 서버가 자동으로 파기합니다.
         </p>
         <div className={styles.actions}>
           <Button onClick={() => download.mutate()} isLoading={download.isPending}>
