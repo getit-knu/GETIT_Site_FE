@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { client } from "../client";
 
-import { getApplicants } from "./applicationsApi";
+import { getApplicantPhone, getApplicants } from "./applicationsApi";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -64,5 +64,14 @@ describe("getApplicants", () => {
     const result = await getApplicants({});
 
     expect(result.summary).toBeUndefined();
+  });
+});
+
+describe("getApplicantPhone (#411)", () => {
+  it("지원자 한 명의 전체 번호를 받아 번호만 돌려준다", async () => {
+    const get = vi.spyOn(client, "get").mockResolvedValue({ data: { phoneNumber: "010-1234-5678" } });
+
+    await expect(getApplicantPhone(42)).resolves.toBe("010-1234-5678");
+    expect(get).toHaveBeenCalledWith("/api/admin/recruitment/applications/42/phone");
   });
 });
