@@ -164,11 +164,36 @@ export function createMockApi() {
     return { investorCount: festaInvestments.length > 0 ? 1 : 0, projects };
   }
 
+  /** 투표가 끝났는지. 기간을 정했으면 종료 시각, 아니면 토글이 꺼졌는지로 본다(BE#236·#241). */
+  function festaEnded(): boolean {
+    const { endAt } = festaSchedule;
+    return endAt === null ? !fx.home.features.mockInvestment : Date.now() >= Date.parse(endAt);
+  }
+
+  const festaParticipated = () => festaPhone !== null && (festaInvestments.length > 0 || festaVote !== null);
+  const maskedFestaPhone = () => (festaPhone === null ? "" : `${festaPhone.slice(0, 4)}****${festaPhone.slice(8)}`);
+
+  // 경품 추첨(#412, BE#241). 참여자는 목 사용자 한 명뿐이다. 번호는 복사하지 않고 `festaPhone`에서 읽는다.
+  let festaWinners: { drawOrder: number; drawnAt: string }[] = [];
+
+  function festaWinnersResult() {
+    return {
+      winners: festaWinners.map((w) => ({ ...w, userId: fx.me.id, name: fx.me.name, phoneNumber: festaPhone })),
+    };
+  }
+
+  function drawFesta(body: unknown): MockResponse {
+    const { additional = false } = (body ?? {}) as { additional?: boolean };
+    if (!festaEnded()) return fail(409, "FESTA_DRAW_BEFORE_END", "투표 종료 전");
+    if (festaWinners.length > 0 && !additional) return fail(409, "FESTA_ALREADY_DRAWN", "이미 추첨");
+    if (!festaParticipated() || festaWinners.length > 0) return fail(409, "FESTA_NO_DRAW_CANDIDATES", "후보 없음");
+    festaWinners = [{ drawOrder: 1, drawnAt: new Date().toISOString() }];
+    return ok(festaWinnersResult());
+  }
+
   function festaInvestorsCsv(): MockResponse {
-    const rows =
-      festaPhone !== null && (festaInvestments.length > 0 || festaVote !== null)
-        ? [`"${fx.me.name}","${festaPhone}","2026-11-23 12:00:00"`]
-        : [];
+    if (!festaEnded()) return fail(409, "FESTA_EXPORT_BEFORE_END", "투표 종료 전");
+    const rows = festaParticipated() ? [`"${fx.me.name}","${maskedFestaPhone()}","2026-11-23 12:00:00"`] : [];
     const csv = ["\uFEFF이름,전화번호,마지막 투자 시각", ...rows].join("\r\n") + "\r\n";
     return { status: 200, body: csv, contentType: "text/csv; charset=UTF-8" };
   }
@@ -227,6 +252,10 @@ export function createMockApi() {
         return ok(festaResults());
       case "GET /api/admin/festa/investors.csv":
         return festaInvestorsCsv();
+      case "POST /api/admin/festa/draw":
+        return drawFesta(body);
+      case "GET /api/admin/festa/winners":
+        return ok(festaWinnersResult());
       case "DELETE /api/admin/festa/investors/phones": {
         const destroyedCount = festaPhone === null ? 0 : 1;
         festaPhone = null;
@@ -238,6 +267,7 @@ export function createMockApi() {
         festaPhone = null;
         festaInvestments = [];
         festaVote = null;
+        festaWinners = [];
         return ok({ deletedInvestorCount });
       }
       case "GET /api/public/projects": {
