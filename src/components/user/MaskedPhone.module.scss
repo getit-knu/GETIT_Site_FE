@@ -18,3 +18,13 @@
   font-size: 0.75rem;
   cursor: pointer;
 }
+
+.toggle:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.error {
+  color: #dc2626;
+  font-size: 0.75rem;
+}
