@@ -2,7 +2,13 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!--
+      탭 아이콘은 GET IT 로고(#417). `favicon.ico` 는 주소를 직접 찾는 브라우저·크롤러용이다 — 없으면
+      SPA 리다이렉트가 HTML 을 대신 내려준다. 아이폰 홈 화면은 투명한 곳을 검정으로 채워서 흰 바탕을 깐다.
+    -->
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/png" href="/favicon.png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!--
@@ -22,23 +28,23 @@
       링크를 붙여도 제목도 설명도 썸네일도 없이 파란 주소만 떴다.
 
       절대 주소여야 한다 — 크롤러는 상대 경로를 제대로 풀어 주지 않는다. 그래서 배포
-      도메인을 여기 박아 둔다. **커스텀 도메인이 붙으면 이 세 줄을 같이 고쳐야 한다.**
+      도메인(`getit.io.kr`)을 여기 박아 둔다. **도메인이 바뀌면 이 두 줄을 같이 고쳐야 한다.**
 
-      이미지는 `public/og.png`(1200×630). SVG 는 어느 크롤러도 안 읽어서 PNG 로 뽑았고,
+      이미지는 `public/og-v2.png`(1200×630, #417에서 GET IT 로고로 바꾸며 이름도 바꿨다). SVG 는 어느 크롤러도 안 읽어서 PNG 로 뽑았고,
       카카오처럼 가운데를 잘라내는 곳이 있어 글자를 가운데 모아 두었다.
-      **og.png 를 바꿔도 카카오는 옛 이미지를 한동안 캐시한다** — 카카오 디벨로퍼스의
-      캐시 초기화를 쓰거나 파일 이름을 바꿔야 한다.
+      **이미지를 바꿔도 카카오는 옛 이미지를 한동안 캐시한다** — 카카오 디벨로퍼스의
+      캐시 초기화를 쓰거나 파일 이름을 바꿔야 한다(다음에 바꾸면 `og-v3.png`).
     -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="GET IT" />
     <meta property="og:locale" content="ko_KR" />
-    <meta property="og:url" content="https://knugetit.pages.dev/" />
+    <meta property="og:url" content="https://getit.io.kr/" />
     <meta property="og:title" content="GET IT · 경북대학교 컴퓨터학부 SW&amp;창업 동아리" />
     <meta
       property="og:description"
       content="강의와 프로젝트로 상상을 현실로 만듭니다. 타과생도 부담 없이, 9기 지원 접수 중."
     />
-    <meta property="og:image" content="https://knugetit.pages.dev/og.png" />
+    <meta property="og:image" content="https://getit.io.kr/og-v2.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="GET IT · LET'S MAKE ANYTHING." />
