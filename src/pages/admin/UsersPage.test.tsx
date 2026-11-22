@@ -332,8 +332,12 @@ describe("UsersPage", () => {
 
     await screen.findByText("김부원");
     // 부분 일치라 정규식으로 칸 전체를 맞춘다. "-" 는 전화번호 안에도 들어 있다.
-    expect(cellOf("김부원", "연락처")).toHaveTextContent(/^010-1234-5678$/);
+    // 처음엔 가려서 보여주고, "보기"를 눌러야 전체 번호가 보인다(#408).
+    expect(cellOf("김부원", "연락처")).toHaveTextContent(/^010-\*\*\*\*-5678보기$/);
     expect(cellOf("이부원", "연락처")).toHaveTextContent(/^-$/);
+
+    await userEvent.click(screen.getByRole("button", { name: "김부원 연락처 보기" }));
+    expect(cellOf("김부원", "연락처")).toHaveTextContent(/^010-1234-5678숨기기$/);
   });
 
   it("연락처가 없으면 '-' 로 표시한다", async () => {
