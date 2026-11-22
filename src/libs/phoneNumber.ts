@@ -44,19 +44,3 @@ export const PHONE_NUMBER_FORMAT_MESSAGE = `전화번호를 ${PHONE_NUMBER_EXAMP
 export function isValidPhoneNumber(value: string): boolean {
   return MOBILE_PHONE_PATTERN.test(value.trim());
 }
-
-/**
- * 화면에 가려서 보여줄 번호(#408). `010-1234-5678` → `010-****-5678`.
- *
- * 앞 3자리와 뒤 4자리만 남긴다. 예전에 형식 없이 저장된 값(`01012345678` 등)도 숫자 자리만 보고 가린다 —
- * 숫자가 7자리보다 짧으면 앞뒤를 남길 수 없으니 전부 가린다.
- */
-export function maskPhoneNumber(value: string): string {
-  const digits = value.replace(/\D/g, "");
-  if (digits.length < 8) return value.replace(/\d/g, "*");
-  let index = 0;
-  return value.replace(/\d/g, (digit) => {
-    index += 1;
-    return index <= 3 || index > digits.length - 4 ? digit : "*";
-  });
-}

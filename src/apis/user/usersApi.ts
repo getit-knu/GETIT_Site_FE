@@ -35,8 +35,19 @@ export async function promoteApplicants(): Promise<PromotionResult> {
 }
 
 /**
- * `GET /api/admin/users/export`
+ * `GET /api/admin/users/{id}/phone` — 전체 번호 한 건(BE#237). 목록은 가린 번호만 준다.
+ * 부를 때마다 서버에 열람 기록이 남는다. 응답을 캐시에 두지 않도록 쿼리가 아니라 그때그때 부른다.
+ */
+export async function getUserPhone(id: number): Promise<string | null> {
+  const { data } = await client.get<{ phoneNumber: string | null }>(`/api/admin/users/${id}/phone`);
+  return data.phoneNumber;
+}
+
+/**
+ * `GET /api/admin/users/export?includePhone=`
  *
  * 파일 응답이다(`ApiResponse` 로 감싸지 않는다) — `client` 의 blob 예외 처리를 그대로 탄다.
+ * 연락처는 `includePhone` 을 켤 때만 들어간다(BE#237, 서버 기본은 뺌). 내려받기는 서버에 기록된다.
  */
-export const exportUsers = (): Promise<void> => downloadFile("/api/admin/users/export", "getit-users.xlsx");
+export const exportUsers = ({ includePhone = false }: { includePhone?: boolean } = {}): Promise<void> =>
+  downloadFile("/api/admin/users/export", "getit-users.xlsx", includePhone ? { includePhone: "true" } : undefined);

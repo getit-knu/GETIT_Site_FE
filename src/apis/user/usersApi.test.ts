@@ -1,8 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { client } from "../client";
+import { downloadFile } from "../../libs/downloadFile";
 
-import { deleteUser, getUsers, promoteApplicants, updateUser } from "./usersApi";
+import { deleteUser, exportUsers, getUserPhone, getUsers, promoteApplicants, updateUser } from "./usersApi";
+
+vi.mock("../../libs/downloadFile");
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -55,5 +58,27 @@ describe("promoteApplicants", () => {
     expect(get).toHaveBeenCalledWith("/api/admin/setting/generation");
     expect(post).toHaveBeenCalledWith("/api/admin/users/promote", { generationId: 9 });
     expect(promoted).toBe(result);
+  });
+});
+
+describe("getUserPhone (#411)", () => {
+  it("한 사람의 전체 번호를 받아 번호만 돌려준다", async () => {
+    // 실제 BE 응답(`PhoneNumberResult`) 그대로다 — 문자열이 아니라 `{ phoneNumber }` 로 감싸 온다.
+    const get = vi.spyOn(client, "get").mockResolvedValue({ data: { phoneNumber: "010-1234-5678" } });
+
+    await expect(getUserPhone(21)).resolves.toBe("010-1234-5678");
+    expect(get).toHaveBeenCalledWith("/api/admin/users/21/phone");
+  });
+});
+
+describe("exportUsers (#411)", () => {
+  it("연락처는 includePhone 을 켤 때만 요청한다", async () => {
+    await exportUsers();
+    expect(downloadFile).toHaveBeenLastCalledWith("/api/admin/users/export", "getit-users.xlsx", undefined);
+
+    await exportUsers({ includePhone: true });
+    expect(downloadFile).toHaveBeenLastCalledWith("/api/admin/users/export", "getit-users.xlsx", {
+      includePhone: "true",
+    });
   });
 });

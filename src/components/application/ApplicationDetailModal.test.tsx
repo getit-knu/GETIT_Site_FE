@@ -32,7 +32,8 @@ function detail(over: Partial<ApplicationDetail> = {}): ApplicationDetail {
     basicInfo: {
       name: "김지원",
       email: "kim@gmail.com",
-      phoneNumber: "010-1234-5678",
+      // 서버가 가려서 준다(BE#237). 전체 번호는 `getApplicantPhone` 으로 따로 받는다.
+      phoneNumber: "010-****-5678",
       collegeId: 1,
       majorId: 1,
       grade: 2,
@@ -109,6 +110,7 @@ describe("ApplicationDetailModal", () => {
     vi.mocked(api.getAdjacentApplicants).mockResolvedValue({ previousId: null, nextId: 43 });
     vi.mocked(api.getEvaluationSummary).mockResolvedValue(evaluationSummary());
     vi.mocked(api.saveEvaluation).mockResolvedValue(evaluationSummary());
+    vi.mocked(api.getApplicantPhone).mockResolvedValue("010-1234-5678");
     vi.mocked(publicApi.getColleges).mockResolvedValue([{ id: 1, name: "경영대학" }]);
     vi.mocked(publicApi.getMajors).mockResolvedValue([{ id: 1, collegeId: 1, name: "경영학과" }]);
   });
@@ -124,11 +126,25 @@ describe("ApplicationDetailModal", () => {
     renderModal();
 
     await screen.findByText("경영대학 경영학과 2학년");
-    // 처음엔 가리고, "보기"를 눌러야 전체 번호가 보인다(#408).
+    // 처음엔 서버가 가려 준 번호 그대로, "보기"를 눌러야 그 지원서의 전체 번호를 받아 온다(#408, #411).
     expect(screen.getByText("010-****-5678")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /연락처 보기$/ }));
-    expect(screen.getByText("010-1234-5678")).toBeInTheDocument();
+    expect(await screen.findByText("010-1234-5678")).toBeInTheDocument();
+    expect(api.getApplicantPhone).toHaveBeenCalledWith(42);
     expect(screen.getByText("kim@gmail.com")).toBeInTheDocument();
+  });
+
+  it("다음 지원자로 넘기면 받아 둔 전체 번호를 버린다 (#411)", async () => {
+    const navigate = renderModal();
+    await screen.findByText("경영대학 경영학과 2학년");
+    await userEvent.click(screen.getByRole("button", { name: /연락처 보기$/ }));
+    await screen.findByText("010-1234-5678");
+
+    vi.mocked(api.getApplicationDetail).mockResolvedValue(detail({ id: 43 }));
+    navigate(43);
+
+    expect(await screen.findByRole("button", { name: /연락처 보기$/ })).toBeInTheDocument();
+    expect(screen.queryByText("010-1234-5678")).not.toBeInTheDocument();
   });
 
   it("전화번호가 없으면 대시로 보여준다", async () => {

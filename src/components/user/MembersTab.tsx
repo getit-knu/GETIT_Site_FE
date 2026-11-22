@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router";
 
-import { exportUsers } from "../../apis/user/usersApi";
+import { exportUsers, getUserPhone } from "../../apis/user/usersApi";
 import { Badge } from "../../components/ui/Badge/Badge";
 import { Button } from "../../components/ui/Button/Button";
 import { DataTable, type Column } from "../../components/ui/DataTable/DataTable";
@@ -48,13 +48,15 @@ export function MembersTab() {
   const removeUser = useDeleteUser();
   const promote = usePromoteApplicants();
   const [exportError, setExportError] = useState<string | null>(null);
+  // 연락처는 필요할 때만 넣는다(#411). 서버도 기본으로 빼고, 넣으면 따로 기록한다(BE#237).
+  const [exportWithPhone, setExportWithPhone] = useState(false);
   const [promoted, setPromoted] = useState<PromotionResult | null>(null);
 
   /** 파일 응답이라 실패도 Blob 으로 온다 — 화면 문구는 BE `ErrorCode` 에서 가져온다. */
   async function handleExport() {
     setExportError(null);
     try {
-      await exportUsers();
+      await exportUsers({ includePhone: exportWithPhone });
     } catch (caught) {
       setExportError(userExportErrorMessage(caught));
     }
@@ -106,8 +108,12 @@ export function MembersTab() {
     { header: "이름", render: (u) => u.name, width: "6rem" },
     { header: "이메일", render: (u) => u.email, width: "13rem" },
     // 서버가 아직 안 주는 값이라 대부분 "-" 로 뜬다(BE#182). 승격 때 지원서에서 옮겨 온다.
-    // 기본은 가리고 "보기"를 눌러야 전체 번호를 보여준다(#408).
-    { header: "연락처", render: (u) => <MaskedPhone phoneNumber={u.phoneNumber} owner={u.name} />, width: "11rem" },
+    // 서버가 가려 준 번호를 보여주고, "보기"를 누르면 그 사람 번호만 받아 온다(#408, #411).
+    {
+      header: "연락처",
+      render: (u) => <MaskedPhone phoneNumber={u.phoneNumber} owner={u.name} reveal={() => getUserPhone(u.id)} />,
+      width: "11rem",
+    },
     // GUEST 는 아직 소속·학년·기수가 없을 수 있다.
     {
       header: "소속",
@@ -207,6 +213,10 @@ export function MembersTab() {
           <Button variant="secondary" onClick={handlePromote} disabled={promote.isPending}>
             합격자 일괄 승격
           </Button>
+          <label className={styles.toggle}>
+            <input type="checkbox" checked={exportWithPhone} onChange={(e) => setExportWithPhone(e.target.checked)} />
+            연락처 포함
+          </label>
           <Button variant="secondary" onClick={() => void handleExport()}>
             엑셀 다운로드
           </Button>

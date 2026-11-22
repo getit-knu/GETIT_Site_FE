@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
+import { getApplicantPhone } from "../../apis/application/applicationsApi";
 import { getColleges, getMajors } from "../../apis/public/publicApi";
 import { queryKeys } from "../../apis/queryKeys";
 import {
@@ -245,7 +246,13 @@ export function ApplicationDetailModal({
             <div>
               <dt>연락처</dt>
               <dd>
-                <MaskedPhone phoneNumber={data.basicInfo.phoneNumber} owner={data.basicInfo.name} />
+                {/* 앞뒤 지원자로 넘기면 받아 둔 전체 번호를 버려야 한다. */}
+                <MaskedPhone
+                  key={data.id}
+                  phoneNumber={data.basicInfo.phoneNumber}
+                  owner={data.basicInfo.name}
+                  reveal={() => getApplicantPhone(data.id)}
+                />
               </dd>
             </div>
             <div>

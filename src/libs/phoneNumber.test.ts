@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatPhoneNumber, isValidPhoneNumber, maskPhoneNumber } from "./phoneNumber";
+import { formatPhoneNumber, isValidPhoneNumber } from "./phoneNumber";
 
 describe("formatPhoneNumber", () => {
   it("숫자만 쭉 치면 010-1234-5678 꼴로 끊어 준다", () => {
@@ -59,16 +59,5 @@ describe("isValidPhoneNumber", () => {
 
   it("앞뒤 공백은 무시한다", () => {
     expect(isValidPhoneNumber(" 010-1234-5678 ")).toBe(true);
-  });
-});
-
-describe("maskPhoneNumber (#408)", () => {
-  it("앞 3자리와 뒤 4자리만 남기고 가운데를 가린다", () => {
-    expect(maskPhoneNumber("010-1234-5678")).toBe("010-****-5678");
-    expect(maskPhoneNumber("01012345678")).toBe("010****5678");
-  });
-
-  it("숫자가 너무 짧으면 전부 가린다", () => {
-    expect(maskPhoneNumber("123-4567")).toBe("***-****");
   });
 });

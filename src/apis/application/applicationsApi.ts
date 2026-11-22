@@ -120,6 +120,15 @@ export async function decideApplicationsBulk(payload: BulkDecisionPayload): Prom
   return data;
 }
 
+/**
+ * `GET /api/admin/recruitment/applications/{id}/phone` — 지원자 전체 번호 한 건(BE#237). 상세는 가린 번호만 준다.
+ * 부를 때마다 서버에 열람 기록이 남는다.
+ */
+export async function getApplicantPhone(id: number): Promise<string | null> {
+  const { data } = await client.get<{ phoneNumber: string | null }>(`${BASE}/${id}/phone`);
+  return data.phoneNumber;
+}
+
 /** `GET /api/admin/recruitment/applications/excel?generationId=&status=` */
 export const exportApplicants = (params: ApplicantListParams): Promise<void> =>
   downloadFile(`${BASE}/excel`, "getit-applicants.xlsx", { generationId: params.generationId, status: params.status });

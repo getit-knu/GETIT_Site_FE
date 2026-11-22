@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -201,6 +201,19 @@ describe("UsersPage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("권한이 없습니다.");
   });
 
+  it("연락처는 '연락처 포함'을 켰을 때만 엑셀에 넣는다 (#411)", async () => {
+    vi.mocked(api.exportUsers).mockResolvedValue();
+    renderPage();
+    const exportButton = await screen.findByRole("button", { name: "엑셀 다운로드" });
+
+    await userEvent.click(exportButton);
+    expect(api.exportUsers).toHaveBeenLastCalledWith({ includePhone: false });
+
+    await userEvent.click(screen.getByRole("checkbox", { name: "연락처 포함" }));
+    await userEvent.click(exportButton);
+    expect(api.exportUsers).toHaveBeenLastCalledWith({ includePhone: true });
+  });
+
   it("일괄 승격은 확인 없이 실행되지 않는다", async () => {
     // 여러 명의 권한을 한 번에 올린다. 한 명 삭제보다 되돌리기 어렵다.
     vi.stubGlobal("confirm", vi.fn().mockReturnValue(false));
@@ -324,20 +337,23 @@ describe("UsersPage", () => {
     // 한 명만 두면 값이 엉뚱한 행에 그려져도 통과한다. 값이 없는 사용자를 함께 둔다.
     vi.mocked(api.getUsers).mockResolvedValue(
       page([
-        user({ id: 21, name: "김부원", phoneNumber: "010-1234-5678" }),
+        // 목록은 서버가 가려서 준다(BE#237). 전체 번호는 "보기"를 눌러 따로 받는다.
+        user({ id: 21, name: "김부원", phoneNumber: "010-****-5678" }),
         user({ id: 22, name: "이부원", email: "member2@example.com" }),
       ]),
     );
+    vi.mocked(api.getUserPhone).mockResolvedValue("010-1234-5678");
     renderPage();
 
     await screen.findByText("김부원");
     // 부분 일치라 정규식으로 칸 전체를 맞춘다. "-" 는 전화번호 안에도 들어 있다.
-    // 처음엔 가려서 보여주고, "보기"를 눌러야 전체 번호가 보인다(#408).
+    // 처음엔 서버가 가려 준 번호 그대로, "보기"를 눌러야 그 사람 번호를 받아 온다(#408, #411).
     expect(cellOf("김부원", "연락처")).toHaveTextContent(/^010-\*\*\*\*-5678보기$/);
     expect(cellOf("이부원", "연락처")).toHaveTextContent(/^-$/);
 
     await userEvent.click(screen.getByRole("button", { name: "김부원 연락처 보기" }));
-    expect(cellOf("김부원", "연락처")).toHaveTextContent(/^010-1234-5678숨기기$/);
+    await waitFor(() => expect(cellOf("김부원", "연락처")).toHaveTextContent(/^010-1234-5678숨기기$/));
+    expect(api.getUserPhone).toHaveBeenCalledWith(21);
   });
 
   it("연락처가 없으면 '-' 로 표시한다", async () => {
