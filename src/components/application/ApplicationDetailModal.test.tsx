@@ -124,6 +124,9 @@ describe("ApplicationDetailModal", () => {
     renderModal();
 
     await screen.findByText("경영대학 경영학과 2학년");
+    // 처음엔 가리고, "보기"를 눌러야 전체 번호가 보인다(#408).
+    expect(screen.getByText("010-****-5678")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /연락처 보기$/ }));
     expect(screen.getByText("010-1234-5678")).toBeInTheDocument();
     expect(screen.getByText("kim@gmail.com")).toBeInTheDocument();
   });

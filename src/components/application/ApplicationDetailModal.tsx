@@ -22,6 +22,7 @@ import type {
   EvaluationSummary,
 } from "../../types/application";
 import { Button } from "../ui/Button/Button";
+import { MaskedPhone } from "../user/MaskedPhone";
 import { PaginatedModal } from "../ui/PaginatedModal/PaginatedModal";
 import { ErrorState, FormSkeleton, TextSkeleton } from "../ui/states/States";
 
@@ -243,7 +244,9 @@ export function ApplicationDetailModal({
             </div>
             <div>
               <dt>연락처</dt>
-              <dd>{data.basicInfo.phoneNumber ?? "-"}</dd>
+              <dd>
+                <MaskedPhone phoneNumber={data.basicInfo.phoneNumber} owner={data.basicInfo.name} />
+              </dd>
             </div>
             <div>
               <dt>이메일</dt>
