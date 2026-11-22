@@ -5,9 +5,11 @@ import { client } from "../client";
 
 import {
   destroyFestaPhoneNumbers,
+  drawFestaWinners,
   getFestaResults,
   getFestaSchedule,
   getFestaVoteResults,
+  getFestaWinners,
   resetFestaInvestments,
   updateFestaSchedule,
 } from "./festaAdminApi";
@@ -102,5 +104,29 @@ describe("festaAdminApi (#365 wire-shape)", () => {
       endAt: "2026-11-29T15:00:00.000Z",
     });
     expect(result).toEqual(schedule);
+  });
+
+  // 모양은 BE `FestaWinnersResult` 기준(#412, BE#241).
+  const WINNERS = {
+    winners: [
+      { drawOrder: 1, userId: 7, name: "김참여", phoneNumber: "010-1234-5678", drawnAt: "2026-11-30T10:00:00+09:00" },
+    ],
+  };
+
+  it("drawFestaWinners 는 인원·추가 여부를 POST 본문으로 보내고 당첨자를 돌려준다(#412)", async () => {
+    const { result, config } = await withAdapter(WINNERS, () => drawFestaWinners({ count: 1, additional: true }));
+
+    expect(config.method).toBe("post");
+    expect(config.url).toBe("/api/admin/festa/draw");
+    expect(JSON.parse(config.data as string)).toEqual({ count: 1, additional: true });
+    expect(result).toEqual(WINNERS);
+  });
+
+  it("getFestaWinners 는 envelope 안의 당첨자를 돌려준다(#412)", async () => {
+    const { result, config } = await withAdapter(WINNERS, getFestaWinners);
+
+    expect(config.method).toBe("get");
+    expect(config.url).toBe("/api/admin/festa/winners");
+    expect(result).toEqual(WINNERS);
   });
 });

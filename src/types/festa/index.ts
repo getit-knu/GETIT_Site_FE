@@ -88,3 +88,27 @@ export interface FestaScheduleSetting {
   startAt: string | null;
   endAt: string | null;
 }
+
+/**
+ * 경품 당첨자 한 명(#412, BE#238). 서버가 번호를 낸 참여자 중에서 뽑는다.
+ * `phoneNumber`는 전체 번호다. 번호를 파기했으면 `null`.
+ */
+export interface FestaWinner {
+  /** 뽑힌 순서(1부터). 추가 추첨은 앞 순번에 이어진다. */
+  drawOrder: number;
+  userId: number;
+  name: string;
+  phoneNumber: string | null;
+  drawnAt: string;
+}
+
+/** `POST /api/admin/festa/draw`, `GET /api/admin/festa/winners` 응답. */
+export interface FestaWinners {
+  winners: FestaWinner[];
+}
+
+/** `count`를 비우면 서버가 5명을 뽑는다. `additional`이면 이미 뽑은 사람을 빼고 이어서 뽑는다. */
+export interface FestaDrawPayload {
+  count?: number;
+  additional?: boolean;
+}
